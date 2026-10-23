@@ -16,18 +16,18 @@
   /* Curated inspiration photos (AI-generated samples). Matched by style and, where the scene is event-specific, by event type. */
   var IMG = 'img/events/';
   var PHOTOS = [
-    { src: IMG + 'blush-tea.jpg', styles: ['blush-romance', 'pastel-whimsy'], types: ['brunch', 'bridal-shower', 'dinner', 'anniversary', 'other'], alt: 'Blush and ivory brunch table with tiered pastries, roses and gold-rimmed teacups' },
+    { src: IMG + 'blush-tea.jpg', styles: ['blush-romance', 'pastel-whimsy'], types: ['brunch', 'bridal-shower'], alt: 'Blush and ivory brunch table with tiered pastries, roses and gold-rimmed teacups' },
     { src: IMG + 'moon-shower.jpg', styles: ['blush-romance', 'pastel-whimsy'], types: ['baby-shower', 'gender-reveal'], alt: 'Blush and gold baby shower dessert table with a moon cake, teddy bear and balloon garland' },
     { src: IMG + 'sage-garden-shower.jpg', styles: ['champagne-garden'], types: ['baby-shower', 'gender-reveal'], alt: 'Garden baby shower with sage and ivory balloons, white roses and a long table under a pergola' },
     { src: IMG + 'plum-graduation.jpg', styles: ['royal-purple', 'moody-floral'], types: ['graduation'], alt: 'Plum, ivory and gold graduation table with a cap-topped cake and cupcakes' },
-    { src: IMG + 'plum-birthday.jpg', styles: ['royal-purple', 'moody-floral'], types: null, alt: 'Plum velvet lounge with a blush floral cake, candles and a plum and blush balloon arch' },
-    { src: IMG + 'noir-skyline.jpg', styles: ['modern-noir', 'old-hollywood'], types: null, alt: 'Black and gold table at dusk with orchids, candles and a skyline view' },
-    { src: IMG + 'ivory-ballroom.jpg', styles: ['ivory-ballroom', 'minimal-white'], types: null, alt: 'Ivory and gold ballroom with a tiered cake, chandeliers and white rose centerpieces' },
-    { src: 'img/hero.jpg', styles: ['blush-romance'], types: null, alt: 'Candlelit table with blush and ivory roses, gold candlesticks and a tiered cake' }
+    { src: IMG + 'plum-birthday.jpg', styles: ['royal-purple', 'moody-floral'], types: ['birthday', 'milestone'], alt: 'Plum velvet lounge with a blush floral cake, candles and a plum and blush balloon arch' },
+    { src: IMG + 'noir-skyline.jpg', styles: ['modern-noir', 'old-hollywood'], types: ['birthday', 'milestone', 'bachelorette', 'holiday'], alt: 'Black and gold table at dusk with orchids, candles and a skyline view' },
+    { src: IMG + 'ivory-ballroom.jpg', styles: ['ivory-ballroom', 'minimal-white'], types: ['wedding', 'gala', 'quince', 'engagement', 'anniversary'], alt: 'Ivory and gold ballroom with a tiered cake, chandeliers and white rose centerpieces' },
+    { src: 'img/hero.jpg', styles: ['blush-romance'], types: ['wedding', 'engagement', 'anniversary', 'gala', 'quince'], alt: 'Candlelit table with blush and ivory roses, gold candlesticks and a tiered cake' }
   ];
   function photoFor(styleId, type) {
-    return PHOTOS.find(function (x) { return x.styles.indexOf(styleId) >= 0 && x.types && x.types.indexOf(type) >= 0; }) ||
-      PHOTOS.find(function (x) { return x.styles.indexOf(styleId) >= 0 && !x.types; }) || null;
+    /* Only show a photo when it fits both the look and the kind of event. A wedding scene is never shown for a brunch. */
+    return PHOTOS.find(function (x) { return x.styles.indexOf(styleId) >= 0 && x.types.indexOf(type) >= 0; }) || null;
   }
   /* Server-made concepts have their own ids, so match them to the closest library style by color. */
   function nearestStyle(pal) {
@@ -440,12 +440,13 @@
   /* ---------- concepts ---------- */
   function conceptsView(id) {
     var ev = getEvent(id); if (!ev) return notFound();
-    frame('<div class="stack-lg"><div class="stack"><h2>Three concepts for ' + esc(ev.name) + '</h2><p class="muted">Each is a theme direction with its own colors, atmosphere and decor. Pick one, then see it in three spending versions or one made for your budget. Photos are inspiration, not your venue.</p></div><div id="cs" class="concepts"><p class="muted">Reading your inspiration…</p></div>' +
+    frame('<div class="stack-lg"><div class="stack"><h2>Three looks for ' + esc(ev.name) + '</h2><p class="muted">Scroll to see all three. Each has its own colors, atmosphere and decor. Pick one and the next screens show what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">Photos appear only when a sample fits your kind of event. They are AI-generated inspiration, not your venue.</p></div><div id="cs" class="concepts"><p class="muted">Reading your inspiration…</p></div>' +
       '<p class="small muted" id="srcNote" hidden></p><div class="row"><button class="btn ghost" id="more">Show three different concepts</button><span class="muted small">Uses your included allowance once, then three more cost $7.99 or 16 credits.</span></div></div>');
     function render(list) {
       $('#cs').innerHTML = list.map(function (c, i) {
         var sel = ev.concept && ev.concept.id === c.id;
-        return '<article class="concept' + (sel ? ' selected' : '') + '">' + thumb(conceptPhoto(c, ev.type)) + '<div class="in"><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(c.mood) + '</p><ul>' + c.outline.map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
+        var ph = conceptPhoto(c, ev.type);
+        return '<article class="concept' + (sel ? ' selected' : '') + '">' + thumb(ph) + '<div class="in"><span class="concept-num">Concept ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(c.mood) + '</p><ul>' + c.outline.map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
       }).join('');
     }
     function load(skip) {

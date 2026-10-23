@@ -308,3 +308,7 @@ a.sample h3 { text-decoration: underline; text-decoration-color: var(--line); te
 a.sample:hover h3 { text-decoration-color: currentColor; }
 .thumb.banner { max-height: 260px; width: 100%; }
 .sum > div { flex-wrap: wrap; column-gap: 12px; }
+
+.concept-num { font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--gold-text); }
+.concept-band { display: flex; height: 28px; }
+.concept-band i { flex: 1; }
