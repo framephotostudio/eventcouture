@@ -161,16 +161,20 @@
   function notFound() { frame('<div class="stack"><h2>This page doesn’t exist</h2><p class="muted">It may have been removed. <a href="#/">Go to the home page</a>.</p></div>'); }
 
   /* ---------- home ---------- */
+  var HERO_IMG = 'img/hero.svg';
   function home() {
-    var st = D.STYLES[2];
-    var demo = E.budget({ type: 'brunch', guests: 10, city: 'Houston, TX' }, 'S');
-    var lines = demo.items.slice(0, 4).map(function (i) { return '<div class="line"><span>' + esc(i.name) + '</span><span class="num">' + money(i.mid) + '</span></div>'; }).join('');
+    var demoEv = { type: 'wedding', guests: 150, city: 'Houston, TX' };
+    var demo = E.budget(demoEv, 'S');
+    var pick = function (id) { return demo.items.find(function (i) { return i.id === id; }) || { mid: 0 }; };
+    var tags = [['Candelabras and decor', pick('decor').mid, 50, 21], ['Cake', pick('cake').mid, 27, 44], ['Champagne and bar', pick('bar').mid, 68, 57], ['Florals', pick('florals').mid, 50, 86]];
+    var lines = [['Venue', pick('venue').mid], ['Catering', pick('catering').mid], ['Photographer', pick('photographer').mid]].map(function (l) { return '<div class="line"><span>' + l[0] + '</span><span class="num">' + money(l[1]) + '</span></div>'; }).join('');
     frame(
       '<section class="hero"><div><h1>Turn saved inspiration into an event you can afford.</h1>' +
       '<p class="lead">Upload the photos you love or describe your dream party. Event Couture plans every detail, from the venue to the playlist, with the cost of each piece shown up front.</p>' +
       '<div class="row"><a class="btn gold" href="#/new">Plan my event</a><a class="btn ghost" href="#samples">See sample plans</a></div></div>' +
-      '<div class="fitting" aria-label="Example plan preview">' + '<div class="swatch tall" aria-hidden="true">' + st.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>' +
-      '<p class="muted small">Example: blush brunch for 10 in Houston, Signature version</p>' + lines +
+      '<div class="fitting" aria-label="Example: an inspiration scene priced piece by piece"><div class="scene"><img src="' + HERO_IMG + '" alt="Reception table with a gold candelabra, blush and ivory roses, a tiered cake and champagne">' +
+      tags.map(function (t, k) { return '<span class="tag-pin" style="left:' + t[2] + '%;top:' + t[3] + '%;animation-delay:' + (0.25 + k * 0.18) + 's"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span>'; }).join('') + '</div>' +
+      '<p class="muted small" style="margin-top:12px">Example: blush and gold wedding for 150 in Houston, Signature version</p>' + lines +
       '<div class="line"><span>Total with 10% cushion</span><span class="total num">' + money(demo.total) + '</span></div></div></section>' +
       '<section class="stack-lg" style="margin-top:28px"><h2>How it works</h2><ol class="steps-line">' +
       '<li><h3>Share your inspiration</h3><p class="muted">Several photos, Pinterest or TikTok links, or a few words. Tap the details you love.</p></li>' +
@@ -644,10 +648,22 @@
   }
   TAB_VIEWS.style = function (ev) {
     var c = ev.concept; var st = D.STYLES.find(function (x) { return x.id === c.id; }) || {}; var color = st.shop || c.styleName.toLowerCase();
-    var items = [color + ' balloon garland kit', color + ' table runner', color + ' taper candles', color + ' cocktail napkins', color + ' party backdrop', color + ' party favors', c.dress.toLowerCase() + ' outfit'];
+    var tables = Math.ceil((ev.expected || ev.guests) / 8), g = ev.expected || ev.guests;
+    var items = [
+      { q: color + ' balloon garland kit', name: 'Balloon garland kit', each: [25, 60], qty: 1 },
+      { q: color + ' table runner', name: 'Table runners', each: [10, 28], qty: tables },
+      { q: color + ' taper candles', name: 'Taper candles (set of 12)', each: [16, 36], qty: tables },
+      { q: color + ' cocktail napkins', name: 'Cocktail napkins (pack of 50)', each: [8, 18], qty: Math.ceil(g * 3 / 50) },
+      { q: color + ' party backdrop', name: 'Photo backdrop', each: [40, 150], qty: 1 },
+      { q: color + ' party favors', name: 'Favors', each: [1.5, 4], qty: g },
+      { q: c.dress.toLowerCase() + ' outfit', name: 'Your outfit', each: [60, 250], qty: 1 }
+    ];
+    var shopLo = items.reduce(function (t, it) { return t + it.each[0] * it.qty; }, 0), shopHi = items.reduce(function (t, it) { return t + it.each[1] * it.qty; }, 0);
     var pl = D.PLAYLIST_SEARCH(c.music);
     return '<div class="stack"><h3>Shopping board</h3><p class="muted">Items picked for the ' + esc(c.styleName) + ' look. Links open the store; prices and availability are on the store’s page.' + (CFG.amazonTag ? ' Some links earn Event Couture a small commission at no cost to you.' : '') + '</p>' +
-      '<div class="list panel">' + items.map(function (it) { var l = shopLink(it); return '<div class="it"><span class="grow">' + esc(it.charAt(0).toUpperCase() + it.slice(1)) + '</span><span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.amazon + '">Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a></span></div>'; }).join('') + '</div></div>' +
+      '<div class="shop">' + items.map(function (it, k) { var l = shopLink(it.q);
+        return '<div class="prod"><div class="pimg" aria-hidden="true" style="background:linear-gradient(135deg,' + c.palette[k % c.palette.length] + ',' + c.palette[(k + 2) % c.palette.length] + ')"></div><div class="pbody"><b>' + esc(it.name) + '</b><span class="small muted">' + (it.qty > 1 ? it.qty + ' \u00d7 ' : '') + '$' + it.each[0] + ' to $' + it.each[1] + (it.qty > 1 ? ' each' : '') + '</span><span class="num">' + money(it.each[0] * it.qty) + ' to ' + money(it.each[1] * it.qty) + '</span><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Shop Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a></span></div></div>'; }).join('') + '</div>' +
+      '<p class="small muted">Estimated shopping total: <b class="num">' + money(shopLo) + ' to ' + money(shopHi) + '</b>. Quantities are sized to ' + plural(g, 'guest') + ' and ' + plural(tables, 'table') + '. Live product photos and prices appear here at launch.</p></div>' +
       '<div class="stack"><h3>Playlist</h3><div class="panel stack"><p>Mood: ' + esc(c.music) + '</p><div class="row"><a class="btn small" target="_blank" rel="noopener" href="' + pl.spotify + '">Open in Spotify</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + pl.apple + '">Open in Apple Music</a></div></div></div>' +
       '<div class="stack"><h3>What to wear</h3><div class="panel stack"><p>Dress code: ' + esc(c.dress) + '</p>' + sw(c.palette) + '<p class="muted small">Want the hair and makeup to match? Try the look on your own photo in Face Couture.</p><div><a class="btn small ghost" target="_blank" rel="noopener" href="https://facecouture.app">Open Face Couture</a></div></div></div>';
   };
@@ -906,6 +922,13 @@
       : '<h2>Terms</h2><p>Event Couture is planning software. Prices are labeled as planning estimates, vendor-published prices, confirmed quotes or confirmed bookings; estimates are not offers from vendors. You book and pay vendors directly, and vendors are responsible for their own services.</p><p>An Event Pass covers one event at the guest capacity you choose, with access for 12 months of planning and 30 days after the event. AI credits and add-ons are charged only when delivered. Generated venue illustrations are illustrations, not proof of venue approval, measurements or feasibility. Menu ideas are suggestions and never guarantee allergy safety.</p><p class="muted small">Draft for review before launch.</p>';
     frame('<div class="wizard stack">' + body + '</div>');
   }
+
+  /* In the phone app, outside links open in an in-app window that returns to the plan when closed. */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[target="_blank"]'); if (!a) return;
+    var B = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser;
+    if (B && B.open) { e.preventDefault(); B.open({ url: a.href, presentationStyle: 'popover' }); }
+  });
 
   route();
 })();

@@ -246,3 +246,17 @@ footer.site nav { display: flex; gap: 16px; justify-content: center; flex-wrap: 
 .vchip i { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
 .btn svg { flex: none; }
 #speak[aria-pressed="true"] { background: var(--champagne-soft); border-color: var(--champagne); }
+
+.scene { position: relative; border-radius: var(--r-md); overflow: hidden; }
+.scene img { width: 100%; aspect-ratio: 480 / 540; object-fit: cover; }
+.tag-pin { position: absolute; transform: translate(-50%, -50%); background: color-mix(in srgb, #FFFFFF 92%, transparent); color: #2A1A2B; border: 1px solid #E6D3B5;
+  font-size: .78rem; padding: 5px 10px 5px 8px; border-radius: 999px; white-space: nowrap; box-shadow: 0 4px 14px rgba(42, 26, 43, .14); display: inline-flex; gap: 5px; align-items: center; }
+.tag-pin::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #B08D57; }
+.tag-pin b { font-weight: 500; }
+@media (prefers-reduced-motion: no-preference) { .tag-pin { animation: pinIn .5s ease both; } @keyframes pinIn { from { opacity: 0; transform: translate(-50%, -30%); } } }
+
+.shop { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.prod { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; display: grid; grid-template-columns: 92px 1fr; min-width: 0; }
+.prod .pimg { min-height: 120px; }
+.prod .pbody { padding: 12px 14px; display: grid; gap: 4px; min-width: 0; }
+.prod .acts { margin-top: 6px; }
