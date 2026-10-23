@@ -193,12 +193,10 @@
   ];
   var CREDIT_PACKS = [{ credits: 10, price: 4.99 }, { credits: 25, price: 9.99 }, { credits: 60, price: 19.99 }];
   var PACKAGES = [
-    { id: 'concepts3', name: 'Three more event concepts', price: 7.99, credits: 16, desc: 'Three new theme directions for this event, guided by what you want changed. Excludes venue images.' },
-    { id: 'illus5', name: 'Five venue decor illustrations', price: 14.99, credits: 30, desc: 'Five downloadable generated images of your concept at one venue. Illustrations only, not venue approval or measurements.' }
+    { id: 'concepts3', name: 'Three more event concepts', price: 7.99, credits: 16, desc: 'Three new theme directions for this event, guided by what you want changed.' }
   ];
   var ADDONS = [
     { id: 'graphics', name: 'Matching event graphics', price: 6.99, desc: 'Welcome sign, menu, place card, table number and thank-you card; editable; PDF or PNG.' },
-    { id: 'inviteArt', name: 'Custom invitation artwork', price: 4.99, desc: 'Three new background-art choices plus one AI revision of your favorite.' },
     { id: 'outfits', name: 'Guest outfit inspiration', price: 4.99, desc: 'Three outfit boards for one person, with product links.' },
     { id: 'branding', name: 'Planner branding', price: 9.99, desc: 'Your logo, contact details and colors on this event’s pages and PDFs.' },
     { id: 'languages', name: 'Multilingual event page', price: 4.99, desc: 'Invitation and up to 2,000 words in up to three more languages.' },
