@@ -1,0 +1,14 @@
+{
+  "name": "Event Couture by Always Luxe",
+  "short_name": "Event Couture",
+  "description": "Turn saved inspiration into a beautiful event you can afford.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FAF7F5",
+  "theme_color": "#2A1A2B",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
