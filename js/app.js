@@ -45,6 +45,9 @@
   function events() { return store.get('events', {}); }
   function getEvent(id) { return events()[id]; }
   function saveEvent(ev) { var all = events(); ev.updated = Date.now(); all[ev.id] = ev; return store.set('events', all); }
+  function drafts() { return store.get('drafts', {}); }
+  function saveDraft(d) { var all = drafts(); d.updated = Date.now(); all[d.id] = d; return store.set('drafts', all); }
+  function removeDraft(id) { var all = drafts(); delete all[id]; store.set('drafts', all); }
   function wallet() { return store.get('wallet', { credits: 0, ledger: [] }); }
   function saveWallet(w) { store.set('wallet', w); }
   function addLedger(entry) { var w = wallet(); entry.id = uid(); entry.at = new Date().toISOString(); w.ledger.unshift(entry); saveWallet(w); return entry; }
@@ -141,7 +144,7 @@
     var h = (location.hash || '#/').slice(1); var p = h.split('/').filter(Boolean);
     try {
       if (!p.length) return home();
-      if (p[0] === 'new') return wizard(+(p[1] || 1));
+      if (p[0] === 'new') return wizard(+(p[1] || 1), p[2]);
       if (p[0] === 'events') return myEvents();
       if (p[0] === 'sample') return planView(sampleEvent(+p[1] || 0), p[2] || 'overview');
       if (p[0] === 'e' && p[2] === 'concepts') return conceptsView(p[1]);
@@ -165,7 +168,7 @@
     frame(
       '<section class="hero"><div><h1>Turn saved inspiration into an event you can afford.</h1>' +
       '<p class="lead">Upload the photos you love or describe your dream party. Event Couture plans every detail, from the venue to the playlist, with the cost of each piece shown up front.</p>' +
-      '<div class="row"><a class="btn gold" href="#/new/1">Plan my event</a><a class="btn ghost" href="#samples">See sample plans</a></div></div>' +
+      '<div class="row"><a class="btn gold" href="#/new">Plan my event</a><a class="btn ghost" href="#samples">See sample plans</a></div></div>' +
       '<div class="fitting" aria-label="Example plan preview">' + '<div class="swatch tall" aria-hidden="true">' + st.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>' +
       '<p class="muted small">Example: blush brunch for 10 in Houston, Signature version</p>' + lines +
       '<div class="line"><span>Total with 10% cushion</span><span class="total num">' + money(demo.total) + '</span></div></div></section>' +
@@ -183,11 +186,18 @@
 
   function myEvents() {
     var all = Object.values(events()).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); });
-    frame('<div class="stack-lg"><div class="row" style="justify-content:space-between"><h2>My events</h2><a class="btn gold small" href="#/new/1">Plan a new event</a></div>' +
-      (all.length ? '<div class="samples">' + all.map(function (ev) {
+    var ds = Object.values(drafts()).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); });
+    var stepName = { 1: 'Inspiration', 2: 'Details', 3: 'Event Pass' };
+    frame('<div class="stack-lg"><div class="row" style="justify-content:space-between"><h2>My events</h2><a class="btn gold small" href="#/new">Plan a new event</a></div>' +
+      (ds.length ? '<div class="stack"><h3>In progress</h3><p class="muted small">Saved automatically. Pick up right where you left off.</p><div class="list panel">' + ds.map(function (d) {
+        var thumb = d.inspiration.photos[0] ? '<img src="' + d.inspiration.photos[0].src + '" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:8px">' : '<span style="width:52px;height:52px;border-radius:8px;background:var(--champagne-soft);display:block"></span>';
+        return '<div class="it">' + thumb + '<div class="grow"><b>' + esc(d.name || 'Untitled event') + '</b><div class="small muted">Next: ' + stepName[d.step || 1] + (d.updated ? ', saved ' + new Date(d.updated).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '') + '</div></div><span class="acts"><a class="btn small" href="#/new/' + (d.step || 1) + '/' + d.id + '">Continue</a><button class="link small" data-rmd="' + d.id + '">Delete</button></span></div>';
+      }).join('') + '</div></div>' : '') +
+      (all.length ? (ds.length ? '<h3>Planned</h3>' : '') + '<div class="samples">' + all.map(function (ev) {
         var pal = ev.concept ? ev.concept.palette : ['#E6DEE0', '#F2DDE1', '#F3EADB'];
         return '<a class="sample" href="#/e/' + ev.id + (ev.concept ? '' : '/concepts') + '">' + sw(pal) + '<div class="in"><h3>' + esc(ev.name) + '</h3><span class="muted small">' + esc(fmtDate(ev.date)) + '</span><span class="small">' + (ev.concept ? esc(ev.concept.styleName) : 'Choose a concept') + '</span></div></a>'; }).join('') + '</div>'
-        : '<div class="panel stack"><h3>No events yet</h3><p class="muted">Start with your inspiration photos or a description. Your plan saves automatically.</p><div><a class="btn gold" href="#/new/1">Plan my event</a></div></div>') + '</div>');
+        : (ds.length ? '' : '<div class="panel stack"><h3>No events yet</h3><p class="muted">Start with your inspiration photos or a description. Your plan saves automatically.</p><div><a class="btn gold" href="#/new">Plan my event</a></div></div>')) + '</div>');
+    $$('[data-rmd]').forEach(function (b) { b.addEventListener('click', function () { sheet('<h3>Delete this draft?</h3><p class="muted">Its photos and details will be removed.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete draft</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { removeDraft(b.dataset.rmd); close(); myEvents(); }); }); }); });
   }
 
   var MIC = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>';
@@ -206,6 +216,29 @@
       btn.setAttribute('aria-pressed', 'true'); btn.querySelector('span').textContent = 'Listening, tap to stop'; hint.textContent = 'Speak naturally about colors, vibe, guests and budget.';
     });
   }
+  var TYPE_WORD = { brunch: 'Brunch', birthday: 'Birthday', milestone: 'Birthday', dinner: 'Dinner', 'bridal-shower': 'Bridal Shower', 'baby-shower': 'Baby Shower', 'gender-reveal': 'Gender Reveal', bachelorette: 'Bachelorette', graduation: 'Graduation', engagement: 'Engagement Party', quince: 'Quincea\u00f1era', anniversary: 'Anniversary', holiday: 'Holiday Party', wedding: 'Wedding', gala: 'Gala', other: 'Celebration' };
+  var VIBE_NOUN = { Romantic: 'Romance', Glam: 'Glamour', Garden: 'A Garden Party', Modern: 'Modern Luxe', Classic: 'Classic Elegance', Boho: 'Boho Dreams', Rustic: 'Rustic Charm', Tropical: 'A Tropical Escape', Coastal: 'A Coastal Breeze', Playful: 'Sweet Moments', Minimal: 'Quiet Luxury', Vintage: 'Vintage Glamour', Disco: 'Disco Nights', Moody: 'Moody Elegance' };
+  function suggestNames(d, type) {
+    var vibes = (d.inspiration && d.inspiration.vibes) || [];
+    var colors = [].concat.apply([], ((d.inspiration && d.inspiration.photos) || []).map(function (p) { return p.colors; }));
+    var picked = vibes.filter(function (v) { return VIBE_COLORS.some(function (c) { return c[0] === v; }); });
+    if (picked.length < 2 && colors.length) {
+      var count = {};
+      colors.forEach(function (c) { var best = null, bd = 1e9; VIBE_COLORS.forEach(function (vc) { if (vc[0] === 'Bright colors' || vc[0] === 'Pastels') return; var r = hexRgb(vc[1]); var dd = Math.abs(r[0] - c[0]) + Math.abs(r[1] - c[1]) + Math.abs(r[2] - c[2]); if (dd < bd) { bd = dd; best = vc[0]; } }); count[best] = (count[best] || 0) + 1; });
+      Object.keys(count).sort(function (a, b) { return count[b] - count[a]; }).forEach(function (c) { if (picked.indexOf(c) < 0) picked.push(c); });
+    }
+    var text = ((d.inspiration && d.inspiration.text) || '') + ' ' + vibes.join(' ').toLowerCase();
+    var style = E.matchStyles(colors, text, [])[0].style;
+    var word = TYPE_WORD[type] || 'Celebration';
+    var c1 = picked[0] || style.name.split(' ')[0], c2 = picked[1];
+    var vibe = vibes.filter(function (v) { return VIBE_NOUN[v]; })[0];
+    var art = function (w) { return /^[AEIOU]/i.test(w) ? 'An ' : 'A '; };
+    var out = [style.name + ' ' + word,
+      c2 ? art(c1) + c1 + ' and ' + c2 + ' ' + (type === 'wedding' ? 'Affair' : word) : art(c1) + c1 + ' ' + word,
+      (vibe ? VIBE_NOUN[vibe] : 'An Evening') + ' in ' + c1,
+      'The ' + c1 + ' ' + (type === 'wedding' || type === 'gala' ? 'Soir\u00e9e' : word + ' Soir\u00e9e')];
+    return out.filter(function (n, i) { return out.indexOf(n) === i; });
+  }
   var VIBE_COLORS = [['Blush', '#F2C9CF'], ['Ivory', '#F7F1E3'], ['Gold', '#C9A86A'], ['Champagne', '#E8D9BC'], ['White', '#FFFFFF'], ['Black', '#151515'], ['Sage', '#A9B89A'], ['Burgundy', '#7B2D3B'], ['Lavender', '#C9B3DD'], ['Dusty blue', '#A9C7D3'], ['Terracotta', '#C47C4E'], ['Silver', '#C0C0C8'], ['Pastels', '#F9E1EC'], ['Bright colors', '#F2B544']];
   var VIBES = ['Romantic', 'Glam', 'Garden', 'Modern', 'Classic', 'Boho', 'Rustic', 'Tropical', 'Coastal', 'Playful', 'Minimal', 'Vintage', 'Disco', 'Moody'];
   var MUSTS = [['photographer', 'Great photos'], ['videographer', 'Video'], ['florals', 'Lots of flowers'], ['catering', 'Amazing food'], ['bar', 'Open bar'], ['dj', 'DJ and dancing'], ['liveMusic', 'Live music'], ['venue', 'Stunning venue'], ['decor', 'Wow decor'], ['lighting', 'Lighting'], ['hairMakeup', 'Hair and makeup'], ['photoBooth', 'Photo booth'], ['cake', 'Show-stopping cake']];
@@ -217,9 +250,12 @@
     return { id: uid(), name: '', type: t.id, guests: t.defaultGuests, expected: t.defaultGuests, city: 'Houston, TX', budget: 2000, setting: 'indoor', hours: t.hours, date: '', time: '18:00', start: '', kids: false,
       inspiration: { photos: [], links: [], text: '', vibes: [] }, priorities: [], guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, overrides: {}, exclude: [], include: [], tier: 'F', created: Date.now() };
   }
-  function wizard(step) {
-    if (!draft) draft = store.get('draft', null) || newDraft();
-    function persist() { store.set('draft', draft); }
+  function wizard(step, id) {
+    if (!id || !drafts()[id]) { var nd = newDraft(); saveDraft(nd); location.replace('#/new/1/' + nd.id); return; }
+    draft = drafts()[id];
+    var W = '#/new/';
+    function persist() { draft.step = Math.max(draft.step || 1, step); return saveDraft(draft); }
+    function laterBtn() { return '<button type="button" class="link" id="later">Save and finish later</button>'; }
     var prog = '<div class="progress" aria-label="Step ' + step + ' of 3">' + [1, 2, 3].map(function (i) { return '<i class="' + (i <= step ? 'on' : '') + '"></i>'; }).join('') + '</div>';
     if (step === 1) {
       frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>Share your inspiration</h2><p class="muted">Add as many photos as you like: Pinterest saves, Instagram or TikTok screenshots, or your own pictures. Then tap the parts you love in each one.</p></div>' +
@@ -230,7 +266,7 @@
         '<div class="row"><button type="button" class="btn ghost small" id="speak" aria-pressed="false">' + MIC + '<span>Speak it</span></button><span class="muted small" id="speakHint">Talk about your colors, vibe, guests and budget.</span></div></div>' +
         '<div class="stack"><h3>No inspiration yet? Pick what you like</h3><span class="muted small">Colors</span><div class="chips" id="vcolors">' + VIBE_COLORS.map(function (c) { return '<button type="button" class="chip vchip" aria-pressed="' + ((draft.inspiration.vibes || []).indexOf(c[0]) >= 0) + '" data-vibe="' + esc(c[0]) + '"><i style="background:' + c[1] + '"></i>' + esc(c[0]) + '</button>'; }).join('') + '</div>' +
         '<span class="muted small">Vibe</span><div class="chips" id="vvibes">' + VIBES.map(function (v) { return '<button type="button" class="chip" aria-pressed="' + ((draft.inspiration.vibes || []).indexOf(v) >= 0) + '" data-vibe="' + esc(v) + '">' + esc(v) + '</button>'; }).join('') + '</div></div>' +
-        '<div class="row" style="justify-content:space-between"><a class="btn ghost" href="#/">Cancel</a><button class="btn gold" id="next">Continue</button></div></div>');
+        '<div class="row" style="justify-content:space-between">' + laterBtn() + '<button class="btn gold" id="next">Continue</button></div></div>');
       var drop = $('#drop'), files = $('#files');
       function renderPhotos() {
         $('#photos').innerHTML = draft.inspiration.photos.map(function (p) {
@@ -269,15 +305,16 @@
         draft.inspiration.links = $('#links').value.split(/\s+/).filter(function (s) { return /^https?:\/\//.test(s); });
         draft.inspiration.text = $('#text').value.trim();
         if (!draft.inspiration.photos.length && !draft.inspiration.text && !draft.inspiration.links.length && !(draft.inspiration.vibes || []).length) return toast('Add a photo, a description, or pick a few colors and a vibe');
-        persist(); location.hash = '#/new/2';
+        persist(); location.hash = W + '2/' + draft.id;
       });
+      $('#later').addEventListener('click', function () { draft.inspiration.links = $('#links').value.split(/\s+/).filter(function (x) { return /^https?:\/\//.test(x); }); draft.inspiration.text = $('#text').value.trim(); persist(); toast('Saved. Pick it up anytime from My events.'); location.hash = '#/events'; });
       return;
     }
     if (step === 2) {
       frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>The details</h2><p class="muted">These set your prices, quantities and timeline. You can change them later.</p></div>' +
+        '<div class="panel stack"><label class="field"><span>Name your event</span><input class="input" id="name" value="' + esc(draft.name) + '" placeholder="Name it, or tap an idea below" maxlength="60"></label><span class="muted small">Ideas from your inspiration</span><div class="chips" id="names"></div><span class="muted small">Your event saves under this name in My events, so you can come back and finish anytime.</span></div>' +
         '<div class="grid2">' +
         '<label class="field"><span>Event type</span><select class="input" id="type">' + D.EVENT_TYPES.map(function (t) { return '<option value="' + t.id + '"' + (t.id === draft.type ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '</select></label>' +
-        '<label class="field"><span>Event name</span><input class="input" id="name" value="' + esc(draft.name) + '" placeholder="Maya’s 30th"></label>' +
         '<label class="field"><span>City</span><select class="input" id="city">' + D.CITIES.map(function (c) { return '<option' + (c.name === draft.city ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></label>' +
         '<label class="field"><span>Date</span><input class="input" type="date" id="date" value="' + esc(draft.date) + '"></label>' +
         '<label class="field"><span>Start time</span><input class="input" type="time" id="time" value="' + esc(draft.time) + '"></label>' +
@@ -289,18 +326,26 @@
         '</div><div class="stack"><span class="muted small">Setting</span><div class="seg" id="setting">' + [['indoor', 'Indoor'], ['outdoor', 'Outdoor'], ['home', 'At home']].map(function (s) { return '<button type="button" data-v="' + s[0] + '" aria-pressed="' + (draft.setting === s[0]) + '">' + s[1] + '</button>'; }).join('') + '</div>' +
         '<label class="row small"><input type="checkbox" id="kids"' + (draft.kids ? ' checked' : '') + '> Children will attend</label></div>' +
         '<div class="stack"><h3>Your must-haves</h3><span class="muted small">These are protected first when the plan is fitted to your budget.</span><div class="chips" id="musts">' + MUSTS.map(function (m) { return '<button type="button" class="chip" data-must="' + m[0] + '" aria-pressed="' + ((draft.priorities || []).indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div></div>' +
-        '<div class="row" style="justify-content:space-between"><a class="btn ghost" href="#/new/1">Back</a><button class="btn gold" id="next">See my price</button></div></div>');
+        '<div class="row" style="justify-content:space-between"><a class="btn ghost" href="' + W + '1/' + draft.id + '">Back</a>' + laterBtn() + '<button class="btn gold" id="next">See my price</button></div></div>');
+      function showNames() { $('#names').innerHTML = suggestNames(draft, $('#type').value).map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join(''); }
+      showNames();
+      $('#names').addEventListener('click', function (e) { var b = e.target.closest('[data-name]'); if (!b) return; $('#name').value = b.dataset.name; draft.name = b.dataset.name; persist(); });
+      $('#type').addEventListener('change', showNames);
       $('#type').addEventListener('change', function () { var t = E.typeOf(this.value); $('#hours').value = t.hours; if (+$('#guests').value === draft.guests) { $('#guests').value = t.defaultGuests; $('#expected').value = t.defaultGuests; } });
       $('#musts').addEventListener('click', function (e) { var b = e.target.closest('[data-must]'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
       $('#setting').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
+      function collect2() {
+        var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
+        draft.type = $('#type').value; draft.name = $('#name').value.trim() || E.typeOf(draft.type).name; draft.city = $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || '18:00';
+        draft.hours = Math.max(1, +$('#hours').value || 3); draft.guests = g; draft.expected = ex || g; draft.budget = Math.max(0, +$('#budget').value || 0); draft.start = $('#start').value.trim();
+        draft.setting = ($('#setting [aria-pressed="true"]') || {}).dataset ? $('#setting [aria-pressed="true"]').dataset.v : 'indoor'; draft.kids = $('#kids').checked; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
+      }
+      $('#later').addEventListener('click', function () { collect2(); if (!$('#name').value.trim()) draft.name = ''; persist(); toast('Saved as ' + (draft.name || 'Untitled event') + '. Pick it up anytime from My events.'); location.hash = '#/events'; });
       $('#next').addEventListener('click', function () {
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
         if (!(g >= 1)) return toast('Enter how many guests can come');
         if (ex > g) return toast('Expected guests can’t be more than the guest capacity');
-        draft.type = $('#type').value; draft.name = $('#name').value.trim() || E.typeOf(draft.type).name; draft.city = $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || '18:00';
-        draft.hours = Math.max(1, +$('#hours').value || 3); draft.guests = g; draft.expected = ex || g; draft.budget = Math.max(0, +$('#budget').value || 0); draft.start = $('#start').value.trim();
-        draft.setting = ($('#setting [aria-pressed="true"]') || {}).dataset ? $('#setting [aria-pressed="true"]').dataset.v : 'indoor'; draft.kids = $('#kids').checked; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
-        persist(); location.hash = '#/new/3';
+        collect2(); persist(); location.hash = W + '3/' + draft.id;
       });
       return;
     }
@@ -318,12 +363,13 @@
       '<p class="muted small">Simple edits never use your allowance. Optional extras are always shown with their price first, and you can always continue without them. If your guest list grows past ' + pass.max.toLocaleString('en-US') + ', you pay only the difference to move up.</p>' +
       (CFG.preview ? '<div class="note">Preview version: checkout is free and no payment is taken.</div>' : '') +
       '<button class="btn gold block" id="pay">' + (CFG.preview ? 'Unlock my plan (preview, no charge)' : 'Pay $' + pass.price.toFixed(2) + ' and build my plan') + '</button></div>' +
-      '<div class="row"><a class="btn ghost" href="#/new/2">Back</a></div></div>');
+      '<div class="row"><a class="btn ghost" href="' + W + '2/' + draft.id + '">Back</a>' + laterBtn() + '</div></div>');
+    $('#later').addEventListener('click', function () { persist(); toast('Saved. Pick it up anytime from My events.'); location.hash = '#/events'; });
     $('#pay').addEventListener('click', function () {
       var ev = draft; ev.paid = { price: pass.price, max: pass.max, at: new Date().toISOString() };
       addLedger({ kind: 'Event Pass', event: ev.name, amount: CFG.preview ? 0 : pass.price, note: pass.label + (CFG.preview ? ' (preview)' : '') });
       if (!saveEvent(ev)) return;
-      draft = null; store.set('draft', null);
+      removeDraft(ev.id); draft = null;
       location.hash = '#/e/' + ev.id + '/concepts';
     });
   }
@@ -379,13 +425,19 @@
     var save = function () { if (!ev.sample) saveEvent(ev); };
     var b = E.budget(ev, ev.tier);
     var head = '<div class="plan-head"><div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>' +
-      '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + '</h2><div class="meta"><span>' + esc(ev.concept.styleName) + '</span><span>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span></div></div>' +
+      '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta"><span>' + esc(ev.concept.styleName) + '</span><span>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span></div></div>' +
       '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + (b.tier.id === 'F' ? 'Planned to your budget' : esc(b.tier.name) + ' estimate') + '</div></div></div>' +
-      (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new/1">Start your own</a> to edit it with your details.</div>' : '') + '</div>';
+      (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new">Start your own</a> to edit it with your details.</div>' : '') + '</div>';
     var rail = '<nav class="rail" aria-label="Plan sections">' + TABS.map(function (t) { return '<a href="' + base + '/' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>';
     var body = (TAB_VIEWS[tab] || TAB_VIEWS.overview)(ev, b);
     frame(head + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
     var cur = $('.rail [aria-current]'); if (cur && cur.scrollIntoView && window.innerWidth < 960) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
+    var rn = $('#rename'); if (rn) rn.addEventListener('click', function () {
+      sheet('<h3>Rename your event</h3><input class="input" id="nn" maxlength="60" value="' + esc(ev.name) + '"><div class="chips">' + suggestNames(ev, ev.type).map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') + '</div><button class="btn gold block" id="ok">Save name</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
+        el.addEventListener('click', function (e) { var b = e.target.closest('[data-name]'); if (b) $('#nn', el).value = b.dataset.name; });
+        $('#ok', el).addEventListener('click', function () { var n = $('#nn', el).value.trim(); if (!n) return toast('Enter a name'); ev.name = n; save(); close(); planView(ev, tab); });
+      });
+    });
     var bind = TAB_BIND[tab]; if (bind) bind(ev, save, function () { planView(ev, tab); });
   }
 
@@ -758,7 +810,7 @@
       ((ev.registry.items || []).length || (ev.registry.funds || []).length ? '<div class="panel stack" style="text-align:left"><h3>Registry</h3><div class="list">' + ev.registry.items.map(function (it, i) { return '<div class="it"><span class="grow">' + esc(it.name) + (it.bought ? ' <span class="badge ok">Purchased</span>' : '') + '</span>' + (it.url ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(it.url) + '">View</a>' : '') + (it.bought ? '' : '<button class="btn small" data-buy="' + i + '">I bought this</button>') + '</div>'; }).join('') +
         (ev.registry.funds || []).map(function (f) { return '<div class="it"><span class="grow">' + esc(f.name) + '</span>' + (payBtns || '<span class="muted small">Ask the host how to give</span>') + '</div>'; }).join('') + '</div></div>' : '') +
       (split.people.length && split.total ? '<div class="panel stack" style="text-align:left"><h3>Your share</h3><p>Each person’s share is <b class="num">' + money(share) + '</b>.</p><div class="row">' + (payBtns || '<span class="muted small">The host will share how to pay.</span>') + '</div><p class="muted small">Payments go straight to the host.</p></div>' : '') +
-      '<p class="muted small">Planned with Event Couture. <a href="#/new/1">Host your own event</a></p></div>', { noRibbon: false });
+      '<p class="muted small">Planned with Event Couture. <a href="#/new">Host your own event</a></p></div>', { noRibbon: false });
     $('#ans').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; $$('#ans button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
     $('#rd').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
     $('#rsvp').addEventListener('submit', function (e) { e.preventDefault(); var n = $('#rn').value.trim(); if (!n) return toast('Enter your name');
