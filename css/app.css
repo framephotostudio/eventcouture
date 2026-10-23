@@ -241,3 +241,8 @@ footer.site nav { display: flex; gap: 16px; justify-content: center; flex-wrap: 
 .packs { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .packs .tier { padding: 14px; gap: 4px; }
 .packs .amt { font-size: 1.7rem; }
+
+.vchip { display: inline-flex; align-items: center; gap: 8px; }
+.vchip i { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+.btn svg { flex: none; }
+#speak[aria-pressed="true"] { background: var(--champagne-soft); border-color: var(--champagne); }

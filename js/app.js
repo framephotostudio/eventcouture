@@ -85,7 +85,9 @@
     concepts: function (ev, skip) {
       var colors = [].concat.apply([], (ev.inspiration.photos || []).map(function (p) { return p.colors; }));
       var loves = [].concat.apply([], (ev.inspiration.photos || []).map(function (p) { return p.loves.map(function (l) { return l.label; }); }));
-      var text = (ev.inspiration.text || '') + ' ' + (ev.inspiration.links || []).join(' ');
+      var vibes = ev.inspiration.vibes || [];
+      VIBE_COLORS.forEach(function (c) { if (vibes.indexOf(c[0]) >= 0) { colors.push(hexRgb(c[1])); colors.push(hexRgb(c[1])); } });
+      var text = (ev.inspiration.text || '') + ' ' + vibes.join(' ').toLowerCase() + ' ' + (ev.inspiration.links || []).join(' ');
       if (AI.live) {
         return fetch(CFG.apiUrl + '/api/concepts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ event: slim(ev), skip: skip || [] }) })
           .then(function (r) { if (!r.ok) throw new Error('server'); return r.json(); })
@@ -188,11 +190,32 @@
         : '<div class="panel stack"><h3>No events yet</h3><p class="muted">Start with your inspiration photos or a description. Your plan saves automatically.</p><div><a class="btn gold" href="#/new/1">Plan my event</a></div></div>') + '</div>');
   }
 
+  var MIC = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>';
+  function setupSpeak(btn, ta, hint) {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null;
+    btn.addEventListener('click', function () {
+      if (!SR) { hint.textContent = 'Tap the microphone on your keyboard to speak, then talk about your event.'; ta.focus(); return; }
+      if (rec) { rec.stop(); return; }
+      try { rec = new SR(); } catch (e) { hint.textContent = 'Tap the microphone on your keyboard to speak instead.'; ta.focus(); return; }
+      rec.lang = 'en-US'; rec.interimResults = true; rec.continuous = true;
+      var base = ta.value.trim() ? ta.value.trim() + ' ' : '';
+      rec.onresult = function (e) { var t = ''; for (var i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; ta.value = base + t; };
+      rec.onerror = function (e) { hint.textContent = e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'Microphone access is off here. Tap the microphone on your keyboard instead.' : 'I couldn\u2019t hear that. Tap Speak it and try again.'; };
+      rec.onend = function () { rec = null; btn.setAttribute('aria-pressed', 'false'); btn.querySelector('span').textContent = 'Speak it'; };
+      try { rec.start(); } catch (e) { rec = null; hint.textContent = 'Tap the microphone on your keyboard to speak instead.'; return; }
+      btn.setAttribute('aria-pressed', 'true'); btn.querySelector('span').textContent = 'Listening, tap to stop'; hint.textContent = 'Speak naturally about colors, vibe, guests and budget.';
+    });
+  }
+  var VIBE_COLORS = [['Blush', '#F2C9CF'], ['Ivory', '#F7F1E3'], ['Gold', '#C9A86A'], ['Champagne', '#E8D9BC'], ['White', '#FFFFFF'], ['Black', '#151515'], ['Sage', '#A9B89A'], ['Burgundy', '#7B2D3B'], ['Lavender', '#C9B3DD'], ['Dusty blue', '#A9C7D3'], ['Terracotta', '#C47C4E'], ['Silver', '#C0C0C8'], ['Pastels', '#F9E1EC'], ['Bright colors', '#F2B544']];
+  var VIBES = ['Romantic', 'Glam', 'Garden', 'Modern', 'Classic', 'Boho', 'Rustic', 'Tropical', 'Coastal', 'Playful', 'Minimal', 'Vintage', 'Disco', 'Moody'];
+  var MUSTS = [['photographer', 'Great photos'], ['videographer', 'Video'], ['florals', 'Lots of flowers'], ['catering', 'Amazing food'], ['bar', 'Open bar'], ['dj', 'DJ and dancing'], ['liveMusic', 'Live music'], ['venue', 'Stunning venue'], ['decor', 'Wow decor'], ['lighting', 'Lighting'], ['hairMakeup', 'Hair and makeup'], ['photoBooth', 'Photo booth'], ['cake', 'Show-stopping cake']];
+  function hexRgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+
   /* ---------- new event wizard ---------- */
   function newDraft() {
     var t = D.EVENT_TYPES[0];
     return { id: uid(), name: '', type: t.id, guests: t.defaultGuests, expected: t.defaultGuests, city: 'Houston, TX', budget: 2000, setting: 'indoor', hours: t.hours, date: '', time: '18:00', start: '', kids: false,
-      inspiration: { photos: [], links: [], text: '' }, guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, overrides: {}, exclude: [], include: [], tier: 'S', created: Date.now() };
+      inspiration: { photos: [], links: [], text: '', vibes: [] }, priorities: [], guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, overrides: {}, exclude: [], include: [], tier: 'F', created: Date.now() };
   }
   function wizard(step) {
     if (!draft) draft = store.get('draft', null) || newDraft();
@@ -203,7 +226,10 @@
         '<label class="drop" id="drop"><input type="file" id="files" accept="image/*" multiple class="sr"><b>Add inspiration photos</b><span class="muted small">Tap to choose, or drop photos here</span></label>' +
         '<div class="photos" id="photos"></div>' +
         '<div class="field"><span>Links to posts or boards (optional)</span><textarea class="input" id="links" placeholder="Paste Pinterest, Instagram or TikTok links, one per line">' + esc(draft.inspiration.links.join('\n')) + '</textarea><span class="muted small">If a link can’t be opened, add a screenshot of it as a photo.</span></div>' +
-        '<div class="field"><span>Describe your dream event (optional)</span><textarea class="input" id="text" placeholder="Example: pink and gold girls’ brunch for 10, chic and girly, under $2,000">' + esc(draft.inspiration.text) + '</textarea></div>' +
+        '<div class="field"><span>Describe your dream event (optional)</span><textarea class="input" id="text" placeholder="Example: pink and gold girls’ brunch for 10, chic and girly, under $2,000">' + esc(draft.inspiration.text) + '</textarea>' +
+        '<div class="row"><button type="button" class="btn ghost small" id="speak" aria-pressed="false">' + MIC + '<span>Speak it</span></button><span class="muted small" id="speakHint">Talk about your colors, vibe, guests and budget.</span></div></div>' +
+        '<div class="stack"><h3>No inspiration yet? Pick what you like</h3><span class="muted small">Colors</span><div class="chips" id="vcolors">' + VIBE_COLORS.map(function (c) { return '<button type="button" class="chip vchip" aria-pressed="' + ((draft.inspiration.vibes || []).indexOf(c[0]) >= 0) + '" data-vibe="' + esc(c[0]) + '"><i style="background:' + c[1] + '"></i>' + esc(c[0]) + '</button>'; }).join('') + '</div>' +
+        '<span class="muted small">Vibe</span><div class="chips" id="vvibes">' + VIBES.map(function (v) { return '<button type="button" class="chip" aria-pressed="' + ((draft.inspiration.vibes || []).indexOf(v) >= 0) + '" data-vibe="' + esc(v) + '">' + esc(v) + '</button>'; }).join('') + '</div></div>' +
         '<div class="row" style="justify-content:space-between"><a class="btn ghost" href="#/">Cancel</a><button class="btn gold" id="next">Continue</button></div></div>');
       var drop = $('#drop'), files = $('#files');
       function renderPhotos() {
@@ -237,10 +263,12 @@
           el.addEventListener('click', function (ev2) { var b = ev2.target.closest('[data-v]'); if (!b) return; p.loves.push({ x: x, y: y, label: b.dataset.v }); persist(); renderPhotos(); close(); });
         });
       });
+      $$('[data-vibe]').forEach(function (b) { b.addEventListener('click', function () { var on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); var v = b.dataset.vibe; draft.inspiration.vibes = (draft.inspiration.vibes || []).filter(function (x) { return x !== v; }); if (on) draft.inspiration.vibes.push(v); persist(); }); });
+      setupSpeak($('#speak'), $('#text'), $('#speakHint'));
       $('#next').addEventListener('click', function () {
         draft.inspiration.links = $('#links').value.split(/\s+/).filter(function (s) { return /^https?:\/\//.test(s); });
         draft.inspiration.text = $('#text').value.trim();
-        if (!draft.inspiration.photos.length && !draft.inspiration.text && !draft.inspiration.links.length) return toast('Add at least one photo, link or description');
+        if (!draft.inspiration.photos.length && !draft.inspiration.text && !draft.inspiration.links.length && !(draft.inspiration.vibes || []).length) return toast('Add a photo, a description, or pick a few colors and a vibe');
         persist(); location.hash = '#/new/2';
       });
       return;
@@ -260,8 +288,10 @@
         '<label class="field"><span>Your starting point for drive times (optional)</span><input class="input" id="start" value="' + esc(draft.start) + '" placeholder="Home, hotel or ceremony address"></label>' +
         '</div><div class="stack"><span class="muted small">Setting</span><div class="seg" id="setting">' + [['indoor', 'Indoor'], ['outdoor', 'Outdoor'], ['home', 'At home']].map(function (s) { return '<button type="button" data-v="' + s[0] + '" aria-pressed="' + (draft.setting === s[0]) + '">' + s[1] + '</button>'; }).join('') + '</div>' +
         '<label class="row small"><input type="checkbox" id="kids"' + (draft.kids ? ' checked' : '') + '> Children will attend</label></div>' +
+        '<div class="stack"><h3>Your must-haves</h3><span class="muted small">These are protected first when the plan is fitted to your budget.</span><div class="chips" id="musts">' + MUSTS.map(function (m) { return '<button type="button" class="chip" data-must="' + m[0] + '" aria-pressed="' + ((draft.priorities || []).indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div></div>' +
         '<div class="row" style="justify-content:space-between"><a class="btn ghost" href="#/new/1">Back</a><button class="btn gold" id="next">See my price</button></div></div>');
       $('#type').addEventListener('change', function () { var t = E.typeOf(this.value); $('#hours').value = t.hours; if (+$('#guests').value === draft.guests) { $('#guests').value = t.defaultGuests; $('#expected').value = t.defaultGuests; } });
+      $('#musts').addEventListener('click', function (e) { var b = e.target.closest('[data-must]'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
       $('#setting').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
       $('#next').addEventListener('click', function () {
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
@@ -269,7 +299,7 @@
         if (ex > g) return toast('Expected guests can’t be more than the guest capacity');
         draft.type = $('#type').value; draft.name = $('#name').value.trim() || E.typeOf(draft.type).name; draft.city = $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || '18:00';
         draft.hours = Math.max(1, +$('#hours').value || 3); draft.guests = g; draft.expected = ex || g; draft.budget = Math.max(0, +$('#budget').value || 0); draft.start = $('#start').value.trim();
-        draft.setting = ($('#setting [aria-pressed="true"]') || {}).dataset ? $('#setting [aria-pressed="true"]').dataset.v : 'indoor'; draft.kids = $('#kids').checked;
+        draft.setting = ($('#setting [aria-pressed="true"]') || {}).dataset ? $('#setting [aria-pressed="true"]').dataset.v : 'indoor'; draft.kids = $('#kids').checked; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
         persist(); location.hash = '#/new/3';
       });
       return;
@@ -349,8 +379,8 @@
     var save = function () { if (!ev.sample) saveEvent(ev); };
     var b = E.budget(ev, ev.tier);
     var head = '<div class="plan-head"><div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>' +
-      '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + '</h2><div class="meta"><span>' + esc(ev.concept.styleName) + '</span><span>' + esc(fmtDate(ev.date)) + (ev.time ? ', ' + fmtTime(ev.time) : '') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span></div></div>' +
-      '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + esc(b.tier.name) + ' estimate</div></div></div>' +
+      '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + '</h2><div class="meta"><span>' + esc(ev.concept.styleName) + '</span><span>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span></div></div>' +
+      '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + (b.tier.id === 'F' ? 'Planned to your budget' : esc(b.tier.name) + ' estimate') + '</div></div></div>' +
       (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new/1">Start your own</a> to edit it with your details.</div>' : '') + '</div>';
     var rail = '<nav class="rail" aria-label="Plan sections">' + TABS.map(function (t) { return '<a href="' + base + '/' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>';
     var body = (TAB_VIEWS[tab] || TAB_VIEWS.overview)(ev, b);
@@ -366,8 +396,9 @@
   /* Overview: three budget versions, pros and cons, guardian, concierge */
   TAB_VIEWS.overview = function (ev, b) {
     var all = E.allBudgets(ev);
+    if (ev.budget) all.unshift(E.budgetFit(ev));
     var g = E.guardian(ev, b);
-    return '<div class="stack"><h3>Your budget versions</h3><p class="muted">The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Your budget is ' + money(ev.budget || 0) + '.</p><div class="tiers">' +
+    return '<div class="stack"><h3>Your budget versions</h3><p class="muted">' + (ev.budget ? 'One plan made for your ' + money(ev.budget) + ' budget' + ((ev.priorities || []).length ? ' that protects your must-haves' : '') + ', plus the same ' + esc(ev.concept.styleName) + ' look at three set spending levels.' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
       all.map(function (t) { var pc = E.prosCons(ev, t);
         return '<button class="tier" data-tier="' + t.tier.id + '" aria-pressed="' + (t.tier.id === ev.tier) + '"><span class="muted small">' + esc(t.tier.name) + '</span><span class="amt num">' + money(t.total) + '</span><span class="small muted">' + money(t.perGuest) + ' per guest, includes a 10% cushion</span>' +
           '<div class="pc"><b>Pros</b><ul>' + pc.pros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><b>Cons</b><ul>' + pc.cons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></button>'; }).join('') + '</div></div>' +
@@ -408,7 +439,8 @@
       ev.guests = n; ev.expected = Math.min(ev.expected || n, n); changes.push('guest capacity is now ' + n);
     }
     if ((m = s.match(/(budget|under|max|spend)[^\d]*\$?\s*(\d+)(k)?/))) { ev.budget = +m[2] * (m[3] ? 1000 : 1); changes.push('budget is now ' + money(ev.budget)); }
-    if (/luxe for less|cheaper version|lowest/.test(s)) { ev.tier = 'L'; changes.push('switched to Luxe for Less'); }
+    if (/my budget|fit (it|the plan)|plan to (my|the) budget/.test(s)) { ev.tier = 'F'; changes.push('fitted the plan to your budget'); }
+    else if (/luxe for less|cheaper version|lowest/.test(s)) { ev.tier = 'L'; changes.push('switched to Luxe for Less'); }
     else if (/signature/.test(s)) { ev.tier = 'S'; changes.push('switched to Signature'); }
     else if (/ultra|splurge|fanciest/.test(s)) { ev.tier = 'U'; changes.push('switched to Ultra Luxe'); }
     if (/outdoor|outside/.test(s)) { ev.setting = 'outdoor'; changes.push('moved outdoors (tent, permits and restrooms added)'); }
@@ -437,7 +469,7 @@
   TAB_VIEWS.budget = function (ev, b) {
     var groups = {}; b.items.forEach(function (i) { (groups[i.group] = groups[i.group] || []).push(i); });
     var excluded = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
-    return '<div class="stack"><div class="row" style="justify-content:space-between"><h3>' + esc(b.tier.name) + ' budget</h3><div class="seg" id="tierseg">' + D.TIERS.map(function (t) { return '<button data-tier="' + t.id + '" aria-pressed="' + (t.id === ev.tier) + '">' + t.name + '</button>'; }).join('') + '</div></div>' +
+    return '<div class="stack"><div class="row" style="justify-content:space-between"><h3>' + esc(b.tier.name) + ' budget</h3><div class="seg" id="tierseg">' + (ev.budget ? [{ id: 'F', name: 'My budget' }] : []).concat(D.TIERS).map(function (t) { return '<button data-tier="' + t.id + '" aria-pressed="' + (t.id === ev.tier) + '">' + t.name + '</button>'; }).join('') + '</div></div>' +
       '<p class="muted small">Every price is labeled. Planning estimates are sized to ' + esc(ev.city) + ' and ' + plural(ev.guests, 'guest') + ', and include tax, service charges and tips where they apply. Add a real quote anytime and the totals update.</p>' +
       (ev.budget ? '<div class="stack" style="gap:6px"><div class="meter' + (b.total > ev.budget ? ' over' : '') + '"><i style="width:' + Math.min(100, b.total / ev.budget * 100) + '%"></i></div><span class="small muted num">' + money(b.total) + ' of your ' + money(ev.budget) + ' budget</span></div>' : '') +
       '<div class="panel"><div class="lines">' + Object.keys(groups).map(function (gname) {
@@ -639,7 +671,7 @@
     var link = location.href.split('#')[0] + '#/g/' + ev.id;
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] };
     var share = split.people.length ? (split.total || 0) / split.people.length : 0;
-    return '<div class="stack"><h3>Invitation and event page</h3><div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + esc(fmtDate(ev.date)) + (ev.time ? ' at ' + fmtTime(ev.time) : '') + '</p><p class="muted">' + esc(ev.city) + '</p><p class="small muted">Dress code: ' + esc(ev.concept.dress) + '</p></div></div></div>' +
+    return '<div class="stack"><h3>Invitation and event page</h3><div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ' at ' + fmtTime(ev.time) : '') + '</p><p class="muted">' + esc(ev.city) + '</p><p class="small muted">Dress code: ' + esc(ev.concept.dress) + '</p></div></div></div>' +
       '<div class="row"><button class="btn gold" id="copy">Copy invite link</button><a class="btn ghost" href="#/g/' + ev.id + '">Preview as a guest</a></div>' +
       (CFG.preview ? '<p class="muted small">Preview version: the link opens on this device only. Guests anywhere can open it once the app launches.</p>' : '<p class="muted small">Guests open it in any browser; no app needed.</p>') + '</div>' +
       '<div class="stack"><h3>Your payment links</h3><p class="muted small">Guests pay you directly for cost splits and cash funds. Event Couture never holds the money.</p><div class="grid3">' +
@@ -718,7 +750,7 @@
     if (!ev) return frame('<div class="invite"><h2>This invitation isn’t available</h2><p class="muted">The host may have made it private. Ask them for a new link.</p></div>');
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] }; var share = split.people.length ? (split.total || 0) / split.people.length : 0;
     var payBtns = [pl.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pl.venmo) + '">Venmo</a>' : '', pl.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pl.cashapp) + '">Cash App</a>' : '', pl.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pl.paypal) + '">PayPal</a>' : ''].join('');
-    frame('<div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + esc(fmtDate(ev.date)) + (ev.time ? ' at ' + fmtTime(ev.time) : '') + '</p><p class="muted">' + esc(ev.city) + '</p><p class="small muted">Dress code: ' + esc(ev.concept.dress) + '</p>' +
+    frame('<div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ' at ' + fmtTime(ev.time) : '') + '</p><p class="muted">' + esc(ev.city) + '</p><p class="small muted">Dress code: ' + esc(ev.concept.dress) + '</p>' +
       (ev.date ? '<div><a class="btn small ghost" target="_blank" rel="noopener" href="' + calLink(ev) + '">Add to calendar</a></div>' : '') + '</div></div>' +
       '<form id="rsvp" class="panel stack" style="text-align:left"><h3>RSVP</h3><label class="field"><span>Your name</span><input class="input" id="rn" required autocomplete="name"></label><div class="seg" id="ans"><button type="button" data-v="yes" aria-pressed="true">I’ll be there</button><button type="button" data-v="declined" aria-pressed="false">Can’t make it</button></div>' +
       '<label class="field"><span>Plus-ones</span><input class="input num" type="number" min="0" max="5" id="rp" value="0"></label><div class="stack"><span class="muted small">Dietary needs</span><div class="chips" id="rd">' + D.DIETS.map(function (d) { return '<button type="button" class="chip" aria-pressed="false">' + esc(d) + '</button>'; }).join('') + '</div></div><button class="btn gold">Send RSVP</button></form>' +

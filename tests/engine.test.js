@@ -86,4 +86,18 @@ t('run of show is in order and formatted', () => {
   const r = E.runOfShow({ type: 'birthday', time: '19:00', hours: 4 });
   assert.equal(r[2].time, '7:00 PM'); assert.equal(r[0].time, '5:00 PM');
 });
+
+t('plan made for your budget lands at the budget and protects must-haves', () => {
+  const ev = { type: 'wedding', guests: 200, city: 'Houston, TX', budget: 30000, priorities: ['photographer'] };
+  const f = E.budgetFit(ev);
+  assert(Math.abs(f.total - 30000) <= 60, 'total ' + f.total);
+  const s = E.budget(ev, 'S').items.find(i => i.id === 'photographer').mid;
+  assert(f.items.find(i => i.id === 'photographer').mid >= s * 0.99, 'photographer protected');
+  assert(f.dropped.length > 0);
+  const rich = E.budgetFit({ ...ev, budget: 90000 });
+  assert(rich.total <= 90000 && rich.total > 85000, 'uses a big budget: ' + rich.total);
+  const tight = E.budgetFit({ type: 'birthday', guests: 40, city: 'Dallas, TX', budget: 800 });
+  assert(tight.shortBy > 0, 'reports when a budget is too small');
+  assert.equal(E.budget(ev, 'F').tier.id, 'F');
+});
 console.log(n + ' checks passed');

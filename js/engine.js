@@ -80,6 +80,7 @@
   }
 
   function budget(ev, tierId) {
+    if (tierId === 'F') return budgetFit(ev);
     var tier = D.TIERS.find(function (x) { return x.id === tierId; }) || D.TIERS[1];
     var cats = categoriesFor(ev).filter(function (id) { return D.CATEGORIES[id].tier.indexOf(tier.id) >= 0 || (ev.include || []).indexOf(id) >= 0; });
     var items = cats.map(function (id) { return lineItem(id, ev, tier); });
@@ -91,11 +92,88 @@
 
   function allBudgets(ev) { return D.TIERS.map(function (t) { return budget(ev, t.id); }); }
 
+  /* Made for your budget: one plan that lands at the host's number, protecting must-haves. */
+  var FIT_TIER = { id: 'F', name: 'Made for your budget', mult: 1, blurb: 'One plan built to your exact budget, with your must-haves protected.' };
+  var OPTIONAL = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'security', 'insurance', 'cleanup', 'hairMakeup', 'florals', 'balloons'];
+  function budgetFit(ev) {
+    var pri = ev.priorities || [];
+    var target = (ev.budget || 0) / (1 + D.CONTINGENCY);
+    var L = budget(ev, 'L'), S = budget(ev, 'S'), U = budget(ev, 'U');
+    var get = function (b, id) { var i = b.items.find(function (x) { return x.id === id; }); return i ? i.mid : 0; };
+    var ids = U.items.map(function (i) { return i.id; });
+    var fixed = function (id) { return !!(ev.overrides && ev.overrides[id] && ev.overrides[id].amount > 0); };
+    var rows = ids.map(function (id) {
+      var u = get(U, id), sm = get(S, id), l = get(L, id);
+      var isPri = pri.indexOf(id) >= 0;
+      var start = sm || (isPri ? u : 0);
+      if (isPri && sm) start = Math.min(u, sm * 1.3);
+      return { id: id, pri: isPri, amt: start, floor: fixed(id) ? start : (l || (sm ? sm * 0.6 : 0)), ceil: u || sm, fixed: fixed(id) };
+    });
+    var total = function () { return rows.reduce(function (s, r) { return s + r.amt; }, 0); };
+    var dropped = [], notes = [];
+    if (!ev.budget) { target = total(); }
+    // too high: trim non-priorities toward their floor, then drop optional extras, then trim priorities
+    if (total() > target) {
+      var flex = rows.filter(function (r) { return !r.pri && !r.fixed && r.amt > r.floor; });
+      var room = flex.reduce(function (s, r) { return s + (r.amt - r.floor); }, 0);
+      var need = total() - target; var k = Math.min(1, room ? need / room : 0);
+      flex.forEach(function (r) { r.amt -= (r.amt - r.floor) * k; });
+    }
+    if (total() > target) {
+      rows.filter(function (r) { return !r.pri && !r.fixed && OPTIONAL.indexOf(r.id) >= 0 && r.amt > 0; })
+        .sort(function (a, b) { return b.amt - a.amt; })
+        .forEach(function (r) { if (total() > target) { dropped.push(r.id); r.amt = 0; } });
+    }
+    if (total() > target) {
+      var pflex = rows.filter(function (r) { return r.pri && !r.fixed && r.amt > r.floor; });
+      var proom = pflex.reduce(function (s, r) { return s + (r.amt - r.floor); }, 0);
+      var pk = Math.min(1, proom ? (total() - target) / proom : 0);
+      pflex.forEach(function (r) { r.amt -= (r.amt - r.floor) * pk; });
+    }
+    if (total() > target) { // last resort: leaner choices across the board, never below 70% of the lowest version
+      var lean = rows.filter(function (r) { return !r.fixed && r.amt > r.floor * 0.7; });
+      var lroom = lean.reduce(function (s, r) { return s + (r.amt - r.floor * 0.7); }, 0);
+      var lk = Math.min(1, lroom ? (total() - target) / lroom : 0);
+      lean.forEach(function (r) { r.amt -= (r.amt - r.floor * 0.7) * lk; });
+    }
+    // money left over: upgrade priorities first, then everything toward the Ultra level
+    if (total() < target * 0.995) {
+      [rows.filter(function (r) { return r.pri && !r.fixed; }), rows.filter(function (r) { return !r.pri && !r.fixed && dropped.indexOf(r.id) < 0; })].forEach(function (grp) {
+        var gap = target - total(); if (gap <= 0) return;
+        var up = grp.reduce(function (s, r) { return s + Math.max(0, r.ceil - r.amt); }, 0);
+        var uk = Math.min(1, up ? gap / up : 0);
+        grp.forEach(function (r) { r.amt += Math.max(0, r.ceil - r.amt) * uk; });
+      });
+    }
+    var tierItems = U.items.concat(S.items.filter(function (i) { return ids.indexOf(i.id) < 0; }));
+    var items = rows.filter(function (r) { return r.amt > 0; }).map(function (r) {
+      var base = tierItems.find(function (i) { return i.id === r.id; });
+      var mid = roundTo(r.amt, 5);
+      return Object.assign({}, base, { mid: mid, lo: base.label === 'Planning estimate' ? roundTo(mid * 0.85, 5) : mid, hi: base.label === 'Planning estimate' ? roundTo(mid * 1.15, 5) : mid, priority: r.pri });
+    });
+    var sum = function (key) { return items.reduce(function (s, i) { return s + i[key]; }, 0); };
+    var mid = sum('mid'); var contingency = roundTo(mid * D.CONTINGENCY, 5);
+    var res = { tier: FIT_TIER, items: items, lo: sum('lo'), hi: sum('hi'), mid: mid, contingency: contingency, total: mid + contingency,
+      perGuest: Math.round((mid + contingency) / Math.max(1, ev.guests || 1)), dropped: dropped };
+    res.shortBy = ev.budget && res.total > ev.budget + 5 ? res.total - ev.budget : 0;
+    return res;
+  }
+
   /* Pros and cons for a budget version, derived from what it includes. */
   function prosCons(ev, b) {
     var ids = b.items.map(function (i) { return i.id; });
     var has = function (x) { return ids.indexOf(x) >= 0; };
     var pros = [], cons = [];
+    if (b.tier.id === 'F') {
+      var pri = (ev.priorities || []).map(function (id) { return D.CATEGORIES[id] ? D.CATEGORIES[id].name.toLowerCase() : id; });
+      pros.push(b.shortBy ? 'As close to your budget as this guest count allows' : 'Lands at your budget, cushion included');
+      if (pri.length) pros.push('Protects your must-haves: ' + pri.join(', '));
+      pros.push('Every category sized to ' + (ev.city || 'your city'));
+      if (b.dropped && b.dropped.length) cons.push('Leaves out ' + b.dropped.map(function (id) { return D.CATEGORIES[id].name.toLowerCase(); }).join(', '));
+      if (b.shortBy) cons.push('Still about ' + money(b.shortBy) + ' over; fewer guests or a home venue would close the gap');
+      if (!cons.length) cons.push('Less room to add extras later');
+      return { pros: pros, cons: cons };
+    }
     if (b.tier.id === 'L') {
       pros.push('Lowest total, about ' + money(b.total));
       pros.push('Keeps the colors, theme and key decor of the concept');
@@ -248,6 +326,6 @@
   root.EC_ENGINE = {
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
-    placesUsed: placesUsed, concepts: concepts, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
+    placesUsed: placesUsed, concepts: concepts, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
   };
 })(typeof window !== 'undefined' ? window : globalThis);
