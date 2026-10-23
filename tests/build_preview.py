@@ -3,8 +3,8 @@ import re, base64, sys
 out = sys.argv[1]
 css = open('css/app.css').read()
 js = ''.join(open(f).read() + '\n' for f in ['js/config.js', 'js/data.js', 'js/engine.js', 'js/app.js'])
-hero = 'data:image/svg+xml;base64,' + base64.b64encode(open('img/hero.svg','rb').read()).decode()
-js = js.replace("var HERO_IMG = 'img/hero.svg';", "var HERO_IMG = '" + hero + "';")
+hero = 'data:image/jpeg;base64,' + base64.b64encode(open('img/hero.jpg','rb').read()).decode()
+js = js.replace("var HERO_IMG = 'img/hero.jpg';", "var HERO_IMG = '" + hero + "';")
 icon = base64.b64encode(open('img/icon.svg','rb').read()).decode()
 page = ('<title>Event Couture</title>\n'
  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=Jost:wght@400;500&display=swap">\n'

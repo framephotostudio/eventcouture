@@ -161,18 +161,18 @@
   function notFound() { frame('<div class="stack"><h2>This page doesn’t exist</h2><p class="muted">It may have been removed. <a href="#/">Go to the home page</a>.</p></div>'); }
 
   /* ---------- home ---------- */
-  var HERO_IMG = 'img/hero.svg';
+  var HERO_IMG = 'img/hero.jpg';
   function home() {
     var demoEv = { type: 'wedding', guests: 150, city: 'Houston, TX' };
     var demo = E.budget(demoEv, 'S');
     var pick = function (id) { return demo.items.find(function (i) { return i.id === id; }) || { mid: 0 }; };
-    var tags = [['Candelabras and decor', pick('decor').mid, 50, 21], ['Cake', pick('cake').mid, 27, 44], ['Champagne and bar', pick('bar').mid, 68, 57], ['Florals', pick('florals').mid, 50, 86]];
+    var tags = [['Candles and decor', pick('decor').mid, 36, 30], ['Cake', pick('cake').mid, 80, 36], ['Florals', pick('florals').mid, 52, 62], ['Linens and tableware', pick('rentals').mid, 34, 86]];
     var lines = [['Venue', pick('venue').mid], ['Catering', pick('catering').mid], ['Photographer', pick('photographer').mid]].map(function (l) { return '<div class="line"><span>' + l[0] + '</span><span class="num">' + money(l[1]) + '</span></div>'; }).join('');
     frame(
       '<section class="hero"><div><h1>Turn saved inspiration into an event you can afford.</h1>' +
       '<p class="lead">Upload the photos you love or describe your dream party. Event Couture plans every detail, from the venue to the playlist, with the cost of each piece shown up front.</p>' +
       '<div class="row"><a class="btn gold" href="#/new">Plan my event</a><a class="btn ghost" href="#samples">See sample plans</a></div></div>' +
-      '<div class="fitting" aria-label="Example: an inspiration scene priced piece by piece"><div class="scene"><img src="' + HERO_IMG + '" alt="Reception table with a gold candelabra, blush and ivory roses, a tiered cake and champagne">' +
+      '<div class="fitting" aria-label="Example: an inspiration scene priced piece by piece"><div class="scene"><img src="' + HERO_IMG + '" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake"><span class="ai-note">AI-generated sample concept</span>' +
       tags.map(function (t, k) { return '<span class="tag-pin" style="left:' + t[2] + '%;top:' + t[3] + '%;animation-delay:' + (0.25 + k * 0.18) + 's"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span>'; }).join('') + '</div>' +
       '<p class="muted small" style="margin-top:12px">Example: blush and gold wedding for 150 in Houston, Signature version</p>' + lines +
       '<div class="line"><span>Total with 10% cushion</span><span class="total num">' + money(demo.total) + '</span></div></div></section>' +
