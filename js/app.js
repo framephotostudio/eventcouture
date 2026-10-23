@@ -706,6 +706,12 @@
       buySheet({ name: 'Move up to ' + nx.label.toLowerCase(), price: due, desc: 'Your plan, guests and purchases stay exactly as they are.' }, ev, function () { ev.paid = { price: nx.price, max: nx.max, at: new Date().toISOString() }; save(); rerender(); }); });
   };
 
+  function calLink(ev) {
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var st = new Date(ev.date + 'T' + (ev.time || '18:00')); var en = new Date(st.getTime() + (ev.hours || 3) * 36e5);
+    var f = function (d) { return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + 'T' + pad(d.getHours()) + pad(d.getMinutes()) + '00'; };
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(ev.name) + '&dates=' + f(st) + '/' + f(en) + '&location=' + encodeURIComponent(ev.city);
+  }
   /* ---------- guest page (no app needed) ---------- */
   function guestPage(id) {
     var ev = getEvent(id);
@@ -713,7 +719,7 @@
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] }; var share = split.people.length ? (split.total || 0) / split.people.length : 0;
     var payBtns = [pl.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pl.venmo) + '">Venmo</a>' : '', pl.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pl.cashapp) + '">Cash App</a>' : '', pl.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pl.paypal) + '">PayPal</a>' : ''].join('');
     frame('<div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + esc(fmtDate(ev.date)) + (ev.time ? ' at ' + fmtTime(ev.time) : '') + '</p><p class="muted">' + esc(ev.city) + '</p><p class="small muted">Dress code: ' + esc(ev.concept.dress) + '</p>' +
-      (ev.date ? '<div><a class="btn small ghost" id="cal" href="#">Add to calendar</a></div>' : '') + '</div></div>' +
+      (ev.date ? '<div><a class="btn small ghost" target="_blank" rel="noopener" href="' + calLink(ev) + '">Add to calendar</a></div>' : '') + '</div></div>' +
       '<form id="rsvp" class="panel stack" style="text-align:left"><h3>RSVP</h3><label class="field"><span>Your name</span><input class="input" id="rn" required autocomplete="name"></label><div class="seg" id="ans"><button type="button" data-v="yes" aria-pressed="true">I’ll be there</button><button type="button" data-v="declined" aria-pressed="false">Can’t make it</button></div>' +
       '<label class="field"><span>Plus-ones</span><input class="input num" type="number" min="0" max="5" id="rp" value="0"></label><div class="stack"><span class="muted small">Dietary needs</span><div class="chips" id="rd">' + D.DIETS.map(function (d) { return '<button type="button" class="chip" aria-pressed="false">' + esc(d) + '</button>'; }).join('') + '</div></div><button class="btn gold">Send RSVP</button></form>' +
       ((ev.polls || []).length ? '<div class="panel stack" style="text-align:left"><h3>Vote</h3>' + ev.polls.map(function (p, pi) { return '<b>' + esc(p.q) + '</b><div class="poll">' + p.options.map(function (o, oi) { return '<button data-vote="' + pi + ':' + oi + '"><span>' + esc(o.t) + '</span></button>'; }).join('') + '</div>'; }).join('') + '</div>' : '') +
@@ -721,10 +727,6 @@
         (ev.registry.funds || []).map(function (f) { return '<div class="it"><span class="grow">' + esc(f.name) + '</span>' + (payBtns || '<span class="muted small">Ask the host how to give</span>') + '</div>'; }).join('') + '</div></div>' : '') +
       (split.people.length && split.total ? '<div class="panel stack" style="text-align:left"><h3>Your share</h3><p>Each person’s share is <b class="num">' + money(share) + '</b>.</p><div class="row">' + (payBtns || '<span class="muted small">The host will share how to pay.</span>') + '</div><p class="muted small">Payments go straight to the host.</p></div>' : '') +
       '<p class="muted small">Planned with Event Couture. <a href="#/new/1">Host your own event</a></p></div>', { noRibbon: false });
-    var cal = $('#cal'); if (cal) cal.addEventListener('click', function (e) { e.preventDefault(); var s = (ev.date + 'T' + (ev.time || '18:00')).replace(/[-:]/g, '') + '00';
-      var end = new Date(new Date(ev.date + 'T' + (ev.time || '18:00')).getTime() + (ev.hours || 3) * 36e5); var pad = function (n) { return (n < 10 ? '0' : '') + n; };
-      var e2 = end.getFullYear() + pad(end.getMonth() + 1) + pad(end.getDate()) + 'T' + pad(end.getHours()) + pad(end.getMinutes()) + '00';
-      window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(ev.name) + '&dates=' + s + '/' + e2 + '&location=' + encodeURIComponent(ev.city), '_blank', 'noopener'); });
     $('#ans').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; $$('#ans button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
     $('#rd').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
     $('#rsvp').addEventListener('submit', function (e) { e.preventDefault(); var n = $('#rn').value.trim(); if (!n) return toast('Enter your name');
