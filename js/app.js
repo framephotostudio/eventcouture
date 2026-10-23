@@ -11,6 +11,42 @@
   function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
   function uid() { return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4); }
   function sw(p) { return '<div class="swatch" aria-hidden="true">' + p.map(function (c) { return '<i style="background:' + esc(c) + '"></i>'; }).join('') + '</div>'; }
+  /* Small palette dots: the photo carries the mood, the dots name the colors. */
+  function dots(p, label) { return '<span class="dots" role="img" aria-label="' + esc(label || 'Color palette') + '">' + p.slice(0, 5).map(function (c) { return '<i style="background:' + esc(c) + '"></i>'; }).join('') + '</span>'; }
+  /* Curated inspiration photos (AI-generated samples). Matched by style and, where the scene is event-specific, by event type. */
+  var IMG = 'img/events/';
+  var PHOTOS = [
+    { src: IMG + 'blush-tea.jpg', styles: ['blush-romance', 'pastel-whimsy'], types: ['brunch', 'bridal-shower', 'dinner', 'anniversary', 'other'], alt: 'Blush and ivory brunch table with tiered pastries, roses and gold-rimmed teacups' },
+    { src: IMG + 'moon-shower.jpg', styles: ['blush-romance', 'pastel-whimsy'], types: ['baby-shower', 'gender-reveal'], alt: 'Blush and gold baby shower dessert table with a moon cake, teddy bear and balloon garland' },
+    { src: IMG + 'sage-garden-shower.jpg', styles: ['champagne-garden'], types: ['baby-shower', 'gender-reveal'], alt: 'Garden baby shower with sage and ivory balloons, white roses and a long table under a pergola' },
+    { src: IMG + 'plum-graduation.jpg', styles: ['royal-purple', 'moody-floral'], types: ['graduation'], alt: 'Plum, ivory and gold graduation table with a cap-topped cake and cupcakes' },
+    { src: IMG + 'plum-birthday.jpg', styles: ['royal-purple', 'moody-floral'], types: null, alt: 'Plum velvet lounge with a blush floral cake, candles and a plum and blush balloon arch' },
+    { src: IMG + 'noir-skyline.jpg', styles: ['modern-noir', 'old-hollywood'], types: null, alt: 'Black and gold table at dusk with orchids, candles and a skyline view' },
+    { src: IMG + 'ivory-ballroom.jpg', styles: ['ivory-ballroom', 'minimal-white'], types: null, alt: 'Ivory and gold ballroom with a tiered cake, chandeliers and white rose centerpieces' },
+    { src: 'img/hero.jpg', styles: ['blush-romance'], types: null, alt: 'Candlelit table with blush and ivory roses, gold candlesticks and a tiered cake' }
+  ];
+  function photoFor(styleId, type) {
+    return PHOTOS.find(function (x) { return x.styles.indexOf(styleId) >= 0 && x.types && x.types.indexOf(type) >= 0; }) ||
+      PHOTOS.find(function (x) { return x.styles.indexOf(styleId) >= 0 && !x.types; }) || null;
+  }
+  /* Server-made concepts have their own ids, so match them to the closest library style by color. */
+  function nearestStyle(pal) {
+    var best = null, bd = 1e9;
+    D.STYLES.forEach(function (st) {
+      var d = 0; pal.slice(0, 5).forEach(function (h) { var a = hexRgb(h), m = 1e9; st.palette.forEach(function (k) { var b = hexRgb(k); m = Math.min(m, Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2])); }); d += m; });
+      if (d < bd) { bd = d; best = st.id; }
+    });
+    return bd < 260 ? best : null;
+  }
+  function conceptPhoto(c, type) { return photoFor(c.id, type) || (c.palette ? photoFor(nearestStyle(c.palette), type) : null); }
+  function eventPhoto(ev) {
+    var up = ev.inspiration && ev.inspiration.photos && ev.inspiration.photos[0];
+    if (up) return { src: up.src, alt: 'Your inspiration photo' };
+    if (ev.photo) return ev.photo;
+    return ev.concept ? conceptPhoto(ev.concept, ev.type) : null;
+  }
+  function srcOf(u) { return (window.EC_EMBED && window.EC_EMBED[u]) || u; }
+  function thumb(photo, cls) { return photo ? '<div class="thumb ' + (cls || '') + '"><img src="' + srcOf(photo.src) + '" alt="' + esc(photo.alt) + '" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()"></div>' : ''; }
   function fmtDate(d) { if (!d) return 'Date not set'; var x = new Date(d + 'T12:00:00'); return x.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }); }
   function shortDate(d) { if (!d) return ''; return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
   function fmtTime(t) { if (!t) return ''; var p = t.split(':'); var h = +p[0]; return ((h + 11) % 12 + 1) + ':' + p[1] + (h < 12 ? ' AM' : ' PM'); }
@@ -94,13 +130,14 @@
       if (AI.live) {
         return fetch(CFG.apiUrl + '/api/concepts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ event: slim(ev), skip: skip || [] }) })
           .then(function (r) { if (!r.ok) throw new Error('server'); return r.json(); })
-          .then(function (j) { return j.concepts; })
-          .catch(function () { return E.concepts(ev, colors, text, loves, skip); });
+          .then(function (j) { AI.source = 'ai'; return j.concepts; })
+          .catch(function () { AI.source = 'library'; return E.concepts(ev, colors, text, loves, skip); });
       }
+      AI.source = 'library';
       return Promise.resolve(E.concepts(ev, colors, text, loves, skip));
     }
   };
-  function slim(ev) { return { type: ev.type, guests: ev.guests, city: ev.city, budget: ev.budget, setting: ev.setting, text: ev.inspiration.text, links: ev.inspiration.links, photos: (ev.inspiration.photos || []).map(function (p) { return { image: p.src, loves: p.loves }; }) }; }
+  function slim(ev) { return { type: ev.type, guests: ev.guests, city: ev.city, budget: ev.budget, setting: ev.setting, text: ev.inspiration.text, vibes: ev.inspiration.vibes || [], links: ev.inspiration.links, photos: (ev.inspiration.photos || []).map(function (p) { return { image: p.src, loves: p.loves }; }) }; }
 
   /* ---------- layout ---------- */
   var ICON = {
@@ -122,20 +159,23 @@
 
   /* ---------- samples (prepared plans; free to explore) ---------- */
   var SAMPLES = [
-    { title: 'Blush brunch for 10', type: 'brunch', guests: 10, city: 'Houston, TX', budget: 2500, style: 'blush-romance', setting: 'indoor', hours: 3 },
-    { title: 'Black and gold 30th', type: 'milestone', guests: 60, city: 'Dallas, TX', budget: 9000, style: 'modern-noir', setting: 'indoor', hours: 5 },
-    { title: 'Garden baby shower', type: 'baby-shower', guests: 30, city: 'Atlanta, GA', budget: 6000, style: 'champagne-garden', setting: 'outdoor', hours: 3 },
-    { title: 'Royal plum engagement', type: 'engagement', guests: 80, city: 'Chicago, IL', budget: 15000, style: 'royal-purple', setting: 'indoor', hours: 4 },
-    { title: 'Coastal wedding', type: 'wedding', guests: 120, city: 'San Diego, CA', budget: 55000, style: 'coastal-linen', setting: 'outdoor', hours: 6 },
-    { title: 'Disco bachelorette', type: 'bachelorette', guests: 12, city: 'Miami, FL', budget: 5000, style: 'disco-glam', setting: 'indoor', hours: 5 }
+    { title: 'Blush brunch for 10', type: 'brunch', guests: 10, city: 'Houston, TX', budget: 2500, style: 'blush-romance', setting: 'indoor', hours: 3, img: 'blush-tea' },
+    { title: 'Black and gold 30th', type: 'milestone', guests: 60, city: 'Dallas, TX', budget: 9000, style: 'modern-noir', setting: 'indoor', hours: 5, img: 'noir-skyline' },
+    { title: 'Garden baby shower', type: 'baby-shower', guests: 30, city: 'Atlanta, GA', budget: 6000, style: 'champagne-garden', setting: 'outdoor', hours: 3, img: 'sage-garden-shower' },
+    { title: 'Plum and blush birthday', type: 'birthday', guests: 40, city: 'Chicago, IL', budget: 8000, style: 'royal-purple', setting: 'indoor', hours: 4, img: 'plum-birthday' },
+    { title: 'Ivory ballroom wedding', type: 'wedding', guests: 200, city: 'Los Angeles, CA', budget: 90000, style: 'ivory-ballroom', setting: 'indoor', hours: 6, img: 'ivory-ballroom' },
+    { title: 'Moon and stars baby shower', type: 'baby-shower', guests: 35, city: 'Phoenix, AZ', budget: 5500, style: 'blush-romance', setting: 'indoor', hours: 3, img: 'moon-shower' },
+    { title: 'Plum and gold graduation', type: 'graduation', guests: 75, city: 'Washington, DC', budget: 7500, style: 'royal-purple', setting: 'indoor', hours: 4, img: 'plum-graduation' }
   ];
+  var FEATURED = [0, 3, 5];
+  function samplePhoto(s) { return PHOTOS.find(function (x) { return x.src === IMG + s.img + '.jpg'; }); }
   function sampleEvent(i) {
     var s = SAMPLES[i]; var st = D.STYLES.find(function (x) { return x.id === s.style; });
     var c = E.concepts({ type: s.type }, st.palette.map(function (h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }), st.tags.join(' '), []);
     var concept = c.find(function (x) { return x.id === s.style; }) || c[0];
     var d = new Date(Date.now() + 70 * 864e5).toISOString().slice(0, 10);
     return { id: 'sample-' + i, sample: true, name: s.title, type: s.type, guests: s.guests, expected: s.guests, city: s.city, budget: s.budget, setting: s.setting, hours: s.hours, date: d, time: '18:00',
-      inspiration: { photos: [], links: [], text: '' }, concepts: c, concept: concept, tier: 'S', guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, paid: { price: 0, max: 0 } };
+      inspiration: { photos: [], links: [], text: '' }, photo: samplePhoto(s), concepts: c, concept: concept, tier: 'S', guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, paid: { price: 0, max: 0 } };
   }
 
   /* ---------- routes ---------- */
@@ -162,30 +202,49 @@
 
   /* ---------- home ---------- */
   var HERO_IMG = 'img/hero.jpg';
+  function sampleCard(s, i) {
+    var stl = D.STYLES.find(function (x) { return x.id === s.style; }); var b = E.budget(s, 'S');
+    return '<a class="sample" href="#/sample/' + i + '">' + thumb(samplePhoto(s)) + '<div class="in"><h3>' + esc(s.title) + '</h3>' + dots(stl.palette, stl.name + ' colors') +
+      '<span class="muted small">' + esc(s.city) + ', ' + s.guests + ' guests</span><span class="small">Estimated event budget <b class="num">' + money(b.total) + '</b></span></div></a>';
+  }
   function home() {
     var demoEv = { type: 'wedding', guests: 150, city: 'Houston, TX' };
     var demo = E.budget(demoEv, 'S');
     var pick = function (id) { return demo.items.find(function (i) { return i.id === id; }) || { mid: 0 }; };
     var tags = [['Candles and decor', pick('decor').mid, 36, 30], ['Cake', pick('cake').mid, 80, 36], ['Florals', pick('florals').mid, 52, 62], ['Linens and tableware', pick('rentals').mid, 34, 86]];
-    var lines = [['Venue', pick('venue').mid], ['Catering', pick('catering').mid], ['Photographer', pick('photographer').mid]].map(function (l) { return '<div class="line"><span>' + l[0] + '</span><span class="num">' + money(l[1]) + '</span></div>'; }).join('');
+    var lines = [['Venue', 'venue'], ['Catering', 'catering'], ['Florals', 'florals'], ['Candles and decor', 'decor'], ['Cake', 'cake'], ['Photographer', 'photographer']].map(function (l) { return '<div class="line"><span>' + l[0] + '</span><span class="num">' + money(pick(l[1]).mid) + '</span></div>'; }).join('');
+    var p0 = D.PASSES[0];
     frame(
-      '<section class="hero"><div><h1>Turn saved inspiration into an event you can afford.</h1>' +
-      '<p class="lead">Upload the photos you love or describe your dream party. Event Couture plans every detail, from the venue to the playlist, with the cost of each piece shown up front.</p>' +
-      '<div class="row"><a class="btn gold" href="#/new">Plan my event</a><a class="btn ghost" href="#samples">See sample plans</a></div></div>' +
-      '<div class="fitting" aria-label="Example: an inspiration scene priced piece by piece"><div class="scene"><img src="' + HERO_IMG + '" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake"><span class="ai-note">AI-generated sample concept</span>' +
-      tags.map(function (t, k) { return '<span class="tag-pin" style="left:' + t[2] + '%;top:' + t[3] + '%;animation-delay:' + (0.25 + k * 0.18) + 's"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span>'; }).join('') + '</div>' +
-      '<p class="muted small" style="margin-top:12px">Example: blush and gold wedding for 150 in Houston, Signature version</p>' + lines +
-      '<div class="line"><span>Total with 10% cushion</span><span class="total num">' + money(demo.total) + '</span></div></div></section>' +
-      '<section class="stack-lg" style="margin-top:28px"><h2>How it works</h2><ol class="steps-line">' +
-      '<li><h3>Share your inspiration</h3><p class="muted">Several photos, Pinterest or TikTok links, or a few words. Tap the details you love.</p></li>' +
-      '<li><h3>Pick a concept</h3><p class="muted">Three theme directions, then three budget versions of the one you choose.</p></li>' +
+      '<section class="hero"><div class="hero-copy"><h1>Your inspiration. A beautifully planned event.</h1>' +
+      '<p class="lead">Turn photos or ideas into three event concepts, a detailed budget and a step-by-step plan.</p>' +
+      '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link" data-scroll="gallery">Explore sample plans</button></div>' +
+      '<p class="small muted pass-note">One-time Event Pass from <b class="num">$' + p0.price.toFixed(2) + '</b> for up to ' + p0.max + ' guests. No subscription. <button class="link small" data-scroll="pricing">See all prices</button></p></div>' +
+      '<figure class="hero-photo"><div class="scene">' +
+      '<img src="' + srcOf(HERO_IMG) + '" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
+      tags.map(function (t) { return '<button class="hot' + (t[2] > 65 ? ' r' : t[2] < 30 ? ' l' : '') + '" style="left:' + t[2] + '%;top:' + t[3] + '%" aria-expanded="false" aria-label="' + esc(t[0]) + ', ' + money(t[1]) + '"><span class="dot" aria-hidden="true"></span><span class="lbl" aria-hidden="true"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span></button>'; }).join('') +
+      '</div><figcaption class="small muted">AI-generated sample concept. Tap a gold dot to see what that piece costs.</figcaption></figure></section>' +
+      '<section class="demo panel"><div class="demo-head"><div><span class="small muted">Example plan</span><h3>Blush and gold wedding</h3><span class="small muted">Houston, TX · 150 guests · Signature version</span></div>' +
+      '<div class="demo-total"><span class="small muted">Estimated event budget</span><span class="display num">' + money(demo.total) + '</span></div></div>' +
+      '<button class="link small" id="showBudget" aria-expanded="false" aria-controls="demoLines">See example budget</button>' +
+      '<div id="demoLines" class="demo-lines" hidden>' + lines + '<div class="line muted small"><span>Tax, service, tips and a 10% cushion</span><span>in the total</span></div></div></section>' +
+      '<section id="gallery" class="stack" style="margin-top:44px"><h2>Find your kind of celebration</h2><p class="muted">Sample plans you can open for free. Photos are AI-generated inspiration, not events we organized.</p><div class="samples">' +
+      FEATURED.map(function (i) { return sampleCard(SAMPLES[i], i); }).join('') + '</div>' +
+      '<div class="samples" id="moreSamples" hidden>' + SAMPLES.map(function (s, i) { return FEATURED.indexOf(i) >= 0 ? '' : sampleCard(s, i); }).join('') + '</div>' +
+      '<div><button class="btn ghost" id="allSamples" aria-expanded="false" aria-controls="moreSamples">See all ' + SAMPLES.length + ' sample plans</button></div></section>' +
+      '<section class="stack-lg" style="margin-top:44px"><h2>How it works</h2><ol class="steps-line">' +
+      '<li><h3>Share your inspiration</h3><p class="muted">Several photos, Pinterest or TikTok links, a few words, or just say it out loud.</p></li>' +
+      '<li><h3>Pick a concept</h3><p class="muted">Three creative directions. Then see the one you choose in three spending versions, or one made for your budget.</p></li>' +
       '<li><h3>See every cost</h3><p class="muted">Venue, food, decor, music, photos and the fees people forget, sized to your city and guest count.</p></li>' +
       '<li><h3>Plan it together</h3><p class="muted">Co-hosts, voting, RSVPs, a registry and cost splitting, without anyone downloading an app.</p></li></ol></section>' +
-      '<section id="samples" class="stack" style="margin-top:44px"><h2>Sample plans</h2><p class="muted">Explore real examples for free. Each one opens as a full plan.</p><div class="samples">' +
-      SAMPLES.map(function (s, i) { var stl = D.STYLES.find(function (x) { return x.id === s.style; }); var b = E.budget(s, 'S');
-        return '<a class="sample" href="#/sample/' + i + '">' + sw(stl.palette) + '<div class="in"><h3>' + esc(s.title) + '</h3><span class="muted small">' + esc(s.city) + ', ' + s.guests + ' guests</span><span class="num">' + money(b.total) + ' Signature</span></div></a>'; }).join('') +
-      '</div></section>'
+      '<section id="pricing" class="stack" style="margin-top:44px"><h2>One-time Event Pass</h2><p class="muted">What it costs to use Event Couture for one event, based on how many guests you expect. This is separate from your event budget. No subscription.</p>' +
+      '<div class="panel price-grid">' + D.PASSES.map(function (ps) { return '<div><span class="muted small">Up to ' + ps.max.toLocaleString('en-US') + ' guests</span><b class="num">$' + ps.price.toFixed(2) + '</b></div>'; }).join('') + '<div><span class="muted small">Each extra 5,000</span><b class="num">+$150</b></div></div>' +
+      '<p class="small muted">Guest list grows later? You pay only the difference.</p><div><a class="btn primary" href="#/new">Plan my event</a></div></section>'
     );
+    $$('[data-scroll]').forEach(function (b) { b.addEventListener('click', function () { var t = document.getElementById(b.dataset.scroll); if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }); });
+    var hots = $$('.hot');
+    hots.forEach(function (h) { h.addEventListener('click', function () { var open = h.getAttribute('aria-expanded') === 'true'; hots.forEach(function (o) { o.setAttribute('aria-expanded', 'false'); }); h.setAttribute('aria-expanded', open ? 'false' : 'true'); }); });
+    $('#showBudget').addEventListener('click', function () { var l = $('#demoLines'), open = l.hidden; l.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Hide example budget' : 'See example budget'; });
+    $('#allSamples').addEventListener('click', function () { var m = $('#moreSamples'), open = m.hidden; m.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Show fewer' : 'See all ' + SAMPLES.length + ' sample plans'; });
   }
 
   function myEvents() {
@@ -199,7 +258,7 @@
       }).join('') + '</div></div>' : '') +
       (all.length ? (ds.length ? '<h3>Planned</h3>' : '') + '<div class="samples">' + all.map(function (ev) {
         var pal = ev.concept ? ev.concept.palette : ['#E6DEE0', '#F2DDE1', '#F3EADB'];
-        return '<a class="sample" href="#/e/' + ev.id + (ev.concept ? '' : '/concepts') + '">' + sw(pal) + '<div class="in"><h3>' + esc(ev.name) + '</h3><span class="muted small">' + esc(fmtDate(ev.date)) + '</span><span class="small">' + (ev.concept ? esc(ev.concept.styleName) : 'Choose a concept') + '</span></div></a>'; }).join('') + '</div>'
+        return '<a class="sample" href="#/e/' + ev.id + (ev.concept ? '' : '/concepts') + '">' + (thumb(eventPhoto(ev)) || '<div class="thumb noimg"></div>') + '<div class="in"><h3>' + esc(ev.name) + '</h3>' + dots(pal) + '<span class="muted small">' + esc(fmtDate(ev.date)) + '</span><span class="small">' + (ev.concept ? esc(ev.concept.styleName) : 'Choose a concept') + '</span></div></a>'; }).join('') + '</div>'
         : (ds.length ? '' : '<div class="panel stack"><h3>No events yet</h3><p class="muted">Start with your inspiration photos or a description. Your plan saves automatically.</p><div><a class="btn gold" href="#/new">Plan my event</a></div></div>')) + '</div>');
     $$('[data-rmd]').forEach(function (b) { b.addEventListener('click', function () { sheet('<h3>Delete this draft?</h3><p class="muted">Its photos and details will be removed.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete draft</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { removeDraft(b.dataset.rmd); close(); myEvents(); }); }); }); });
   }
@@ -381,15 +440,19 @@
   /* ---------- concepts ---------- */
   function conceptsView(id) {
     var ev = getEvent(id); if (!ev) return notFound();
-    frame('<div class="stack-lg"><div class="stack"><h2>Three concepts for ' + esc(ev.name) + '</h2><p class="muted">Each is a theme direction with its own colors, atmosphere and decor. Pick one to see it in three budget versions.</p></div><div id="cs" class="concepts"><p class="muted">Reading your inspiration…</p></div>' +
-      '<div class="row"><button class="btn ghost" id="more">Show three different concepts</button><span class="muted small">Uses your included allowance once, then three more cost $7.99 or 16 credits.</span></div></div>');
+    frame('<div class="stack-lg"><div class="stack"><h2>Three concepts for ' + esc(ev.name) + '</h2><p class="muted">Each is a theme direction with its own colors, atmosphere and decor. Pick one, then see it in three spending versions or one made for your budget. Photos are inspiration, not your venue.</p></div><div id="cs" class="concepts"><p class="muted">Reading your inspiration…</p></div>' +
+      '<p class="small muted" id="srcNote" hidden></p><div class="row"><button class="btn ghost" id="more">Show three different concepts</button><span class="muted small">Uses your included allowance once, then three more cost $7.99 or 16 credits.</span></div></div>');
     function render(list) {
       $('#cs').innerHTML = list.map(function (c, i) {
-        return '<div class="concept" role="radio" aria-checked="' + (ev.concept && ev.concept.id === c.id) + '">' + sw(c.palette) + '<div class="in"><span class="badge est">' + esc(c.fit) + '</span><h3>' + esc(c.name) + '</h3><p class="muted">' + esc(c.mood) + '</p><ul>' + c.outline.map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '">Choose this concept</button></div></div>';
+        var sel = ev.concept && ev.concept.id === c.id;
+        return '<article class="concept' + (sel ? ' selected' : '') + '">' + thumb(conceptPhoto(c, ev.type)) + '<div class="in"><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(c.mood) + '</p><ul>' + c.outline.map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
       }).join('');
     }
     function load(skip) {
-      AI.concepts(ev, skip).then(function (list) { ev.concepts = list; saveEvent(ev); render(list); });
+      AI.concepts(ev, skip).then(function (list) {
+        ev.concepts = list; saveEvent(ev); render(list);
+        var n = $('#srcNote'); if (n) { n.hidden = !(AI.live && AI.source === 'library'); n.textContent = 'Our AI is busy right now, so these three come from the Event Couture style library. Nothing extra was used. Try again later for fresh AI ideas.'; }
+      });
     }
     if (ev.concepts && ev.concepts.length) render(ev.concepts); else load([]);
     $('#cs').addEventListener('click', function (e) {
@@ -428,7 +491,8 @@
     var base = ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id;
     var save = function () { if (!ev.sample) saveEvent(ev); };
     var b = E.budget(ev, ev.tier);
-    var head = '<div class="plan-head"><div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>' +
+    var hp = eventPhoto(ev);
+    var head = '<div class="plan-head">' + (hp ? thumb(hp, 'banner') : '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>') +
       '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta"><span>' + esc(ev.concept.styleName) + '</span><span>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span></div></div>' +
       '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + (b.tier.id === 'F' ? 'Planned to your budget' : esc(b.tier.name) + ' estimate') + '</div></div></div>' +
       (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new">Start your own</a> to edit it with your details.</div>' : '') + '</div>';
@@ -837,7 +901,7 @@
       if (!existing) ev.guestsList.push(g);
       g.status = ans; if (ans === 'yes' && E.placesUsed(ev.guestsList) > cap) g.status = 'waitlist';
       saveEvent(ev);
-      $('#rsvp').innerHTML = '<h3>' + (g.status === 'yes' ? 'Thank you, see you there!' : g.status === 'waitlist' ? 'You’re on the waitlist' : 'Thanks for letting us know') + '</h3><p class="muted">' + (g.status === 'waitlist' ? 'The event is full right now. The host will let you know if a place opens up.' : 'Your RSVP was sent to the host.') + '</p>';
+      $('#rsvp').innerHTML = '<h3>' + (g.status === 'yes' ? 'Thank you, see you there!' : g.status === 'waitlist' ? 'You’re on the waitlist' : 'Thanks for letting us know') + '</h3><p class="muted">' + (g.status === 'waitlist' ? 'The event is full right now. The host will let you know if a place opens up.' : (CFG.preview ? 'Your RSVP is saved. In this preview it stays on this device; at launch it goes straight to the host.' : 'Your RSVP was sent to the host.')) + '</p>';
     });
     $$('[data-vote]').forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.vote.split(':'); ev.polls[+k[0]].options[+k[1]].votes++; saveEvent(ev); b.closest('.poll').innerHTML = '<p class="muted">Thanks for voting.</p>'; }); });
     $$('[data-buy]').forEach(function (b) { b.addEventListener('click', function () { ev.registry.items[+b.dataset.buy].bought = true; saveEvent(ev); b.outerHTML = '<span class="badge ok">Purchased</span>'; }); });

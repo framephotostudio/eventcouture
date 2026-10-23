@@ -94,7 +94,8 @@
 
   /* Made for your budget: one plan that lands at the host's number, protecting must-haves. */
   var FIT_TIER = { id: 'F', name: 'Made for your budget', mult: 1, blurb: 'One plan built to your exact budget, with your must-haves protected.' };
-  var OPTIONAL = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'security', 'insurance', 'cleanup', 'hairMakeup', 'florals', 'balloons'];
+  /* Never auto-dropped: venue, food, security and insurance (venues often require the last two). They can be trimmed, not removed. */
+  var OPTIONAL = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'cleanup', 'hairMakeup', 'florals', 'balloons'];
   function budgetFit(ev) {
     var pri = ev.priorities || [];
     var target = (ev.budget || 0) / (1 + D.CONTINGENCY);
