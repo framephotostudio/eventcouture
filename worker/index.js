@@ -26,7 +26,7 @@ export default {
     const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'content-type': 'application/json' } });
     try {
       if (url.pathname === '/api/status') {
-        return json({ ai: !!env.GEMINI_KEY, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env) });
+        return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env) });
       }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
       const body = await req.json().catch(() => ({}));
@@ -65,8 +65,26 @@ async function reserve(env, usd) {
 }
 
 /* ---------- concepts (Gemini) ---------- */
+/* Pick the newest Gemini Flash model the key can use, so retired model names never break the app. Cached for a day. */
+async function pickModel(env) {
+  const cached = await env.EC_KV.get('model');
+  if (cached) return cached;
+  let name = env.GEMINI_MODEL || 'gemini-2.5-flash';
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': env.GEMINI_KEY } });
+    const list = ((await r.json()).models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map(m => m.name.replace('models/', ''))
+      .filter(n => /^gemini-[\d.]+-flash(-\d+)?$|^gemini-flash-latest$/.test(n));
+    const ver = n => parseFloat((n.match(/gemini-([\d.]+)/) || [0, 0])[1]);
+    list.sort((a, b) => ver(b) - ver(a));
+    if (list.length) name = list.find(n => n !== 'gemini-flash-latest') || list[0];
+  } catch (e) {}
+  await env.EC_KV.put('model', name, { expirationTtl: 86400 });
+  return name;
+}
 async function concepts(env, { event = {}, skip = [] }) {
-  const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const model = await pickModel(env);
   const parts = [];
   for (const p of (event.photos || []).slice(0, 8)) {
     const m = /^data:(image\/[a-z]+);base64,(.+)$/.exec(p.image || '');
