@@ -344,6 +344,19 @@
     }).sort(function (a, b) { return b.score - a.score; });
     return scored;
   }
+  /* General dress code only (no colors or themes), from the kind of event, where it is and the time of day. */
+  function dressCode(ev, tierId) {
+    var t = ev.type, st = ev.setting || 'indoor', h = +String(ev.time || '18:00').split(':')[0], night = h >= 17, day = h < 15;
+    if (t === 'wedding' || t === 'gala') return night ? (tierId === 'U' ? 'Black tie optional' : 'Formal') : 'Formal daytime attire';
+    if (t === 'quince') return 'Formal';
+    if (t === 'bachelorette') return night ? 'Going-out attire' : 'Casual chic';
+    if (t === 'graduation') return 'Business casual';
+    if (st === 'restaurant' || st === 'privateRoom') return day ? 'Smart casual' : 'Dressy casual';
+    if (st === 'home') return day ? 'Casual chic' : 'Smart casual';
+    if (st === 'outdoor') return day ? 'Summer dresses and light fabrics' : 'Garden party attire';
+    if (['bridal-shower', 'baby-shower', 'gender-reveal', 'brunch'].indexOf(t) >= 0) return 'Dressy casual';
+    return night ? 'Cocktail attire' : 'Dressy casual';
+  }
   var TYPE_TITLE = { brunch: 'Brunch', birthday: 'Birthday', milestone: 'Birthday', dinner: 'Dinner Party', 'bridal-shower': 'Bridal Shower', 'baby-shower': 'Baby Shower',
     'gender-reveal': 'Gender Reveal', bachelorette: 'Bachelorette', graduation: 'Graduation Party', engagement: 'Engagement Party', quince: 'Quincea\u00f1era', anniversary: 'Anniversary',
     holiday: 'Holiday Party', wedding: 'Wedding', gala: 'Gala', other: 'Celebration' };
@@ -355,13 +368,13 @@
       var s = r.style;
       var name = s.name + ' ' + (TYPE_TITLE[ev.type] || 'Celebration');
       return {
-        id: s.id, name: name, styleName: s.name, palette: s.palette, mood: s.mood, decor: s.decor, dress: s.dress,
+        id: s.id, name: name, styleName: s.name, palette: s.palette, mood: s.mood, decor: s.decor, dress: 'A standout look in ' + s.dress.charAt(0).toLowerCase() + s.dress.slice(1),
         menuStyle: s.menu, music: s.music, fit: i === 0 ? 'Closest match to your inspiration' : (i === 1 ? 'A close alternative' : 'A fresh direction'),
         outline: [
           'Arrival: ' + s.decor[0].toLowerCase() + ' sets the tone at the entrance',
           'Tables: ' + s.decor[1].toLowerCase(),
           'Moment: ' + s.decor[3].toLowerCase(),
-          'Dress code: ' + s.dress.toLowerCase()
+          'Dress code: ' + dressCode(ev).toLowerCase()
         ]
       };
     });
@@ -372,6 +385,6 @@
   root.EC_ENGINE = {
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
-    placesUsed: placesUsed, concepts: concepts, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
+    placesUsed: placesUsed, concepts: concepts, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
   };
 })(typeof window !== 'undefined' ? window : globalThis);

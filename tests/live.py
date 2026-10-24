@@ -21,7 +21,7 @@ with sync_playwright() as p:
     page.click('.concept button.gold'); page.wait_for_selector('.tier')
     page.goto(page.url.rstrip('/') + '/places'); page.wait_for_selector('[data-live]')
     page.click('[data-live] >> nth=0'); page.wait_for_selector('text=Real Loft'); page.wait_for_timeout(300)
-    if '14 min drive' not in page.inner_text('#live'): problems.append('drive time missing')
+    if '14 min drive' not in page.inner_text('#tab'): problems.append('drive time missing')
     page.goto(page.url.replace('/places', '/style')); page.wait_for_timeout(200)
     if 'tag=tag-20' not in page.inner_html('#tab'): problems.append('affiliate tag missing')
     if errs: problems.append(errs)

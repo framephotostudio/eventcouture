@@ -52,9 +52,17 @@
     return keep.concat(['Small centerpieces and candles in ' + c.styleName + ' colors', 'Place cards and a cake topper to match']).slice(0, 4);
   }
   function outlineFor(c, ev) {
-    if (!ev || ev.setting !== 'restaurant') return c.outline;
+    if (!ev || ev.setting !== 'restaurant') return (c.outline || []).filter(function (o) { return !/^dress code/i.test(o); }).slice(0, 3).concat(ev ? ['Dress code: ' + E.dressCode(ev).toLowerCase()] : []);
     var d = decorFor(c, ev);
-    return ['Table: ' + d[0].toLowerCase(), 'Details: ' + d[1].toLowerCase(), 'Moment: cake or dessert brought out with candles and a song', 'Dress code: ' + c.dress.toLowerCase()];
+    return ['Table: ' + d[0].toLowerCase(), 'Details: ' + d[1].toLowerCase(), 'Moment: cake or dessert brought out with candles and a song', 'Dress code: ' + E.dressCode(ev).toLowerCase()];
+  }
+  var HONOREE = { wedding: 'the couple', engagement: 'the couple', anniversary: 'the couple', 'bridal-shower': 'the bride-to-be', bachelorette: 'the bride-to-be', 'baby-shower': 'the parent-to-be', 'gender-reveal': 'the parents-to-be', birthday: 'the birthday guest of honor', milestone: 'the birthday guest of honor', graduation: 'the graduate', quince: 'the quincea\u00f1era' };
+  function honoree(ev) { return HONOREE[ev.type] || 'the host'; }
+  /* Guests get a general dress code; the person being celebrated gets the concept's specific look. */
+  function dressBlock(ev, cls) {
+    var look = ev.concept && ev.concept.dress ? ev.concept.dress : '';
+    return '<p class="' + (cls || '') + '"><b>Guest dress code:</b> ' + esc(E.dressCode(ev, ev.tier)) + '</p>' +
+      (look ? '<p class="' + (cls || '') + '"><b>For ' + esc(honoree(ev)) + ':</b> ' + esc(look.charAt(0).toUpperCase() + look.slice(1)) + '</p>' : '');
   }
   function srcOf(u) { return (window.EC_EMBED && window.EC_EMBED[u]) || u; }
   function thumb(photo, cls) { return photo ? '<div class="thumb ' + (cls || '') + '"><img src="' + srcOf(photo.src) + '" alt="' + esc(photo.alt) + '" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()"></div>' : ''; }
@@ -564,7 +572,7 @@
         g.swaps.map(function (s, i) { return '<div class="it"><span class="grow">' + esc(s.text) + '</span>' + (s.save ? '<span class="num muted">saves about ' + money(s.save) + '</span>' : '') + '<button class="btn small ghost" data-swap="' + i + '">Apply</button></div>'; }).join('') + '</div></div>' : '') +
       '<div class="panel stack"><h3>Ask the concierge</h3><p class="muted small">Type a change in plain words, like “make it 25 guests”, “budget $3,000”, “move it outdoors”, “skip the photographer” or “add a photo booth”.</p>' +
       '<div class="chat" id="chat"></div><form id="ask" class="row"><input class="input" id="q" style="flex:1 1 220px" placeholder="What would you like to change?" autocomplete="off"><button class="btn">Send</button></form></div>' +
-      '<div class="panel stack"><h3>Your concept</h3>' + dots(ev.concept.palette, ev.concept.styleName + ' colors') + '<p>' + esc(ev.concept.mood) + '</p><ul class="incl">' + decorFor(ev.concept, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul><p class="muted small">Dress code: ' + esc(ev.concept.dress) + '</p>' + (ev.sample ? '' : '<div><a class="btn ghost small" href="#/e/' + ev.id + '/concepts">Change concept</a></div>') + '</div>';
+      '<div class="panel stack"><h3>Your concept</h3>' + dots(ev.concept.palette, ev.concept.styleName + ' colors') + '<p>' + esc(ev.concept.mood) + '</p><ul class="incl">' + decorFor(ev.concept, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' + dressBlock(ev, 'muted small') + (ev.sample ? '' : '<div><a class="btn ghost small" href="#/e/' + ev.id + '/concepts">Change concept</a></div>') + '</div>';
   };
   TAB_BIND.overview = function (ev, save, rerender) {
     $$('[data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { ev.tier = btn.dataset.tier; save(); rerender(); }); });
@@ -675,18 +683,19 @@
     var intro = ev.setting === 'restaurant'
       ? 'Your food and drinks come to about ' + money(foodLine / Math.max(1, ev.guests)) + ' per person with tax and tip. Look for restaurants that take reservations for ' + plural(ev.guests, 'guest') + '.'
       : (venueLine ? 'Your ' + esc(b.tier.name) + ' venue budget is about ' + money(venueLine.mid) + '. ' : '') + 'Look for spaces that hold ' + plural(ev.guests, 'guest') + (ev.setting === 'outdoor' ? ' outdoors' : '') + '.';
-    return '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' +
-      '<p class="small muted">Searches are matched to your ' + esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[venueLevel(ev, b)]) + ' level: well-reviewed, polished places only, never budget chains.</p>' +
+    var filters = '<form class="panel venue-filter" id="vfilter"><label class="field"><span>Area or neighborhood (optional)</span><input class="input" id="varea" value="' + esc(ev.area || '') + '" placeholder="e.g. Uptown, The Woodlands, Downtown"></label>' +
+      '<label class="field"><span>Your starting point, for drive times (optional)</span><input class="input" id="start" value="' + esc(ev.start || '') + '" placeholder="Home, hotel or ceremony address"></label>' +
+      '<div><button class="btn small">Apply</button></div></form>';
+    return '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' + filters +
+      '<p class="small muted">' + (AI.live ? 'Choose a style of venue to see a curated list of top-rated places in ' + esc(city) + '. Open any one to see photos, hours and contact details, then reach out to schedule a tour. ' : '') + 'Every list is matched to your ' + esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[venueLevel(ev, b)]) + ' level: well-reviewed, polished places only, never budget chains.</p>' +
       (AI.live ? '' : '<div class="note">Live venue photos, ratings, hours and drive times appear here when venue search is connected at launch. For now, each idea opens a live map search.</div>') +
       '<div class="list panel">' + types.map(function (v) {
-        var q = venueQuery(v, ev, b) + ' in ' + city;
+        var q = venueQuery(v, ev, b) + ' in ' + (ev.area ? ev.area + ', ' : '') + city;
         var dir = ev.start ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(ev.start) + '&destination=' + encodeURIComponent(q) + '">Drive time</a>' : '';
         var pc = venueProsCons(v, ev);
-        if (AI.live) return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><button class="btn small" data-live="' + esc(v) + '" data-q="' + esc(venueQuery(v, ev, b)) + '" data-level="' + venueLevel(ev, b) + '">Find real places</button></span></div>';
-        return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q) + '">See places</a>' + dir + '</span></div>';
-      }).join('') + '</div><div id="live"></div>' +
-      (ev.start ? '' : '<p class="muted small">Add your starting point in Settings below to see drive times.</p>') +
-      '<div class="panel stack"><h3>Settings</h3><label class="field"><span>Starting point for drive times</span><input class="input" id="start" value="' + esc(ev.start || '') + '" placeholder="Home, hotel or ceremony address"></label><div><button class="btn small" id="saveStart">Save</button></div></div></div>';
+        if (AI.live) return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><button class="btn small" data-live="' + esc(v) + '" data-q="' + esc(venueQuery(v, ev, b)) + '" data-level="' + venueLevel(ev, b) + '">View curated venues</button></span></div><div class="live-res" data-for="' + esc(v) + '"></div>';
+        return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q) + '">View on map</a>' + dir + '</span></div>';
+      }).join('') + '</div><div id="live"></div></div>';
   };
   /* Turn a venue type into a search that finds polished places at the plan's level, never budget chains. */
   var VENUE_SEARCH = {
@@ -729,18 +738,34 @@
   }
   TAB_BIND.places = function (ev, save, rerender) {
     $$('[data-live]').forEach(function (btn) { btn.addEventListener('click', function () {
-      var box = $('#live'); box.innerHTML = '<p class="muted">Searching\u2026</p>';
-      fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: btn.dataset.q || btn.dataset.live, level: btn.dataset.level || 'S', city: ev.city }) })
+      $$('.live-res').forEach(function (x) { x.innerHTML = ''; }); ev.lastVenue = btn.dataset.live;
+      var box = document.querySelector('.live-res[data-for="' + btn.dataset.live.replace(/"/g, '') + '"]') || $('#live'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Curating venues\u2026</p>';
+      fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: btn.dataset.q || btn.dataset.live, level: btn.dataset.level || 'S', city: (ev.area ? ev.area + ', ' : '') + ev.city }) })
         .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.places; }); })
         .then(function (list) {
           if (!list.length) { box.innerHTML = '<p class="muted">No well-reviewed matches nearby for this type. Try another venue type, or switch to a different budget version.</p>'; return; }
           var ids = list.map(function (p) { return p.id; });
-          box.innerHTML = '<div class="list panel">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + esc(p.address || '') + (p.rating ? ', ' + p.rating + ' stars (' + (p.reviews || 0) + ' reviews)' : '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">Open in Maps</a></span></div>'; }).join('') + '</div><p class="muted small">Source: Google. Prices and availability aren\u2019t shown until the venue confirms them.</p>';
-          if (ev.start && ids.length) fetch(CFG.apiUrl + '/api/drive', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ origin: ev.start, placeIds: ids }) })
-            .then(function (r) { return r.json(); }).then(function (j) { (j.times || []).forEach(function (t) { var el = box.querySelector('[data-dt="' + t.placeId + '"]'); if (el) el.textContent = t.minutes + ' min drive, ' + t.miles + ' mi'; }); }).catch(function () {});
+          box.innerHTML = '<div class="curated"><p class="eyebrow">Curated ' + esc(btn.dataset.live.toLowerCase()) + 's in ' + esc(ev.city.split(',')[0]) + '</p>' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.rating ? '\u2605 ' + p.rating + ' \u00b7 ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews \u00b7 ' : '') + esc(p.address || '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Pricing and availability come directly from each venue when you inquire.</p></div>';
+          if (ev.start && ids.length) {
+            var origin = /,|\d{5}/.test(ev.start) ? ev.start : ev.start + ', ' + ev.city;
+            fetch(CFG.apiUrl + '/api/drive', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ origin: origin, placeIds: ids }) })
+              .then(function (r) { return r.json(); }).then(function (j) {
+                var times = j.times || [];
+                if (!times.length) { box.querySelector('.curated').insertAdjacentHTML('beforeend', '<p class="small" style="color:var(--warn)">We couldn\u2019t find your starting point. Try a full street address.</p>'); return; }
+                times.forEach(function (t) { var el = box.querySelector('[data-dt="' + t.placeId + '"]'); if (el) { el.textContent = t.minutes + ' min drive \u00b7 ' + t.miles + ' mi'; el.closest('.it').dataset.min = t.minutes; } });
+                var wrap = box.querySelector('.curated'); var rows = [].slice.call(wrap.querySelectorAll('.it')).sort(function (a, c) { return (+a.dataset.min || 999) - (+c.dataset.min || 999); });
+                var note = wrap.querySelector('p.muted.small'); rows.forEach(function (r) { wrap.insertBefore(r, note); });
+              }).catch(function () {});
+          }
         }).catch(function (e) { box.innerHTML = '<p class="muted">' + esc(e.message || 'Venue search isn\u2019t available right now.') + '</p>'; });
     }); });
-    $('#saveStart').addEventListener('click', function () { if (lockSample(ev)) return; ev.start = $('#start').value.trim(); save(); rerender(); });
+    $('#vfilter').addEventListener('submit', function (e) {
+      e.preventDefault();
+      ev.area = $('#varea').value.trim(); ev.start = $('#start').value.trim(); save();
+      var last = ev.lastVenue; rerender();
+      toast(ev.area || ev.start ? 'Updated' + (ev.area ? ' for ' + ev.area : '') : 'Filters cleared');
+      if (last) { var bt = document.querySelector('[data-live="' + last.replace(/"/g, '') + '"]'); if (bt) bt.click(); }
+    });
   };
 
   /* Vendors: by category with estimates; ask for a price */
@@ -800,7 +825,7 @@
       { q: color + ' place cards', name: 'Place cards', each: [8, 20], qty: 1 },
       { q: color + ' cake topper', name: 'Cake topper', each: [10, 30], qty: 1 },
       { q: color + ' party favors', name: 'Favors', each: [1.5, 4], qty: g },
-      { q: c.dress.toLowerCase() + ' outfit', name: 'Your outfit', each: [60, 250], qty: 1 }
+      { q: E.dressCode(ev, ev.tier).toLowerCase() + ' outfit', name: 'Your outfit', each: [60, 250], qty: 1 }
     ] : [
       { q: color + ' balloon garland kit', name: 'Balloon garland kit', each: [25, 60], qty: 1 },
       { q: color + ' table runner', name: 'Table runners', each: [10, 28], qty: tables },
@@ -808,7 +833,7 @@
       { q: color + ' cocktail napkins', name: 'Cocktail napkins (pack of 50)', each: [8, 18], qty: Math.ceil(g * 3 / 50) },
       { q: color + ' party backdrop', name: 'Photo backdrop', each: [40, 150], qty: 1 },
       { q: color + ' party favors', name: 'Favors', each: [1.5, 4], qty: g },
-      { q: c.dress.toLowerCase() + ' outfit', name: 'Your outfit', each: [60, 250], qty: 1 }
+      { q: E.dressCode(ev, ev.tier).toLowerCase() + ' outfit', name: 'Your outfit', each: [60, 250], qty: 1 }
     ];
     var shopLo = items.reduce(function (t, it) { return t + it.each[0] * it.qty; }, 0), shopHi = items.reduce(function (t, it) { return t + it.each[1] * it.qty; }, 0);
     var pl = D.PLAYLIST_SEARCH(c.music);
@@ -817,7 +842,7 @@
         return '<div class="prod"><div class="pimg" aria-hidden="true" style="background:linear-gradient(135deg,' + c.palette[k % c.palette.length] + ',' + c.palette[(k + 2) % c.palette.length] + ')"></div><div class="pbody"><b>' + esc(it.name) + '</b>' + (it.qty > 1 ? '<span class="small muted">' + it.qty + ' \u00d7 $' + it.each[0] + ' to $' + it.each[1] + ' each</span>' : '') + '<span class="num">' + money(it.each[0] * it.qty) + ' to ' + money(it.each[1] * it.qty) + '</span><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Shop Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a></span></div></div>'; }).join('') + '</div>' +
       '<p class="small muted">Estimated shopping total: <b class="num">' + money(shopLo) + ' to ' + money(shopHi) + '</b>. ' + (rest ? 'Sized to one table of ' + plural(g, 'guest') + '.' : 'Quantities are sized to ' + plural(g, 'guest') + ' and ' + plural(tables, 'table') + '.') + ' Live product photos and prices appear here at launch.</p></div>' +
       (rest ? '' : '<div class="stack"><h3>Playlist</h3><div class="panel stack"><p>Mood: ' + esc(c.music) + '</p><div class="row"><a class="btn small" target="_blank" rel="noopener" href="' + pl.spotify + '">Open in Spotify</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + pl.apple + '">Open in Apple Music</a></div></div></div>') +
-      '<div class="stack"><h3>What to wear</h3><div class="panel stack"><p>Dress code: ' + esc(c.dress) + '</p>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted small">Want the hair and makeup to match? Try the look on your own photo in Face Couture.</p><div><a class="btn small ghost" target="_blank" rel="noopener" href="https://facecouture.app">Open Face Couture</a></div></div></div>';
+      '<div class="stack"><h3>What to wear</h3><div class="panel stack">' + dressBlock(ev) + dots(c.palette, c.styleName + ' colors') + '<p class="muted small">Want the hair and makeup to match? Try the look on your own photo in Face Couture.</p><div><a class="btn small ghost" target="_blank" rel="noopener" href="https://facecouture.app">Open Face Couture</a></div></div></div>';
   };
 
   /* Timeline: checklist and run of show */
@@ -891,7 +916,7 @@
     var link = location.href.split('#')[0] + '#/g/' + ev.id;
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] };
     var share = split.people.length ? (split.total || 0) / split.people.length : 0;
-    return '<div class="stack"><h3>Invitation and event page</h3><div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ' at ' + fmtTime(ev.time) : '') + '</p><p class="muted">' + esc(ev.city) + '</p><p class="small muted">Dress code: ' + esc(ev.concept.dress) + '</p></div></div></div>' +
+    return '<div class="stack"><h3>Invitation and event page</h3><div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ' at ' + fmtTime(ev.time) : '') + '</p><p class="muted">' + esc(ev.city) + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p></div></div></div>' +
       '<div class="row"><button class="btn gold" id="copy">Copy invite link</button><a class="btn ghost" href="#/g/' + ev.id + '">Preview as a guest</a></div>' +
       (CFG.preview ? '<p class="muted small">Preview version: the link opens on this device only. Guests anywhere can open it once the app launches.</p>' : '<p class="muted small">Guests open it in any browser; no app needed.</p>') + '</div>' +
       '<div class="stack"><h3>Your payment links</h3><p class="muted small">Guests pay you directly for cost splits and cash funds. Event Couture never holds the money.</p><div class="grid3">' +
@@ -969,7 +994,7 @@
     if (!ev) return frame('<div class="invite"><h2>This invitation isn’t available</h2><p class="muted">The host may have made it private. Ask them for a new link.</p></div>');
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] }; var share = split.people.length ? (split.total || 0) / split.people.length : 0;
     var payBtns = [pl.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pl.venmo) + '">Venmo</a>' : '', pl.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pl.cashapp) + '">Cash App</a>' : '', pl.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pl.paypal) + '">PayPal</a>' : ''].join('');
-    frame('<div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ' at ' + fmtTime(ev.time) : '') + '</p><p class="muted">' + esc(ev.city) + '</p><p class="small muted">Dress code: ' + esc(ev.concept.dress) + '</p>' +
+    frame('<div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ' at ' + fmtTime(ev.time) : '') + '</p><p class="muted">' + esc(ev.city) + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p>' +
       (ev.date ? '<div><a class="btn small ghost" target="_blank" rel="noopener" href="' + calLink(ev) + '">Add to calendar</a></div>' : '') + '</div></div>' +
       '<form id="rsvp" class="panel stack" style="text-align:left"><h3>RSVP</h3><label class="field"><span>Your name</span><input class="input" id="rn" required autocomplete="name"></label><div class="seg" id="ans"><button type="button" data-v="yes" aria-pressed="true">I’ll be there</button><button type="button" data-v="declined" aria-pressed="false">Can’t make it</button></div>' +
       '<label class="field"><span>Plus-ones</span><input class="input num" type="number" min="0" max="5" id="rp" value="0"></label><div class="stack"><span class="muted small">Dietary needs</span><div class="chips" id="rd">' + D.DIETS.map(function (d) { return '<button type="button" class="chip" aria-pressed="false">' + esc(d) + '</button>'; }).join('') + '</div></div><button class="btn gold">Send RSVP</button></form>' +

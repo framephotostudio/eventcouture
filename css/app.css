@@ -444,3 +444,9 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .brand.logo-banner .frame { display: flex; justify-content: center; background-size: cover; background-position: center; }
 .brand.logo-banner img { height: var(--h); width: min(100%, calc(var(--h) * 1.667 * 1.55)); object-fit: fill; }
 @media (min-width: 700px) { .brand.logo-banner { flex: 0 1 auto; width: calc(var(--h) * 1.667 * 1.55 + 80px); margin: 0 auto; } .topbar nav { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); } }
+
+.live-res:empty { display: none; }
+.curated { margin: 4px 0 12px; padding: 14px 16px; background: var(--tint); border-radius: var(--r-md); display: grid; gap: 4px; }
+.curated .it { border-color: var(--line); }
+.venue-filter { display: grid; gap: 12px; }
+@media (min-width: 700px) { .venue-filter { grid-template-columns: 1fr 1fr auto; align-items: end; } }
