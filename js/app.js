@@ -458,7 +458,7 @@
     var word = TYPE_WORD[type] || 'Celebration';
     /* Names use real colors: the ones picked, else the ones typed, else the look's main color. */
     var typed = ['Blush', 'Pink', 'Ivory', 'Cream', 'Gold', 'Champagne', 'Sage', 'Emerald', 'Black', 'White', 'Navy', 'Silver', 'Lavender', 'Plum', 'Purple', 'Burgundy', 'Red', 'Terracotta', 'Blue', 'Pastel'].filter(function (w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).sort(function (a, b) { return text.toLowerCase().indexOf(a.toLowerCase()) - text.toLowerCase().indexOf(b.toLowerCase()); });
-    var STYLE_COLOR = { 'champagne-garden': 'Champagne', 'modern-noir': 'Black', 'blush-romance': 'Blush', 'boho-sunset': 'Terracotta', 'coastal-linen': 'Blue', 'tropical-glam': 'Tropical', 'old-hollywood': 'Red', 'pastel-whimsy': 'Pastel', 'ivory-ballroom': 'Ivory', 'minimal-white': 'White', 'disco-glam': 'Silver', 'moody-floral': 'Burgundy', 'rustic-elegance': 'Rustic', 'royal-purple': 'Plum', 'midnight-celestial': 'Midnight' };
+    var STYLE_COLOR = { 'champagne-garden': 'Sage', 'modern-noir': 'Black', 'blush-romance': 'Blush', 'boho-sunset': 'Terracotta', 'coastal-linen': 'Blue', 'tropical-glam': 'Tropical', 'old-hollywood': 'Red', 'pastel-whimsy': 'Pastel', 'ivory-ballroom': 'Ivory', 'minimal-white': 'White', 'disco-glam': 'Silver', 'moody-floral': 'Burgundy', 'rustic-elegance': 'Rustic', 'royal-purple': 'Plum', 'midnight-celestial': 'Midnight' };
     picked = picked.concat(typed.filter(function (w) { return picked.indexOf(w) < 0; }));
     var c1 = picked[0] || STYLE_COLOR[style.id] || 'Gold', c2 = picked[1];
     var hr = +String(d.timeTouched && d.time ? d.time : defaultTime(type, d.kids)).split(':')[0];
@@ -795,7 +795,7 @@
     var b = E.budget(ev, ev.tier);
     var hp = eventPhoto(ev);
     var head = '<div class="plan-head">' + (hp ? thumb(hp, 'banner') : '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>') +
-      '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta"><span>' + esc(ev.concept.styleName) + '</span><span>' + (ev.sample ? esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') : '<button class="link small" id="when" aria-label="Date and time: ' + esc(ev.date ? fmtDate(ev.date) : 'not set') + '. Change">' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ', ' + fmtTime(ev.time) : '') : 'Add your date') + '</button>') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span><span>' + (ev.sample ? esc(settingName(ev)) : '<button class="link small" id="where" aria-label="Where it happens: ' + esc(settingName(ev)) + '. Change">' + esc(settingName(ev)) + '</button>') + '</span></div></div>' +
+      '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta">' + (ev.concept.styleName && ev.concept.styleName !== ev.name ? '<span>' + esc(ev.concept.styleName) + '</span>' : '') + '<span>' + (ev.sample ? esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') : '<button class="link small" id="when" aria-label="Date and time: ' + esc(ev.date ? fmtDate(ev.date) : 'not set') + '. Change">' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ', ' + fmtTime(ev.time) : '') : 'Add your date') + '</button>') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span><span>' + (ev.sample ? esc(settingName(ev)) : '<button class="link small" id="where" aria-label="Where it happens: ' + esc(settingName(ev)) + '. Change">' + esc(settingName(ev)) + '</button>') + '</span></div></div>' +
       '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + 'Estimated total \u00b7 ' + (b.tier.id === 'F' ? (b.shortBy ? 'Closest plan, ' + money(b.shortBy) + ' over your budget' : 'Fits your ' + money(ev.budget) + ' budget') : esc(b.tier.name)) + '</div></div></div>' +
       (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new">Start your own</a> to edit it with your details.</div>' : '') + '</div>';
     if (!TAB_VIEWS[tab]) tab = 'overview';
@@ -1246,6 +1246,28 @@
     var tag = CFG.amazonTag ? '&tag=' + encodeURIComponent(CFG.amazonTag) : '';
     return { amazon: 'https://www.amazon.com/s?k=' + encodeURIComponent(q) + tag, etsy: 'https://www.etsy.com/search?q=' + encodeURIComponent(q) };
   }
+  /* Get this look: every piece named in the host's words, marked in her photos, or seen in the chosen photo or look, with where to buy it or who to hire. */
+  var HIRE_WHO = { florals: 'a florist', cake: 'a baker', balloons: 'a balloon artist', decor: 'a decorator', rentals: 'a rental company', lighting: 'a lighting company', catering: 'a caterer', kids: 'a kids entertainer', liveMusic: 'a band', photoBooth: 'a photo booth company' };
+  var WHY = { asked: 'You asked for this', loved: 'You marked this in your photo', photo: 'In the inspiration photo', ai: 'In your inspiration', look: 'Part of this look' };
+  function getLook(ev) {
+    var rest = ev.setting === 'restaurant' || ev.setting === 'privateRoom';
+    var re = ev.alcohol === 'none' ? ALC : ev.alcohol === 'wine' ? HARD : null;
+    var all = E.lookPieces(ev).filter(function (p) {
+      if (re && (re.test(p.name) || re.test(p.q))) return false;
+      if (rest && (['rentals', 'decor', 'lighting', 'balloons', 'photoBooth'].indexOf(p.hire) >= 0 || BIG_DECOR.test(p.name))) return false;
+      return true;
+    });
+    if (!all.length) return '';
+    var base = ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id;
+    var list = cut(all, 4, ev);
+    return '<div class="stack"><h3>Get this look</h3><p class="muted">Everything it takes to bring ' + esc(ev.concept.styleName) + ' to life: the pieces you can buy yourself, and the ones a pro makes for you.' + (rest ? ' Only what a restaurant allows on the table is listed.' : '') + '</p><div class="list panel get-look">' +
+      list.map(function (p) {
+        var l = p.q ? shopLink(p.q) : null;
+        return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + esc(WHY[p.why] || '') + (p.hire ? ' \u00b7 Hire ' + esc(HIRE_WHO[p.hire] || 'a pro') : ' \u00b7 Buy it') + '</div></div><span class="acts">' +
+          (l ? '<a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a>' : '<a class="btn small ghost" href="' + base + '/vendors">Find ' + esc(HIRE_WHO[p.hire] || 'a pro') + '</a>') + '</span></div>';
+      }).join('') + '</div>' + more(ev, all.length, list.length, 'pieces') +
+      '<p class="small muted">Store links search for that exact piece so you can compare live prices and pick the one you like. Show your florist, baker or decorator your inspiration photo so they can match it.</p></div>';
+  }
   TAB_VIEWS.style = function (ev) {
     var c = ev.concept; var st = D.STYLES.find(function (x) { return x.id === c.id; }) || {}; var color = c.shop || st.shop || c.styleName.toLowerCase();
     var tables = Math.ceil((ev.expected || ev.guests) / 8), g = ev.expected || ev.guests;
@@ -1282,7 +1304,7 @@
     var shopLo = items.reduce(function (t, it) { return t + it.each[0] * it.qty; }, 0), shopHi = items.reduce(function (t, it) { return t + it.each[1] * it.qty; }, 0);
     var pl = D.PLAYLIST_SEARCH(c.music);
     var itemsAll = items.length; items = cut(items, 2, ev);
-    return '<div class="stack"><h3>Shopping board</h3><p class="muted">' + (rest && decorLine ? 'Your budget includes about ' + money(decorLine.mid) + ' for table decor; these are the basics to buy with it, picked for the ' + esc(c.styleName) + ' look.' : bigHired && items.length ? 'For an event this size your decorator and rental company supply linens, candles and backdrops. These are personal touches to pick up yourself.' : 'Optional do-it-yourself picks for the ' + esc(c.styleName) + ' look. They\u2019re not counted in your budget.') + ' Links open the store, where you\u2019ll see live prices.' + (CFG.amazonTag ? ' Some links earn Event Couture a small commission at no cost to you.' : '') + '</p>' +
+    return getLook(ev) + '<div class="stack"><h3>Table basics, with quantities</h3><p class="muted">' + (rest && decorLine ? 'Your budget includes about ' + money(decorLine.mid) + ' for table decor; these are the basics to buy with it, picked for the ' + esc(c.styleName) + ' look.' : bigHired && items.length ? 'For an event this size your decorator and rental company supply linens, candles and backdrops. These are personal touches to pick up yourself.' : 'Optional do-it-yourself picks for the ' + esc(c.styleName) + ' look. They\u2019re not counted in your budget.') + ' Links open the store, where you\u2019ll see live prices.' + (CFG.amazonTag ? ' Some links earn Event Couture a small commission at no cost to you.' : '') + '</p>' +
       (!items.length ? '<p class="small muted">Everything for this look is already covered by your hired vendors in the budget.</p></div>' : '<div class="shop">' + items.map(function (it, k) { var l = shopLink(it.q);
         return '<div class="prod"><div class="pimg" aria-hidden="true" style="background:linear-gradient(135deg,' + c.palette[k % c.palette.length] + ',' + c.palette[(k + 2) % c.palette.length] + ')"></div><div class="pbody"><b>' + esc(it.name) + '</b>' + (it.qty > 1 ? '<span class="small muted">' + it.qty + ' \u00d7 ' + usd(it.each[0]) + ' to ' + usd(it.each[1]) + ' each</span>' : '') + '<span class="num">' + money(it.each[0] * it.qty) + ' to ' + money(it.each[1] * it.qty) + '</span><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Shop Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a></span></div></div>'; }).join('') + '</div>' + more(ev, itemsAll, items.length, 'shopping picks') +
       '<p class="small muted">Estimated shopping total: <b class="num">' + money(shopLo) + ' to ' + money(shopHi) + '</b>. ' + (bigHired ? '' : rest ? 'Sized to one table of ' + plural(g, 'guest') + '.' : 'Quantities are sized to ' + plural(g, 'guest') + ' and ' + plural(tables, 'table') + '.') + '</p></div>') +

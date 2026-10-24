@@ -48,6 +48,8 @@ with sync_playwright() as p:
         base = '#/' + '/'.join(pg.url.split('#/')[1].split('/')[:2])
         pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
         pg.goto(U + base + '/style'); pg.wait_for_timeout(300); sty = pg.inner_text('#tab')
+        check('Get this look' in sty and 'Oversized graduation cap prop' in sty and 'Find a florist' in sty, tag + ': photo pieces missing: ' + sty[:300])
+        if pg.query_selector('.get-look'): pg.query_selector('.get-look').scroll_into_view_if_needed(); shot(pg, tag + '-8-get-look')
         check('emerald green and gold graduation' in sty.lower() or 'emerald' in pg.content().lower(), tag + ': shopping not in the photo colors')
         pg.goto(U + base); pg.wait_for_timeout(300); ov = pg.inner_text('#tab')
         check('grad cap' in ov.lower() or 'grad cap' in pg.inner_text('main').lower(), tag + ': photo details not in the plan')
@@ -60,6 +62,18 @@ with sync_playwright() as p:
         pg.select_option('#city', 'Houston, TX'); pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept h3'); pg.wait_for_timeout(300)
         ns = [x.inner_text() for x in pg.query_selector_all('.concept h3')]
         check(ns[0] != 'Emerald Garden Graduation' and 'Emerald Garden Graduation' in ns, tag + ': host colors did not lead: ' + str(ns))
+        # typed or spoken ideas: every named piece shows up to buy or hire
+        pg.goto(U + '#/new/1'); pg.wait_for_timeout(300)
+        pg.fill('#text', 'navy and gold 30th birthday with a balloon arch, peonies, a neon sign, velvet chairs and gold chargers')
+        pg.set_input_files('#files', ['tests/pink.jpg']); pg.wait_for_timeout(1200)
+        pg.click('#photos img'); pg.wait_for_selector('.sheet [data-v=Cake]'); pg.click('.sheet [data-v=Cake]'); pg.wait_for_timeout(200)
+        pg.click('#next'); pg.wait_for_selector('#type'); pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]')
+        pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept h3'); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
+        base = '#/' + '/'.join(pg.url.split('#/')[1].split('/')[:2]); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
+        pg.goto(U + base + '/style'); pg.wait_for_timeout(300); sty = pg.inner_text('#tab')
+        for want in ['Balloon arch', 'Arrangements with peonies', 'Custom neon sign', 'Velvet chairs', 'Gold charger plates', 'A cake like the one in your photo']:
+            check(want in sty, tag + ': typed idea not in Get this look: ' + want)
+        if pg.query_selector('.get-look'): pg.query_selector('.get-look').scroll_into_view_if_needed(); shot(pg, tag + '-9-typed-look')
         # new venue: Houston indoor birthday
         pg.goto(U + '#/inspiration/milestone'); pg.wait_for_timeout(300)
         pg.click('#igrid [data-inspo=black-and-gold-soiree]'); pg.click('.sheet #useInspo'); pg.wait_for_selector('.inspo-chosen'); pg.click('#next'); pg.wait_for_selector('#type')
@@ -71,4 +85,7 @@ with sync_playwright() as p:
         check(not errs, tag + ': page errors ' + str(errs[:2]))
         pg.close()
     b.close()
+import re
+bad = re.findall(r'champagne|wine|cocktail|vineyard|prosecco|mimosa|martini', open('js/inspo.js').read().lower().replace('champagne-garden', ''))
+check(not bad, 'alcohol words in inspiration photos: ' + str(set(bad)))
 print('\n'.join(problems) if problems else 'inspiration ok')

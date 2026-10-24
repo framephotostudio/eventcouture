@@ -27,7 +27,7 @@ P = [
   ['#A9C7D3', '#7C9CB8', '#F4F1EA', '#D9CBB0', '#7E8C6A'], 'dusty blue and white', 'outdoor', 'evening', 'gardenDinner',
   'Dusty blue and white hydrangeas on long tables with a hillside view.',
   ['Long farm tables under an olive tree with a hillside view', 'Blue and white hydrangea runners down every table', 'Dusty blue napkins and cross-back chairs', 'Dinner served at golden hour as the sun sets']),
- ('burgundy-vineyard-evening', '1359dc28', 'Burgundy Vineyard Evening', ['wedding', 'anniversary', 'engagement', 'milestone'], 'moody-floral',
+ ('burgundy-hilltop-evening', '1359dc28', 'Burgundy Hilltop Evening', ['wedding', 'anniversary', 'engagement', 'milestone'], 'moody-floral',
   ['#6E1F2B', '#E8B4B8', '#F3E3D3', '#C9A86A', '#4A3A2A'], 'burgundy and blush', 'outdoor', 'evening', 'elegant',
   'Burgundy velvet, blush roses and candlelight on a hilltop terrace.',
   ['Candlelit tables on a hilltop terrace beside a dance floor', 'Burgundy, blush and ivory rose runners', 'Burgundy velvet chairs and napkins with gold accents', 'Draped pergolas and a lounge glowing at dusk']),
@@ -52,9 +52,9 @@ P = [
   'Emerald velvet, white hydrangeas and gold in a candlelit courtyard.',
   ['Stone courtyard with a lounge and lanterns', 'Emerald velvet tablecloths with ivory runners', 'White hydrangea and rose centerpieces with tall candles', 'Gold-framed table numbers and cane-back chairs']),
  ('rosewood-private-dinner', '2de6c2ef', 'Rosewood Private Dinner', ['birthday', 'dinner', 'bridal-shower', 'anniversary', 'engagement', 'retirement'], 'moody-floral',
-  ['#C98B92', '#6E1F2B', '#EADBC8', '#F3E3D3', '#C9A86A'], 'dusty rose and wine', 'privateRoom', 'evening', 'elegant',
-  'Dusty rose velvet, wine-red runners and candlelit roses in a private room.',
-  ['Restaurant private room with long candlelit tables', 'Champagne linens with wine-red runners', 'Low red and blush rose centerpieces', 'Dusty rose velvet chairs and a tall floral arrangement']),
+  ['#C98B92', '#6E1F2B', '#EADBC8', '#F3E3D3', '#C9A86A'], 'dusty rose and deep red', 'privateRoom', 'evening', 'elegant',
+  'Dusty rose velvet, deep red runners and candlelit roses in a private room.',
+  ['Restaurant private room with long candlelit tables', 'Cream linens with deep red runners', 'Low red and blush rose centerpieces', 'Dusty rose velvet chairs and a tall floral arrangement']),
  ('royal-red-quinceanera', '8a792643', 'Royal Red Quinceañera', ['quince', 'sweet16', 'gala', 'wedding'], 'old-hollywood',
   ['#7A0E1B', '#D4AF37', '#F7F1E3', '#4A0A12', '#FFFFFF'], 'red and gold', 'indoor', 'evening', 'quince',
   'Red velvet, gold chairs and red roses in a chandelier ballroom.',
@@ -64,10 +64,10 @@ P = [
   'Blush roses, mirrored tables and pink and silver balloons.',
   ['Bright event room with mirrored tables and clear chairs', 'Tall blush and white rose centerpieces', 'Pink, white and silver balloon garland behind the cake', 'A tiered white cake on its own sparkling table']),
  ('candlelit-sweetheart-garden', '6bc16b91', 'Candlelit Sweetheart Garden', ['anniversary', 'engagement', 'wedding', 'dinner'], 'champagne-garden',
-  ['#F3E7D3', '#E8D9BC', '#FFFFFF', '#C9A86A', '#6F7D63'], 'ivory and champagne', 'outdoor', 'evening', 'gardenDinner',
+  ['#F3E7D3', '#E8D9BC', '#FFFFFF', '#C9A86A', '#6F7D63'], 'ivory and gold', 'outdoor', 'evening', 'gardenDinner',
   'Ivory linen, white garden roses and dozens of candles in a quiet garden.',
-  ['A table for two in a lantern-lit garden', 'Ivory linen with a champagne silk drape', 'White garden rose arrangements in stone urns', 'Dozens of candles and lanterns around the table']),
- ('wine-and-roses-courtyard', '132d29c2', 'Wine & Roses Courtyard', ['birthday', 'milestone', 'dinner', 'anniversary', 'bachelorette', 'engagement'], 'moody-floral',
+  ['A table for two in a lantern-lit garden', 'Ivory linen with a soft gold silk drape', 'White garden rose arrangements in stone urns', 'Dozens of candles and lanterns around the table']),
+ ('burgundy-roses-courtyard', '132d29c2', 'Burgundy Roses Courtyard', ['birthday', 'milestone', 'dinner', 'anniversary', 'bachelorette', 'engagement'], 'moody-floral',
   ['#6E1F2B', '#E8B4B8', '#F3E3D3', '#C9A86A', '#5C4033'], 'burgundy and blush', 'outdoor', 'evening', 'gardenDinner',
   'Burgundy velvet and blush roses under string lights at sunset.',
   ['Stone courtyard under string lights at sunset', 'Burgundy and blush rose centerpieces with taper candles', 'Blush silk runner and burgundy velvet chairs', 'Lantern-lit lounge for after dinner']),
@@ -94,7 +94,7 @@ P = [
  ('disco-velvet-lounge', 'e5c67704', 'Disco Velvet Lounge', ['bachelorette', 'milestone', 'birthday', 'holiday', 'engagement'], 'disco-glam',
   ['#7A0E1B', '#111111', '#C0C0C8', '#E8B4B8', '#C9A86A'], 'red velvet and disco ball', 'indoor', 'evening', 'modern',
   'Red velvet, mirror balls and candlelight in a dark lounge.',
-  ['Dark lounge with red velvet curtains', 'Cluster of disco balls hanging over the table', 'Deep red rose and amaranthus centerpieces with candles', 'Red velvet chairs and a cocktail cart']),
+  ['Dark lounge with red velvet curtains', 'Cluster of disco balls hanging over the table', 'Deep red rose and amaranthus centerpieces with candles', 'Red velvet chairs and a rolling drink cart']),
  ('citrus-pool-party', 'e3382832', 'Citrus Pool Party', ['birthday', 'bachelorette', 'brunch', 'milestone', 'graduation', 'sweet16'], 'citrus-fiesta',
   ['#E23D7A', '#F28C38', '#FFFFFF', '#F7C6D0', '#D9B98C'], 'hot pink and orange', 'outdoor', 'day', 'garden',
   'Hot pink and orange flowers, citrus and sunshine by the pool.',
@@ -107,8 +107,8 @@ P = [
   ['#C9B3DD', '#A9B89A', '#FFFFFF', '#F6F1E6', '#C9A86A'], 'lavender and sage', 'outdoor', 'day', 'sweet',
   'Lavender, sage and ivory balloons with wildflowers in a garden.',
   ['Garden patio with an arched backdrop', 'Lavender, sage and ivory balloon garland', 'Lavender and white flower centerpieces with lilac napkins', 'Two-tier cake on a fluted dessert table']),
- ('champagne-taupe-terrace', '6b3530fa', 'Champagne Taupe Terrace', ['wedding', 'engagement', 'bridal-shower', 'anniversary', 'milestone'], 'ivory-ballroom',
-  ['#D8C3B4', '#EFE3CF', '#B8925A', '#FFFFFF', '#A68A7A'], 'taupe and champagne', 'outdoor', 'evening', 'elegant',
+ ('taupe-gold-terrace', '6b3530fa', 'Taupe & Gold Terrace', ['wedding', 'engagement', 'bridal-shower', 'anniversary', 'milestone'], 'ivory-ballroom',
+  ['#D8C3B4', '#EFE3CF', '#B8925A', '#FFFFFF', '#A68A7A'], 'taupe and gold', 'outdoor', 'evening', 'elegant',
   'Taupe velvet, mauve roses, gold candlesticks and a villa view.',
   ['Villa terrace with a hillside view', 'Taupe velvet linens with gold flatware and taper candles', 'Mauve and ivory rose centerpieces', 'Round dessert table with a tiered cake and petite sweets']),
  ('pink-or-blue-garden-reveal', '54f788e0', 'Pink or Blue Garden Reveal', ['gender-reveal', 'baby-shower'], 'pastel-whimsy',
@@ -146,7 +146,7 @@ P = [
  ('black-and-gold-soiree', '799135b4', 'Black & Gold Soirée', ['milestone', 'birthday', 'gala', 'corporate', 'engagement', 'retirement'], 'modern-noir',
   ['#111111', '#C9A86A', '#FFFFFF', '#2B2B2B', '#E8D9BC'], 'black and gold', 'indoor', 'evening', 'modern',
   'Black velvet, gold and a cascade of white flowers in a lounge.',
-  ['Open-air lounge with black drapes and a lit bar', 'Black velvet chairs at a gold-base table', 'Hanging white flower installation over the table', 'Candles in tall glass cylinders and lounge seating']),
+  ['Open-air lounge with black drapes and glowing lights', 'Black velvet chairs at a gold-base table', 'Hanging white flower installation over the table', 'Candles in tall glass cylinders and lounge seating']),
  ('sapphire-night', '459df175', 'Sapphire Night', ['wedding', 'gala', 'sweet16', 'anniversary', 'engagement', 'quince'], 'midnight-celestial',
   ['#1F3A8A', '#16203A', '#C0C0C8', '#FFFFFF', '#9FB3C8'], 'royal blue and silver', 'outdoor', 'evening', 'elegant',
   'Royal blue velvet, silver and white flowers on a terrace at twilight.',
@@ -173,16 +173,60 @@ P = [
   ['Garden terrace beside a fountain', 'Blush tablecloth with a lace runner', 'Pink and white rose centerpieces', 'Floral china teacups, scones and tiered treats']),
 ]
 
+# What a host can buy or hire to recreate each photo: (item, store search, who to hire). A blank search means hire it.
+PIECES = {
+ 'sage-pergola-luncheon': [('Sage green tablecloths', 'sage green rectangle tablecloth', ''), ('White rose and hydrangea centerpieces', '', 'florals'), ('Gold footed bowls for the flowers', 'gold compote bowl centerpiece vase', ''), ('Sage green cloth napkins', 'sage green linen napkins', ''), ('Gold-rim dinner plates', 'gold rim dinner plates', ''), ('Sheer white drapes', 'sheer white chiffon curtain panels', ''), ('Cane-back chairs', '', 'rentals')],
+ 'bougainvillea-fiesta': [('Hot pink and orange table runners', 'hot pink orange table runner', ''), ('Dahlia and zinnia centerpieces', '', 'florals'), ('Teal cloth napkins', 'teal linen napkins', ''), ('Amber glass votive holders', 'amber glass votive candle holders', ''), ('Woven pendant lanterns', 'woven rattan pendant lantern', ''), ('Wood cross-back chairs', '', 'rentals')],
+ 'silver-blue-ballroom': [('Silver crushed-velvet tablecloths', 'silver crushed velvet round tablecloth', ''), ('White and blue hydrangea centerpieces', '', 'florals'), ('Silver charger plates', 'silver charger plates', ''), ('Pillar candles in glass', 'glass hurricane pillar candle holders', ''), ('Blue uplighting', '', 'lighting'), ('Floral stage arrangements', '', 'decor')],
+ 'hilltop-hydrangea-dinner': [('Blue and white hydrangea runners', '', 'florals'), ('Dusty blue chiffon table runners', 'dusty blue chiffon table runner', ''), ('Dusty blue linen napkins', 'dusty blue linen napkins', ''), ('Clear glass votives', 'clear glass votive candle holders', ''), ('Cross-back wood chairs', '', 'rentals'), ('Long farm tables', '', 'rentals')],
+ 'burgundy-hilltop-evening': [('Burgundy, blush and ivory rose runners', '', 'florals'), ('Burgundy velvet napkins', 'burgundy velvet napkins', ''), ('Gold flatware', 'gold flatware set', ''), ('Taper candles in brass holders', 'brass taper candle holders', ''), ('Burgundy velvet chairs', '', 'rentals'), ('Dance floor', '', 'rentals')],
+ 'black-tie-ballroom': [('Black tablecloths', 'black round tablecloth', ''), ('Gold charger plates', 'gold charger plates', ''), ('Glass candle cylinders', 'glass cylinder candle holders', ''), ('Tall white floral arrangements', '', 'florals'), ('Gold-frame chairs', '', 'rentals'), ('Stage, screen and uplighting', '', 'lighting')],
+ 'ivory-chandelier-ballroom': [('Ivory tablecloths', 'ivory round tablecloth', ''), ('Gold charger plates', 'gold charger plates', ''), ('Pillar candles in glass', 'glass hurricane pillar candle holders', ''), ('Towering white rose centerpieces', '', 'florals'), ('Gold-frame chairs', '', 'rentals'), ('Crystal chandeliers', '', 'lighting')],
+ 'fireside-christmas-dinner': [('Evergreen garland runner', 'faux evergreen garland table runner', ''), ('Emerald velvet napkins', 'emerald green velvet napkins', ''), ('Gold charger plates', 'gold charger plates', ''), ('Gold taper candlesticks', 'gold taper candle holders', ''), ('Pinecones and red berries', 'pinecones and red berry picks', ''), ('Red rose and berry arrangements', '', 'florals')],
+ 'winter-lights-rooftop': [('Lighted birch trees', 'lighted white birch tree', ''), ('Navy velvet tablecloths', 'navy blue velvet tablecloth', ''), ('White table runners', 'white satin table runner', ''), ('Silver ornaments', 'silver glass ornaments', ''), ('Faux-fur throws', 'white faux fur throw blanket', ''), ('Fire pits and patio heaters', '', 'rentals')],
+ 'emerald-courtyard-dinner': [('Emerald velvet tablecloths', 'emerald green velvet tablecloth', ''), ('Ivory table runners', 'ivory table runner', ''), ('Gold-frame table numbers', 'gold frame table numbers', ''), ('Tall glass candle holders', 'tall glass hurricane candle holders', ''), ('White hydrangea and rose centerpieces', '', 'florals'), ('Cane-back chairs', '', 'rentals')],
+ 'rosewood-private-dinner': [('Low red and blush rose centerpieces', '', 'florals'), ('Deep red table runners', 'burgundy satin table runner', ''), ('Glass votive candles', 'glass votive candle holders', ''), ('Blush place cards', 'blush place cards', ''), ('Gold bud vases', 'gold bud vases set', '')],
+ 'royal-red-quinceanera': [('Red damask tablecloths', 'red damask round tablecloth', ''), ('Gold centerpiece stands', 'gold trumpet vase centerpiece stand', ''), ('Tall red rose centerpieces', '', 'florals'), ('Gold chiavari chairs', '', 'rentals'), ('Throne chair for the quinceañera', '', 'rentals'), ('Tiered red and white cake', '', 'cake')],
+ 'blush-silver-sweet-16': [('Pink, white and silver balloon garland', '', 'balloons'), ('Silver charger plates', 'silver charger plates', ''), ('Tall blush rose centerpieces', '', 'florals'), ('Mirrored tables', '', 'rentals'), ('Clear ghost chairs', '', 'rentals'), ('Tiered white cake', '', 'cake')],
+ 'candlelit-sweetheart-garden': [('Ivory linen tablecloth', 'ivory linen round tablecloth', ''), ('Gold silk table drape', 'gold silk chiffon table runner', ''), ('Stone urns', 'stone urn planter', ''), ('Candle lanterns', 'gold candle lanterns set', ''), ('White pillar candles', 'white pillar candles set', ''), ('White garden rose arrangements', '', 'florals')],
+ 'burgundy-roses-courtyard': [('Blush silk table runner', 'blush silk table runner', ''), ('Ivory taper candles', 'ivory taper candles', ''), ('Outdoor string lights', 'outdoor string lights', ''), ('Candle lanterns for the lounge', 'candle lanterns set', ''), ('Burgundy and blush rose centerpieces', '', 'florals'), ('Burgundy velvet chairs', '', 'rentals')],
+ 'olive-grove-dinner': [('Ivory linen napkins', 'ivory linen napkins', ''), ('Glass candle holders', 'glass hurricane candle holders', ''), ('Ivory and blush rose centerpieces', '', 'florals'), ('Floral arbor', '', 'decor'), ('Cane-back chairs', '', 'rentals'), ('Long wooden tables', '', 'rentals')],
+ 'seaside-dusty-blue': [('Dusty blue tablecloths', 'dusty blue rectangle tablecloth', ''), ('Dusty blue napkins', 'dusty blue linen napkins', ''), ('White pillar candles', 'white pillar candles set', ''), ('Glass hurricanes', 'glass hurricane candle holders', ''), ('White rose and hydrangea runners', '', 'florals'), ('Sheer white draping', '', 'decor')],
+ 'burgundy-gold-grad-party': [('Gold frames for a memory shelf', 'gold picture frames set', ''), ('Graduation cap centerpiece', 'graduation cap centerpiece', ''), ('Gold tiered cupcake stand', 'gold tiered cupcake stand', ''), ('Glass drink dispenser', 'glass beverage dispenser', ''), ('Burgundy table runner', 'burgundy satin table runner', ''), ('Burgundy, blush and gold balloon garland', '', 'balloons')],
+ 'emerald-garden-graduation': [('Oversized graduation cap prop', 'giant graduation cap prop', ''), ('Emerald velvet table runners', 'emerald green velvet table runner', ''), ('Gold-rim plates', 'gold rim dinner plates', ''), ('Glass candle holders', 'glass hurricane candle holders', ''), ('Outdoor string lights', 'outdoor string lights', ''), ('White hydrangea and rose centerpieces', '', 'florals')],
+ 'navy-silver-graduation': [('Navy table drape', 'navy blue table runner', ''), ('Silver cake stands', 'silver cake stand set', ''), ('Glass candy jars', 'glass apothecary candy jars', ''), ('Navy, white and silver balloon garland', '', 'balloons'), ('Graduation cap cake', '', 'cake'), ('Navy and silver cake pops', '', 'cake')],
+ 'disco-velvet-lounge': [('Disco ball cluster', 'large disco ball set', ''), ('Red velvet curtain backdrop', 'red velvet curtain backdrop', ''), ('Glass candle cylinders', 'glass cylinder candle holders', ''), ('Rolling drink cart', 'gold rolling serving cart', ''), ('Deep red rose centerpieces', '', 'florals'), ('Red velvet chairs', '', 'rentals')],
+ 'citrus-pool-party': [('Hot pink and orange drapes', 'hot pink chiffon curtain panels', ''), ('Rattan chargers', 'rattan charger plates', ''), ('Hot pink napkins', 'hot pink linen napkins', ''), ('Pink and orange glassware', 'pink and orange drinking glasses', ''), ('Peony and dahlia centerpieces', '', 'florals'), ('Cabana and umbrellas', '', 'rentals')],
+ 'peach-and-blue-terrace': [('Powder blue napkins', 'powder blue napkins', ''), ('Rattan chargers', 'rattan charger plates', ''), ('Glass drink dispensers', 'glass beverage dispenser', ''), ('Peach and powder blue balloon garland', '', 'balloons'), ('Arched backdrop', '', 'decor'), ('Blue hydrangea and peach rose centerpieces', '', 'florals')],
+ 'lavender-garden-shower': [('Lilac napkins', 'lilac lavender napkins', ''), ('Rattan lanterns', 'rattan lantern set', ''), ('Lavender, sage and ivory balloon garland', '', 'balloons'), ('Arched backdrop', '', 'decor'), ('Lavender and white flower centerpieces', '', 'florals'), ('Two-tier cake', '', 'cake')],
+ 'taupe-gold-terrace': [('Taupe velvet tablecloths', 'taupe velvet tablecloth', ''), ('Gold flatware', 'gold flatware set', ''), ('Gold taper candlesticks', 'gold taper candle holders', ''), ('Mauve and ivory rose centerpieces', '', 'florals'), ('Tiered cake and petite sweets', '', 'cake'), ('Ivory round-back chairs', '', 'rentals')],
+ 'pink-or-blue-garden-reveal': [('White panel backdrop', 'white wooden panel backdrop', ''), ('Pink and blue taper candles', 'pink and light blue taper candles', ''), ('Gold tiered cupcake stand', 'gold tiered cupcake stand', ''), ('Lemonade dispensers', 'glass beverage dispenser', ''), ('Pink, blue and ivory balloon garland', '', 'balloons'), ('Pink rose and blue hydrangea centerpieces', '', 'florals')],
+ 'daisy-garden-party': [('Scalloped table skirt', 'scalloped table skirt pink', ''), ('White ceramic pitchers', 'white ceramic pitcher vase', ''), ('Scalloped umbrella', 'scalloped patio umbrella', ''), ('Gold tiered cupcake stand', 'gold tiered cupcake stand', ''), ('Daisy and rose arrangements', '', 'florals'), ('Daisy cake', '', 'cake')],
+ 'over-the-moon': [('Hanging gold moons and stars', 'gold moon and star hanging decorations', ''), ('Gold taper candlesticks', 'gold taper candle holders', ''), ('Dusty blue chiffon runner', 'dusty blue chiffon table runner', ''), ('Moon backdrop', '', 'decor'), ('Blue and white flower centerpieces', '', 'florals'), ('Two-tier cake and cupcakes', '', 'cake')],
+ 'provence-garden-luncheon': [('Butter yellow tablecloth', 'butter yellow tablecloth', ''), ('Peach linen napkins', 'peach linen napkins', ''), ('Tiered pastry stands', 'gold tiered dessert stand', ''), ('Glass candle holders', 'glass hurricane candle holders', ''), ('Peach and yellow flower runner', '', 'florals'), ('Cane-back chairs', '', 'rentals')],
+ 'blue-willow-tea-party': [('Blue floral toile tablecloth', 'blue floral toile tablecloth', ''), ('Blue and white teacups', 'blue and white floral teacups', ''), ('Powder blue chair bows', 'powder blue satin chair sash bows', ''), ('Blue and white garden stools', 'blue and white ceramic garden stool', ''), ('Tiered pastry stands', 'gold tiered dessert stand', ''), ('White rose and blue hydrangea arrangements', '', 'florals')],
+ 'tuscan-sunset-supper': [('Terracotta vases', 'terracotta vase set', ''), ('Olive green linen napkins', 'olive green linen napkins', ''), ('Stoneware plates', 'stoneware dinner plates', ''), ('Woven pendant light', 'woven rattan pendant light', ''), ('Ivory pillar candles', 'ivory pillar candles set', ''), ('Olive branches and dahlias', '', 'florals')],
+ 'fig-and-mauve-dinner': [('Mauve velvet table runner', 'mauve velvet table runner', ''), ('Brass napkin rings', 'brass napkin rings', ''), ('Blush taper candles', 'blush pink taper candles', ''), ('Amber glass votives', 'amber glass votive candle holders', ''), ('Dusty rose and burgundy flowers', '', 'florals'), ('Fresh figs for the table', '', 'catering')],
+ 'emerald-fireside-terrace': [('Emerald velvet table runners', 'emerald green velvet table runner', ''), ('Gold charger plates', 'gold charger plates', ''), ('Mercury glass votives', 'gold mercury glass votive holders', ''), ('Gold lanterns', 'gold lanterns set', ''), ('White hydrangea and green flower centerpieces', '', 'florals'), ('Emerald velvet chairs', '', 'rentals')],
+ 'black-and-gold-soiree': [('Tall glass candle cylinders', 'glass cylinder candle holders', ''), ('Black and gold pillows', 'black and gold throw pillows', ''), ('Hanging white flower installation', '', 'florals'), ('Black velvet chairs', '', 'rentals'), ('Gold-base table', '', 'rentals'), ('Black drapes and lighting', '', 'lighting')],
+ 'sapphire-night': [('Royal blue goblets', 'royal blue glass goblets', ''), ('Tall glass candle cylinders', 'glass cylinder candle holders', ''), ('Blue delphinium and white rose arrangements', '', 'florals'), ('Royal blue cake with silver petals', '', 'cake'), ('Royal blue velvet chairs', '', 'rentals'), ('Mirrored table', '', 'rentals')],
+ 'plum-velvet-birthday': [('Plum velvet table runner', 'plum velvet table runner', ''), ('Crystal goblets', 'crystal cut glass goblets', ''), ('Plum and gold balloon garland', '', 'balloons'), ('Plum, blush and ivory rose centerpieces', '', 'florals'), ('Floral birthday cake', '', 'cake'), ('Plum velvet chairs', '', 'rentals')],
+ 'coral-rooftop-party': [('Coral napkins', 'coral linen napkins', ''), ('Pink glassware', 'pink glass goblets', ''), ('Pink patterned pillows', 'pink ikat throw pillows', ''), ('Rattan chargers', 'rattan charger plates', ''), ('Coral and pink flower centerpieces', '', 'florals'), ('Citrus bowls for the table', '', 'catering')],
+ 'amalfi-lemon-lunch': [('Blue and white striped tablecloth', 'blue and white striped tablecloth', ''), ('Yellow striped napkins', 'yellow striped napkins', ''), ('Blue and white vases', 'blue and white ceramic vase', ''), ('Glass lemonade pitchers', 'glass pitcher set', ''), ('Potted lemon tree', 'faux potted lemon tree', ''), ('Yellow ranunculus and lemon arrangements', '', 'florals')],
+ 'skyline-black-and-gold': [('Black napkins with gold rings', 'black napkins gold napkin rings', ''), ('Gold charger plates', 'gold charger plates', ''), ('Gold geometric vases', 'gold geometric vase', ''), ('Glass votive candles', 'glass votive candle holders', ''), ('White rose centerpieces', '', 'florals'), ('Black velvet chairs', '', 'rentals')],
+ 'blush-rose-tea-party': [('Blush tablecloth', 'blush pink tablecloth', ''), ('Lace table runner', 'white lace table runner', ''), ('Floral china teacups', 'vintage floral teacups set', ''), ('Gold tiered dessert stands', 'gold tiered dessert stand', ''), ('Pink and white rose centerpieces', '', 'florals'), ('Scones and pastries', '', 'catering')],
+}
+
 os.makedirs(os.path.join(OUT, 'sm'), exist_ok=True)
 seen, out = set(), []
 for (pid, f, name, types, style, pal, shop, setting, time, menu, mood, decor) in P:
     assert pid not in seen and f not in [o['_f'] for o in out], 'duplicate ' + pid
-    seen.add(pid)
+    seen.add(pid); assert pid in PIECES, 'no pieces for ' + pid
     im = Image.open(os.path.join(SRC, f + '-image.png')).convert('RGB')
     for size, path, q in ((1200, os.path.join(OUT, pid + '.jpg'), 74), (560, os.path.join(OUT, 'sm', pid + '.jpg'), 72)):
         c = im.copy(); c.thumbnail((size, size)); c.save(path, 'JPEG', quality=q, optimize=True, progressive=True)
     out.append({'_f': f, 'id': pid, 'name': name, 'types': types, 'style': style, 'palette': pal, 'shop': shop, 'setting': setting, 'time': time,
-                'menu': menu, 'mood': mood, 'decor': decor, 'alt': 'AI-generated inspiration: ' + mood[0].lower() + mood[1:-1]})
+                'menu': menu, 'mood': mood, 'decor': decor, 'pieces': [{'name': a, 'q': b, 'hire': c} for (a, b, c) in PIECES[pid]], 'alt': 'AI-generated inspiration: ' + mood[0].lower() + mood[1:-1]})
 for o in out: del o['_f']
 js = ('/* AI-generated inspiration photos. Each one is described in words so a plan can follow what is in the picture.\n'
       '   Built by tools_inspo.py; edit the list there. */\n(function (root) {\n  root.EC_INSPO = ' + json.dumps(out, ensure_ascii=False, separators=(',', ':')).replace('},{', '},\n  {') + ';\n})(typeof window !== \'undefined\' ? window : globalThis);\n')

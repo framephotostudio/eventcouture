@@ -157,3 +157,5 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 - New looks: citrus-fiesta, amalfi-lemon, blue-willow, butter-bloom, tuscan-olive.
 - D.NEW_VENUES: hand-checked newly opened venues (Deco House River Oaks, Houston). Not paid placement.
 - Test: tests/inspiration.py
+- No alcohol words in photo names or descriptions (test checks js/inspo.js). Library look "Champagne Garden" now shows as "Sage Garden" (id unchanged).
+- Get this look (Style and music page): E.lookPieces(ev) lists what to buy (Amazon/Etsy searches) or hire (links to Vendors), in this order: host's own words (PIECE_WORDS, nearest color wins), photo marks (LOVE_PIECES), then the photo's pieces (tools_inspo.py PIECES), the AI concept's pieces (worker returns "pieces"), or D.STYLE_PIECES.
