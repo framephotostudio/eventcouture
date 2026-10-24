@@ -465,3 +465,9 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 @media (max-width: 420px) { .confirm .crow { grid-template-columns: 1fr; gap: 2px; } }
 /* keep this plan */
 .keep-bar { position: sticky; top: 8px; z-index: 15; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--ink); border-radius: var(--r-md); padding: 12px 14px; margin: 0 0 18px; box-shadow: 0 6px 18px rgba(30, 18, 26, .06); }
+.lock-card { display: grid; gap: 10px; justify-items: start; padding: 16px 18px; border: 1px dashed #D9CFC2; border-radius: var(--r-md); background: var(--tint); }
+.lock-card.big { justify-items: center; text-align: center; padding: 34px 20px; }
+.ghost-rows { display: grid; gap: 7px; width: 100%; }
+.ghost-rows i { display: block; height: 10px; border-radius: 6px; background: linear-gradient(90deg, #E9E3DA, #F1ECE4); }
+.ghost-rows i:nth-child(2) { width: 82%; } .ghost-rows i:nth-child(3) { width: 64%; }
+.keep-bar { position: static; box-shadow: none; }

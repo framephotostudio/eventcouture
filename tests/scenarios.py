@@ -8,7 +8,7 @@ problems = []
 def money(t):
     m = re.search(r'\$([\d,]+)', t); return int(m.group(1).replace(',', '')) if m else None
 
-def run(pg, text, typ, guests, setting, time='18:00', budget=None, alcohol=None, payer=None, guests_first=True):
+def run(pg, text, typ, guests, setting, time='18:00', budget=None, alcohol=None, payer=None, guests_first=True, keep=True):
     pg.goto(U + '#/new/1'); pg.wait_for_timeout(250)
     pg.fill('#text', text); pg.click('#next'); pg.wait_for_timeout(250)
     if guests_first:  # the bug ChatGPT found: typing guests, then choosing the type, reset the number
@@ -25,22 +25,27 @@ def run(pg, text, typ, guests, setting, time='18:00', budget=None, alcohol=None,
     review = pg.inner_text('.confirm')
     pg.click('#go'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(250)
     pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.wait_for_timeout(250)
-    return names, review, pg.inner_text('.plan-head'), pg.url.rstrip('/')
+    head = pg.inner_text('.plan-head'); base = pg.url.rstrip('/')
+    if keep:
+        pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(250)
+    return names, review, head, base
 
 with sync_playwright() as p:
     b = p.chromium.launch(); pg = b.new_page(viewport={'width': 390, 'height': 844})
     errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
 
     # 1. ChatGPT's test: lavender birthday dinner, 10 people, Houston restaurant, $1,000 max, no alcohol
-    names, review, head, base = run(pg, 'lavender birthday dinner for 10, no alcohol', 'birthday', 10, 'restaurant', '19:00', 1000, 'none')
+    names, review, head, base = run(pg, 'lavender birthday dinner for 10, no alcohol', 'birthday', 10, 'restaurant', '19:00', 1000, 'none', keep=False)
     if '10 people invited' not in review: problems.append('1: review lost guest count: ' + review)
     if '10 guests' not in head: problems.append('1: plan shows wrong guests: ' + head)
     if 'brunch' in names.lower(): problems.append('1: name ideas mention brunch: ' + names)
     if money(head) > 1000: problems.append('1: over the $1,000 maximum: ' + head)
     if 'Fits your $1,000 budget' not in head: problems.append('1: budget label: ' + head)
     if not pg.query_selector('#keepBtn'): problems.append('1: no Keep my plan button on a free plan')
-    pg.goto(base + '/budget'); pg.wait_for_timeout(250); t = pg.inner_text('#tab')
-    if re.search(r'beer|wine|cocktail', t, re.I) or 'Non-alcoholic' not in t: problems.append('1: alcohol preference ignored')
+    pg.goto(base + '/timeline'); pg.wait_for_timeout(250)
+    if not pg.query_selector('.lock-card'): problems.append('1: free preview shows the full timeline')
+    pg.goto(base + '/guests'); pg.wait_for_timeout(250)
+    if 'Keep your plan' not in pg.inner_text('#tab'): problems.append('1: guest list open before keeping')
     pg.goto(base + '/extras'); pg.wait_for_timeout(250)
     if '$9.99' not in pg.inner_text('#tab'): problems.append('1: pass for 10 guests is not $9.99')
     pg.goto(base + '/invite'); pg.wait_for_timeout(250); pg.click('#copy'); pg.wait_for_timeout(250)
@@ -49,6 +54,9 @@ with sync_playwright() as p:
         pg.click('#keepPay'); pg.wait_for_timeout(300)
         pg.goto(base); pg.wait_for_timeout(250)
         if pg.query_selector('#keepBtn'): problems.append('1: still asks to keep after keeping')
+        pg.goto(base + '/budget'); pg.wait_for_timeout(250); t = pg.inner_text('#tab')
+        if re.search(r'beer|wine|cocktail', t, re.I) or 'Non-alcoholic' not in t: problems.append('1: alcohol preference ignored')
+        if pg.query_selector('.lock-card'): problems.append('1: budget still locked after keeping')
 
     # 2. restaurant brunch, everyone pays their own
     names, review, head, base = run(pg, 'girls brunch, everyone pays for themselves', 'brunch', 8, 'restaurant', '11:00', None, 'wine', 'own')

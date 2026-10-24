@@ -51,6 +51,13 @@ def run(p, name, viewport, scheme):
     first = page.inner_text('.concept h3')
     if 'Blush' not in first and 'Pastel' not in first: problems.append(f'{name}: first concept {first}')
     page.click('.concept button.gold')
+    page.wait_for_selector('#keepBtn')
+    if 'Keep my plan' not in page.inner_text('main'): problems.append(f'{name}: no keep-my-plan prompt on a free plan')
+    page.goto(page.url.split('#')[0] + '#' + page.url.split('#')[1].rstrip('/') + '/budget'); page.wait_for_timeout(300)
+    if not page.query_selector('.lock-card'): problems.append(f'{name}: free preview shows the whole budget')
+    page.click('#keepBtn'); page.click('#keepPay'); page.wait_for_timeout(300)
+    if page.query_selector('#keepBtn') or page.query_selector('.lock-card'): problems.append(f'{name}: still locked after keeping')
+    page.goto(page.url.rsplit('/budget', 1)[0]); page.wait_for_timeout(300)
     page.wait_for_selector('.tier')
     url = page.url.split('#')[0] + '#' + page.url.split('#')[1]
     evbase = page.url.split('#')[1].rstrip('/')
