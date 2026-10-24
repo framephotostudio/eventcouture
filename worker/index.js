@@ -106,14 +106,21 @@ async function concepts(env, { event = {}, skip = [] }) {
     'Fit every idea to this occasion: no alcohol in any idea when drinks are no alcohol; kid-friendly looks (no nightclub, candles or dark moody themes) for a child\'s birthday; daytime wording for daytime events; nothing a restaurant or private dining room wouldn\'t allow when the setting is restaurant or privateRoom. Use the colors the host named first.\n' +
     `Chosen vibes and colors: ${(event.vibes || []).slice(0, 12).join(', ') || 'none'}. Host notes: ${event.text || 'none'}. Links: ${(event.links || []).join(' ') || 'none'}.\n` +
     `Avoid these concepts already shown: ${skip.join(', ') || 'none'}.\n` +
-    'Return JSON: {"concepts":[{"id":"kebab-id","name":"","styleName":"","palette":["#hex x5"],"mood":"one sentence","decor":["4 items"],"dress":"one specific outfit idea for the person being celebrated (bride, birthday guest of honor, graduate, etc.), under 20 words","menuStyle":"garden|modern|elegant|rustic|coastal|tropical|classic|sweet|party","music":"3-word mood","playlistName":"2 to 4 word playlist name that fits this event and look, e.g. Velvet Lounge or Garden Party Jazz","songs":["25 well-known real songs that fit this event type and look, clean versions only, family-friendly for showers, gender reveals and quinceañeras, romantic songs only for couples events, as Title — Artist"],"fit":"Closest match to your inspiration|A close alternative|A fresh direction","outline":["Arrival: ...","Tables: ...","Moment: ...","Dress code: ..."]}]} with exactly 3 distinct concepts that keep what the host loves and feel luxurious at any budget.' });
+    'Return JSON: {"concepts":[{"id":"kebab-id","name":"","styleName":"","palette":["#hex x5"],"mood":"one sentence","decor":["4 items"],"dress":"one specific outfit idea for the person being celebrated (bride, birthday guest of honor, graduate, etc.), under 20 words","menuStyle":"garden|modern|elegant|rustic|coastal|tropical|classic|sweet|party","music":"3-word mood","fit":"Closest match to your inspiration|A close alternative|A fresh direction","outline":["Arrival: ...","Tables: ...","Moment: ...","Dress code: ..."]}]} with exactly 3 distinct concepts that keep what the host loves and feel luxurious at any budget.' });
   // Ask up to twice; a long or interrupted answer is retried once before failing
   let out = [];
-  for (let attempt = 0; attempt < 2 && out.length < 3; attempt++) {
+  /* Speed: concepts are short, so ask for a quick answer with little or no extended thinking.
+     Newer models take thinkingLevel, older ones thinkingBudget; if a model rejects the setting we ask again without it. */
+  const v = parseFloat((model.match(/gemini-([\d.]+)/) || [0, 0])[1]) || 0;
+  let thinking = v >= 3 ? { thinkingLevel: 'low' } : v >= 2.5 ? { thinkingBudget: 0 } : null;
+  for (let attempt = 0; attempt < 3 && out.length < 3; attempt++) {
+    const gen = { responseMimeType: 'application/json', temperature: 0.8, maxOutputTokens: 4096 };
+    if (thinking) gen.thinkingConfig = thinking;
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_KEY },
-      body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0.8, maxOutputTokens: 12288 } })
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: gen })
     });
+    if (r.status === 400 && thinking) { thinking = null; continue; }
     if (!r.ok) { let why = ''; try { why = (await r.json()).error?.status || ''; } catch (e) {} throw new Error('ai ' + r.status + ' ' + why); }
     const j = await r.json();
     const text = (j.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
@@ -124,7 +131,7 @@ async function concepts(env, { event = {}, skip = [] }) {
     id: String(c.id || '').slice(0, 40), name: String(c.name || '').slice(0, 60), styleName: String(c.styleName || c.name || '').slice(0, 40),
     palette: (c.palette || []).filter(h => hex.test(h)).slice(0, 5), mood: String(c.mood || '').slice(0, 200),
     decor: (c.decor || []).map(String).slice(0, 4), dress: String(c.dress || '').slice(0, 160), menuStyle: String(c.menuStyle || 'party'),
-    music: String(c.music || 'feel-good party').slice(0, 40), playlistName: String(c.playlistName || '').slice(0, 40), songs: (c.songs || []).map(String).filter(x => x.length < 90).slice(0, 25), fit: String(c.fit || ''), outline: (c.outline || []).map(String).slice(0, 4)
+    music: String(c.music || 'feel-good party').slice(0, 40), fit: String(c.fit || ''), outline: (c.outline || []).map(String).slice(0, 4)
   })).filter(c => c.palette.length >= 3 && c.decor.length >= 3);
   if (clean.length < 3) throw new Error('ai shape');
   return clean;

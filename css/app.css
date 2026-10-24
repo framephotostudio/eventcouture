@@ -540,3 +540,13 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .legal-table > div:last-child { border-bottom: 0; }
 .legal-table span { color: var(--muted); font-size: .92rem; }
 @media (min-width: 760px) { .legal-table > div { grid-template-columns: 1fr 1.2fr; gap: 18px; } }
+.loading-concepts { display: flex; align-items: center; gap: 12px; padding: 28px 4px; color: var(--muted); grid-column: 1 / -1; }
+.loading-concepts .spin { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--champagne); animation: ecspin .9s linear infinite; flex: none; }
+@keyframes ecspin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .loading-concepts .spin { animation: none; } }
+/* Spending-level cards never run off a phone screen (they're buttons, which iPhone won't shrink by default) */
+.tiers { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
+.tier { min-width: 0; width: 100%; white-space: normal; overflow-wrap: anywhere; box-sizing: border-box; }
+.tier .pc, .tier .pc li { white-space: normal; }
+.tier-pick { justify-self: start; font-size: .88rem; font-weight: 500; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--ink); color: var(--ink); }
+.tier[aria-pressed="true"] .tier-pick { background: var(--ink); color: var(--on-plum, #fff); }

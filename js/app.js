@@ -115,7 +115,7 @@
     document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600);
   }
   /* Undo: big plan changes show a message with an Undo button for 8 seconds. */
-  var UNDO_KEYS = ['tier', 'exclude', 'include', 'overrides', 'hours', 'guests', 'expected', 'budget', 'alcohol', 'setting', 'city', 'shortlist', 'date', 'time', 'ros'];
+  var UNDO_KEYS = ['tier', 'exclude', 'include', 'overrides', 'hours', 'guests', 'expected', 'budget', 'alcohol', 'setting', 'city', 'shortlist', 'date', 'time', 'ros', 'settingOpen'];
   function snap(ev) { var o = {}; UNDO_KEYS.forEach(function (k) { o[k] = ev[k] === undefined ? undefined : JSON.parse(JSON.stringify(ev[k])); }); return o; }
   function undoToast(ev, before, msg, rerender) {
     clearToasts();
@@ -204,10 +204,17 @@
       VIBE_COLORS.forEach(function (c) { if (vibes.indexOf(c[0]) >= 0) { colors.push(hexRgb(c[1])); colors.push(hexRgb(c[1])); } });
       var text = (ev.inspiration.text || '') + ' ' + vibes.join(' ').toLowerCase() + ' ' + (ev.inspiration.links || []).join(' ');
       if (AI.live) {
-        return fetch(CFG.apiUrl + '/api/concepts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ event: slim(ev), skip: skip || [] }) })
+        /* Started early on the review screen, so the concepts are usually ready when the host taps Create. */
+        var key = JSON.stringify(slim(ev)).length + ':' + JSON.stringify([ev.type, ev.guests, ev.city, ev.budget, ev.setting, ev.time, ev.kids, ev.alcohol, ev.inspiration.text, ev.inspiration.vibes, (ev.inspiration.photos || []).length]);
+        if (!(skip && skip.length) && AI.pre && AI.pre.key === key) return AI.pre.p;
+        var library = function () { AI.source = 'library'; return E.concepts(ev, colors, text, loves, skip); };
+        var call = fetch(CFG.apiUrl + '/api/concepts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ event: slim(ev), skip: skip || [] }) })
           .then(function (r) { if (!r.ok) throw new Error('server'); return r.json(); })
-          .then(function (j) { AI.source = 'ai'; return j.concepts; })
-          .catch(function () { AI.source = 'library'; return E.concepts(ev, colors, text, loves, skip); });
+          .then(function (j) { AI.source = 'ai'; return j.concepts; });
+        /* Never keep a host waiting: after 20 seconds the style library answers instead. */
+        var p = Promise.race([call, new Promise(function (_, no) { setTimeout(function () { no(new Error('slow')); }, 20000); })]).catch(library);
+        if (!(skip && skip.length)) AI.pre = { key: key, p: p };
+        return p;
       }
       AI.source = 'library';
       return Promise.resolve(E.concepts(ev, colors, text, loves, skip));
@@ -526,7 +533,7 @@
         '<label class="field"><span>Expected to attend</span><input class="input num" type="number" min="1" id="expected" value="' + draft.expected + '"></label>' +
         '<label class="field"><span>Maximum budget for the event (USD, optional)</span><input class="input num" type="number" min="0" step="50" id="budget" value="' + (draft.budget || '') + '" placeholder="Leave blank to see typical prices"></label>' +
         '<label class="field"><span>Your starting point for drive times (optional)</span><input class="input" id="start" value="' + esc(draft.start) + '" placeholder="Home, hotel or ceremony address"></label>' +
-        '</div><div class="stack"><h3 id="whereLbl">Where is it? <span class="muted small" style="font-family:var(--body)">(required)</span></h3><span class="muted small">Restaurant: everyone orders from the menu, so we price what the bill will look like, with no venue or catering fees. Event venue: you rent the space and pay food per person, so we price the venue, catering and rentals.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + (draft.setting === st.id) + '">' + esc(st.name) + '</button>'; }).join('') + '</div>' +
+        '</div><div class="stack"><h3 id="whereLbl">Where is it? <span class="muted small" style="font-family:var(--body)">(required)</span></h3><span class="muted small">Restaurant: everyone orders from the menu, so we price what the bill will look like, with no venue or catering fees. Event venue: you rent the space and pay food per person, so we price the venue, catering and rentals. Not sure yet? Choose it and your plan compares every option for you.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + (draft.setting === st.id && !draft.settingOpen) + '">' + esc(st.name) + '</button>'; }).join('') + '<button type="button" class="chip" data-v="unsure" aria-pressed="' + !!draft.settingOpen + '">Not sure yet</button>' + '</div>' +
         '<label class="row small"><input type="checkbox" id="kids"' + (draft.kids ? ' checked' : '') + '> Children will attend</label></div>' +
         '<div class="grid2"><div class="stack"><h3 id="alcLbl">Drinks</h3><div class="chips" id="alcohol" role="group" aria-labelledby="alcLbl">' + [['none', 'No alcohol'], ['wine', 'Beer and wine'], ['full', 'Full bar or cocktails']].map(function (o) { return '<button type="button" class="chip" data-v="' + o[0] + '" aria-pressed="' + ((draft.alcohol || defaultAlcohol(draft.type, draft.inspiration && draft.inspiration.text)) === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div>' +
         '<div class="stack"><h3 id="payLbl">Who\u2019s paying?</h3><div class="chips" id="payer" role="group" aria-labelledby="payLbl">' + [['host', 'I\u2019m hosting and paying'], ['own', 'Everyone pays their own'], ['shared', 'We\u2019re splitting the cost']].map(function (o) { return '<button type="button" class="chip" data-v="' + o[0] + '" aria-pressed="' + ((draft.payer || 'host') === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div></div>' +
@@ -558,7 +565,7 @@
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
         draft.type = $('#type').value; draft.nameAuto = !$('#name').value.trim() || draft.nameAuto && $('#name').value.trim() === draft.name; draft.name = $('#name').value.trim() || (suggestNames(draft, draft.type)[0]) || E.typeOf(draft.type).name; draft.city = !$('#city').value ? '' : $('#city').value === 'Other US city' ? ($('#cityOther').value.trim() || 'Other US city') : $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || defaultTime(draft.type);
         draft.hours = Math.max(1, +$('#hours').value || 3); draft.guests = g; draft.expected = ex || g; draft.budget = Math.max(0, +$('#budget').value || 0); draft.start = $('#start').value.trim();
-        var sb = $('#setting [aria-pressed="true"]'); draft.setting = sb ? sb.dataset.v : null; draft.kids = $('#kids').checked; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
+        var sb = $('#setting [aria-pressed="true"]'); draft.settingOpen = !!(sb && sb.dataset.v === 'unsure'); draft.setting = sb ? (draft.settingOpen ? 'indoor' : sb.dataset.v) : null; draft.kids = $('#kids').checked; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
         var ab = $('#alcohol [aria-pressed="true"]'); draft.alcohol = ab ? ab.dataset.v : defaultAlcohol(draft.type, draft.inspiration && draft.inspiration.text);
         var pb = $('#payer [aria-pressed="true"]'); draft.payer = pb ? pb.dataset.v : 'host';
       }
@@ -583,7 +590,7 @@
     var setName = (D.SETTINGS.find(function (x) { return x.id === draft.setting; }) || {}).name || 'Not chosen';
     var rowsHtml = [
       ['Event', esc(E.typeOf(draft.type).name) + (draft.name && draft.name !== E.typeOf(draft.type).name ? ' · ' + esc(draft.name) : '')],
-      ['Where', esc(setName) + ', ' + esc(draft.city)],
+      ['Where', (draft.settingOpen ? 'Not decided yet: your plan compares a restaurant, a venue, outdoors and home' : esc(setName)) + ', ' + esc(draft.city)],
       ['When', draft.date ? esc(fmtDate(draft.date)) + ' at ' + esc(fmtTime(draft.time)) : 'Date not set yet, ' + esc(fmtTime(draft.time))],
       ['People', draft.guests.toLocaleString('en-US') + (draft.guests === 1 ? ' person' : ' people') + ' invited' + (draft.expected && draft.expected !== draft.guests ? ', about ' + draft.expected.toLocaleString('en-US') + ' expected' : '') + (draft.kids ? ', children attending' : '')],
       ['Budget', draft.budget ? 'Up to ' + money(draft.budget) + ' for the event' : 'No limit set; you’ll see three spending levels'],
@@ -597,6 +604,7 @@
       '<p class="muted small">Planning is free. You only pay if you want to keep your plan and share it with guests.</p>' +
       '<div class="wiz-act"><button class="btn gold" id="go">Create my concepts</button><a class="btn ghost" href="' + W + '2/' + draft.id + '">Edit details</a>' + laterBtn() + '</div></div>');
     $('#later').addEventListener('click', function () { persist(); location.hash = '#/events'; setTimeout(function () { toast('Saved. Pick it up anytime from My events.'); }, 80); });
+    if (AI.live) AI.concepts(draft, []);   /* start the AI now; it's usually ready by the time the host taps Create */
     $('#go').addEventListener('click', function () {
       var btn = this; if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Starting…';   // no double submits
       var ev = draft; ev.paid = null; ev.created = ev.created || new Date().toISOString().slice(0, 10);
@@ -609,9 +617,12 @@
   /* ---------- concepts ---------- */
   function conceptsView(id) {
     var ev = getEvent(id); if (!ev) return notFound();
-    frame('<div class="stack-lg"><div class="stack"><h2>Three looks for ' + (ev.nameAuto ? 'your ' + esc(E.typeOf(ev.type).name.toLowerCase().replace(/^girls' /, 'girls\u2019 ')) : esc(ev.name)) + '</h2><p class="muted">Each look has its own colors, atmosphere and decor. Pick one to see what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">' + (function () { var ins = ev.inspiration || {}, src = []; if ((ins.photos || []).length) src.push('your photos'); if (ins.text) src.push('your description'); if ((ins.vibes || []).length) src.push('the colors and vibes you picked'); return src.length ? 'Built from ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' and ' + src[src.length - 1] : src[0]) + '.' : 'Built from your event details.'; })() + '</p></div><div id="cs" class="concepts"><p class="muted">Reading your inspiration…</p></div>' +
+    frame('<div class="stack-lg"><div class="stack"><h2>Three looks for ' + (ev.nameAuto ? 'your ' + esc(E.typeOf(ev.type).name.toLowerCase().replace(/^girls' /, 'girls\u2019 ')) : esc(ev.name)) + '</h2><p class="muted">Each look has its own colors, atmosphere and decor. Pick one to see what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">' + (function () { var ins = ev.inspiration || {}, src = []; if ((ins.photos || []).length) src.push('your photos'); if (ins.text) src.push('your description'); if ((ins.vibes || []).length) src.push('the colors and vibes you picked'); return src.length ? 'Built from ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' and ' + src[src.length - 1] : src[0]) + '.' : 'Built from your event details.'; })() + '</p></div><div id="cs" class="concepts"><div class="loading-concepts" role="status"><span class="spin" aria-hidden="true"></span><span id="lmsg">Reading your inspiration…</span></div></div>' +
       '<p class="small muted" id="srcNote" hidden></p><div class="row"><button class="btn ghost" id="more">Show three different concepts</button><span class="muted small">You can see three new looks once, free.</span></div></div>');
+    var msgs = ['Reading your inspiration…', 'Choosing colors and decor…', 'Matching the look to your event…', 'Almost ready…'], mi = 0;
+    var tick = setInterval(function () { var m = $('#lmsg'); if (!m) return clearInterval(tick); mi = Math.min(msgs.length - 1, mi + 1); m.textContent = msgs[mi]; }, 2500);
     function render(list) {
+      clearInterval(tick);
       $('#cs').innerHTML = list.map(function (c, i) {
         var sel = ev.concept && ev.concept.id === c.id;
         return '<article class="concept' + (sel ? ' selected' : '') + '">' + '<div class="in"><span class="concept-num">Concept ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(moodFor(c, ev)) + '</p><ul>' + outlineFor(c, ev).map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
@@ -734,13 +745,28 @@
     });
     var wh = $('#where'); if (wh) wh.addEventListener('click', function () {
       sheet('<h3>Where is it?</h3><p class="muted">Prices, venues, checklist and timeline update to match.</p><div class="stack">' + D.SETTINGS.map(function (st) { return '<button class="btn ' + (st.id === (ev.setting || 'indoor') ? 'gold' : 'ghost') + ' block" data-set="' + st.id + '">' + esc(st.name) + '</button>'; }).join('') + '</div><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
-        el.addEventListener('click', function (e) { var bt = e.target.closest('[data-set]'); if (!bt) return; var bf = snap(ev); ev.setting = bt.dataset.set; if (ev.setting === 'restaurant' && ev.hours > 3) ev.hours = 2; save(); close(); planView(ev, tab); undoToast(ev, bf, 'Updated for ' + settingName(ev).toLowerCase(), function () { planView(ev, tab); }); });
+        el.addEventListener('click', function (e) { var bt = e.target.closest('[data-set]'); if (!bt) return; var bf = snap(ev); ev.setting = bt.dataset.set; ev.settingOpen = false; if (ev.setting === 'restaurant' && ev.hours > 3) ev.hours = 2; save(); close(); planView(ev, tab); undoToast(ev, bf, 'Updated for ' + settingName(ev).toLowerCase(), function () { planView(ev, tab); }); });
       });
     });
     var bind = TAB_BIND[tab]; if (bind && !lockedTab) bind(ev, save, function () { planView(ev, tab); });
     $$('[data-keep]').forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { planView(ev, tab); }); }); });
   }
-  function settingName(ev) { var st = D.SETTINGS.find(function (x) { return x.id === (ev.setting || 'indoor'); }); return st ? st.short : 'Event venue'; }
+  /* "Not sure yet": compare every place the event could happen, priced for this plan, and let the host pick. */
+  function whereCompare(ev) {
+    var g = ev.guests || 0;
+    var opts = [['restaurant', 'Restaurant, ordering from the menu', 'No venue, catering or setup; simplest and often cheapest.', 'Table decor only; group size limits.', g <= 40],
+      ['privateRoom', 'Private room at a restaurant', 'Food, service and a room in one booking.', 'Food and drink minimums and a set end time.', g <= 150],
+      ['indoor', 'Event venue', 'Full control of decor, music and dancing.', 'You book catering, rentals and setup.', true],
+      ['outdoor', 'Outdoors', 'Big, beautiful space and great photos.', 'Needs a tent, restrooms, power and a rain plan.', true],
+      ['home', 'At home', 'No venue cost and the most personal.', 'Setup, cleanup and parking fall on you.', g <= 150]].filter(function (o) { return o[4]; });
+    var rows = opts.map(function (o) { var t = Object.assign({}, ev, { setting: o[0] }); return { id: o[0], name: o[1], pro: o[2], con: o[3], total: E.budget(t, t.tier).total }; }).sort(function (a, b) { return a.total - b.total; });
+    return '<div class="panel stack where-compare"><h3>Where should you host it?</h3><p class="muted small">You haven\u2019t decided yet, so here is this same plan priced in each kind of place. Your plan uses an event venue until you choose.</p><div class="list">' +
+      rows.map(function (r) { return '<div class="it"><div class="grow"><b>' + esc(r.name) + '</b> <span class="num">about ' + money(r.total) + '</span>' + (ev.budget ? (r.total <= ev.budget ? ' <span class="badge ok">Fits your budget</span>' : '') : '') + '<div class="small muted">Pros: ' + esc(r.pro) + ' Cons: ' + esc(r.con) + '</div></div><span class="acts"><button class="btn small ghost" data-pickwhere="' + r.id + '">Choose</button></span></div>'; }).join('') + '</div></div>';
+  }
+  function bindWhere(ev, rerender) {
+    $$('[data-pickwhere]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; var bf = snap(ev); bf.settingOpen = true; ev.setting = bt.dataset.pickwhere; ev.settingOpen = false; if ((ev.setting === 'restaurant' || ev.setting === 'privateRoom') && ev.hours > 3) ev.hours = ev.setting === 'restaurant' ? 2 : 3; saveEvent(ev); rerender(); undoToast(ev, bf, 'Planned for ' + settingName(ev).toLowerCase(), rerender); }); });
+  }
+  function settingName(ev) { if (ev.settingOpen) return 'Not decided yet'; var st = D.SETTINGS.find(function (x) { return x.id === (ev.setting || 'indoor'); }); return st ? st.short : 'Event venue'; }
 
   function lockSample(ev) { if (ev.sample) { toast('This is a sample. Start your own plan to make changes.'); return true; } return false; }
 
@@ -751,10 +777,10 @@
     var all = E.allBudgets(ev);
     if (ev.budget) all = [E.budgetFit(ev)];   /* with a budget, one clear answer; the three levels stay available below */
     var g = E.guardian(ev, b);
-    return '<div class="stack"><h3>' + (ev.budget ? 'Your plan' : 'Your budget versions') + '</h3><p class="muted">' + (ev.budget ? (all[0] && all[0].shortBy && all[0].shortBy <= ev.budget * 0.1 ? 'Your plan comes to ' + money(all[0].total) + ', about ' + money(all[0].shortBy) + ' over your ' + money(ev.budget) + ' maximum. One of the swaps below brings it under.' : all[0] && all[0].shortBy ? (/^[aeiou]/i.test(E.typeOf(ev.type).name) ? 'An ' : 'A ') + esc(E.typeOf(ev.type).name.toLowerCase()) + ' for ' + plural(ev.guests, 'guest') + ' usually costs more than ' + money(ev.budget) + ' in ' + esc(ev.city.split(',')[0]) + '. This is the closest plan, kept as lean as the look allows. The budget guardian below shows ways to close the gap, like fewer guests or a different setting.' : 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there.') + ' <button class="link small" id="cmpLevels">Compare spending levels</button>' : '') + (ev.budget ? '' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
+    return (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.budget ? 'Your plan' : 'Your budget versions') + '</h3><p class="muted">' + (ev.budget ? (all[0] && all[0].shortBy && all[0].shortBy <= ev.budget * 0.1 ? 'Your plan comes to ' + money(all[0].total) + ', about ' + money(all[0].shortBy) + ' over your ' + money(ev.budget) + ' maximum. One of the swaps below brings it under.' : all[0] && all[0].shortBy ? (/^[aeiou]/i.test(E.typeOf(ev.type).name) ? 'An ' : 'A ') + esc(E.typeOf(ev.type).name.toLowerCase()) + ' for ' + plural(ev.guests, 'guest') + ' usually costs more than ' + money(ev.budget) + ' in ' + esc(ev.city.split(',')[0]) + '. This is the closest plan, kept as lean as the look allows. The budget guardian below shows ways to close the gap, like fewer guests or a different setting.' : 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there.') + ' <button class="link small" id="cmpLevels">Compare spending levels</button>' : '') + (ev.budget ? '' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
       all.map(function (t) { var pc = E.prosCons(ev, t);
-        return '<button class="tier" data-tier="' + t.tier.id + '" aria-pressed="' + (t.tier.id === ev.tier) + '"><span class="muted small">' + esc(t.tier.name) + '</span><span class="amt num">' + money(t.total) + '</span><span class="small muted">estimated</span><span class="small muted">' + (ev.setting === 'restaurant' ? 'About ' + money(t.perGuest) + ' a person all in: the menu bill, cake and table decor, with a 10% cushion' : money(t.perGuest) + ' per guest, includes a 10% cushion') + '</span>' +
-          '<div class="pc"><b>Pros</b><ul>' + pc.pros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><b>Cons</b><ul>' + pc.cons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></button>'; }).join('') + '</div></div>' +
+        return '<button class="tier" data-tier="' + t.tier.id + '" aria-pressed="' + (t.tier.id === ev.tier) + '"><span class="muted small">' + esc(t.tier.name) + '</span><span class="amt num">' + money(t.total) + '</span><span class="small muted">estimated</span><span class="small muted">' + (ev.setting === 'restaurant' ? 'About ' + money(t.perGuest) + ' a person all in: the menu bill, cake and table decor, with a 10% cushion' : 'Includes a 10% cushion for surprises') + '</span>' +
+          '<div class="pc"><b>Pros</b><ul>' + pc.pros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><b>Cons</b><ul>' + pc.cons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' + (all.length > 1 ? '<span class="tier-pick">' + (t.tier.id === ev.tier ? '\u2713 Your plan uses this version' : 'Use this version') + '</span>' : '') + '</button>'; }).join('') + '</div></div>' +
       (g.over > 0 ? '<div class="panel stack"><div class="row" style="justify-content:space-between"><h3>Budget guardian</h3><span class="badge bad">' + money(g.over) + ' over</span></div><p class="muted">These swaps keep the look and bring the total down.</p><div class="list">' +
         g.swaps.map(function (s, i) { return '<div class="it"><span class="grow">' + esc(s.text) + '</span>' + (s.save ? '<span class="num muted">saves about ' + money(s.save) + '</span>' : '') + '<button class="btn small ghost" data-swap="' + i + '">Apply</button></div>'; }).join('') + '</div></div>' : '') +
       '<div class="panel stack"><h3>Ask the concierge</h3><p class="muted small">Type a change in plain words, like “make it 25 guests”, “budget $3,000”, “move it outdoors”, “skip the photographer” or “add a photo booth”.</p>' +
@@ -762,13 +788,14 @@
       '<div class="panel stack"><h3>Your concept</h3>' + dots(ev.concept.palette, ev.concept.styleName + ' colors') + '<p>' + esc(moodFor(ev.concept, ev)) + '</p><ul class="incl">' + decorFor(ev.concept, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' + dressBlock(ev, 'muted small') + (ev.sample ? '' : '<div><a class="btn ghost small" href="#/e/' + ev.id + '/concepts">Change concept</a></div>') + '</div>';
   };
   TAB_BIND.overview = function (ev, save, rerender) {
+    bindWhere(ev, rerender);
     var cl = $('#cmpLevels'); if (cl) cl.addEventListener('click', function () {
       var levels = E.allBudgets(ev);
       sheet('<h3>Spending levels for this look</h3><p class="muted">The same concept at three levels, for comparison. Your plan stays within your maximum unless you pick one of these.</p>' + levels.map(function (t) { return '<div class="it"><span class="grow"><b>' + esc(t.tier.name) + '</b><span class="muted small"> ' + esc(t.tier.blurb) + '</span></span><span class="num">about ' + money(t.total) + '</span><button class="btn small ghost" data-pick="' + t.tier.id + '">Use</button></div>'; }).join('') + '<button class="btn ghost block" data-pick="F">Keep my budget plan</button>', function (el, close) {
         el.addEventListener('click', function (e) { var bt = e.target.closest('[data-pick]'); if (!bt) return; var bf = snap(ev); ev.tier = bt.dataset.pick; save(); close(); rerender(); if (bf.tier !== ev.tier) undoToast(ev, bf, 'Switched to ' + tierName(ev.tier), rerender); });
       });
     });
-    $$('[data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { var bf = snap(ev); ev.tier = btn.dataset.tier; save(); rerender(); if (bf.tier !== ev.tier) undoToast(ev, bf, 'Switched to ' + tierName(ev.tier), rerender); }); });
+    $$('[data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { var bf = snap(ev); ev.tier = btn.dataset.tier; save(); rerender(); if (bf.tier !== ev.tier) undoToast(ev, bf, 'Your plan now uses ' + tierName(ev.tier) + ': ' + money(E.budget(ev, ev.tier).total), rerender); }); });
     var g = E.guardian(ev, E.budget(ev, ev.tier));
     $$('[data-swap]').forEach(function (btn) { btn.addEventListener('click', function () {
       if (lockSample(ev)) return;
@@ -947,7 +974,7 @@
     var filters = '<form class="panel venue-filter" id="vfilter"><label class="field"><span>Area or neighborhood (optional)</span><input class="input" id="varea" value="' + esc(ev.area || '') + '" placeholder="e.g. Uptown, The Woodlands, Downtown"></label>' +
       '<label class="field"><span>Your starting point, for drive times (optional)</span><input class="input" id="start" value="' + esc(ev.start || '') + '" placeholder="Home, hotel or ceremony address"></label>' +
       '<div><button class="btn small">Apply</button></div></form>';
-    return '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' + filters +
+    return (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' + filters +
       '<p class="small muted">' + (AI.live ? 'Tap View venues to see top-rated places in ' + esc(city) + '. Open any one to see photos, hours and contact details, then reach out to schedule a tour. ' : '') + 'Every list is matched to ' + (b.tier.id === 'F' ? 'your budget' : 'your ' + esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[venueLevel(ev, b)]) + ' level') + ': well-reviewed, polished places only, never budget chains.</p>' +
       (AI.live ? '' : '<div class="note">Live venue photos, ratings, hours and drive times appear here when venue search is connected at launch. For now, each idea opens a live map search.</div>') +
       '<div class="list panel">' + types.map(function (v) {
@@ -1006,7 +1033,7 @@
     return m[v] || ['fits your guest count', 'check what is included'];
   }
   TAB_BIND.places = function (ev, save, rerender) {
-    bindSave(ev, $('#tab'));
+    bindSave(ev, $('#tab')); bindWhere(ev, rerender);
     $$('[data-live]').forEach(function (btn) { btn.addEventListener('click', function () {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; }); ev.lastVenue = btn.dataset.live;
       var box = document.querySelector('.live-res[data-for="' + btn.dataset.live.replace(/"/g, '') + '"]') || $('#live'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding venues\u2026</p>';
