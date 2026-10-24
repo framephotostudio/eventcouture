@@ -4,7 +4,7 @@ compatibility_date = "2026-09-01"
 
 [vars]
 # Websites allowed to call this server (add the final domain when it's chosen)
-ALLOWED_ORIGINS = "https://framephotostudio.github.io,capacitor://localhost,https://localhost"
+ALLOWED_ORIGINS = "https://facecouture.app,https://www.facecouture.app,https://framephotostudio.github.io,capacitor://localhost,https://localhost"
 # About $20 a month across AI and venue lookups; calls stop for the day once reached
 DAILY_CAP_USD = "0.66"
 GEMINI_MODEL = "gemini-2.5-flash"
