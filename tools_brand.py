@@ -1,7 +1,7 @@
 # Builds every brand asset from the two approved artworks (no redrawing): python3 tools_brand.py
 import os, io
 from PIL import Image, ImageFilter, ImageDraw
-SRC_ICON = 'brand-src/ec-icon-original.png'; SRC_LOGO = 'brand-src/logo-original.png'
+SRC_ICON = 'brand-src/ec-icon-original.png'; SRC_LOGO = 'brand-src/logo-defined.png'  # approved logo with the Couture script defined (tools_couture.py)
 OUT = 'img/brand'; os.makedirs(OUT, exist_ok=True)
 for d in ['ios', 'android', 'web', 'store', 'splash']: os.makedirs(f'{OUT}/{d}', exist_ok=True)
 icon = Image.open(SRC_ICON).convert('RGB'); logo = Image.open(SRC_LOGO).convert('RGB')
