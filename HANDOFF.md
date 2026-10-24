@@ -163,3 +163,10 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 ## 0.25.0: analytics; three truly different concepts
 - js/analytics.js: GA4, same property as Face Couture (G-JNY27DLF0Z); every event has app_name=event_couture. Only on facecouture.app, off with Do Not Track / Global Privacy Control. Page titles and addresses are replaced with clean paths (/eventcouture/plan/budget), so event names and ids never reach Google. Funnel: page_view, inspiration_filter/open/used, details_done, concepts_requested, concepts_shown (source ai|library, wait_seconds), concept_chosen, plan_kept, shop_click, venues_view, new_venue_click, song_play, face_couture_click, rsvp_sent, vendor_listing_published, event_deleted and more. Test: tests/analytics.py.
 - E.withInspo now cleans AI concepts (no drink words as colors/names), drops repeats of the chosen photo or of each other, and tops up from the library so there are always 3 different looks.
+
+## 0.26.0: second independent review (16 issues fixed)
+- AI answers are untrusted: E.withInspo -> cleanConcept(c, i, ev) rebuilds each concept from plain text and hex colors only (no img/inspo/links), fills missing fields, swaps every drink word in names (swapDrinks: champagne->soft gold, mimosa->citrus, rosé->blush...), drops alcohol lines at no-alcohol events and nightclub/candle/dark looks at kids' parties.
+- Always 3 different looks: repeats by name/id, the photo, and anything already shown (ev.seenLooks) are dropped; topped up from a 12-look library list.
+- Photo names follow the host's occasion (E.inspoName). Her own colors lead in the library match too (E.wordsDiffer).
+- Thumb src escaped; analytics city is a list city or "Other US city"; photo-swap target reset on every route; new photo drafts are saved only when the host continues; kids flag follows the occasion; long words wrap.
+- Test: tests/ai_chaos.py (fake AI answers: code injection, drink names, kids club looks, broken fields, repeats, long words, photo flows).

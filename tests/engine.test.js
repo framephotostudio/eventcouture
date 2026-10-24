@@ -156,3 +156,11 @@ console.log(n + ' checks passed');
   if (out.length !== 3 || new Set(names).size !== 3 || names.filter(n => /lavender garden/i.test(n)).length !== 1 || names.some(n => /champagne/i.test(n)) || out[0].inspo !== 'lavender-garden-shower') { console.error('FAIL three different looks', names); process.exit(1); }
   console.log('ok three different looks with no drink names');
 }
+{
+  const E3 = globalThis.EC_ENGINE;
+  const n = E3.lookPieces({ type: 'birthday', inspiration: { text: 'pastel colored napkins, multicolored candles, fresh flowered runners' } }, { id: 'x' }).map(p => p.name).join('|');
+  if (/Red /.test(n)) { console.error('FAIL color inside a word', n); process.exit(1); }
+  const k = E3.lookPieces({ type: 'kids-birthday', kids: true, inspiration: { text: 'lanterns and candles' } }, { id: 'x' });
+  if (k.some(p => /candle/i.test(p.name + ' ' + p.q))) { console.error('FAIL candles at a kids party', k); process.exit(1); }
+  console.log('ok shopping colors and kids pieces');
+}

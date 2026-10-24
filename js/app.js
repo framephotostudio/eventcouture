@@ -14,7 +14,7 @@
   function uid() { return Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4); }
   function sw(p) { return '<div class="swatch" aria-hidden="true">' + p.map(function (c) { return '<i style="background:' + esc(c) + '"></i>'; }).join('') + '</div>'; }
   /* Small palette dots: the photo carries the mood, the dots name the colors. */
-  function dots(p, label) { return '<span class="dots" role="img" aria-label="' + esc(label || 'Color palette') + '">' + p.slice(0, 5).map(function (c) { return '<i style="background:' + esc(c) + '"></i>'; }).join('') + '</span>'; }
+  function dots(p, label) { p = Array.isArray(p) ? p.filter(function (c) { return /^#[0-9a-f]{3,8}$/i.test(c); }) : []; return '<span class="dots" role="img" aria-label="' + esc(label || 'Color palette') + '">' + p.slice(0, 5).map(function (c) { return '<i style="background:' + esc(c) + '"></i>'; }).join('') + '</span>'; }
   /* Curated inspiration photos (AI-generated samples). Matched by style and, where the scene is event-specific, by event type. */
   var IMG = 'img/events/', INSPO_IMG = 'img/inspo/';
   var PHOTOS = [
@@ -50,7 +50,7 @@
   /* At a restaurant only table-sized decor makes sense: no backdrops, arches or dessert tables. */
   var BIG_DECOR = /backdrop|arch|installation|garland|lounge|neon|cloud|tower|wall|dessert table|bar setup|signage|runway|hanging|marquee|dance floor|photo/i;
   /* Drinks follow the host's choice everywhere: no champagne towers or martinis at an alcohol-free event. */
-  var ALC = /martini|spritz|mimosa|\bwine\b|cocktail|sangria|margarita|champagne|prosecco|\bbeer\b|bourbon|whiskey|tequila|rum punch|bellini|negroni|old fashioned|bar setup|bar cart/i;
+  var ALC = /bartender|bottle service|ros\u00e9|whiske?y|martini|spritz|mimosa|\bwine\b|cocktail|sangria|margarita|champagne|prosecco|\bbeer\b|bourbon|whiskey|tequila|rum punch|bellini|negroni|old fashioned|bar setup|bar cart/i;
   var HARD = /martini|cocktail|margarita|bourbon|whiskey|tequila|negroni|old fashioned|rum punch/i;
   function drinkSafe(list, ev, kind) {
     if (!ev || !ev.alcohol || ev.alcohol === 'full') return list;
@@ -108,7 +108,7 @@
       (look ? '<p class="' + (cls || '') + '"><b>For ' + esc(honoree(ev)) + ':</b> ' + esc(look.charAt(0).toUpperCase() + look.slice(1)) + '</p>' : '');
   }
   function srcOf(u) { return (window.EC_EMBED && window.EC_EMBED[u]) || u; }
-  function thumb(photo, cls) { return photo ? '<div class="thumb ' + (cls || '') + '"><img src="' + srcOf(photo.src) + '" alt="' + esc(photo.alt) + '" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' + (photo.ai ? AI_TAG : '') + '</div>' : ''; }
+  function thumb(photo, cls) { return photo ? '<div class="thumb ' + (cls || '') + '"><img src="' + esc(srcOf(photo.src)) + '" alt=""' + esc(photo.alt) + '" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' + (photo.ai ? AI_TAG : '') + '</div>' : ''; }
   /* Every AI-made picture says so, so no one mistakes it for a real event we organized. */
   var AI_TAG = '<span class="ai-tag">AI-generated inspiration</span>';
   function fmtDate(d) { if (!d) return 'Date not set'; var x = new Date(d + 'T12:00:00'); return x.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }); }
@@ -211,8 +211,8 @@
       VIBE_COLORS.forEach(function (c) { if (vibes.indexOf(c[0]) >= 0) { colors.push(hexRgb(c[1])); colors.push(hexRgb(c[1])); } });
       var text = (ev.inspiration.text || '') + ' ' + vibes.join(' ').toLowerCase() + ' ' + (ev.inspiration.links || []).join(' ');
       /* A chosen inspiration photo counts like the host's own photo; her own words come first, so they win. */
-      var ip = E.inspoOf(ev); if (ip) { ip.palette.forEach(function (h) { colors.push(hexRgb(h)); }); text += ' ' + E.inspoText(ip).toLowerCase(); }
-      var fin = function (list) { return E.withInspo(ev, list, skip, E.concepts(ev, colors, text, loves, (skip || []).concat((list || []).map(function (c) { return c.id; })))); };
+      var ip = E.inspoOf(ev); if (ip && !E.wordsDiffer(ev, ip)) { ip.palette.forEach(function (h) { colors.push(hexRgb(h)); }); text += ' ' + E.inspoText(ip).toLowerCase(); }
+      var fin = function (list) { return E.withInspo(ev, list, skip, E.concepts(ev, colors, text, loves, (skip || []).concat((Array.isArray(list) ? list : []).map(function (c) { return c && c.id; })), 12)); };
       if (AI.live) {
         /* Started early on the review screen, so the concepts are usually ready when the host taps Create. */
         var key = JSON.stringify(slim(ev)).length + ':' + JSON.stringify([ev.inspiration.inspo || '', ev.type, ev.guests, ev.city, ev.budget, ev.setting, ev.time, ev.kids, ev.alcohol, ev.inspiration.text, ev.inspiration.vibes, (ev.inspiration.photos || []).length]);
@@ -283,6 +283,7 @@
   var draft = null, pendingDraft = null;
   function route() {
     var h = (location.hash || '#/').slice(1); var p = h.split('/').filter(Boolean);
+    if (p[0] !== 'inspiration') inspoFor_ = null;   /* only the "choose a different photo" page swaps a photo on an existing draft */
     try {
       if (!p.length) return home();
       if (p[0] === 'new') return wizard(+(p[1] || 1), p[2]);
@@ -318,7 +319,7 @@
   function inspoFor(type) { return type ? INSPO.filter(function (p) { return p.types.indexOf(type) >= 0; }).sort(function (a, b) { return a.types.indexOf(type) - b.types.indexOf(type); }) : INSPO_MIX; }
   function inspoCards(type, limit) {
     var list = inspoFor(type), shown = limit ? list.slice(0, limit) : list;
-    return shown.map(function (p) { return '<button type="button" class="icard" data-inspo="' + p.id + '" aria-label="' + esc(p.name) + ', AI-generated inspiration photo"><div class="thumb"><img src="' + srcOf(INSPO_IMG + 'sm/' + p.id + '.jpg') + '" alt="' + esc(p.alt) + '" loading="lazy">' + AI_TAG + '</div><span class="iname">' + esc(p.name) + '</span></button>'; }).join('') +
+    return shown.map(function (p) { return '<button type="button" class="icard" data-inspo="' + p.id + '" aria-label="' + esc(E.inspoName(p, type)) + ', AI-generated inspiration photo"><div class="thumb"><img src="' + srcOf(INSPO_IMG + 'sm/' + p.id + '.jpg') + '" alt="' + esc(p.alt) + '" loading="lazy">' + AI_TAG + '</div><span class="iname">' + esc(E.inspoName(p, type)) + '</span></button>'; }).join('') +
       (limit && list.length > limit ? '<a class="icard more" href="#/inspiration' + (type ? '/' + type : '') + '"><span>See all ' + list.length + (type ? ' ' + esc(E.typeOf(type).name.toLowerCase().replace(/christmas/, 'Christmas')) : '') + ' photos</span></a>' : '');
   }
   function inspoGallery(type, limit) {
@@ -336,12 +337,12 @@
     var p = INSPO.find(function (x) { return x.id === id; }); if (!p) return;
     var pick = type && p.types.indexOf(type) >= 0 ? type : p.types[0];
     sheet('<div class="thumb ibig"><img src="' + srcOf(INSPO_IMG + p.id + '.jpg') + '" alt="' + esc(p.alt) + '">' + AI_TAG + '</div>' +
-      '<div class="stack"><h3>' + esc(p.name) + '</h3>' + dots(p.palette, p.name + ' colors') + '<p class="muted">' + esc(p.mood) + '</p></div>' +
+      '<div class="stack"><h3 id="iname">' + esc(E.inspoName(p, pick)) + '</h3>' + dots(p.palette, p.name + ' colors') + '<p class="muted">' + esc(p.mood) + '</p></div>' +
       '<div class="stack"><b class="small">In this photo</b><ul class="incl">' + p.decor.map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul></div>' +
       '<div class="stack"><b class="small" id="iforLbl">Plan it for</b><div class="chips" id="ifor" role="group" aria-labelledby="iforLbl">' + p.types.map(function (t) { return '<button type="button" class="chip" data-t="' + t + '" aria-pressed="' + (t === pick) + '">' + esc(E.typeOf(t).name) + '</button>'; }).join('') + '</div><span class="muted small">Planning something else? Choose any occasion on the next steps.</span></div>' +
       '<p class="muted small">Your concepts, decor, shopping list, menu and playlist follow this photo. Next, add anything you want different, like colors, guest count or budget. Your words always win.</p>' +
       '<button class="btn gold block" id="useInspo">Use this inspiration</button><button class="btn ghost block" data-close>Keep browsing</button>', function (el, close) {
-      $('#ifor', el).addEventListener('click', function (e) { var b = e.target.closest('[data-t]'); if (!b) return; pick = b.dataset.t; $$('#ifor [data-t]', el).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
+      $('#ifor', el).addEventListener('click', function (e) { var b = e.target.closest('[data-t]'); if (!b) return; pick = b.dataset.t; $('#iname', el).textContent = E.inspoName(p, pick); $$('#ifor [data-t]', el).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
       $('#useInspo', el).addEventListener('click', function () { T('inspiration_used', { photo: p.id, occasion: pick }); close(); startFromInspo(p, pick); });
     });
   }
@@ -353,8 +354,8 @@
     if (d.type !== type) { d.type = type; d.hours = tt.hours; if (!d.guestsTouched) d.guests = d.expected = tt.defaultGuests; }
     d.typeChosen = true;
     if (!d.settingChosen) { d.setting = p.setting; if ((d.setting === 'restaurant' || d.setting === 'privateRoom') && d.hours > 3) d.hours = 3; }
-    if (type === 'kids-birthday') d.kids = true;
-    if (!saveDraft(d)) return;
+    if (type === 'kids-birthday') d.kids = true; else if (!d.kidsTouched) d.kids = false;
+    if (keep) { if (!saveDraft(d)) return; } else pendingDraft = d;   /* a new draft is saved only once the host continues, so Back never leaves empty drafts */
     location.hash = '#/new/1/' + d.id;
   }
   function inspirationPage(type, forId) {
@@ -474,7 +475,7 @@
       c2 ? art(c1) + c1 + ' and ' + c2 + ' ' + (type === 'wedding' ? 'Affair' : word) : art(c1) + c1 + ' ' + word,
       (vibe ? VIBE_NOUN[vibe] : partOfDay) + ' in ' + c1,
       'The ' + c1 + ' ' + (type === 'wedding' || type === 'gala' || / Party$/.test(word) ? 'Soir\u00e9e' : word + ' Soir\u00e9e')];
-    var ip = E.inspoOf(d); if (ip) out.unshift(ip.name);
+    var ip = E.inspoOf(d); if (ip) out.unshift(E.inspoName(ip, type));
     return out.filter(function (n, i) { return out.indexOf(n) === i; });
   }
   var VIBE_COLORS = [['Blush', '#F2C9CF'], ['Ivory', '#F7F1E3'], ['Gold', '#C9A86A'], ['Champagne', '#E8D9BC'], ['White', '#FFFFFF'], ['Black', '#151515'], ['Sage', '#A9B89A'], ['Burgundy', '#7B2D3B'], ['Lavender', '#C9B3DD'], ['Dusty blue', '#A9C7D3'], ['Terracotta', '#C47C4E'], ['Silver', '#C0C0C8'], ['Pastels', '#F9E1EC'], ['Bright colors', '#F2B544']];
@@ -531,7 +532,7 @@
     if (step === 1) {
       var ip = E.inspoOf(draft);
       frame('<div class="wizard stack-lg">' + prog + (ip ? '<div class="stack"><h2>Your inspiration</h2><p class="muted">Your plan starts from this photo. Add your own photos or words below for anything you want different.</p></div>' +
-        '<div class="panel inspo-chosen">' + thumb({ src: INSPO_IMG + 'sm/' + ip.id + '.jpg', alt: ip.alt, ai: true }) + '<div class="stack"><b>' + esc(ip.name) + '</b><span class="muted small">' + esc(ip.mood) + '</span><div class="row"><a class="btn ghost small" href="#/inspiration/' + esc(draft.type || 'all') + '/' + draft.id + '">Choose a different photo</a><button type="button" class="link small" id="noInspo">Remove</button></div></div></div>'
+        '<div class="panel inspo-chosen">' + thumb({ src: INSPO_IMG + 'sm/' + ip.id + '.jpg', alt: ip.alt, ai: true }) + '<div class="stack"><b>' + esc(E.inspoName(ip, draft.type)) + '</b><span class="muted small">' + esc(ip.mood) + '</span><div class="row"><a class="btn ghost small" id="swapInspo" href="#/inspiration/' + esc(draft.type || 'all') + '/' + draft.id + '">Choose a different photo</a><button type="button" class="link small" id="noInspo">Remove</button></div></div></div>'
         : '<div class="stack"><h2>Share your inspiration</h2><p class="muted">Add as many photos as you like: Pinterest saves, Instagram or TikTok screenshots, or your own pictures. Then tap the parts you love in each one.</p></div>') +
         '<label class="drop" id="drop"><input type="file" id="files" accept="image/*" multiple class="sr"><b>Add inspiration photos</b><span class="muted small">Tap to choose, or drop photos here</span></label>' +
         '<div class="photos" id="photos"></div>' +
@@ -575,7 +576,7 @@
       });
       $$('[data-vibe]').forEach(function (b) { b.addEventListener('click', function () { var on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); var v = b.dataset.vibe; draft.inspiration.vibes = (draft.inspiration.vibes || []).filter(function (x) { return x !== v; }); if (on) draft.inspiration.vibes.push(v); persist(); }); });
       setupSpeak($('#speak'), $('#text'), $('#speakHint'));
-      if ($('#browseInspo')) $('#browseInspo').addEventListener('click', function () { var t = $('#text').value.trim(); if (t || draft.inspiration.photos.length) { draft.inspiration.text = t; persist(); } });
+      ['#browseInspo', '#swapInspo'].forEach(function (sel) { if ($(sel)) $(sel).addEventListener('click', function () { draft.inspiration.text = $('#text').value.trim(); draft.inspiration.links = $('#links').value.split(/\s+/).filter(function (x) { return /^https?:\/\//.test(x); }); persist(); }); });
       if ($('#noInspo')) $('#noInspo').addEventListener('click', function () { draft.inspiration.text = $('#text').value.trim(); delete draft.inspiration.inspo; persist(); wizard(1, draft.id); });
       $('#next').addEventListener('click', function () {
         draft.inspiration.links = $('#links').value.split(/\s+/).filter(function (s) { return /^https?:\/\//.test(s); });
@@ -666,7 +667,7 @@
         if (ex > g) return toast('Expected to attend can’t be more than the number of people you’re inviting');
         if (!$('#setting [aria-pressed="true"]')) { $('#whereLbl').scrollIntoView({ block: 'center' }); return toast('Choose where it is: a restaurant, a venue, outdoors or at home'); }
         collect2(); persist();
-        T('details_done', { event_type: draft.type, setting: draft.settingOpen ? 'not_sure' : draft.setting, city: draft.city, guests_band: band(draft.guests, [10, 25, 50, 100, 200, 500]), budget_band: draft.budget ? band(draft.budget, [1000, 3000, 5000, 10000, 25000, 50000, 100000]) : 'none', drinks: draft.alcohol, payer: draft.payer, kids: draft.kids ? 'yes' : 'no', start: E.inspoOf(draft) ? 'inspiration_photo' : draft.inspiration.photos.length ? 'own_photos' : draft.inspiration.text ? 'words' : 'colors_and_vibes', own_photos: draft.inspiration.photos.length });
+        T('details_done', { event_type: draft.type, setting: draft.settingOpen ? 'not_sure' : draft.setting, city: D.CITIES.some(function (c) { return c.name === draft.city; }) ? draft.city : 'Other US city', guests_band: band(draft.guests, [10, 25, 50, 100, 200, 500]), budget_band: draft.budget ? band(draft.budget, [1000, 3000, 5000, 10000, 25000, 50000, 100000]) : 'none', drinks: draft.alcohol, payer: draft.payer, kids: draft.kids ? 'yes' : 'no', start: E.inspoOf(draft) ? 'inspiration_photo' : draft.inspiration.photos.length ? 'own_photos' : draft.inspiration.text ? 'words' : 'colors_and_vibes', own_photos: draft.inspiration.photos.length });
         location.hash = W + '3/' + draft.id;
       });
       return;
@@ -711,7 +712,7 @@
       clearInterval(tick);
       $('#cs').innerHTML = list.map(function (c, i) {
         var sel = ev.concept && ev.concept.id === c.id;
-        return '<article class="concept' + (sel ? ' selected' : '') + '">' + (c.img ? thumb({ src: c.img.replace(INSPO_IMG, INSPO_IMG + 'sm/'), alt: 'The inspiration photo you chose', ai: true }) : '') + '<div class="in"><span class="concept-num">Concept ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(moodFor(c, ev)) + '</p><ul>' + outlineFor(c, ev).map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
+        return '<article class="concept' + (sel ? ' selected' : '') + '">' + (c.inspo && E.inspoOf({ inspiration: { inspo: c.inspo } }) ? thumb({ src: INSPO_IMG + 'sm/' + c.inspo + '.jpg', alt: 'The inspiration photo you chose', ai: true }) : '') + '<div class="in"><span class="concept-num">Concept ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(moodFor(c, ev)) + '</p><ul>' + outlineFor(c, ev).map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
       }).join('');
     }
     function load(skip) {
@@ -729,6 +730,7 @@
     });
     $('#more').addEventListener('click', function () {
       ev.seen = (ev.seen || []).concat(ev.concepts.map(function (c) { return c.id; }));
+      ev.seenLooks = (ev.seenLooks || []).concat(ev.concepts.map(function (c) { return c.name; }));
       if (ev.usedMoreConcepts && SELL_EXTRAS) {
         return buySheet({ name: 'Three more event concepts', price: 7.99, credits: 16, desc: D.PACKAGES[0].desc }, ev, function () { load(ev.seen); });
       }
@@ -1266,6 +1268,8 @@
     var all = E.lookPieces(ev).filter(function (p) {
       if (re && (re.test(p.name) || re.test(p.q))) return false;
       if (rest && (['rentals', 'decor', 'lighting', 'balloons', 'photoBooth'].indexOf(p.hire) >= 0 || BIG_DECOR.test(p.name))) return false;
+      if (ev.kids && /birthday/.test(ev.type) && /candle|neon|disco|nightclub|cocktail|bartender|\bbar\b/i.test(p.name + ' ' + p.q)) return false;
+      if (ev.alcohol === 'none' && /bartender|mimosa|sangria|margarita|ros\u00e9|whiske?y|prosecco/i.test(p.name + ' ' + p.q)) return false;
       return true;
     });
     if (!all.length) return '';
@@ -1280,7 +1284,7 @@
       '<p class="small muted">Store links search for that exact piece so you can compare live prices and pick the one you like. Show your florist, baker or decorator your inspiration photo so they can match it.</p></div>';
   }
   TAB_VIEWS.style = function (ev) {
-    var c = ev.concept; var st = D.STYLES.find(function (x) { return x.id === c.id; }) || {}; var color = c.shop || st.shop || c.styleName.toLowerCase();
+    var c = ev.concept; var st = D.STYLES.find(function (x) { return x.id === c.id; }) || {}; var color = c.shop || st.shop || String(c.styleName || c.name || 'party').toLowerCase();
     var tables = Math.ceil((ev.expected || ev.guests) / 8), g = ev.expected || ev.guests;
     var rest = ev.setting === 'restaurant';
     var items = rest ? [

@@ -579,3 +579,5 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 /* The big photo in a pop-up keeps its own height so nothing slides under it */
 .thumb.ibig { aspect-ratio: auto; flex-shrink: 0; overflow: hidden; }
 .thumb.ibig img { height: auto; aspect-ratio: 3 / 2; }
+/* Very long words (from the AI or typed by a host) wrap instead of pushing the page sideways */
+main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept, .panel, .it .grow { overflow-wrap: anywhere; }

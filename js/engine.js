@@ -469,9 +469,21 @@
   /* A host who starts from one of our AI-generated inspiration photos gets that photo as a concept, built from what is in it. */
   function inspoOf(ev) { var id = ev && ev.inspiration && ev.inspiration.inspo; return id && root.EC_INSPO ? root.EC_INSPO.find(function (p) { return p.id === id; }) || null : null; }
   function inspoText(p) { return p ? 'Inspiration photo "' + p.name + '" (an AI-generated sample): ' + p.mood + ' In the photo: ' + p.decor.join('; ') + '. Colors: ' + p.shop + '.' : ''; }
+  /* A photo made for one occasion, used for another, is renamed for the host's occasion: "Royal Red Quinceañera" for a wedding is "Royal Red Wedding". */
+  var OCCASION_WORDS = /\s*(?:Quinceañera|Sweet 16|Grad Party|Graduation|Baby Shower|Bridal Shower|Shower|Gender Reveal|Reveal|Tea Party|Pool Party|Birthday|Christmas Dinner|Christmas|Luncheon|Brunch|Lunch|Dinner Party|Dinner|Supper|Party)\s*$/;
+  function inspoName(p, type) {
+    if (!type || p.types[0] === type) return p.name;
+    var base = p.name, prev; do { prev = base; base = base.replace(OCCASION_WORDS, ''); } while (base !== prev && base);
+    if (!base || base === p.name) return p.name;
+    return base.replace(/\s*&\s*$/, '') + ' ' + (TYPE_TITLE[type] || 'Celebration');
+  }
+  var KIDS_NO = ['disco-glam', 'modern-noir', 'moody-floral', 'old-hollywood'];
+  var KIDS_BAD = /night ?club|\bclub\b|neon|strobe|bottle service|lounge|cocktail|\bbar\b|bartender|candle|candlelit|\bdark\b|noir|moody|velvet curtains|disco/i;
+  function isKidsParty(ev) { return !!(ev && ((ev.kids && /birthday/.test(ev.type || '')) || ev.type === 'kids-birthday')); }
+  function kidSafePhoto(p) { return p.types.indexOf('kids-birthday') >= 0 || (KIDS_NO.indexOf(p.style) < 0 && !KIDS_BAD.test(p.mood + ' ' + p.decor.join(' '))); }
   function inspoConcept(ev, p) {
-    var s = D.STYLES.find(function (x) { return x.id === p.style; }) || D.STYLES[0];
-    return { id: s.id, inspo: p.id, img: 'img/inspo/' + p.id + '.jpg', name: p.name, styleName: p.name, palette: p.palette, mood: p.mood, decor: p.decor.slice(), shop: p.shop,
+    var s = D.STYLES.find(function (x) { return x.id === p.style; }) || D.STYLES[0], nm = inspoName(p, ev.type);
+    return { id: s.id, inspo: p.id, img: 'img/inspo/' + p.id + '.jpg', name: nm, styleName: nm, palette: p.palette, mood: p.mood, decor: p.decor.slice(), shop: p.shop,
       dress: 'A standout look in ' + s.dress.charAt(0).toLowerCase() + s.dress.slice(1), menuStyle: p.menu, music: s.music, fit: 'The look in the photo you chose',
       outline: ['Setting: ' + p.decor[0].toLowerCase(), 'Details: ' + p.decor[1].toLowerCase() + ', plus ' + p.decor[2].charAt(0).toLowerCase() + p.decor[2].slice(1), 'Moment: ' + p.decor[3].toLowerCase(), 'Dress code: ' + dressCode(ev).toLowerCase()] };
   }
@@ -480,54 +492,94 @@
     var t = (((ev.inspiration && ev.inspiration.text) || '') + ' ' + ((ev.inspiration && ev.inspiration.vibes) || []).join(' ')).toLowerCase();
     return COLOR_TAGS.some(function (tag) { return (WORDS[tag] || []).some(function (w) { return t.indexOf(w) >= 0; }); }) || /\b(navy|teal|beige|taupe|mauve|brown|grey|gray|turquoise|mint|copper|bronze|rose gold)\b/.test(t);
   }
-  /* No drink names as color or look names anywhere: "champagne" reads as a color in decor talk, but hosts see an alcohol word. */
-  var DRINK_COLOR = [[/\bchampagne[- ]gold\b/gi, 'soft gold'], [/\bchampagne\b(?=[ -]+(?:and|&|neutrals?|tones?|hues?|linens?|silk|velvet|blush|sage|ivory|gold|garden|terrace|palette|colou?rs?|accents?|chargers?|napkins?|runners?|drap\w*)\b)/gi, 'soft gold'],
-    [/\b(?:and|&) champagne\b(?! (?:tower|toast|flutes?|bar|wall|cart))/gi, '$&'], [/\bwine[- ]red\b/gi, 'deep red'], [/\bros[eé] gold\b/gi, 'rose gold'], [/\b(?:merlot|bordeaux|cabernet|sangria|prosecco|bourbon|whiskey|cognac)(?= (?:and|&|velvet|tones?|hues?|linens?|red|accents?|napkins?|runners?|colou?rs?))/gi, 'deep red']];
-  function noDrinkWords(t) { t = String(t || ''); DRINK_COLOR.forEach(function (r) { t = t.replace(r[0], function (m) { var out = r[1].replace('$&', m); return /^[A-Z]/.test(m) ? out.charAt(0).toUpperCase() + out.slice(1) : out; }); }); return t.replace(/\bChampagne\b(?! (?:tower|toast|flutes?|bar|wall|cart))/g, 'Soft Gold').replace(/\bchampagne\b(?! (?:tower|toast|flutes?|bar|wall|cart))/g, 'soft gold'); }
-  function cleanConcept(c) {
-    ['name', 'styleName', 'mood', 'dress'].forEach(function (k) { if (c[k]) c[k] = noDrinkWords(c[k]); });
-    ['decor', 'outline'].forEach(function (k) { if (c[k]) c[k] = c[k].map(noDrinkWords); });
-    if (c.pieces) c.pieces.forEach(function (x) { if (x.item) x.item = noDrinkWords(x.item); if (x.search) x.search = noDrinkWords(x.search); });
-    return c;
+  /* Did the host name colors that are not in the chosen photo? Then her words lead. */
+  function wordsDiffer(ev, p) {
+    p = p || inspoOf(ev); if (!p) return false;
+    var said = (((ev.inspiration && ev.inspiration.text) || '') + ' ' + ((ev.inspiration && ev.inspiration.vibes) || []).join(' ')).toLowerCase(), inPhoto = (p.shop + ' ' + p.mood + ' ' + p.name).toLowerCase();
+    var has = function (w) { return new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(said); };
+    return COLOR_TAGS.some(function (tag) { return (WORDS[tag] || []).some(function (w) { return has(w) && inPhoto.indexOf(w) < 0; }); }) || ['navy', 'teal', 'beige', 'taupe', 'mauve', 'brown', 'grey', 'gray', 'turquoise', 'mint', 'copper', 'bronze'].some(function (w) { return has(w) && inPhoto.indexOf(w) < 0; });
+  }
+  /* No drink names as a color or look name, ever. Each drink word becomes a fitting color or mood word. */
+  var DRINK_SWAP = [['champagne', 'soft gold'], ['prosecco', 'sparkle'], ['mimosas?', 'citrus'], ['sangrias?', 'ruby'], ['margaritas?', 'lime'], ['rosé|rose wine', 'blush'], ['whiske?y', 'amber'], ['bourbon', 'amber'], ['cognac', 'amber'], ['brandy', 'amber'], ['negroni', 'amber'], ['merlot', 'deep red'], ['cabernet', 'deep red'], ['bordeaux', 'deep red'], ['burgundy wine', 'burgundy'], ['wine[- ]red', 'deep red'], ['wine', 'deep red'], ['martinis?', 'velvet'], ['cocktails?', 'evening'], ['bellinis?', 'peach'], ['spritz(?:es)?', 'sunny'], ['tequila', 'agave'], ['mezcal', 'agave'], ['sake', 'blossom'], ['beers?', 'garden'], ['vodka', 'crystal'], ['gin', 'botanical'], ['rum', 'island'], ['mojitos?', 'mint'], ['piña colada', 'pineapple']];
+  var DRINK_THING = /(champagne|prosecco|wine|cocktail) (tower|toast|flutes?|bar|wall|cart|hour)|mimosa bar|bar cart|bartender/i;
+  function caseLike(src, out, title) { return /^[A-Z][a-z\u00e0-\u00ff]/.test(src) ? (title ? out.replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); }) : out.charAt(0).toUpperCase() + out.slice(1)) : /^[A-Z]+$/.test(src) ? out.toUpperCase() : out; }
+  function swapDrinks(t, keepThings, title) {
+    t = String(t == null ? '' : t);
+    DRINK_SWAP.forEach(function (d) {
+      t = t.replace(new RegExp('(^|[^A-Za-z\\u00c0-\\u00ff])(' + d[0] + ')(?![A-Za-z\\u00c0-\\u00ff])', 'gi'), function (m, pre, w, at, all) { var st = at + pre.length; if (keepThings && DRINK_THING.test(all.slice(st, st + w.length + 12))) return m; return pre + caseLike(w, d[1], title); });
+    });
+    return t;
+  }
+  function noDrinkWords(t) { return swapDrinks(t, true); }
+  var ALC_ANY = /champagne|prosecco|mimosa|sangria|margarita|rosé|whiske?y|bourbon|cognac|brandy|negroni|merlot|cabernet|\bwine\b|martini|cocktail|bellini|spritz|tequila|mezcal|\bsake\b|\bbeer\b|vodka|\bgin\b|\brum\b|mojito|bartender|open bar|\bbar cart\b|bottle service|happy hour|\bbooze\b|\btoast with\b/i;
+  var HEX = /^#[0-9a-f]{6}$/i, MENUS_OK = /^(garden|modern|elegant|rustic|coastal|tropical|classic|sweet|party|gardenDinner|kids|holiday|quince)$/;
+  function str(x, max) { return x == null || typeof x === 'object' ? '' : String(x).slice(0, max || 200).trim(); }
+  function list(x, max) { return (Array.isArray(x) ? x : typeof x === 'string' && x ? [x] : []).map(function (v) { return str(v, 160); }).filter(Boolean).slice(0, max || 6); }
+  /* Everything from the AI server is untrusted: keep only well-formed text and colors, never links or pictures, and follow the host's drinks and kids rules. */
+  function cleanConcept(c, i, ev) {
+    if (!c || typeof c !== 'object') return null;
+    var lib = D.STYLES[(i || 0) % D.STYLES.length];
+    var none = ev && ev.alcohol === 'none', kid = isKidsParty(ev);
+    var name = swapDrinks(str(c.name, 60) || str(c.styleName, 60), false, true), styleName = swapDrinks(str(c.styleName, 60) || name, false, true);
+    if (!name) return null;
+    var pal = (Array.isArray(c.palette) ? c.palette : []).filter(function (h) { return typeof h === 'string' && HEX.test(h); }).slice(0, 5);
+    var keepText = function (t) { return !(none && ALC_ANY.test(t)) && !(kid && KIDS_BAD.test(t)); };
+    var tidy = function (t) { return none ? swapDrinks(t) : noDrinkWords(t); };
+    var out = {
+      id: 'ai-' + (str(c.id, 40).replace(/[^a-z0-9-]/gi, '').toLowerCase() || name.toLowerCase().replace(/[^a-z0-9]+/g, '-')),
+      name: name, styleName: styleName, palette: pal.length >= 3 ? pal : lib.palette.slice(),
+      mood: tidy(str(c.mood, 220)), decor: list(c.decor, 4).filter(keepText).map(tidy), dress: tidy(str(c.dress, 160)),
+      menuStyle: MENUS_OK.test(str(c.menuStyle, 20)) ? str(c.menuStyle, 20) : 'party', music: str(c.music, 40) || 'pop feel-good', fit: str(c.fit, 60),
+      outline: list(c.outline, 4).filter(keepText).map(tidy),
+      pieces: (Array.isArray(c.pieces) ? c.pieces : []).filter(function (x) { return x && typeof x === 'object'; }).map(function (x) {
+        return { item: tidy(str(x.item || x.name, 80)), search: tidy(str(x.search || x.q, 80)), hire: /^(florals|balloons|cake|decor|rentals|lighting|catering)$/.test(x.hire) ? x.hire : '' };
+      }).filter(function (x) { return x.item && keepText(x.item + ' ' + x.search); }).slice(0, 8)
+    };
+    while (out.decor.length < 3) out.decor.push(lib.decor[out.decor.length]);
+    if (kid && (KIDS_BAD.test(name + ' ' + out.mood) || KIDS_NO.indexOf(str(c.id, 40)) >= 0)) return null;   /* never a nightclub or moody look at a child's party */
+    if (none && ALC_ANY.test(out.mood)) out.mood = swapDrinks(out.mood);
+    return out;
   }
   var STOP = { the: 1, and: 1, a: 1, of: 1, with: 1, party: 1, shower: 1, birthday: 1, celebration: 1, '&': 1 };
-  function words(n) { return String(n || '').toLowerCase().replace(/[^a-z\u00e0-\u00ff ]/g, ' ').split(/\s+/).filter(function (w) { return w && !STOP[w]; }); }
-  function sameLook(a, b) { var A = words(a), B = words(b); if (!A.length || !B.length) return false; var hit = A.filter(function (w) { return B.indexOf(w) >= 0; }).length; return hit >= Math.min(2, A.length, B.length) || a.toLowerCase() === b.toLowerCase(); }
-  /* Always three different looks: drop repeats (by name or by look) and top up from the style library. */
+  function words(n) { return String(n || '').toLowerCase().replace(/[^a-zà-ÿ ]/g, ' ').split(/\s+/).filter(function (w) { return w && !STOP[w]; }); }
+  function sameLook(a, b) { a = String(a || ''); b = String(b || ''); var A = words(a), B = words(b); if (!A.length || !B.length) return false; var hit = A.filter(function (w) { return B.indexOf(w) >= 0; }).length; return hit >= Math.min(2, A.length, B.length) || a.toLowerCase() === b.toLowerCase(); }
+  /* Always three different looks: drop repeats (by name or by look), anything already shown, and top up from the style library. */
   function threeDifferent(list, extra, avoid) {
     var out = [];
     list.concat(extra || []).forEach(function (c) {
-      if (!c || out.length >= 3) return;
-      if ((avoid || []).some(function (a) { return a && (sameLook(a.name, c.name) || (a.style && a.style === c.id)); })) return;
+      if (!c || !c.name || out.length >= 3) return;
+      if ((avoid || []).some(function (a) { return a && ((a.name && sameLook(a.name, c.name)) || (a.style && a.style === c.id) || (a.id && a.id === c.id)); })) return;
       if (out.some(function (o) { return sameLook(o.name, c.name) || (o.id === c.id && !o.inspo && !c.inspo); })) return;
       out.push(c);
     });
     return out;
   }
+  /* ev.seenLooks: everything the host was already shown, so "three different concepts" never repeats one. */
   function withInspo(ev, list, skip, extra) {
-    list = (list || []).map(cleanConcept);
+    var ai = (Array.isArray(list) ? list : []).map(function (c, i) { return c && c.inspo && !c.img ? c : cleanConcept(c, i, ev); }).filter(Boolean);
+    var kid = isKidsParty(ev);
+    extra = (extra || []).filter(function (c) { return !(kid && (KIDS_NO.indexOf(c.id) >= 0 || KIDS_BAD.test(c.name + ' ' + c.mood))); });
+    var avoid = (ev.seenLooks || []).map(function (n) { return { name: n }; }).concat((skip || []).map(function (id) { return { id: id }; }));
     var p = inspoOf(ev);
-    if (!p || (skip && skip.length)) return threeDifferent(list, extra, p && skip && skip.length ? [{ name: p.name, style: p.style }] : []);   /* "three different concepts" means new looks, not the photo again */
-    var pc = inspoConcept(ev, p);
-    var rest = threeDifferent(list.filter(function (c) { return !c.inspo; }), extra, [{ name: p.name, style: p.style }]);
-    /* Her own colors lead only when they differ from the photo's; "lavender" with a lavender photo keeps the photo first. */
-    var said = (((ev.inspiration && ev.inspiration.text) || '') + ' ' + ((ev.inspiration && ev.inspiration.vibes) || []).join(' ')).toLowerCase(), inPhoto = (p.shop + ' ' + p.mood + ' ' + p.name).toLowerCase();
-    var other = COLOR_TAGS.some(function (tag) { return (WORDS[tag] || []).some(function (w) { return said.indexOf(w) >= 0 && inPhoto.indexOf(w) < 0; }); }) || (/\b(navy|teal|beige|taupe|mauve|brown|grey|gray|turquoise|mint|copper|bronze)\b/.exec(said) || []).some(function (w) { return w && inPhoto.indexOf(w) < 0; });
-    var at = other ? 1 : 0;
-    rest.splice(Math.min(at, rest.length), 0, pc);
+    if (p) avoid.push({ name: inspoName(p, ev.type), style: p.style }, { name: p.name });
+    var useP = p && !(skip && skip.length) && (!kid || kidSafePhoto(p));
+    var rest = threeDifferent(ai, extra, avoid);
+    if (!useP) { var k = 0; return rest.map(function (c, i) { c.fit = skip && skip.length ? (i < 2 ? 'Another idea' : 'A fresh direction') : (i === 0 ? (c.fit && /closest/i.test(c.fit) ? c.fit : 'Closest match to your inspiration') : k++ ? 'A fresh direction' : 'A close alternative'); return c; }); }
+    var pc = inspoConcept(ev, p), at = wordsDiffer(ev, p) ? 1 : 0;
+    rest = rest.slice(0, 2); rest.splice(Math.min(at, rest.length), 0, pc);
     var n = 0;
     return rest.slice(0, 3).map(function (c, i) { if (c.inspo) return c; if (i === 0 && at === 1) c.fit = 'Closest match to your words'; else c.fit = n++ ? 'A fresh direction' : 'A close alternative'; return c; });
   }
-  function concepts(ev, colors, text, liked, skip) {
+  function concepts(ev, colors, text, liked, skip, count) {
     skip = skip || [];
     /* Children's parties never get nightclub or black-tie looks. */
-    var kidsNo = (ev.kids && /birthday/.test(ev.type || '')) || /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|for my (son|daughter|kids?)/i.test(text || '') ? ['disco-glam', 'modern-noir', 'moody-floral', 'old-hollywood'] : [];
+    var kidsNo = isKidsParty(ev) || /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|for my (son|daughter|kids?)/i.test(text || '') ? KIDS_NO : [];
     var kidsParty = kidsNo.length > 0;
     var ranked = matchStyles(colors, text, liked).filter(function (r) { return skip.indexOf(r.style.id) < 0 && kidsNo.indexOf(r.style.id) < 0 && (kidsParty || !r.style.kidsOnly); });
     var kidBoost = function (r) { return r.score + (r.style.kidsOnly ? 1.5 : ['pastel-whimsy', 'tropical-glam'].indexOf(r.style.id) >= 0 ? 1 : 0); };
     if (kidsParty) ranked.sort(function (a, b) { return kidBoost(b) - kidBoost(a); });   /* a named theme comes first at a kids' party */
     var t = typeOf(ev.type);
-    return ranked.slice(0, 3).map(function (r, i) {
+    return ranked.slice(0, count || 3).map(function (r, i) {
       var s = r.style;
       var name = s.name + ' ' + (TYPE_TITLE[ev.type] || 'Celebration');
       return {
@@ -579,9 +631,10 @@
     PIECE_WORDS.forEach(function (r) {
       var m = said.match(r[0]); if (!m) return;
       if (kid && /candle/i.test(r[1])) return;
+      if (kid && /lantern/i.test(r[1])) { add('Paper lanterns', 'paper lanterns colorful', '', 'asked'); return; }
       var name = r[4] && !m[1] ? r[4] : r[1].replace('$1', m[1] || ''), q = r[2];
       /* The color right before the word wins ("gold chargers" in a navy party), then the host's main color. Candles default to ivory. */
-      var near = null, win = said.slice(Math.max(0, m.index - 12), m.index); PIECE_COLORS.forEach(function (w) { var i = win.lastIndexOf(w), e = i + w.length; if (i >= 0 && (!near || e > near[1] || (e === near[1] && w.length > near[0].length))) near = [w, e]; });
+      var near = null, win = said.slice(Math.max(0, m.index - 12), m.index); PIECE_COLORS.forEach(function (w) { var re = new RegExp('\\b' + w + '\\b', 'g'), mm, i = -1; while ((mm = re.exec(win))) i = mm.index; var e = i + w.length; if (i >= 0 && (!near || e > near[1] || (e === near[1] && w.length > near[0].length))) near = [w, e]; });
       var col = near ? near[0] : /candle/i.test(r[1]) ? 'ivory' : color;
       if (r[3] === 'C' && col) { name = cap(col) + ' ' + name.charAt(0).toLowerCase() + name.slice(1); q = col + ' ' + q; }
       add(cap(name), q, r[3], 'asked');
@@ -599,6 +652,6 @@
   root.EC_ENGINE = {
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
-    placesUsed: placesUsed, concepts: concepts, inspoOf: inspoOf, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
+    placesUsed: placesUsed, concepts: concepts, inspoOf: inspoOf, inspoName: inspoName, wordsDiffer: wordsDiffer, kidSafePhoto: kidSafePhoto, swapDrinks: swapDrinks, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
   };
 })(typeof window !== 'undefined' ? window : globalThis);
