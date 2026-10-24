@@ -62,7 +62,9 @@
   function shortDate(d) { if (!d) return ''; return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
   function fmtTime(t) { if (!t) return ''; var p = t.split(':'); var h = +p[0]; return ((h + 11) % 12 + 1) + ':' + p[1] + (h < 12 ? ' AM' : ' PM'); }
   function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+  function clearToasts() { $$('.toast').forEach(function (t) { t.remove(); }); }
   function toast(msg) {
+    clearToasts();
     var t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
     document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600);
   }
@@ -155,15 +157,17 @@
     help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
     events: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>'
   };
+  var BRAND = { mark: 'img/brand/ec-mark-128.png', logo: 'img/brand/logo-full.jpg', compact: 'img/brand/logo-compact.jpg' };
   var lastHash = null;
   function frame(inner, opts) {
     opts = opts || {};
     var ribbon = CFG.preview && !opts.noRibbon ? '<div class="preview-ribbon">Preview version: no real charges, and sharing works on this device only.</div>' : '';
     app.innerHTML = ribbon +
-      '<header class="topbar"><a class="brand" href="#/"><b>Event Couture</b><span>by Always Luxe</span></a>' +
+      '<header class="topbar"><a class="brand" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.mark) + '" alt="" width="44" height="44"><span class="bt"><b>Event Couture</b><span>by Always Luxe</span></span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
-      '<footer class="site"><nav><a href="#/help">Help</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div>Event Couture by Always Luxe</div></footer>';
+      '<footer class="site"><img src="' + srcOf(BRAND.logo) + '" alt="Event Couture by Always Luxe" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div></footer>';
+    var ld = document.getElementById('loader'); if (ld && !ld.classList.contains('done')) { ld.classList.add('done'); setTimeout(function () { if (ld.parentNode) ld.parentNode.removeChild(ld); }, 450); }
     if (location.hash !== lastHash) window.scrollTo(0, 0);
     lastHash = location.hash;
   }
@@ -203,12 +207,13 @@
       if (p[0] === 'g') return guestPage(p[1]);
       if (p[0] === 'vendors') return vendorJoin();
       if (p[0] === 'help') return help();
+      if (p[0] === 'pricing') return pricing();
       if (p[0] === 'privacy') return legal('privacy');
       if (p[0] === 'terms') return legal('terms');
       notFound();
     } catch (err) { console.error(err); frame('<div class="stack"><h2>Something went wrong on this screen</h2><p class="muted">Your events are saved. Go back to <a href="#/events">My events</a> and open it again.</p></div>'); }
   }
-  window.addEventListener('hashchange', route);
+  window.addEventListener('hashchange', function () { clearToasts(); route(); });
   function notFound() { frame('<div class="stack"><h2>This page doesn’t exist</h2><p class="muted">It may have been removed. <a href="#/">Go to the home page</a>.</p></div>'); }
 
   /* ---------- home ---------- */
@@ -224,20 +229,20 @@
     var pick = function (id) { return demo.items.find(function (i) { return i.id === id; }) || { mid: 0 }; };
     var tags = [['Candles and decor', pick('decor').mid, 36, 30], ['Cake', pick('cake').mid, 80, 36], ['Florals', pick('florals').mid, 52, 62], ['Linens and tableware', pick('rentals').mid, 34, 86]];
     var lines = [['Venue', 'venue'], ['Catering', 'catering'], ['Florals', 'florals'], ['Candles and decor', 'decor'], ['Cake', 'cake'], ['Photographer', 'photographer']].map(function (l) { return '<div class="line"><span>' + l[0] + '</span><span class="num">' + money(pick(l[1]).mid) + '</span></div>'; }).join('');
-    var p0 = D.PASSES[0];
     frame(
-      '<section class="hero"><div class="hero-copy"><h1>Your inspiration. A beautifully planned event.</h1>' +
+      '<section class="welcome satin bleed"><img class="wlogo" src="' + srcOf(BRAND.logo) + '" alt="Event Couture by Always Luxe">' +
+      '<div class="wcopy"><h1>Your inspiration. A beautifully planned event.</h1>' +
       '<p class="lead">Turn photos or ideas into three event concepts, a detailed budget and a step-by-step plan.</p>' +
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link" data-scroll="gallery">Explore sample plans</button></div>' +
-      '<p class="small muted pass-note">One-time Event Pass from <b class="num">$' + p0.price.toFixed(2) + '</b> for up to ' + p0.max + ' guests. No subscription. <button class="link small" data-scroll="pricing">See all prices</button></p></div>' +
-      '<figure class="hero-photo"><div class="scene">' +
+      '</div></section>' +
+      '<div class="showcase"><figure class="hero-photo"><div class="scene">' +
       '<img src="' + srcOf(HERO_IMG) + '" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
       tags.map(function (t) { return '<button class="hot' + (t[2] > 65 ? ' r' : t[2] < 30 ? ' l' : '') + '" style="left:' + t[2] + '%;top:' + t[3] + '%" aria-expanded="false" aria-label="' + esc(t[0]) + ', ' + money(t[1]) + '"><span class="dot" aria-hidden="true"></span><span class="lbl" aria-hidden="true"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span></button>'; }).join('') +
-      '</div><figcaption class="small muted">AI-generated sample concept. Tap a gold dot to see what that piece costs.</figcaption></figure></section>' +
+      '</div><figcaption class="small muted">AI-generated sample concept. Tap a gold dot to see what that piece costs.</figcaption></figure>' +
       '<section class="demo panel"><div class="demo-head"><div><span class="small muted">Example plan</span><h3>Blush and gold wedding</h3><span class="small muted">Houston, TX · 150 guests · Signature version</span></div>' +
       '<div class="demo-total"><span class="small muted">Estimated event budget</span><span class="display num">' + money(demo.total) + '</span></div></div>' +
       '<button class="link small" id="showBudget" aria-expanded="false" aria-controls="demoLines">See example budget</button>' +
-      '<div id="demoLines" class="demo-lines" hidden>' + lines + '<div class="line muted small"><span>Tax, service, tips and a 10% cushion</span><span>in the total</span></div></div></section>' +
+      '<div id="demoLines" class="demo-lines" hidden>' + lines + '<p class="muted small" style="margin:8px 0 0">The total also includes tax, service charges, tips and a 10% cushion.</p></div></section></div>' +
       '<section id="gallery" class="stack" style="margin-top:44px"><h2>Find your kind of celebration</h2><p class="muted">Sample plans you can open for free. Photos are AI-generated inspiration, not events we organized.</p><div class="samples">' +
       FEATURED.map(function (i) { return sampleCard(SAMPLES[i], i); }).join('') + '</div>' +
       '<div class="samples" id="moreSamples" hidden>' + SAMPLES.map(function (s, i) { return FEATURED.indexOf(i) >= 0 ? '' : sampleCard(s, i); }).join('') + '</div>' +
@@ -247,15 +252,23 @@
       '<li><h3>Pick a concept</h3><p class="muted">Three creative directions. Then see the one you choose in three spending versions, or one made for your budget.</p></li>' +
       '<li><h3>See every cost</h3><p class="muted">Venue, food, decor, music, photos and the fees people forget, sized to your city and guest count.</p></li>' +
       '<li><h3>Plan it together</h3><p class="muted">Co-hosts, voting, RSVPs, a registry and cost splitting, without anyone downloading an app.</p></li></ol></section>' +
-      '<section id="pricing" class="stack" style="margin-top:44px"><h2>One-time Event Pass</h2><p class="muted">What it costs to use Event Couture for one event, based on how many guests you expect. This is separate from your event budget. No subscription.</p>' +
-      '<div class="panel price-grid">' + D.PASSES.map(function (ps) { return '<div><span class="muted small">Up to ' + ps.max.toLocaleString('en-US') + ' guests</span><b class="num">$' + ps.price.toFixed(2) + '</b></div>'; }).join('') + '<div><span class="muted small">Each extra 5,000</span><b class="num">+$150</b></div></div>' +
-      '<p class="small muted">Guest list grows later? You pay only the difference.</p><div><a class="btn primary" href="#/new">Plan my event</a></div></section>'
+      '<section class="stack" style="margin-top:44px;text-align:center;justify-items:center"><h2>Ready when you are</h2><p class="muted">Start with a photo, a few words or just your colors.</p><div><a class="btn primary" href="#/new">Plan my event</a></div></section>'
     );
     $$('[data-scroll]').forEach(function (b) { b.addEventListener('click', function () { var t = document.getElementById(b.dataset.scroll); if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }); });
     var hots = $$('.hot');
     hots.forEach(function (h) { h.addEventListener('click', function () { var open = h.getAttribute('aria-expanded') === 'true'; hots.forEach(function (o) { o.setAttribute('aria-expanded', 'false'); }); h.setAttribute('aria-expanded', open ? 'false' : 'true'); }); });
     $('#showBudget').addEventListener('click', function () { var l = $('#demoLines'), open = l.hidden; l.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Hide example budget' : 'See example budget'; });
     $('#allSamples').addEventListener('click', function () { var m = $('#moreSamples'), open = m.hidden; m.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Show fewer' : 'See all ' + SAMPLES.length + ' sample plans'; });
+  }
+
+  function pricing() {
+    frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2><p class="muted">Exploring sample plans is free. You pay once per event, only when you’re ready to plan your own. No subscription.</p></div>' +
+      '<section class="stack"><h3>Event Pass</h3><p class="muted">Based on how many guests you expect. This is what Event Couture costs, separate from your event budget.</p>' +
+      '<div class="panel price-grid">' + D.PASSES.map(function (ps) { return '<div><span class="muted small">Up to ' + ps.max.toLocaleString('en-US') + ' guests</span><b class="num">$' + ps.price.toFixed(2) + '</b></div>'; }).join('') + '<div><span class="muted small">Each extra 5,000</span><b class="num">+$150</b></div></div>' +
+      '<p class="small muted">Guest list grows later? You pay only the difference.</p></section>' +
+      '<section class="stack"><h3>Optional extras</h3><div class="list panel">' + D.PACKAGES.concat(D.ADDONS).map(function (x) { return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b><div class="small muted">' + esc(x.desc) + '</div></div><span class="num">$' + x.price.toFixed(2) + '</span></div>'; }).join('') + '</div>' +
+      '<p class="small muted">AI credits: ' + D.CREDIT_PACKS.map(function (c) { return c.credits + ' for $' + c.price.toFixed(2); }).join(', ') + '. Charged only when delivered.</p></section>' +
+      '<div><a class="btn primary" href="#/new">Plan my event</a></div></div>');
   }
 
   function myEvents() {
@@ -446,7 +459,7 @@
       '<li>' + A.storageMB + ' MB of photo storage; access for ' + A.accessMonths + ' months and ' + A.afterEventDays + ' days after the event</li></ul>' +
       '<p class="muted small">Simple edits never use your allowance. Optional extras are always shown with their price first, and you can always continue without them. If your guest list grows past ' + pass.max.toLocaleString('en-US') + ', you pay only the difference to move up.</p>' +
       (CFG.preview ? '<div class="note">Preview version: checkout is free and no payment is taken.</div>' : '') +
-      '<button class="btn gold block" id="pay">' + (CFG.preview ? 'Unlock my plan (preview, no charge)' : 'Pay $' + pass.price.toFixed(2) + ' and build my plan') + '</button></div>' +
+      '<button class="btn gold block" id="pay">' + (CFG.preview ? 'Unlock my plan' : 'Pay $' + pass.price.toFixed(2) + ' and build my plan') + '</button></div>' +
       '<div class="row"><a class="btn ghost" href="' + W + '2/' + draft.id + '">Back</a>' + laterBtn() + '</div></div>');
     $('#later').addEventListener('click', function () { persist(); toast('Saved. Pick it up anytime from My events.'); location.hash = '#/events'; });
     $('#pay').addEventListener('click', function () {
@@ -497,7 +510,7 @@
       '<div class="sum"><div><span>Price</span><b class="num">$' + item.price.toFixed(2) + '</b></div>' + (item.credits ? '<div><span>Or with credits</span><span class="num">' + item.credits + ' credits (you have ' + w.credits + ')</span></div>' : '') + '</div>' +
       '<p class="muted small">Charged once, only when it’s delivered. Failed results never cost anything.</p>' +
       (CFG.preview ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
-      '<button class="btn gold block" id="buy">' + (CFG.preview ? 'Add it (preview, no charge)' : 'Pay $' + item.price.toFixed(2)) + '</button>' +
+      '<button class="btn gold block" id="buy">' + (CFG.preview ? 'Add it' : 'Pay $' + item.price.toFixed(2)) + '</button>' +
       (canCredits ? '<button class="btn block" id="useCredits">Use ' + item.credits + ' credits</button>' : '') +
       '<button class="btn ghost block" data-close>Continue without this</button>', function (el, close) {
       $('#buy', el).addEventListener('click', function () { addLedger({ kind: item.name, event: ev ? ev.name : '', amount: CFG.preview ? 0 : item.price, note: CFG.preview ? 'preview' : '' }); close(); toast('Added'); onDone && onDone(); });
@@ -713,8 +726,10 @@
   /* Vendors: by category with estimates; ask for a price */
   TAB_VIEWS.vendors = function (ev, b) {
     var city = ev.city.replace('Other US city', '');
-    var cats = b.items.filter(function (i) { return ['venue', 'privateDining', 'rentals', 'tent', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'attire', 'favors', 'invitations', 'bar'].indexOf(i.id) < 0; });
-    return '<div class="stack"><h3>Vendors for this plan</h3><p class="muted">Listed vendors show their own packages and prices here. Until vendors in ' + esc(city || 'your city') + ' join, each category shows a labeled estimate and a live map search.</p>' +
+    var cats = b.items.filter(function (i) { return ['venue', 'privateDining', 'rentals', 'tent', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'attire', 'favors', 'invitations', 'bar', 'restaurantFood', 'restaurantDrinks', 'cakeFee', 'tableDecor'].indexOf(i.id) < 0; });
+    var restNote = ev.setting === 'restaurant' ? '<div class="note">Your restaurant handles the food and drinks, so there is nothing to book for those here. Pick the restaurant on the Venues tab; table decor is on the Style tab.</div>' : '';
+    if (!cats.length) return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">No other vendors are needed for this plan.</p></div>';
+    return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">Listed vendors show their own packages and prices here. Until vendors in ' + esc(city || 'your city') + ' join, each category shows a labeled estimate and a live map search.</p>' +
       '<div class="list panel">' + cats.map(function (i) {
         return '<div class="it"><div class="grow"><b>' + esc(i.name) + '</b><div class="small muted"><span class="badge ' + (i.label === 'Planning estimate' ? 'est' : 'ok') + '">' + esc(i.label) + '</span> ' + money(i.mid) + '</div></div>' +
           '<span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(i.name.split(' (')[0] + ' near ' + city) + '">Find nearby</a><button class="btn small" data-ask="' + i.id + '">Ask for their price</button></span></div>';
@@ -732,7 +747,9 @@
     var menu = D.MENUS[ev.concept.menuStyle] || D.MENUS.party;
     var diets = {}; (ev.guestsList || []).forEach(function (g) { (g.diet || []).forEach(function (d) { diets[d] = (diets[d] || 0) + 1; }); });
     var q = E.quantities(ev);
-    return '<div class="stack"><h3>Menu ideas</h3><div class="panel"><ul class="incl">' + menu.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>' +
+    var rest = ev.setting === 'restaurant';
+    return (rest ? '<div class="stack"><h3>Ordering at the restaurant</h3><div class="panel"><ul class="incl"><li>Call ahead: groups of ' + Math.max(6, Math.min(10, ev.guests)) + ' or more often get a set menu or an automatic tip</li><li>Ask about separate checks before you sit down</li><li>Pre-order a few shared starters so food arrives quickly</li><li>Ask about the cake-cutting fee, or order dessert from the menu instead</li></ul></div></div>' : '') +
+      '<div class="stack"><h3>' + (rest ? 'Look for these on the menu' : 'Menu ideas') + '</h3><div class="panel"><ul class="incl">' + menu.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>' +
       '<p class="muted small">Menu ideas are suggestions. Confirm every allergy directly with your caterer or restaurant.</p></div>' +
       '<div class="stack"><h3>Dietary needs from RSVPs</h3>' + (Object.keys(diets).length ? '<div class="chips">' + Object.keys(diets).map(function (d) { return '<span class="badge">' + esc(d) + ': ' + diets[d] + '</span>'; }).join('') + '</div>' : '<p class="muted">Guests add these when they RSVP. They’ll show up here.</p>') + '</div>' +
       '<div class="stack"><div class="row" style="justify-content:space-between"><h3>How much to get</h3><label class="row small">Expected guests <input class="input num" type="number" min="1" id="exp" value="' + (ev.expected || ev.guests) + '" style="width:96px;min-height:40px"></label></div>' +
@@ -750,7 +767,16 @@
   TAB_VIEWS.style = function (ev) {
     var c = ev.concept; var st = D.STYLES.find(function (x) { return x.id === c.id; }) || {}; var color = st.shop || c.styleName.toLowerCase();
     var tables = Math.ceil((ev.expected || ev.guests) / 8), g = ev.expected || ev.guests;
-    var items = [
+    var rest = ev.setting === 'restaurant';
+    var items = rest ? [
+      { q: color + ' small floral centerpiece', name: 'Small centerpieces', each: [12, 35], qty: Math.max(1, Math.ceil(g / 6)) },
+      { q: color + ' votive candles', name: 'Votive candles (set of 12)', each: [12, 28], qty: 1 },
+      { q: color + ' table confetti', name: 'Table confetti', each: [6, 14], qty: 1 },
+      { q: color + ' place cards', name: 'Place cards', each: [8, 20], qty: 1 },
+      { q: color + ' cake topper', name: 'Cake topper', each: [10, 30], qty: 1 },
+      { q: color + ' party favors', name: 'Favors', each: [1.5, 4], qty: g },
+      { q: c.dress.toLowerCase() + ' outfit', name: 'Your outfit', each: [60, 250], qty: 1 }
+    ] : [
       { q: color + ' balloon garland kit', name: 'Balloon garland kit', each: [25, 60], qty: 1 },
       { q: color + ' table runner', name: 'Table runners', each: [10, 28], qty: tables },
       { q: color + ' taper candles', name: 'Taper candles (set of 12)', each: [16, 36], qty: tables },
@@ -764,9 +790,9 @@
     return '<div class="stack"><h3>Shopping board</h3><p class="muted">Items picked for the ' + esc(c.styleName) + ' look. Links open the store; prices and availability are on the store’s page.' + (CFG.amazonTag ? ' Some links earn Event Couture a small commission at no cost to you.' : '') + '</p>' +
       '<div class="shop">' + items.map(function (it, k) { var l = shopLink(it.q);
         return '<div class="prod"><div class="pimg" aria-hidden="true" style="background:linear-gradient(135deg,' + c.palette[k % c.palette.length] + ',' + c.palette[(k + 2) % c.palette.length] + ')"></div><div class="pbody"><b>' + esc(it.name) + '</b>' + (it.qty > 1 ? '<span class="small muted">' + it.qty + ' \u00d7 $' + it.each[0] + ' to $' + it.each[1] + ' each</span>' : '') + '<span class="num">' + money(it.each[0] * it.qty) + ' to ' + money(it.each[1] * it.qty) + '</span><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Shop Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a></span></div></div>'; }).join('') + '</div>' +
-      '<p class="small muted">Estimated shopping total: <b class="num">' + money(shopLo) + ' to ' + money(shopHi) + '</b>. Quantities are sized to ' + plural(g, 'guest') + ' and ' + plural(tables, 'table') + '. Live product photos and prices appear here at launch.</p></div>' +
-      '<div class="stack"><h3>Playlist</h3><div class="panel stack"><p>Mood: ' + esc(c.music) + '</p><div class="row"><a class="btn small" target="_blank" rel="noopener" href="' + pl.spotify + '">Open in Spotify</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + pl.apple + '">Open in Apple Music</a></div></div></div>' +
-      '<div class="stack"><h3>What to wear</h3><div class="panel stack"><p>Dress code: ' + esc(c.dress) + '</p>' + sw(c.palette) + '<p class="muted small">Want the hair and makeup to match? Try the look on your own photo in Face Couture.</p><div><a class="btn small ghost" target="_blank" rel="noopener" href="https://facecouture.app">Open Face Couture</a></div></div></div>';
+      '<p class="small muted">Estimated shopping total: <b class="num">' + money(shopLo) + ' to ' + money(shopHi) + '</b>. ' + (rest ? 'Sized to one table of ' + plural(g, 'guest') + '.' : 'Quantities are sized to ' + plural(g, 'guest') + ' and ' + plural(tables, 'table') + '.') + ' Live product photos and prices appear here at launch.</p></div>' +
+      (rest ? '' : '<div class="stack"><h3>Playlist</h3><div class="panel stack"><p>Mood: ' + esc(c.music) + '</p><div class="row"><a class="btn small" target="_blank" rel="noopener" href="' + pl.spotify + '">Open in Spotify</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + pl.apple + '">Open in Apple Music</a></div></div></div>') +
+      '<div class="stack"><h3>What to wear</h3><div class="panel stack"><p>Dress code: ' + esc(c.dress) + '</p>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted small">Want the hair and makeup to match? Try the look on your own photo in Face Couture.</p><div><a class="btn small ghost" target="_blank" rel="noopener" href="https://facecouture.app">Open Face Couture</a></div></div></div>';
   };
 
   /* Timeline: checklist and run of show */
@@ -791,7 +817,7 @@
     return '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Guest list</h3><span class="num muted">' + used + ' of ' + cap + ' places</span></div>' +
       '<div class="meter' + (used > cap ? ' over' : '') + '"><i style="width:' + Math.min(100, used / Math.max(1, cap) * 100) + '%"></i></div>' +
       '<div class="chips"><span class="badge ok">' + counts.yes + ' coming</span><span class="badge">' + counts.invited + ' invited</span><span class="badge">' + counts.declined + ' declined</span><span class="badge warn">' + counts.waitlist + ' waitlist</span></div>' +
-      '<form id="addg" class="row"><input class="input" id="gn" placeholder="Guest name" style="flex:2 1 180px"><input class="input num" id="gp" type="number" min="0" max="10" value="0" style="flex:0 0 90px" aria-label="Plus-ones"><button class="btn">Add guest</button></form>' +
+      '<form id="addg" class="row"><input class="input" id="gn" placeholder="Guest name" style="flex:2 1 180px"><label class="field" style="flex:0 0 96px"><span class="small muted">Plus-ones</span><input class="input num" id="gp" type="number" min="0" max="10" value="0"></label><button class="btn">Add guest</button></form>' +
       '<button class="link small" id="bulk" style="justify-self:start">Paste a list of names</button>' +
       '<div class="panel list">' + ((ev.guestsList || []).length ? ev.guestsList.map(function (g) {
         return '<div class="it"><div class="grow"><b>' + esc(g.name) + '</b>' + (g.plusOnes ? ' <span class="muted small">+' + g.plusOnes + '</span>' : '') + (g.diet && g.diet.length ? '<div class="small muted">' + esc(g.diet.join(', ')) + '</div>' : '') + '</div>' +

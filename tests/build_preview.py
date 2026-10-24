@@ -11,11 +11,13 @@ def data_uri(path, width):
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
 embed = {'img/hero.jpg': data_uri('img/hero.jpg', 900)}
 for f in sorted(glob.glob('img/events/*.jpg')): embed[f] = data_uri(f, 900)
+embed['img/brand/logo-full.jpg'] = data_uri('img/brand/logo-full.jpg', 1040)
+embed['img/brand/ec-mark-128.png'] = 'data:image/png;base64,' + base64.b64encode(open('img/brand/ec-mark-128.png','rb').read()).decode()
 js = 'window.EC_EMBED = ' + json.dumps(embed) + ';\n' + js
 icon = base64.b64encode(open('img/icon.svg','rb').read()).decode()
-page = ('<title>Event Couture</title>\n'
+page = ('<title>Event Couture by Always Luxe</title>\n'
  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=Jost:wght@400;500&display=swap">\n'
  '<style>' + css + '\nmain{padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));}</style>\n'
- '<div id="app"></div>\n<script>' + js.replace('</script', '<\\/script') + '</script>\n')
+ '<div id="loader" class="loader" role="status"><img src="' + embed['img/brand/logo-full.jpg'] + '" alt="Event Couture by Always Luxe"><span>Loading your planner…</span></div>\n<div id="app"></div>\n<script>' + js.replace('</script', '<\\/script') + '</script>\n')
 open(out, 'w').write(page)
 print(len(page))

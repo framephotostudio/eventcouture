@@ -4,11 +4,11 @@
   "description": "Turn saved inspiration into a beautiful event you can afford.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#FAF7F5",
-  "theme_color": "#2A1A2B",
+  "background_color": "#F5E6CB",
+  "theme_color": "#4A0A25",
   "icons": [
-    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "img/brand/web/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/brand/web/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "img/brand/web/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

@@ -17,7 +17,7 @@ def run(p, name, viewport, scheme):
     page.on('pageerror', lambda e: errs.append(str(e)))
     page.on('console', lambda m: errs.append(m.text) if m.type == 'error' and 'fonts.g' not in m.text else None)
     page.goto(BASE)
-    page.wait_for_selector('.hero')
+    page.wait_for_selector('.welcome')
     page.screenshot(path=f'{OUT}/{name}-home.png', full_page=True)
     # wizard step 1
     page.click('text=Plan my event')
