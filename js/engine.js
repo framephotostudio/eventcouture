@@ -30,6 +30,11 @@
   /* ---------- Budget ---------- */
   function categoriesFor(ev) {
     var t = typeOf(ev.type);
+    if (ev.setting === 'restaurant' || ev.setting === 'privateRoom') {
+      var rl = D.PROFILES[ev.setting].slice(); if (ev.kids && ev.setting === 'privateRoom') rl.push('kids');
+      var rs = {};
+      return rl.concat(ev.include || []).filter(function (c) { if (rs[c] || !D.CATEGORIES[c] || (ev.exclude || []).indexOf(c) >= 0) return false; rs[c] = 1; return true; });
+    }
     var list = (D.PROFILES[t.style] || D.PROFILES.party).slice();
     if (ev.setting === 'outdoor') list = list.concat(['tent', 'restrooms', 'generator', 'permits']);
     if (ev.kids) list.push('kids');
@@ -40,6 +45,9 @@
     return list.filter(function (c) { if (seen[c] || (ev.exclude || []).indexOf(c) >= 0) return false; seen[c] = 1; return true; });
   }
 
+  function rules(ev) { return (D.SETTING_RULES && D.SETTING_RULES[ev.setting]) || {}; }
+  function tiersFor(catId, ev) { var r = rules(ev).tiers; return (r && r[catId]) || D.CATEGORIES[catId].tier; }
+  function isDaytime(ev) { var h = +String(ev.time || '18:00').split(':')[0]; return h < 15; }
   function lineItem(catId, ev, tier) {
     var c = D.CATEGORIES[catId];
     var t = typeOf(ev.type);
@@ -53,7 +61,7 @@
     if (c.fixed) { lo += c.fixed[0] * fscale; hi += c.fixed[1] * fscale; }
     if (c.perGuest) { lo += c.perGuest[0] * guests; hi += c.perGuest[1] * guests; }
     if (c.perHour) {
-      var h = (adj.hours && adj.hours[catId]) || hours;
+      var h = (rules(ev).hours && rules(ev).hours[catId]) || (adj.hours && adj.hours[catId]) || hours;
       var staff = c.staffPer ? Math.max(1, Math.ceil(guests / c.staffPer)) : 1;
       lo += c.perHour[0] * h * staff; hi += c.perHour[1] * h * staff;
     }
@@ -62,10 +70,13 @@
       lo += c.perPerson[0] * people; hi += c.perPerson[1] * people;
     }
     lo *= mult; hi *= mult;
+    var mealNote = '';
+    if (c.meal && isDaytime(ev)) { lo *= 0.8; hi *= 0.8; mealNote = ', lunch or brunch prices'; }
     var extras = [];
     if (c.service) extras.push({ label: 'Service charge (20%)', rate: D.SERVICE });
     if (c.taxable) extras.push({ label: 'Sales tax (' + city.tax + '%)', rate: city.tax / 100 });
     if (c.tip) extras.push({ label: 'Tip (10%)', rate: D.TIP });
+    if (c.gratuity) extras.push({ label: 'Tip or automatic group gratuity (20%)', rate: D.GRATUITY });
     var rate = extras.reduce(function (s, e) { return s + e.rate; }, 0);
     lo = lo * (1 + rate); hi = hi * (1 + rate);
     var ov = ev.overrides && ev.overrides[catId];
@@ -75,14 +86,14 @@
       lo: roundTo(lo, 5), hi: roundTo(hi, 5), mid: roundTo((lo + hi) / 2, 5),
       extras: extras.map(function (e) { return e.label; }),
       label: ov ? ({ vendor: 'Vendor-published price', quote: 'Confirmed quote', booking: 'Confirmed booking' }[ov.source] || 'Your price') : 'Planning estimate',
-      source: ov ? (ov.note || '') : (city.name + ' estimate, ' + guests + ' guests')
+      source: ov ? (ov.note || '') : (city.name + ' estimate, ' + guests + ' guests' + mealNote)
     };
   }
 
   function budget(ev, tierId) {
     if (tierId === 'F') return budgetFit(ev);
     var tier = D.TIERS.find(function (x) { return x.id === tierId; }) || D.TIERS[1];
-    var cats = categoriesFor(ev).filter(function (id) { return D.CATEGORIES[id].tier.indexOf(tier.id) >= 0 || (ev.include || []).indexOf(id) >= 0; });
+    var cats = categoriesFor(ev).filter(function (id) { return tiersFor(id, ev).indexOf(tier.id) >= 0 || (ev.include || []).indexOf(id) >= 0; });
     var items = cats.map(function (id) { return lineItem(id, ev, tier); });
     var sum = function (k) { return items.reduce(function (s, i) { return s + i[k]; }, 0); };
     var lo = sum('lo'), hi = sum('hi'), mid = sum('mid');
@@ -139,7 +150,8 @@
     }
     // money left over: upgrade priorities first, then everything toward the Ultra level
     if (total() < target * 0.995) {
-      [rows.filter(function (r) { return r.pri && !r.fixed; }), rows.filter(function (r) { return !r.pri && !r.fixed && dropped.indexOf(r.id) < 0; })].forEach(function (grp) {
+      var addExtras = ev.setting !== 'restaurant';
+      [rows.filter(function (r) { return r.pri && !r.fixed; }), rows.filter(function (r) { return !r.pri && !r.fixed && dropped.indexOf(r.id) < 0 && (addExtras || r.amt > 0); })].forEach(function (grp) {
         var gap = target - total(); if (gap <= 0) return;
         var up = grp.reduce(function (s, r) { return s + Math.max(0, r.ceil - r.amt); }, 0);
         var uk = Math.min(1, up ? gap / up : 0);
@@ -173,6 +185,19 @@
       if (b.dropped && b.dropped.length) cons.push('Leaves out ' + b.dropped.map(function (id) { return D.CATEGORIES[id].name.toLowerCase(); }).join(', '));
       if (b.shortBy) cons.push('Still about ' + money(b.shortBy) + ' over; fewer guests or a home venue would close the gap');
       if (!cons.length) cons.push('Less room to add extras later');
+      return { pros: pros, cons: cons };
+    }
+    if (ev.setting === 'restaurant') {
+      var kind = { L: 'a stylish casual restaurant', S: 'an upscale restaurant', U: 'a fine-dining restaurant' }[b.tier.id];
+      var meal = b.items.filter(function (i) { return i.id === 'restaurantFood' || i.id === 'restaurantDrinks'; }).reduce(function (s, i) { return s + i.mid; }, 0);
+      pros.push('Plans for ' + kind + ': food and drinks about ' + money(meal / Math.max(1, ev.guests || 1)) + ' per person with tax and tip');
+      pros.push('No venue, rentals, setup or cleanup');
+      if (has('photographer')) pros.push('A photographer for the first two hours');
+      cons.push('Decor is limited to the table; ask the restaurant what is allowed');
+      if (b.tier.id === 'U') cons.push('Fine dining books up early for groups');
+      else cons.push('Large groups may get a set menu or automatic tip');
+      if (ev.budget && b.total > ev.budget) cons.unshift('About ' + money(b.total - ev.budget) + ' over your budget');
+      else if (ev.budget) pros.unshift('Fits your budget with ' + money(ev.budget - b.total) + ' to spare');
       return { pros: pros, cons: cons };
     }
     if (b.tier.id === 'L') {
@@ -211,6 +236,10 @@
     if (florals) swaps.push({ kind: 'note', id: 'florals', text: 'Use seasonal flowers and greenery-heavy designs', save: Math.round(florals.mid * 0.35) });
     var bar = b.items.find(function (i) { return i.id === 'bar'; });
     if (bar) swaps.push({ kind: 'note', id: 'bar', text: 'Beer, wine and one signature cocktail instead of a full bar', save: Math.round(bar.mid * 0.3) });
+    var drinks = b.items.find(function (i) { return i.id === 'restaurantDrinks'; });
+    if (drinks) swaps.push({ kind: 'note', id: 'restaurantDrinks', text: 'One drink each, or guests buy their own drinks', save: Math.round(drinks.mid * 0.5) });
+    var food = b.items.find(function (i) { return i.id === 'restaurantFood'; });
+    if (food && !isDaytime(ev)) swaps.push({ kind: 'note', id: 'restaurantFood', text: 'Make it lunch or brunch instead of dinner', save: Math.round(food.mid * 0.2) });
     var hours = ev.hours || typeOf(ev.type).hours;
     if (hours > 3) swaps.push({ kind: 'hours', id: 'hours', text: 'Shorten the event by one hour', save: Math.round(b.items.filter(function (i) { return D.CATEGORIES[i.id].perHour; }).reduce(function (s, i) { return s + i.mid / hours; }, 0)) });
     if (b.tier.id !== 'L') swaps.push({ kind: 'tier', id: 'tier', text: 'Switch to the ' + (b.tier.id === 'U' ? 'Signature' : 'Luxe for Less') + ' version', save: 0 });
@@ -224,6 +253,13 @@
     var hours = ev.hours || typeOf(ev.type).hours;
     var tables = Math.ceil(g / 8);
     var drinks = g * (1 + hours);
+    if (ev.setting === 'restaurant') return [
+      { item: 'Reservation', qty: g, unit: 'seats', note: 'Book for everyone who said yes, plus the guest of honor' },
+      { item: 'Cake or dessert', qty: Math.ceil(g * 1.1), unit: 'servings', note: 'Or order dessert from the menu and skip the cake-cutting fee' },
+      { item: 'Candles', qty: 1, unit: 'set', note: 'Ask the restaurant before lighting anything' },
+      { item: 'Small centerpieces', qty: Math.max(1, Math.ceil(g / 6)), unit: 'pieces', note: 'One for every six seats' },
+      { item: 'Favors', qty: Math.ceil(g * 1.05), unit: 'favors', note: 'Optional; 5% extra' }
+    ];
     return [
       { item: 'Drinks (all kinds)', qty: drinks, unit: 'servings', note: '2 in the first hour, then 1 per hour per guest' },
       { item: 'Wine', qty: Math.ceil(drinks * 0.4 / 5), unit: 'bottles', note: 'If 40% of drinks are wine; 5 glasses per bottle' },
@@ -244,7 +280,8 @@
   function checklist(ev, today) {
     var date = ev.date ? new Date(ev.date + 'T12:00:00') : null;
     today = today || new Date();
-    return D.CHECKLIST.filter(function (c) { return !c.only || c.only.indexOf(ev.type) >= 0; }).map(function (c, i) {
+    var st = ev.setting || 'indoor';
+    return D.CHECKLIST.filter(function (c) { return (!c.only || c.only.indexOf(ev.type) >= 0) && (!c.not || c.not.indexOf(st) < 0) && (!c.in || c.in.indexOf(st) >= 0); }).map(function (c, i) {
       var due = date ? new Date(date.getTime() - c.w * 7 * 864e5) : null;
       return { id: 'c' + i, text: c.t, due: due ? due.toISOString().slice(0, 10) : null, overdue: !!(due && due < today && c.w > 0) };
     });
@@ -255,7 +292,9 @@
     var start = ev.time || '18:00';
     var parts = start.split(':'); var base = (+parts[0]) * 60 + (+parts[1] || 0);
     var hours = ev.hours || t.hours;
-    var plan = t.style === 'wedding'
+    var plan = ev.setting === 'restaurant'
+      ? [[-30, 'Host arrives to set the table decor'], [0, 'Guests arrive and order drinks'], [20, 'Order food'], [Math.round(hours * 60 * 0.55), 'Toasts'], [Math.round(hours * 60 * 0.75), 'Cake or dessert and the birthday song'], [hours * 60 - 10, 'Pay the bill (separate checks or your split)'], [hours * 60, 'Goodbyes and photos outside']]
+      : t.style === 'wedding'
       ? [[-180, 'Vendors arrive and setup begins'], [-120, 'Hair and makeup finishing touches'], [-30, 'Guests arrive'], [0, 'Ceremony'], [30, 'Cocktail hour'], [90, 'Grand entrance and dinner'], [150, 'Toasts and first dance'], [180, 'Cake cutting and dancing'], [hours * 60 - 15, 'Send-off'], [hours * 60, 'Breakdown and cleanup']]
       : [[-120, 'Setup begins and vendors arrive'], [-30, 'Host ready for photos'], [0, 'Guests arrive, welcome drinks'], [45, 'Food is served'], [Math.round(hours * 60 * 0.5), 'Toasts or the main moment'], [Math.round(hours * 60 * 0.65), 'Cake or dessert'], [Math.round(hours * 60 * 0.75), 'Games, dancing or photo booth'], [hours * 60, 'Goodbyes and favors'], [hours * 60 + 30, 'Cleanup']];
     return plan.map(function (p) {
@@ -294,9 +333,11 @@
         });
         score = score / colors.length * 3;
       }
+      var groups = 0;
       Object.keys(WORDS).forEach(function (tag) {
-        if (WORDS[tag].some(function (w) { return text.indexOf(w) >= 0; }) && s.tags.indexOf(tag) >= 0) score += 2;
+        if (WORDS[tag].some(function (w) { return text.indexOf(w) >= 0; }) && s.tags.indexOf(tag) >= 0) { score += 2; groups++; }
       });
+      if (groups > 1) score += groups; /* matching several of the host's words beats matching one */
       s.tags.forEach(function (tag) { if (text.indexOf(tag) >= 0) score += 1; });
       return { style: s, score: score };
     }).sort(function (a, b) { return b.score - a.score; });

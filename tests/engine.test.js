@@ -100,4 +100,18 @@ t('plan made for your budget lands at the budget and protects must-haves', () =>
   assert(tight.shortBy > 0, 'reports when a budget is too small');
   assert.equal(E.budget(ev, 'F').tier.id, 'F');
 });
+t('restaurant lunch prices menu ordering, not a venue event', () => {
+  const ev = { type: 'birthday', guests: 10, city: 'Houston, TX', setting: 'restaurant', time: '12:30', hours: 2, budget: 2000 };
+  const s = E.budget(ev, 'S'); const ids = s.items.map(i => i.id);
+  assert(!ids.includes('venue') && !ids.includes('catering') && !ids.includes('rentals') && !ids.includes('dj'), ids.join());
+  assert(ids.includes('restaurantFood') && ids.includes('cake'));
+  assert(s.perGuest >= 45 && s.perGuest <= 90, 'per guest ' + s.perGuest);
+  const dinner = E.budget({ ...ev, time: '19:00' }, 'S');
+  assert(dinner.total > s.total, 'dinner costs more than lunch');
+  const fit = E.budgetFit(ev);
+  assert(!fit.items.some(i => i.id === 'photographer'), 'budget fit does not add hired extras at a restaurant');
+  assert(fit.total < 1500, 'does not spend money just because it is there: ' + fit.total);
+  assert(E.checklist(ev).some(c => /reserve a table/.test(c.text)) && !E.checklist(ev).some(c => /Book key vendors/.test(c.text)));
+  assert(E.runOfShow(ev).some(r => /Pay the bill/.test(r.text)));
+});
 console.log(n + ' checks passed');

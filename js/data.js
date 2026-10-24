@@ -60,7 +60,12 @@
     tent:         { name: 'Tent', group: 'Outdoor', perGuest: [8, 24], tier: 'LSU', taxable: true, outdoor: true },
     restrooms:    { name: 'Restroom trailer', group: 'Outdoor', fixed: [300, 1400], tier: 'SU', outdoor: true },
     generator:    { name: 'Generator', group: 'Outdoor', fixed: [300, 900], tier: 'SU', outdoor: true },
-    permits:      { name: 'Permits', group: 'Outdoor', fixed: [50, 450], tier: 'LSU', outdoor: true }
+    permits:      { name: 'Permits', group: 'Outdoor', fixed: [50, 450], tier: 'LSU', outdoor: true },
+    /* Restaurant, ordering from the menu: no venue, catering or rentals. Lunch and brunch cost about 20% less than dinner. */
+    restaurantFood:   { name: 'Meals ordered from the menu', group: 'Food and drink', perGuest: [26, 42], tier: 'LSU', taxable: true, gratuity: true, meal: true },
+    restaurantDrinks: { name: 'Drinks (about two per person)', group: 'Food and drink', perGuest: [12, 22], tier: 'LSU', taxable: true, gratuity: true, meal: true },
+    cakeFee:          { name: 'Cake-cutting fee (if you bring a cake)', group: 'Food and drink', perGuest: [1.5, 4], tier: 'LSU' },
+    tableDecor:       { name: 'Table decor (small centerpiece, candles, confetti)', group: 'Style', fixed: [30, 120], perGuest: [1, 3], tier: 'LSU', taxable: true }
   };
 
   /* Which categories each event style uses. */
@@ -69,7 +74,22 @@
     shower:  ['venue', 'catering', 'bar', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'photographer', 'entertainment', 'favors', 'invitations', 'cleanup', 'attire', 'hairMakeup', 'photoBooth', 'lighting'],
     party:   ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'dj', 'photographer', 'photoBooth', 'entertainment', 'favors', 'invitations', 'cleanup', 'attire', 'hairMakeup', 'lighting', 'videographer', 'mc', 'insurance', 'security', 'transport', 'parking'],
     gala:    ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'lighting', 'dj', 'liveMusic', 'mc', 'photographer', 'videographer', 'photoBooth', 'entertainment', 'favors', 'invitations', 'attire', 'hairMakeup', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
-    wedding: ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'florals', 'lighting', 'dj', 'liveMusic', 'mc', 'photographer', 'videographer', 'photoBooth', 'favors', 'invitations', 'attire', 'hairMakeup', 'officiant', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking']
+    wedding: ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'florals', 'lighting', 'dj', 'liveMusic', 'mc', 'photographer', 'videographer', 'photoBooth', 'favors', 'invitations', 'attire', 'hairMakeup', 'officiant', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
+    /* Where the event happens can override the event type. */
+    restaurant:  ['restaurantFood', 'restaurantDrinks', 'cake', 'cakeFee', 'tableDecor', 'photographer', 'favors'],
+    privateRoom: ['privateDining', 'cake', 'cakeFee', 'decor', 'florals', 'balloons', 'photographer', 'favors', 'invitations']
+  };
+  /* Per-setting limits: which budget versions include an item, and short bookings. */
+  var SETTINGS = [
+    { id: 'restaurant', name: 'Restaurant, ordering from the menu', short: 'Restaurant' },
+    { id: 'privateRoom', name: 'Private room at a restaurant', short: 'Private room' },
+    { id: 'indoor', name: 'Event venue', short: 'Event venue' },
+    { id: 'outdoor', name: 'Outdoors', short: 'Outdoors' },
+    { id: 'home', name: 'At home', short: 'At home' }
+  ];
+  var SETTING_RULES = {
+    restaurant: { tiers: { photographer: 'U', favors: 'U', tableDecor: 'LSU' }, hours: { photographer: 2 } },
+    privateRoom: { tiers: { balloons: 'SU', florals: 'SU', photographer: 'SU', favors: 'U', invitations: 'U' }, hours: { photographer: 2 } }
   };
 
   /* Event-specific adjustments (multipliers on the Signature range). */
@@ -113,7 +133,7 @@
     { id: 'modern-noir', shop: 'black and gold', name: 'Modern Noir', palette: ['#111111', '#2B2B2B', '#C9A86A', '#F5F2EC', '#7A6A55'], tags: ['black', 'dark', 'gold', 'modern', 'glam', 'evening'],
       mood: 'Black and gold, sharp lines and dramatic low light.', decor: ['Black linens with gold flatware', 'Mirrored table numbers', 'Tall black taper candles', 'Neon sign with the guest of honor’s name'],
       music: 'r&b lounge house', dress: 'All black, cocktail to black tie', menu: 'modern' },
-    { id: 'blush-romance', shop: 'blush pink', name: 'Blush Romance', palette: ['#F7DCDC', '#E8B4B8', '#C98B92', '#FFF7F3', '#B88A5A'], tags: ['pink', 'blush', 'romantic', 'soft', 'floral'],
+    { id: 'blush-romance', shop: 'blush pink', name: 'Blush Romance', palette: ['#F7DCDC', '#E8B4B8', '#C98B92', '#FFF7F3', '#B88A5A'], tags: ['pink', 'blush', 'romantic', 'soft', 'floral', 'gold'],
       mood: 'Blush roses, soft draping and a romantic glow.', decor: ['Blush and ivory rose centerpieces', 'Sheer draped backdrop', 'Rose-gold accents', 'Pearl-dotted dessert table'],
       music: 'love songs soul', dress: 'Blush, ivory and champagne', menu: 'elegant' },
     { id: 'boho-sunset', shop: 'terracotta boho', name: 'Boho Sunset', palette: ['#E9C9A6', '#C47C4E', '#8C5A3C', '#F4EBDD', '#6B7A55'], tags: ['boho', 'terracotta', 'warm', 'rustic', 'orange', 'outdoor'],
@@ -171,16 +191,21 @@
     { w: 40, t: 'Book the venue', only: ['wedding', 'gala', 'quince'] },
     { w: 32, t: 'Book photographer, caterer and music', only: ['wedding', 'gala', 'quince'] },
     { w: 24, t: 'Send save-the-dates', only: ['wedding'] },
-    { w: 10, t: 'Choose your concept and budget version' },
-    { w: 9, t: 'Book the venue or reserve private dining' },
-    { w: 8, t: 'Book key vendors (food, photos, music)' },
-    { w: 6, t: 'Send invitations and open RSVPs' },
-    { w: 5, t: 'Order decor, balloons and florals' },
-    { w: 4, t: 'Finalize menu and dietary needs' },
-    { w: 3, t: 'Plan outfits and book hair and makeup' },
-    { w: 2, t: 'Confirm final guest count with vendors' },
-    { w: 2, t: 'Finish seating chart' },
-    { w: 1, t: 'Confirm vendor arrival times and pay balances' },
+    { w: 10, t: 'Choose your concept and budget version', not: ['restaurant'] },
+    { w: 9, t: 'Book the venue or reserve private dining', not: ['restaurant'] },
+    { w: 8, t: 'Book key vendors (food, photos, music)', not: ['restaurant', 'privateRoom'] },
+    { w: 4, t: 'Choose the restaurant and reserve a table for your group', in: ['restaurant'] },
+    { w: 3, t: 'Ask the restaurant about large-party rules: automatic tip, cake-cutting fee, decor and separate checks', in: ['restaurant', 'privateRoom'] },
+    { w: 6, t: 'Send invitations and open RSVPs', not: ['restaurant'] },
+    { w: 3, t: 'Send invitations and open RSVPs', in: ['restaurant'] },
+    { w: 5, t: 'Order decor, balloons and florals', not: ['restaurant'] },
+    { w: 1, t: 'Order or pick up the cake and table decor', in: ['restaurant'] },
+    { w: 4, t: 'Finalize menu and dietary needs', not: ['restaurant'] },
+    { w: 3, t: 'Plan outfits and book hair and makeup', not: ['restaurant'] },
+    { w: 2, t: 'Confirm final guest count with vendors', not: ['restaurant'] },
+    { w: 2, t: 'Finish seating chart', not: ['restaurant'] },
+    { w: 1, t: 'Confirm the reservation and final headcount', in: ['restaurant', 'privateRoom'] },
+    { w: 1, t: 'Confirm vendor arrival times and pay balances', not: ['restaurant'] },
     { w: 1, t: 'Build the day-of run of show' },
     { w: 0, t: 'Enjoy the event' },
     { w: -1, t: 'Send thank-you notes and share the album' }
@@ -209,6 +234,8 @@
   var ALLOWANCE = { photoAnalyses: 10, aiChanges: 15, venueSearches: 20, storageMB: 500, accessMonths: 12, afterEventDays: 30 };
 
   var VENUE_TYPES = {
+    restaurant: ['Upscale brunch or lunch spot', 'Steakhouse or chophouse', 'Rooftop restaurant', 'Wine bar or bistro', 'Trendy dinner spot with a large table'],
+    privateRoom: ['Private dining room', 'Rooftop restaurant', 'Hotel tea room', 'Wine bar with a private space'],
     dining: ['Private dining room', 'Rooftop restaurant', 'Hotel tea room', 'Wine bar with a private space'],
     shower: ['Event loft', 'Garden venue', 'Tea room or bistro', 'Community or clubhouse room'],
     party: ['Event loft', 'Rooftop lounge', 'Restaurant buyout', 'Backyard or home', 'Hotel ballroom'],
@@ -224,6 +251,7 @@
   };
 
   root.EC_DATA = {
+    SETTINGS: SETTINGS, SETTING_RULES: SETTING_RULES, GRATUITY: 0.20,
     EVENT_TYPES: EVENT_TYPES, CATEGORIES: CATEGORIES, PROFILES: PROFILES, ADJUST: ADJUST, TIERS: TIERS,
     CITIES: CITIES, STYLES: STYLES, MENUS: MENUS, DIETS: DIETS, CHECKLIST: CHECKLIST, PASSES: PASSES,
     CREDIT_PACKS: CREDIT_PACKS, PACKAGES: PACKAGES, ADDONS: ADDONS, ALLOWANCE: ALLOWANCE,

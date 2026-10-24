@@ -44,6 +44,18 @@
     if (up) return { src: up.src, alt: 'Your inspiration photo' };
     return ev.photo || null; /* sample plans only; we never generate or substitute pictures for a host's event */
   }
+  /* At a restaurant only table-sized decor makes sense: no backdrops, arches or dessert tables. */
+  var BIG_DECOR = /backdrop|arch|installation|garland|lounge|neon|cloud|tower|wall|dessert table|bar setup|signage|runway|hanging|marquee|dance floor|photo/i;
+  function decorFor(c, ev) {
+    if (!ev || ev.setting !== 'restaurant') return c.decor;
+    var keep = (c.decor || []).filter(function (d) { return !BIG_DECOR.test(d); });
+    return keep.concat(['Small centerpieces and candles in ' + c.styleName + ' colors', 'Place cards and a cake topper to match']).slice(0, 4);
+  }
+  function outlineFor(c, ev) {
+    if (!ev || ev.setting !== 'restaurant') return c.outline;
+    var d = decorFor(c, ev);
+    return ['Table: ' + d[0].toLowerCase(), 'Details: ' + d[1].toLowerCase(), 'Moment: cake or dessert brought out with candles and a song', 'Dress code: ' + c.dress.toLowerCase()];
+  }
   function srcOf(u) { return (window.EC_EMBED && window.EC_EMBED[u]) || u; }
   function thumb(photo, cls) { return photo ? '<div class="thumb ' + (cls || '') + '"><img src="' + srcOf(photo.src) + '" alt="' + esc(photo.alt) + '" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()"></div>' : ''; }
   function fmtDate(d) { if (!d) return 'Date not set'; var x = new Date(d + 'T12:00:00'); return x.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }); }
@@ -307,9 +319,19 @@
   function hexRgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
 
   /* ---------- new event wizard ---------- */
+  /* Brunches and dinners usually happen at a restaurant; everything else starts at an event venue until the host says otherwise. */
+  function defaultSetting(type) { return E.typeOf(type).style === 'dining' ? 'restaurant' : 'indoor'; }
+  function guessSetting(text) {
+    text = (text || '').toLowerCase();
+    if (/private (dining )?room/.test(text)) return 'privateRoom';
+    if (/restaurant|order(ing)? from the menu|reservation|(lunch|dinner|brunch) at /.test(text)) return 'restaurant';
+    if (/at home|my house|my place|backyard/.test(text)) return 'home';
+    if (/outdoor|outside|park|beach/.test(text)) return 'outdoor';
+    return null;
+  }
   function newDraft() {
     var t = D.EVENT_TYPES[0];
-    return { id: uid(), name: '', type: t.id, guests: t.defaultGuests, expected: t.defaultGuests, city: 'Houston, TX', budget: 2000, setting: 'indoor', hours: t.hours, date: '', time: '18:00', start: '', kids: false,
+    return { id: uid(), name: '', type: t.id, guests: t.defaultGuests, expected: t.defaultGuests, city: 'Houston, TX', budget: 0, setting: defaultSetting(t.id), hours: t.hours, date: '', time: '18:00', start: '', kids: false,
       inspiration: { photos: [], links: [], text: '', vibes: [] }, priorities: [], guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, overrides: {}, exclude: [], include: [], tier: 'F', created: Date.now() };
   }
   function wizard(step, id) {
@@ -383,9 +405,9 @@
         '<label class="field"><span>How many hours</span><input class="input" type="number" min="1" max="16" id="hours" value="' + draft.hours + '"></label>' +
         '<label class="field"><span>Guest capacity (everyone invited, including plus-ones)</span><input class="input num" type="number" min="1" max="100000" id="guests" value="' + draft.guests + '"></label>' +
         '<label class="field"><span>Expected to attend</span><input class="input num" type="number" min="1" id="expected" value="' + draft.expected + '"></label>' +
-        '<label class="field"><span>Total budget (USD)</span><input class="input num" type="number" min="0" step="50" id="budget" value="' + draft.budget + '"></label>' +
+        '<label class="field"><span>Total budget (USD, optional)</span><input class="input num" type="number" min="0" step="50" id="budget" value="' + (draft.budget || '') + '" placeholder="Leave blank to see typical prices"></label>' +
         '<label class="field"><span>Your starting point for drive times (optional)</span><input class="input" id="start" value="' + esc(draft.start) + '" placeholder="Home, hotel or ceremony address"></label>' +
-        '</div><div class="stack"><span class="muted small">Setting</span><div class="seg" id="setting">' + [['indoor', 'Indoor'], ['outdoor', 'Outdoor'], ['home', 'At home']].map(function (s) { return '<button type="button" data-v="' + s[0] + '" aria-pressed="' + (draft.setting === s[0]) + '">' + s[1] + '</button>'; }).join('') + '</div>' +
+        '</div><div class="stack"><h3 id="whereLbl">Where is it?</h3><span class="muted small">This changes what we price. At a restaurant, everyone orders from the menu: no venue, catering or rentals.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + (draft.setting === st.id) + '">' + esc(st.name) + '</button>'; }).join('') + '</div>' +
         '<label class="row small"><input type="checkbox" id="kids"' + (draft.kids ? ' checked' : '') + '> Children will attend</label></div>' +
         '<div class="stack"><h3>Your must-haves</h3><span class="muted small">These are protected first when the plan is fitted to your budget.</span><div class="chips" id="musts">' + MUSTS.map(function (m) { return '<button type="button" class="chip" data-must="' + m[0] + '" aria-pressed="' + ((draft.priorities || []).indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div></div>' +
         '<div class="row" style="justify-content:space-between"><a class="btn ghost" href="' + W + '1/' + draft.id + '">Back</a>' + laterBtn() + '<button class="btn gold" id="next">See my price</button></div></div>');
@@ -393,9 +415,11 @@
       showNames();
       $('#names').addEventListener('click', function (e) { var b = e.target.closest('[data-name]'); if (!b) return; $('#name').value = b.dataset.name; draft.name = b.dataset.name; persist(); });
       $('#type').addEventListener('change', showNames);
+      if (!draft.settingChosen) { var gs = guessSetting((draft.inspiration && draft.inspiration.text) || ''); if (gs) { draft.setting = gs; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === gs); }); } }
+      $('#type').addEventListener('change', function () { if (!draft.settingChosen && !guessSetting(draft.inspiration && draft.inspiration.text)) { var ds = defaultSetting(this.value); $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === ds); }); } });
       $('#type').addEventListener('change', function () { var t = E.typeOf(this.value); $('#hours').value = t.hours; if (+$('#guests').value === draft.guests) { $('#guests').value = t.defaultGuests; $('#expected').value = t.defaultGuests; } });
       $('#musts').addEventListener('click', function (e) { var b = e.target.closest('[data-must]'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
-      $('#setting').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
+      $('#setting').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; draft.settingChosen = true; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); if (b.dataset.v === 'restaurant' && +$('#hours').value > 3) $('#hours').value = 2; });
       function collect2() {
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
         draft.type = $('#type').value; draft.name = $('#name').value.trim() || E.typeOf(draft.type).name; draft.city = $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || '18:00';
@@ -444,7 +468,7 @@
     function render(list) {
       $('#cs').innerHTML = list.map(function (c, i) {
         var sel = ev.concept && ev.concept.id === c.id;
-        return '<article class="concept' + (sel ? ' selected' : '') + '">' + '<div class="in"><span class="concept-num">Concept ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(c.mood) + '</p><ul>' + c.outline.map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
+        return '<article class="concept' + (sel ? ' selected' : '') + '">' + '<div class="in"><span class="concept-num">Concept ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(c.mood) + '</p><ul>' + outlineFor(c, ev).map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
       }).join('');
     }
     function load(skip) {
@@ -492,7 +516,7 @@
     var b = E.budget(ev, ev.tier);
     var hp = eventPhoto(ev);
     var head = '<div class="plan-head">' + (hp ? thumb(hp, 'banner') : '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>') +
-      '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta"><span>' + esc(ev.concept.styleName) + '</span><span>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span></div></div>' +
+      '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta"><span>' + esc(ev.concept.styleName) + '</span><span>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span><span>' + (ev.sample ? esc(settingName(ev)) : '<button class="link small" id="where" aria-label="Where it happens: ' + esc(settingName(ev)) + '. Change">' + esc(settingName(ev)) + '</button>') + '</span></div></div>' +
       '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + (b.tier.id === 'F' ? 'Planned to your budget' : esc(b.tier.name) + ' estimate') + '</div></div></div>' +
       (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new">Start your own</a> to edit it with your details.</div>' : '') + '</div>';
     var rail = '<nav class="rail" aria-label="Plan sections">' + TABS.map(function (t) { return '<a href="' + base + '/' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>';
@@ -505,8 +529,14 @@
         $('#ok', el).addEventListener('click', function () { var n = $('#nn', el).value.trim(); if (!n) return toast('Enter a name'); ev.name = n; save(); close(); planView(ev, tab); });
       });
     });
+    var wh = $('#where'); if (wh) wh.addEventListener('click', function () {
+      sheet('<h3>Where is it?</h3><p class="muted">Prices, venues, checklist and timeline update to match.</p><div class="stack">' + D.SETTINGS.map(function (st) { return '<button class="btn ' + (st.id === (ev.setting || 'indoor') ? 'gold' : 'ghost') + ' block" data-set="' + st.id + '">' + esc(st.name) + '</button>'; }).join('') + '</div><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
+        el.addEventListener('click', function (e) { var bt = e.target.closest('[data-set]'); if (!bt) return; ev.setting = bt.dataset.set; if (ev.setting === 'restaurant' && ev.hours > 3) ev.hours = 2; save(); close(); planView(ev, tab); toast('Updated for ' + settingName(ev).toLowerCase()); });
+      });
+    });
     var bind = TAB_BIND[tab]; if (bind) bind(ev, save, function () { planView(ev, tab); });
   }
+  function settingName(ev) { var st = D.SETTINGS.find(function (x) { return x.id === (ev.setting || 'indoor'); }); return st ? st.short : 'Event venue'; }
 
   function lockSample(ev) { if (ev.sample) { toast('This is a sample. Start your own plan to make changes.'); return true; } return false; }
 
@@ -525,7 +555,7 @@
         g.swaps.map(function (s, i) { return '<div class="it"><span class="grow">' + esc(s.text) + '</span>' + (s.save ? '<span class="num muted">saves about ' + money(s.save) + '</span>' : '') + '<button class="btn small ghost" data-swap="' + i + '">Apply</button></div>'; }).join('') + '</div></div>' : '') +
       '<div class="panel stack"><h3>Ask the concierge</h3><p class="muted small">Type a change in plain words, like “make it 25 guests”, “budget $3,000”, “move it outdoors”, “skip the photographer” or “add a photo booth”.</p>' +
       '<div class="chat" id="chat"></div><form id="ask" class="row"><input class="input" id="q" style="flex:1 1 220px" placeholder="What would you like to change?" autocomplete="off"><button class="btn">Send</button></form></div>' +
-      '<div class="panel stack"><h3>Your concept</h3>' + sw(ev.concept.palette) + '<p>' + esc(ev.concept.mood) + '</p><ul class="incl">' + ev.concept.decor.map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul><p class="muted small">Dress code: ' + esc(ev.concept.dress) + '</p>' + (ev.sample ? '' : '<div><a class="btn ghost small" href="#/e/' + ev.id + '/concepts">Change concept</a></div>') + '</div>';
+      '<div class="panel stack"><h3>Your concept</h3>' + dots(ev.concept.palette, ev.concept.styleName + ' colors') + '<p>' + esc(ev.concept.mood) + '</p><ul class="incl">' + decorFor(ev.concept, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul><p class="muted small">Dress code: ' + esc(ev.concept.dress) + '</p>' + (ev.sample ? '' : '<div><a class="btn ghost small" href="#/e/' + ev.id + '/concepts">Change concept</a></div>') + '</div>';
   };
   TAB_BIND.overview = function (ev, save, rerender) {
     $$('[data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { ev.tier = btn.dataset.tier; save(); rerender(); }); });
@@ -562,7 +592,9 @@
     else if (/luxe for less|cheaper version|lowest/.test(s)) { ev.tier = 'L'; changes.push('switched to Luxe for Less'); }
     else if (/signature/.test(s)) { ev.tier = 'S'; changes.push('switched to Signature'); }
     else if (/ultra|splurge|fanciest/.test(s)) { ev.tier = 'U'; changes.push('switched to Ultra Luxe'); }
-    if (/outdoor|outside/.test(s)) { ev.setting = 'outdoor'; changes.push('moved outdoors (tent, permits and restrooms added)'); }
+    if (/private (dining )?room/.test(s)) { ev.setting = 'privateRoom'; changes.push('moved to a private room at a restaurant'); }
+    else if (/restaurant|order(ing)? from the menu/.test(s)) { ev.setting = 'restaurant'; changes.push('moved to a restaurant, ordering from the menu (no venue, catering or rentals)'); }
+    else if (/outdoor|outside/.test(s)) { ev.setting = 'outdoor'; changes.push('moved outdoors (tent, permits and restrooms added)'); }
     else if (/indoor|inside/.test(s)) { ev.setting = 'indoor'; changes.push('moved indoors'); }
     else if (/at home|my house|backyard/.test(s)) { ev.setting = 'home'; changes.push('set at home'); }
     if ((m = s.match(/(\d+)\s*hours?/))) { ev.hours = Math.min(16, Math.max(1, +m[1])); changes.push('length is now ' + ev.hours + ' hours'); }
@@ -619,10 +651,14 @@
 
   /* Venues: types that fit, live search links, drive times */
   TAB_VIEWS.places = function (ev, b) {
-    var t = E.typeOf(ev.type); var types = D.VENUE_TYPES[t.style] || D.VENUE_TYPES.party;
+    var t = E.typeOf(ev.type); var types = D.VENUE_TYPES[ev.setting] || D.VENUE_TYPES[t.style] || D.VENUE_TYPES.party;
     var venueLine = b.items.find(function (i) { return i.id === 'venue' || i.id === 'privateDining'; });
     var city = ev.city.replace('Other US city', '');
-    return '<div class="stack"><h3>Venues that fit this plan</h3><p class="muted">' + (venueLine ? 'Your ' + esc(b.tier.name) + ' venue budget is about ' + money(venueLine.mid) + '. ' : '') + 'Look for spaces that hold ' + plural(ev.guests, 'guest') + (ev.setting === 'outdoor' ? ' outdoors' : '') + '.</p>' +
+    var foodLine = b.items.filter(function (i) { return i.id === 'restaurantFood' || i.id === 'restaurantDrinks'; }).reduce(function (s2, i) { return s2 + i.mid; }, 0);
+    var intro = ev.setting === 'restaurant'
+      ? 'Your food and drinks come to about ' + money(foodLine / Math.max(1, ev.guests)) + ' per person with tax and tip. Look for restaurants that take reservations for ' + plural(ev.guests, 'guest') + '.'
+      : (venueLine ? 'Your ' + esc(b.tier.name) + ' venue budget is about ' + money(venueLine.mid) + '. ' : '') + 'Look for spaces that hold ' + plural(ev.guests, 'guest') + (ev.setting === 'outdoor' ? ' outdoors' : '') + '.';
+    return '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' +
       (AI.live ? '' : '<div class="note">Live venue photos, ratings, hours and drive times appear here when venue search is connected at launch. For now, each idea opens a live map search.</div>') +
       '<div class="list panel">' + types.map(function (v) {
         var q = v + ' near ' + city;
@@ -637,6 +673,10 @@
   function venueProsCons(v, ev) {
     var m = {
       'Private dining room': ['food and space in one booking, no setup', 'food and drink minimums, set end time'],
+      'Upscale brunch or lunch spot': ['bright, pretty and great for photos', 'busy on weekends, book ahead'],
+      'Steakhouse or chophouse': ['polished service and big portions', 'higher prices per person'],
+      'Wine bar or bistro': ['intimate and stylish', 'smaller tables for big groups'],
+      'Trendy dinner spot with a large table': ['lively atmosphere', 'can be loud; may add an automatic tip'],
       'Rooftop restaurant': ['views and built-in atmosphere', 'weather risk and higher minimums'],
       'Hotel tea room': ['elegant, quiet and polished', 'fewer decor options'],
       'Wine bar with a private space': ['intimate and stylish', 'smaller capacity'],
