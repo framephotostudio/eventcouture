@@ -25,12 +25,14 @@
       '<div><b>Vendor listings</b> (business name, email, phone, prices, policies) entered on For vendors<span>Saved on your device in this version. When listings go live, they will be shown to hosts planning events in your area.</span></div>' +
       '<div><b>Technical data</b> (IP address, browser type, time of request)<span>Received by our hosting and server providers when your device connects. Our server keeps a short-lived count of requests per IP address to prevent abuse; it expires within about an hour.</span></div>' +
       '<div><b>Purchases</b> (when payments are switched on)<span>Handled by our payment processor or by Apple or Google. We receive confirmation of what you bought; we never receive your full card number.</span></div>' +
+      '<div><b>Usage statistics</b> (which pages are opened and which buttons are tapped, plus general choices such as the kind of event, city, guest-count range and budget range)<span>Sent to Google Analytics to count visits and see which features people use. We never send names, guest lists, photos, what you type, or your event\u2019s details. Advertising features are turned off. Nothing is sent if your browser asks sites not to track you (Do Not Track or Global Privacy Control).</span></div>' +
       '</div>' +
-      '<p>We don’t collect precise location, contacts, or advertising IDs, and we don’t use analytics or advertising trackers on Event Couture.</p>' +
+      '<p>We don’t collect precise location, contacts, or advertising IDs, and we don’t use advertising trackers on Event Couture.</p>' +
 
       '<h3>3. Who receives information</h3><p>We share information only with service providers that run Event Couture for us, and only for that purpose:</p><ul class="incl">' +
       '<li><span><b>Google (Gemini API)</b> creates concepts from your event details and inspiration. Google processes these requests under its API terms; our server doesn’t store them.</span></li>' +
       '<li><span><b>Google Maps Platform</b> returns venues, vendors, ratings and drive times.</span></li>' +
+      '<li><span><b>Google Analytics</b> counts visits and feature use, as described above. Face Couture, also from Always Luxe, uses the same Google Analytics account, so a visit to both sites can be counted together.</span></li>' +
       '<li><span><b>Cloudflare</b> runs our server; <b>GitHub Pages</b> hosts the website; <b>Google Fonts</b> provides the typefaces. Each receives standard technical data when your device connects.</span></li>' +
       '<li><span><b>Stores you choose to visit</b> (Amazon, Etsy, Spotify, Apple Music, Venmo, Cash App, PayPal, Google Maps). Links open their sites, which have their own privacy policies. Some shopping links earn us a commission; they’re marked where they appear.</span></li>' +
       '<li><span><b>Authorities</b>, when the law requires it or to protect people from harm.</span></li></ul>' +

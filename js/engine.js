@@ -480,13 +480,43 @@
     var t = (((ev.inspiration && ev.inspiration.text) || '') + ' ' + ((ev.inspiration && ev.inspiration.vibes) || []).join(' ')).toLowerCase();
     return COLOR_TAGS.some(function (tag) { return (WORDS[tag] || []).some(function (w) { return t.indexOf(w) >= 0; }); }) || /\b(navy|teal|beige|taupe|mauve|brown|grey|gray|turquoise|mint|copper|bronze|rose gold)\b/.test(t);
   }
-  function withInspo(ev, list, skip) {
-    var p = inspoOf(ev); if (!p || (skip && skip.length)) return list;   /* "three different concepts" means new looks, not the photo again */
+  /* No drink names as color or look names anywhere: "champagne" reads as a color in decor talk, but hosts see an alcohol word. */
+  var DRINK_COLOR = [[/\bchampagne[- ]gold\b/gi, 'soft gold'], [/\bchampagne\b(?=[ -]+(?:and|&|neutrals?|tones?|hues?|linens?|silk|velvet|blush|sage|ivory|gold|garden|terrace|palette|colou?rs?|accents?|chargers?|napkins?|runners?|drap\w*)\b)/gi, 'soft gold'],
+    [/\b(?:and|&) champagne\b(?! (?:tower|toast|flutes?|bar|wall|cart))/gi, '$&'], [/\bwine[- ]red\b/gi, 'deep red'], [/\bros[eé] gold\b/gi, 'rose gold'], [/\b(?:merlot|bordeaux|cabernet|sangria|prosecco|bourbon|whiskey|cognac)(?= (?:and|&|velvet|tones?|hues?|linens?|red|accents?|napkins?|runners?|colou?rs?))/gi, 'deep red']];
+  function noDrinkWords(t) { t = String(t || ''); DRINK_COLOR.forEach(function (r) { t = t.replace(r[0], function (m) { var out = r[1].replace('$&', m); return /^[A-Z]/.test(m) ? out.charAt(0).toUpperCase() + out.slice(1) : out; }); }); return t.replace(/\bChampagne\b(?! (?:tower|toast|flutes?|bar|wall|cart))/g, 'Soft Gold').replace(/\bchampagne\b(?! (?:tower|toast|flutes?|bar|wall|cart))/g, 'soft gold'); }
+  function cleanConcept(c) {
+    ['name', 'styleName', 'mood', 'dress'].forEach(function (k) { if (c[k]) c[k] = noDrinkWords(c[k]); });
+    ['decor', 'outline'].forEach(function (k) { if (c[k]) c[k] = c[k].map(noDrinkWords); });
+    if (c.pieces) c.pieces.forEach(function (x) { if (x.item) x.item = noDrinkWords(x.item); if (x.search) x.search = noDrinkWords(x.search); });
+    return c;
+  }
+  var STOP = { the: 1, and: 1, a: 1, of: 1, with: 1, party: 1, shower: 1, birthday: 1, celebration: 1, '&': 1 };
+  function words(n) { return String(n || '').toLowerCase().replace(/[^a-z\u00e0-\u00ff ]/g, ' ').split(/\s+/).filter(function (w) { return w && !STOP[w]; }); }
+  function sameLook(a, b) { var A = words(a), B = words(b); if (!A.length || !B.length) return false; var hit = A.filter(function (w) { return B.indexOf(w) >= 0; }).length; return hit >= Math.min(2, A.length, B.length) || a.toLowerCase() === b.toLowerCase(); }
+  /* Always three different looks: drop repeats (by name or by look) and top up from the style library. */
+  function threeDifferent(list, extra, avoid) {
+    var out = [];
+    list.concat(extra || []).forEach(function (c) {
+      if (!c || out.length >= 3) return;
+      if ((avoid || []).some(function (a) { return a && (sameLook(a.name, c.name) || (a.style && a.style === c.id)); })) return;
+      if (out.some(function (o) { return sameLook(o.name, c.name) || (o.id === c.id && !o.inspo && !c.inspo); })) return;
+      out.push(c);
+    });
+    return out;
+  }
+  function withInspo(ev, list, skip, extra) {
+    list = (list || []).map(cleanConcept);
+    var p = inspoOf(ev);
+    if (!p || (skip && skip.length)) return threeDifferent(list, extra, p && skip && skip.length ? [{ name: p.name, style: p.style }] : []);   /* "three different concepts" means new looks, not the photo again */
     var pc = inspoConcept(ev, p);
-    var rest = list.filter(function (c) { return !c.inspo && c.id !== pc.id; });
-    var at = hostNamedColors(ev) ? 1 : 0;
+    var rest = threeDifferent(list.filter(function (c) { return !c.inspo; }), extra, [{ name: p.name, style: p.style }]);
+    /* Her own colors lead only when they differ from the photo's; "lavender" with a lavender photo keeps the photo first. */
+    var said = (((ev.inspiration && ev.inspiration.text) || '') + ' ' + ((ev.inspiration && ev.inspiration.vibes) || []).join(' ')).toLowerCase(), inPhoto = (p.shop + ' ' + p.mood + ' ' + p.name).toLowerCase();
+    var other = COLOR_TAGS.some(function (tag) { return (WORDS[tag] || []).some(function (w) { return said.indexOf(w) >= 0 && inPhoto.indexOf(w) < 0; }); }) || (/\b(navy|teal|beige|taupe|mauve|brown|grey|gray|turquoise|mint|copper|bronze)\b/.exec(said) || []).some(function (w) { return w && inPhoto.indexOf(w) < 0; });
+    var at = other ? 1 : 0;
     rest.splice(Math.min(at, rest.length), 0, pc);
-    return rest.slice(0, 3).map(function (c, i) { if (!c.inspo && i === 0 && at === 1) c.fit = 'Closest match to your words'; return c; });
+    var n = 0;
+    return rest.slice(0, 3).map(function (c, i) { if (c.inspo) return c; if (i === 0 && at === 1) c.fit = 'Closest match to your words'; else c.fit = n++ ? 'A fresh direction' : 'A close alternative'; return c; });
   }
   function concepts(ev, colors, text, liked, skip) {
     skip = skip || [];

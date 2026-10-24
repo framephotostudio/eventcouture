@@ -146,3 +146,13 @@ t('brunch timeline has no birthday song unless it is a birthday', () => {
   assert(E.runOfShow({ type: 'birthday', setting: 'restaurant', time: '19:00', hours: 2 }).some(r => /birthday/.test(r.text)));
 });
 console.log(n + ' checks passed');
+// chosen photo + AI repeat of it + drink word as a color: three different looks, no "Champagne" names
+{
+  const E2 = globalThis.EC_ENGINE; if (!globalThis.EC_INSPO) require('../js/inspo.js');
+  const ev = { type: 'baby-shower', guests: 30, inspiration: { inspo: 'lavender-garden-shower', text: 'lavender', vibes: [] } };
+  const ai = [{ id: 'a', name: 'Lavender Garden Shower' }, { id: 'b', name: 'Champagne & Sage Terrace', mood: 'warm champagne neutrals' }, { id: 'c', name: 'Lavender Garden Party' }];
+  const out = E2.withInspo(ev, ai, [], E2.concepts(ev, [], 'lavender', [], []));
+  const names = out.map(c => c.name);
+  if (out.length !== 3 || new Set(names).size !== 3 || names.filter(n => /lavender garden/i.test(n)).length !== 1 || names.some(n => /champagne/i.test(n)) || out[0].inspo !== 'lavender-garden-shower') { console.error('FAIL three different looks', names); process.exit(1); }
+  console.log('ok three different looks with no drink names');
+}

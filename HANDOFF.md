@@ -159,3 +159,7 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 - Test: tests/inspiration.py
 - No alcohol words in photo names or descriptions (test checks js/inspo.js). Library look "Champagne Garden" now shows as "Sage Garden" (id unchanged).
 - Get this look (Style and music page): E.lookPieces(ev) lists what to buy (Amazon/Etsy searches) or hire (links to Vendors), in this order: host's own words (PIECE_WORDS, nearest color wins), photo marks (LOVE_PIECES), then the photo's pieces (tools_inspo.py PIECES), the AI concept's pieces (worker returns "pieces"), or D.STYLE_PIECES.
+
+## 0.25.0: analytics; three truly different concepts
+- js/analytics.js: GA4, same property as Face Couture (G-JNY27DLF0Z); every event has app_name=event_couture. Only on facecouture.app, off with Do Not Track / Global Privacy Control. Page titles and addresses are replaced with clean paths (/eventcouture/plan/budget), so event names and ids never reach Google. Funnel: page_view, inspiration_filter/open/used, details_done, concepts_requested, concepts_shown (source ai|library, wait_seconds), concept_chosen, plan_kept, shop_click, venues_view, new_venue_click, song_play, face_couture_click, rsvp_sent, vendor_listing_published, event_deleted and more. Test: tests/analytics.py.
+- E.withInspo now cleans AI concepts (no drink words as colors/names), drops repeats of the chosen photo or of each other, and tops up from the library so there are always 3 different looks.

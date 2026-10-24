@@ -3,6 +3,8 @@
   'use strict';
   var D = window.EC_DATA, E = window.EC_ENGINE, CFG = window.EC_CONFIG || {};
   var money = E.money;
+  function T(n, p) { try { (window.ecTrack || function () {})(n, p); } catch (e) {} }
+  function band(n, cuts) { for (var i = 0; i < cuts.length; i++) if (n <= cuts[i]) return (i ? cuts[i - 1] + 1 : 0) + '-' + cuts[i]; return cuts[cuts.length - 1] + '+'; }
   var app = document.getElementById('app');
 
   /* ---------- small utilities ---------- */
@@ -210,7 +212,7 @@
       var text = (ev.inspiration.text || '') + ' ' + vibes.join(' ').toLowerCase() + ' ' + (ev.inspiration.links || []).join(' ');
       /* A chosen inspiration photo counts like the host's own photo; her own words come first, so they win. */
       var ip = E.inspoOf(ev); if (ip) { ip.palette.forEach(function (h) { colors.push(hexRgb(h)); }); text += ' ' + E.inspoText(ip).toLowerCase(); }
-      var fin = function (list) { return E.withInspo(ev, list, skip); };
+      var fin = function (list) { return E.withInspo(ev, list, skip, E.concepts(ev, colors, text, loves, (skip || []).concat((list || []).map(function (c) { return c.id; })))); };
       if (AI.live) {
         /* Started early on the review screen, so the concepts are usually ready when the host taps Create. */
         var key = JSON.stringify(slim(ev)).length + ':' + JSON.stringify([ev.inspiration.inspo || '', ev.type, ev.guests, ev.city, ev.budget, ev.setting, ev.time, ev.kids, ev.alcohol, ev.inspiration.text, ev.inspiration.vibes, (ev.inspiration.photos || []).length]);
@@ -340,7 +342,7 @@
       '<p class="muted small">Your concepts, decor, shopping list, menu and playlist follow this photo. Next, add anything you want different, like colors, guest count or budget. Your words always win.</p>' +
       '<button class="btn gold block" id="useInspo">Use this inspiration</button><button class="btn ghost block" data-close>Keep browsing</button>', function (el, close) {
       $('#ifor', el).addEventListener('click', function (e) { var b = e.target.closest('[data-t]'); if (!b) return; pick = b.dataset.t; $$('#ifor [data-t]', el).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
-      $('#useInspo', el).addEventListener('click', function () { close(); startFromInspo(p, pick); });
+      $('#useInspo', el).addEventListener('click', function () { T('inspiration_used', { photo: p.id, occasion: pick }); close(); startFromInspo(p, pick); });
     });
   }
   var inspoFor_ = null;   /* the draft a host is choosing a different photo for */
@@ -663,7 +665,9 @@
         if (stv === 'home' && g > 150) return toast('Home events work for up to about 150 people. Choose a venue or outdoors for ' + g.toLocaleString('en-US') + '.');
         if (ex > g) return toast('Expected to attend can’t be more than the number of people you’re inviting');
         if (!$('#setting [aria-pressed="true"]')) { $('#whereLbl').scrollIntoView({ block: 'center' }); return toast('Choose where it is: a restaurant, a venue, outdoors or at home'); }
-        collect2(); persist(); location.hash = W + '3/' + draft.id;
+        collect2(); persist();
+        T('details_done', { event_type: draft.type, setting: draft.settingOpen ? 'not_sure' : draft.setting, city: draft.city, guests_band: band(draft.guests, [10, 25, 50, 100, 200, 500]), budget_band: draft.budget ? band(draft.budget, [1000, 3000, 5000, 10000, 25000, 50000, 100000]) : 'none', drinks: draft.alcohol, payer: draft.payer, kids: draft.kids ? 'yes' : 'no', start: E.inspoOf(draft) ? 'inspiration_photo' : draft.inspiration.photos.length ? 'own_photos' : draft.inspiration.text ? 'words' : 'colors_and_vibes', own_photos: draft.inspiration.photos.length });
+        location.hash = W + '3/' + draft.id;
       });
       return;
     }
@@ -688,6 +692,7 @@
     if (AI.live) AI.concepts(draft, []);   /* start the AI now; it's usually ready by the time the host taps Create */
     $('#go').addEventListener('click', function () {
       var btn = this; if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Starting…';   // no double submits
+      T('concepts_requested', { event_type: draft.type });
       var ev = draft; ev.paid = null; ev.created = ev.created || new Date().toISOString().slice(0, 10);
       if (!saveEvent(ev)) { btn.disabled = false; btn.textContent = 'Create my concepts'; return; }
       removeDraft(ev.id); draft = null;
@@ -710,7 +715,9 @@
       }).join('');
     }
     function load(skip) {
+      var t0 = Date.now();
       AI.concepts(ev, skip).then(function (list) {
+        T(skip && skip.length ? 'concepts_more_shown' : 'concepts_shown', { source: AI.source || 'library', wait_seconds: Math.round((Date.now() - t0) / 100) / 10, event_type: ev.type, from_photo: E.inspoOf(ev) ? 'yes' : 'no' });
         ev.concepts = list; saveEvent(ev); render(list);
         var n = $('#srcNote'); if (n) { n.hidden = !(AI.live && AI.source === 'library'); n.textContent = 'Our AI is busy right now, so these three come from the Event Couture style library. Nothing extra was used. Try again later for fresh AI ideas.'; }
       });
@@ -718,7 +725,7 @@
     if (ev.concepts && ev.concepts.length) render(ev.concepts); else load([]);
     $('#cs').addEventListener('click', function (e) {
       var b = e.target.closest('[data-i]'); if (!b) return;
-      ev.concept = ev.concepts[+b.dataset.i]; if (ev.nameAuto) ev.name = ev.concept.name; saveEvent(ev); location.hash = '#/e/' + ev.id;
+      ev.concept = ev.concepts[+b.dataset.i]; T('concept_chosen', { look: ev.concept.inspo || ev.concept.id, position: +b.dataset.i + 1, from_photo: ev.concept.inspo ? 'yes' : 'no', event_type: ev.type }); if (ev.nameAuto) ev.name = ev.concept.name; saveEvent(ev); location.hash = '#/e/' + ev.id;
     });
     $('#more').addEventListener('click', function () {
       ev.seen = (ev.seen || []).concat(ev.concepts.map(function (c) { return c.id; }));
@@ -759,6 +766,7 @@
       '<button class="btn gold block" id="keepPay">' + (CFG.preview ? 'Keep my plan' : 'Pay ' + usd2(pass.price) + ' and keep my plan') + '</button><button class="btn ghost block" data-close>Not now</button>', function (el, close) {
       $('#keepPay', el).addEventListener('click', function () {
         ev.paid = { price: pass.price, max: pass.max, at: new Date().toISOString() };
+        T('plan_kept', { pass: pass.label, value: CFG.preview ? 0 : pass.price, pass_price: pass.price, currency: 'USD', event_type: ev.type, preview: CFG.preview ? 'yes' : 'no' });
         addLedger({ kind: 'Event Pass', event: ev.name, amount: CFG.preview ? 0 : pass.price, note: pass.label + (CFG.preview ? ' (preview)' : '') });
         saveEvent(ev); close(); toast('Your plan is kept'); onDone && onDone();
       });
@@ -1476,7 +1484,7 @@
     $$('[data-pkg]').forEach(function (b) { b.addEventListener('click', function () { if (lockSample(ev)) return; var p = D.PACKAGES[+b.dataset.pkg];
       buySheet(p, ev, function () { if (p.id === 'concepts3') { ev.seen = (ev.seen || []).concat((ev.concepts || []).map(function (c) { return c.id; })); AI.concepts(ev, ev.seen).then(function (list) { ev.concepts = list; save(); location.hash = '#/e/' + ev.id + '/concepts'; }); } }); }); });
     $$('[data-add]').forEach(function (b) { b.addEventListener('click', function () { if (lockSample(ev)) return; buySheet(D.ADDONS[+b.dataset.add], ev, rerender); }); });
-    var del = $('#del'); if (del) del.addEventListener('click', function () { sheet('<h3>Delete ' + esc(ev.name) + '?</h3><p class="muted">This can\u2019t be undone.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete event</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { var all = events(); delete all[ev.id]; store.set('events', all); close(); toast('Event deleted'); location.hash = '#/events'; }); }); });
+    var del = $('#del'); if (del) del.addEventListener('click', function () { sheet('<h3>Delete ' + esc(ev.name) + '?</h3><p class="muted">This can\u2019t be undone.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete event</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { T('event_deleted', { event_type: ev.type }); var all = events(); delete all[ev.id]; store.set('events', all); close(); toast('Event deleted'); location.hash = '#/events'; }); }); });
     var kx = $('#keepX'); if (kx) { kx.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', rerender); }); return; }
     $('#upg').addEventListener('click', function () { if (lockSample(ev)) return; var cur = ev.paid.max || ev.guests; var nx = E.passFor(cur + 1); var due = Math.max(0, Math.round((nx.price - ev.paid.price) * 100) / 100);
       buySheet({ name: 'Move up to ' + nx.label.toLowerCase(), price: due, desc: 'Your plan, guests and purchases stay exactly as they are.' }, ev, function () { ev.paid = { price: nx.price, max: nx.max, at: new Date().toISOString() }; save(); rerender(); }); });
@@ -1566,7 +1574,7 @@
     $$('[data-multi]').forEach(function (box) { box.addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (!b) return; b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); collect(); }); });
     if ($('#autofill')) $('#autofill').addEventListener('click', function () { sheet('<h3>Fill in from your website</h3><p class="muted">Paste your website or Instagram link and the AI fills in the form for you to check. This turns on when the app launches.</p><button class="btn block" data-close>OK</button>'); });
     $('#submit').addEventListener('click', function () { collect(); if (v.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v.email).trim())) { toast('Enter a valid business email'); var em = document.getElementById('v_email'); if (em) em.focus(); return; } if (done() < 1) { var missing = req().filter(function (f) { var x = v[f[0]]; return Array.isArray(x) ? !x.length : (f[2] === 'check' ? x !== true : !x || !String(x).trim()); }); toast('Still needed: ' + missing.slice(0, 3).map(function (f) { return f[1].toLowerCase(); }).join(', ')); var el = document.getElementById('v_' + missing[0][0]); if (el) el.scrollIntoView({ block: 'center' }); return; }
-      v.published = new Date().toISOString(); store.set('vendor', v);
+      v.published = new Date().toISOString(); store.set('vendor', v); T('vendor_listing_published', { categories: [].concat(v.cats || []).join(',') });
       sheet('<h3>Your listing is ready</h3><p class="muted">' + (CFG.preview ? 'Preview version: listings go live for hosts when the app launches.' : 'Hosts planning events in your area can now see your packages.') + '</p><button class="btn block" data-close>Done</button>'); });
   }
 
@@ -1576,7 +1584,7 @@
     ['What if my guest list grows?', 'Move up a size under Overview, Your pass. You pay only the difference, and your plan stays exactly as it is.', 'grow more guests upgrade capacity bigger'],
     ['Can I get a refund?', 'Planning is free, so you see your whole plan before you pay. If something you paid for doesn\u2019t work, contact us and we\u2019ll make it right. Purchases made in the iPhone or Android app are refunded through Apple or Google from your purchase history.', 'refund money back cancel charged'],
     ['How do I contact you?', CFG.supportEmail ? 'Email us at ' + CFG.supportEmail + '. We reply within one business day.' : 'Start with the answers on this page. If you still need help, use the contact details on the Event Couture website.', 'contact support email phone talk person help reach'],
-    ['Is my data safe?', 'Yes. Your plans, guest lists and photos stay on your device. To create your concepts, your details and inspiration go through our server to Google\u2019s AI and aren\u2019t kept by Event Couture. We never sell your data, and guest details are never shown to vendors. See Privacy for the details.', 'safe secure privacy data private sell share'],
+    ['Is my data safe?', 'Yes. Your plans, guest lists and photos stay on your device. To create your concepts, your details and inspiration go through our server to Google\u2019s AI and aren\u2019t kept by Event Couture. We never sell your data, and guest details are never shown to vendors. Google Analytics counts visits and which buttons are tapped, never names, photos or what you type. See Privacy for the details.', 'safe secure privacy data private sell share'],
     ['How long do I keep my plan?', 'Until 12 months after you keep it, or 30 days after your event, whichever is later. The exact date is shown before you pay and under Overview, Your pass.', 'expire expiry how long access keep'],
     ['Are the prices real?', 'Each price is labeled. Planning estimates are sized to your city and guest count and include tax, service charges and tips. Vendor-published prices, quotes and bookings are marked as such. Add any quote you get under Budget & bookings, Add quote or booking.', 'real accurate estimate price quote'],
     ['Do my guests need the app?', 'No. Once accounts launch, guests open your invite link in any browser to see the details, RSVP, vote and view the registry. Right now the link previews on your own device.', 'guests app download link rsvp'],
