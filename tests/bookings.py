@@ -16,7 +16,7 @@ with sync_playwright() as p:
         ctx=b.new_context(viewport={'width':w,'height':h}); pg=ctx.new_page(); e=[]; pg.on('pageerror',lambda x:e.append(str(x)))
         pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
         pg.goto(U+'#/new/1'); pg.wait_for_timeout(300); pg.fill('#text','black and gold 30th birthday'); pg.click('#next'); pg.wait_for_timeout(250)
-        pg.select_option('#type','birthday'); pg.fill('#guests','40'); pg.fill('#expected','40'); pg.fill('#time','19:00'); pg.click('#setting [data-v=indoor]')
+        pg.select_option('#type','birthday'); pg.fill('#guests','40'); pg.fill('#expected','40'); pg.fill('#time','19:00'); pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]')
         pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept', timeout=20000); pg.wait_for_timeout(250)
         pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
         base=pg.url.split('#')[1].split('/'); base='#/'+base[1]+'/'+base[2]

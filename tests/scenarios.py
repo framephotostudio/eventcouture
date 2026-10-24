@@ -19,7 +19,7 @@ def run(pg, text, typ, guests, setting, time='18:00', budget=None, alcohol=None,
     if budget: pg.fill('#budget', str(budget))
     if alcohol: pg.click(f'#alcohol [data-v={alcohol}]')
     if payer: pg.click(f'#payer [data-v={payer}]')
-    pg.click(f'#setting [data-v={setting}]')
+    pg.select_option('#city', 'Houston, TX'); pg.click(f'#setting [data-v={setting}]')
     names = pg.inner_text('#names')
     pg.click('#next'); pg.wait_for_selector('#go')
     review = pg.inner_text('.confirm')

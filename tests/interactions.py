@@ -11,7 +11,7 @@ def plan(pg, payer='shared', kept=True):
     pg.goto(U + '#/new/1'); pg.wait_for_timeout(300)
     pg.fill('#text', 'black and gold 40th birthday, splitting with friends'); pg.click('#next'); pg.wait_for_timeout(300)
     pg.select_option('#type', 'milestone'); pg.fill('#guests', '30'); pg.fill('#expected', '30'); pg.fill('#budget', '6000')
-    pg.click('#payer [data-v=%s]' % payer); pg.click('#setting [data-v=indoor]')
+    pg.click('#payer [data-v=%s]' % payer); pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]')
     pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(250)
     pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
     if kept: pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
@@ -57,7 +57,7 @@ with sync_playwright() as p:
         # cost splitting
         go(base + '/invite'); t = pg.inner_text('#tab')
         check('Cost splitting' in t, n + ': splitting missing when the host chose splitting')
-        pg.fill('#stot', '600'); pg.press('#stot', 'Tab'); pg.wait_for_timeout(250)
+        pg.fill('#stot', '600'); pg.press('#stot', 'Tab'); pg.wait_for_timeout(250); pg.fill('#scount', '3'); pg.press('#scount', 'Tab'); pg.wait_for_timeout(250)
         for nm in ['Ava', 'Ben', 'Cara']: pg.fill('#sname', nm); pg.click('#sadd button'); pg.wait_for_timeout(200)
         check('$200' in pg.inner_text('#tab'), n + ': share not $200: ' + pg.inner_text('#tab')[-400:])
         pg.check('[data-paid="0"]'); pg.wait_for_timeout(250); go(base + '/invite'); check(pg.query_selector('[data-paid="0"]:checked') is not None, n + ': paid tick not kept')
@@ -100,7 +100,7 @@ with sync_playwright() as p:
             if (el.tagName === 'SELECT') { el.selectedIndex = 1; el.dispatchEvent(new Event('change', {bubbles: true})); }
             else if (el.tagName === 'TEXTAREA') { el.value = 'Full setup and cleanup'; el.dispatchEvent(new Event('input', {bubbles: true})); }
             else if (el.tagName === 'INPUT' && el.type === 'checkbox') { el.checked = true; el.dispatchEvent(new Event('change', {bubbles: true})); }
-            else if (el.tagName === 'INPUT') { el.value = el.type === 'number' ? '5' : 'Gilded Events'; el.dispatchEvent(new Event('input', {bubbles: true})); }
+            else if (el.tagName === 'INPUT') { el.value = el.type === 'number' ? '5' : el.id === 'v_email' ? 'hello@gildedevents.com' : 'Gilded Events'; el.dispatchEvent(new Event('input', {bubbles: true})); }
             else if (el.dataset.multi !== undefined) { const c = el.querySelector('.chip'); if (c) c.click(); }
           });
         }''')

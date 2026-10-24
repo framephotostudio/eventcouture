@@ -113,7 +113,7 @@ t('restaurant lunch prices menu ordering, not a venue event', () => {
   assert(!fit.items.some(i => i.id === 'photographer'), 'budget fit does not add hired extras at a restaurant');
   assert(fit.total < 1500, 'does not spend money just because it is there: ' + fit.total);
   assert(E.checklist(ev).some(c => /reserve a table/.test(c.text)) && !E.checklist(ev).some(c => /Book key vendors/.test(c.text)));
-  assert(E.runOfShow(ev).some(r => /Pay the bill/.test(r.text)));
+  assert(E.runOfShow(ev).some(r => /Settle the bill|settles their own check/.test(r.text)));
 });
 t('ChatGPT scenario: Houston birthday dinner, 10 people, $1,000 max, no alcohol', () => {
   const ev = { type: 'birthday', guests: 10, expected: 10, city: 'Houston, TX', setting: 'restaurant', time: '19:00', hours: 2, budget: 1000, alcohol: 'none' };

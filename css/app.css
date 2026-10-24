@@ -521,3 +521,15 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
   .seg { display: grid; grid-template-columns: 1fr 1fr; border-radius: 16px; width: 100%; }
   .seg button { border-radius: 12px; text-align: center; }
 }
+.invite-host { max-width: 640px; margin: 0 auto 14px; }
+
+/* Launch polish */
+.steps-line li { align-content: start; grid-template-rows: auto auto 1fr; }
+.grid2 > .field { align-content: end; }
+.concept .in { grid-template-rows: auto auto auto auto auto 1fr auto; align-content: start; }
+.concept .badge { justify-self: start; white-space: normal; }
+@media (min-width: 900px) { .home-samples { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 959px) {
+  .rail { position: static; overflow: visible; padding-top: 0; }
+  .rail .rg.on { flex-wrap: wrap; }
+}

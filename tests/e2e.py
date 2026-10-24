@@ -38,7 +38,7 @@ def run(p, name, viewport, scheme):
     page.fill('#start', '1600 Main St, Houston')
     page.click('#next'); page.wait_for_timeout(200)
     if '#/new/3' in page.url: problems.append('continued without choosing restaurant or venue')
-    page.click('#setting [data-v=indoor]')
+    page.select_option('#city', 'Houston, TX'); page.click('#setting [data-v=indoor]')
     page.screenshot(path=f'{OUT}/{name}-step2.png', full_page=True)
     page.click('#next')
     page.wait_for_selector('#go')

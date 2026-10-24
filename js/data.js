@@ -137,10 +137,10 @@
       mood: 'Blush roses, soft draping and a romantic glow.', decor: ['Blush and ivory rose centerpieces', 'Sheer draped backdrop', 'Rose-gold accents', 'Pearl-dotted dessert table'],
       music: 'love songs soul', dress: 'Blush, ivory and champagne', menu: 'elegant' },
     { id: 'boho-sunset', shop: 'terracotta boho', name: 'Boho Sunset', palette: ['#E9C9A6', '#C47C4E', '#8C5A3C', '#F4EBDD', '#6B7A55'], tags: ['boho', 'terracotta', 'warm', 'rustic', 'orange', 'outdoor'],
-      mood: 'Warm sunset tones, pampas grass and low lounge seating.', decor: ['Pampas and dried-flower arrangements', 'Low tables with floor cushions', 'Rattan and macramé accents', 'Lantern-lit pathway'],
+      mood: 'Warm sunset tones, pampas grass and low lounge seating.', decor: ['Pampas and dried-flower arrangements', 'Lounge corners with floor cushions', 'Rattan and macramé accents', 'Lantern-lit pathway'],
       music: 'indie acoustic sunset', dress: 'Flowy earth tones', menu: 'rustic' },
     { id: 'coastal-linen', shop: 'dusty blue', name: 'Coastal Linen', palette: ['#EAF1F4', '#A9C7D3', '#5D8AA0', '#FBF8F2', '#D8C8A8'], tags: ['blue', 'coastal', 'beach', 'light'],
-      mood: 'Breezy linen, ocean blues and natural textures.', decor: ['Linen tablecloths in sea-glass blue', 'Driftwood and white hydrangea', 'Glass hurricanes with sand', 'Seafood raw bar display'],
+      mood: 'Breezy linen, ocean blues and natural textures.', decor: ['Linen tablecloths in sea-glass blue', 'Driftwood and white hydrangea', 'Glass hurricanes with sand', 'Shell and sea-glass table accents'],
       music: 'yacht rock bossa nova', dress: 'Linen and light blues', menu: 'coastal' },
     { id: 'tropical-glam', shop: 'tropical', name: 'Tropical Glam', palette: ['#0F5C4D', '#F2B544', '#E5677A', '#FFF6E5', '#1B3B36'], tags: ['tropical', 'green', 'bright', 'colorful', 'summer'],
       mood: 'Lush palms, bold color and island glamour.', decor: ['Monstera and orchid centerpieces', 'Gold pineapple accents', 'Tiki-luxe bar setup', 'Bright floral photo wall'],
@@ -158,9 +158,9 @@
       mood: 'Clean white space, sculptural florals and quiet luxury.', decor: ['White-on-white table design', 'Single-stem sculptural florals', 'Clear acrylic signage', 'Statement white balloon cloud'],
       music: 'deep house chill', dress: 'All white', menu: 'modern' },
     { id: 'disco-glam', shop: 'silver disco', name: 'Disco Glam', palette: ['#C0C0C8', '#E05AA6', '#6B3FA0', '#141414', '#F2D16B'], tags: ['disco', 'silver', 'sparkle', 'party', 'purple', 'pink'],
-      mood: 'Mirror balls, metallics and a packed dance floor.', decor: ['Disco ball clusters', 'Metallic fringe backdrop', 'Silver tablescape with glitter accents', 'LED dance floor'],
+      mood: 'Mirror balls, metallics and a packed dance floor.', decor: ['Disco ball clusters', 'Metallic fringe backdrop', 'Silver tablescape with glitter accents', 'Mirror-ball lit dance area'],
       music: 'disco funk dance', dress: 'Sequins and metallics', menu: 'party' },
-    { id: 'moody-floral', shop: 'burgundy', name: 'Moody Floral', palette: ['#3B1F2B', '#7B2D3B', '#B5838D', '#E8D5C4', '#2F3A2F'], tags: ['burgundy', 'dark', 'floral', 'romantic', 'autumn', 'purple'],
+    { id: 'moody-floral', shop: 'burgundy', name: 'Moody Floral', palette: ['#3B1F2B', '#7B2D3B', '#B5838D', '#E8D5C4', '#2F3A2F'], tags: ['burgundy', 'red', 'dark', 'floral', 'romantic', 'autumn', 'purple'],
       mood: 'Deep jewel tones, abundant florals and candlelight.', decor: ['Burgundy and plum floral runners', 'Velvet napkins', 'Brass candelabras', 'Fruit and flower grazing table'],
       music: 'neo soul candlelight', dress: 'Jewel tones', menu: 'elegant' },
     { id: 'rustic-elegance', shop: 'rustic', name: 'Rustic Elegance', palette: ['#EADBC8', '#A47551', '#5C4033', '#F8F4EE', '#7D8C6A'], tags: ['rustic', 'wood', 'brown', 'barn', 'warm', 'neutral', 'autumn'],
@@ -183,6 +183,7 @@
     tropical: ['Jerk chicken skewers', 'Coconut rice', 'Plantain chips with guac', 'Tropical fruit display', 'Pineapple upside-down cupcakes', 'Passion-fruit punch'],
     classic: ['Beef tenderloin crostini', 'Crab cakes with remoulade', 'Caesar salad', 'Filet or vegetable Wellington', 'Champagne cake', 'Classic martinis'],
     gardenDinner: ['Burrata with heirloom tomatoes and basil', 'Herb-roasted chicken with lemon', 'Grilled vegetables with salsa verde', 'Spring pea and mint risotto', 'Berry pavlova', 'Elderflower spritz'],
+    kids: ['Mini pizzas', 'Chicken tenders with dips', 'Fruit cups and veggie cups', 'Mac and cheese bites', 'Cupcakes or a fun cake', 'Pink lemonade and juice boxes'],
     sweet: ['Finger sandwiches', 'Fruit skewers', 'Mini quiches', 'Macaron tower', 'Cake pops', 'Pink lemonade'],
     party: ['Loaded slider bar', 'Wings and dips', 'Taco station', 'Veggie crudités', 'Cupcake tower', 'Glitter cocktail and mocktail']
   };
@@ -210,8 +211,7 @@
     { w: 2, t: 'Finish seating chart', not: ['restaurant'], minGuests: 40 },
     { w: 1, t: 'Confirm the reservation and final headcount', in: ['restaurant', 'privateRoom'] },
     { w: 1, t: 'Confirm vendor arrival times and pay balances', not: ['restaurant'] },
-    { w: 1, t: 'Build the day-of run of show' },
-    { w: 0, t: 'Enjoy the event' },
+    { w: 1, t: 'Share the day-of schedule with vendors and helpers' },
     { w: -1, t: 'Send thank-you notes and share the album' }
   ];
 

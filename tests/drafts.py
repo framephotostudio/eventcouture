@@ -20,7 +20,7 @@ with sync_playwright() as p:
     pg.reload(); pg.wait_for_selector('text=In progress')
     pg.click('text=Continue'); pg.wait_for_selector('#name')
     if pg.input_value('#name') != name or pg.input_value('#guests') != '150': problems.append('draft details lost')
-    pg.click('#setting [data-v=indoor]'); pg.click('#next'); pg.click('#go'); pg.wait_for_selector('.concept'); pg.click('.concept button.gold'); pg.wait_for_selector('#rename')
+    pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]'); pg.click('#next'); pg.click('#go'); pg.wait_for_selector('.concept'); pg.click('.concept button.gold'); pg.wait_for_selector('#rename')
     pg.click('#rename'); pg.fill('#nn', 'Our Forever Day'); pg.click('#ok'); pg.wait_for_timeout(200)
     if 'Our Forever Day' not in pg.inner_text('.plan-head'): problems.append('rename failed')
     pg.goto('http://localhost:8765/#/events'); pg.wait_for_timeout(200)

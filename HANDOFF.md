@@ -1,6 +1,6 @@
 # Event Couture by Always Luxe: developer handoff
 
-**Version 0.18 · October 24, 2026**
+**Version 0.19 · October 24, 2026**
 **Live site:** https://facecouture.app/eventcouture/
 **Code:** https://github.com/framephotostudio/eventcouture (public; every push to `main` deploys automatically)
 **Server:** https://event-couture-api.facecouture.workers.dev (status at `/api/status`)
@@ -117,6 +117,7 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
   - `python3 tests/drafts.py <folder>`
   - `python3 tests/bookings.py <folder>` (shortlist and bookings with a stand-in server)
   - `python3 tests/interactions.py` (every control after a plan is made: date, levels, undo, prices, guests, co-hosts, seating, splitting, album, gifts, notes, pass upgrade, new concepts, delete, help, vendor form, drafts)
+  - `python3 tests/review_regressions.py` (each problem found by the independent review stays fixed)
   - `python3 tests/personas.py <folder>` (18 different clients, from a $600 kids' party to a 1,000-guest wedding; every page of each plan is read and checked)
 - **Single-file preview:** `python3 tests/build_preview.py <out.html>`
 - **Brand assets:** `python3 tools_brand.py`
