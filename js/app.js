@@ -359,6 +359,7 @@
     inspoFor_ = forId && drafts()[forId] ? forId : null;
     if (type && !inspoTypes().some(function (t) { return t.id === type; })) type = '';
     frame('<div class="stack-lg"><div class="stack"><h2>Inspiration by occasion</h2><p class="muted">Tap a photo you love. Your plan, from the decor to the playlist, is built around what’s in it.</p></div>' + inspoGallery(type) + '</div>');
+    var on = $('#ifilter [aria-pressed="true"]'); if (on && on.dataset.t) on.scrollIntoView({ block: 'nearest', inline: 'center' });
     bindInspo(0, function (t) { history.replaceState(null, '', '#/inspiration/' + (t || 'all') + (inspoFor_ ? '/' + inspoFor_ : '')); });
   }
 
