@@ -170,3 +170,11 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 - Photo names follow the host's occasion (E.inspoName). Her own colors lead in the library match too (E.wordsDiffer).
 - Thumb src escaped; analytics city is a list city or "Other US city"; photo-swap target reset on every route; new photo drafts are saved only when the host continues; kids flag follows the occasion; long words wrap.
 - Test: tests/ai_chaos.py (fake AI answers: code injection, drink names, kids club looks, broken fields, repeats, long words, photo flows).
+
+## 0.27.0: whole-site review (31 issues fixed)
+- Guest places follow the Event Pass (placesCap); declining frees a place; seating starts at table 1; one host vote per poll; sample guest preview; guests can add album photos from the invite page; unkept plans can be deleted.
+- Overview follows a chosen spending level; concierge reads each clause separately ("skip X and add Y"), understands $2.5k, and won't exceed place limits (also the Where sheet).
+- Wizard: step-1 text autosaves; typed hours kept; guests and budget read from the description; no past dates; "Other US city" needs a typed city.
+- Midnight to 4 AM is late night (E.startHour). Restaurant/private-room big events get matching checklist steps. Checklist unticks stick. Pay-your-own shows a per-person share everywhere. Home venue note matches the budget. "Shorten by an hour" shows the real saving.
+- Kids: no candles or nightlife names. No-alcohol: no wine bars, "welcome hour" instead of cocktail hour. Help answers invites, guest photos, subscriptions. Vendor form promises only what it does. Pop-ups keep keyboard focus. Alt text fixed.
+- Tests: tests/launch_review.py (all 31), personas types a city for "Other US city".

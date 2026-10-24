@@ -49,6 +49,7 @@ with sync_playwright() as p:
         pg.select_option('#type', c['type'])
         pg.fill('#guests', str(c['guests'])); pg.fill('#expected', str(c['guests']))
         pg.select_option('#city', c['city'])
+        if c['city'] == 'Other US city': pg.fill('#cityOther', 'Boise, ID')
         if c.get('time'): pg.fill('#time', c['time'])
         if c.get('budget'): pg.fill('#budget', str(c['budget']))
         if c.get('alcohol'): pg.click('#alcohol [data-v=%s]' % c['alcohol'])

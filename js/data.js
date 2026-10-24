@@ -255,8 +255,10 @@
   /* Checklist: weeks before the event. */
   var CHECKLIST = [
     { w: 52, t: 'Set the budget and guest count', only: ['wedding', 'gala', 'quince'] },
-    { w: 40, t: 'Book the venue', only: ['wedding', 'gala', 'quince'], not: ['home'] },
-    { w: 32, t: 'Book photographer, caterer and music', only: ['wedding', 'gala', 'quince'] },
+    { w: 40, t: 'Book the venue', only: ['wedding', 'gala', 'quince'], not: ['home', 'restaurant', 'privateRoom'] },
+    { w: 40, t: 'Reserve the private dining room', only: ['wedding', 'gala', 'quince'], in: ['privateRoom'] },
+    { w: 32, t: 'Book photographer, caterer and music', only: ['wedding', 'gala', 'quince'], not: ['restaurant', 'privateRoom'] },
+    { w: 32, t: 'Book the photographer and music', only: ['wedding', 'gala', 'quince'], in: ['restaurant', 'privateRoom'] },
     { w: 24, t: 'Send save-the-dates', only: ['wedding'] },
     { w: 10, t: 'Choose your concept and budget version', not: ['restaurant'] },
     { w: 9, t: 'Book the venue or reserve private dining', not: ['restaurant', 'home'] },
