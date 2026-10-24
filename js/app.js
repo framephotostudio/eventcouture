@@ -166,7 +166,7 @@
       '<header class="topbar"><a class="brand" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.mark) + '" alt="" width="44" height="44"><span class="bt"><b>Event Couture</b><span>by Always Luxe</span></span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
-      '<footer class="site"><img src="' + srcOf(BRAND.logo) + '" alt="Event Couture by Always Luxe" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div></footer>';
+      '<footer class="site"><img src="' + srcOf(BRAND.compact) + '" alt="Event Couture by Always Luxe" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div></footer>';
     var ld = document.getElementById('loader'); if (ld && !ld.classList.contains('done')) { ld.classList.add('done'); setTimeout(function () { if (ld.parentNode) ld.parentNode.removeChild(ld); }, 450); }
     if (location.hash !== lastHash) window.scrollTo(0, 0);
     lastHash = location.hash;
@@ -230,7 +230,7 @@
     var tags = [['Candles and decor', pick('decor').mid, 36, 30], ['Cake', pick('cake').mid, 80, 36], ['Florals', pick('florals').mid, 52, 62], ['Linens and tableware', pick('rentals').mid, 34, 86]];
     var lines = [['Venue', 'venue'], ['Catering', 'catering'], ['Florals', 'florals'], ['Candles and decor', 'decor'], ['Cake', 'cake'], ['Photographer', 'photographer']].map(function (l) { return '<div class="line"><span>' + l[0] + '</span><span class="num">' + money(pick(l[1]).mid) + '</span></div>'; }).join('');
     frame(
-      '<section class="welcome satin bleed"><img class="wlogo" src="' + srcOf(BRAND.logo) + '" alt="Event Couture by Always Luxe">' +
+      '<section class="welcome satin bleed"><img class="wlogo" src="' + srcOf(BRAND.compact) + '" alt="Event Couture by Always Luxe">' +
       '<div class="wcopy"><h1>Your inspiration. A beautifully planned event.</h1>' +
       '<p class="lead">Turn photos or ideas into three event concepts, a detailed budget and a step-by-step plan.</p>' +
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link" data-scroll="gallery">Explore sample plans</button></div>' +
