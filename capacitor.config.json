@@ -1,0 +1,12 @@
+{
+  "appId": "app.facecouture.events",
+  "appName": "Event Couture",
+  "webDir": "www",
+  "backgroundColor": "#FAF8F4",
+  "ios": { "contentInset": "never", "scrollEnabled": true, "allowsLinkPreview": false },
+  "android": { "allowMixedContent": false },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 1200, "backgroundColor": "#F3E2C3", "showSpinner": false },
+    "StatusBar": { "style": "LIGHT", "backgroundColor": "#FAF8F4" }
+  }
+}

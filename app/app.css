@@ -1,0 +1,17 @@
+/* Event Couture app: native feel on top of the site styles */
+html.ec-app { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
+html.ec-app body { padding-top: env(safe-area-inset-top, 0px); padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); overscroll-behavior-y: none; -webkit-user-select: none; user-select: none; }
+html.ec-app input, html.ec-app textarea, html.ec-app [contenteditable] { -webkit-user-select: text; user-select: text; }
+html.ec-app .topbar nav { display: none; }   /* My events and Help live in the tab bar */
+html.ec-app footer.site nav a[href="#/help"] { display: none; }
+.tab-ec { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--bg, #FAF8F4); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid var(--line, #E8E1D6); padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)); }
+.tab-ec a { display: grid; justify-items: center; gap: 2px; padding: 4px 0; color: var(--muted, #7A6F78); text-decoration: none; font-size: .68rem; letter-spacing: .01em; min-height: 48px; align-content: center; }
+.tab-ec a svg { width: 24px; height: 24px; }
+.tab-ec a[aria-current="page"] { color: var(--ink, #4B1235); font-weight: 500; }
+.tab-ec a[aria-current="page"] svg { stroke-width: 2; }
+.tab-ec a:hover { text-decoration: none; }
+.offline-ec { position: fixed; left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); z-index: 41; background: #2A1A26; color: #fff; border-radius: 12px; padding: 10px 14px; font-size: .85rem; box-shadow: 0 8px 24px rgba(0, 0, 0, .2); }
+.offline-ec[hidden] { display: none; }
+html.ec-app .toast { bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; }
+html.ec-app .sheet-back { z-index: 60; }
+html.ec-app .sheet { padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
