@@ -471,3 +471,8 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .ghost-rows i { display: block; height: 10px; border-radius: 6px; background: linear-gradient(90deg, #E9E3DA, #F1ECE4); }
 .ghost-rows i:nth-child(2) { width: 82%; } .ghost-rows i:nth-child(3) { width: 64%; }
 .keep-bar { position: static; box-shadow: none; }
+.sister { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); text-decoration: none; color: inherit; min-height: 56px; }
+.sister:hover { border-color: #D9CFC2; }
+.sister img { width: 44px; height: 44px; border-radius: 11px; flex: none; }
+.sister > span:nth-child(2) { display: grid; gap: 2px; flex: 1; }
+.sister-go { color: var(--gold-text); font-size: 1.2rem; }

@@ -169,6 +169,10 @@
     help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
     events: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>'
   };
+  /* Sister site: Face Couture (already live). Simple link only; deeper tie-ins wait until its looks are approved. */
+  function faceCard(ctx) {
+    return '<a class="sister" href="https://facecouture.app/" target="_blank" rel="noopener"><img src="' + srcOf('img/brand/facecouture-icon-128.png') + '" alt="" width="48" height="48"><span><b>' + (ctx === 'look' ? 'Get photo-ready for the day' : 'Also from Always Luxe') + '</b><span class="muted small">Face Couture: couture beauty for every photo</span></span><span class="sister-go" aria-hidden="true">\u2192</span></a>';
+  }
   var BRAND = { mark: 'img/brand/ec-mark-128.png', logo: 'img/brand/logo-full.jpg', compact: 'img/brand/logo-compact.jpg', banner: 'img/brand/logo-banner-wide.jpg', letters: 'img/brand/logo-letters.png' };
   var lastHash = null;
   function frame(inner, opts) {
@@ -178,7 +182,7 @@
       '<header class="topbar"><a class="brand logo-banner" href="#/" aria-label="Event Couture by Always Luxe, home"><span class="frame-outer"><span class="frame" style="background-image:url(' + srcOf(BRAND.banner) + ')"><img src="' + srcOf(BRAND.letters) + '" alt="Event Couture by Always Luxe" width="900" height="540"></span></span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
-      '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div></footer>';
+      '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div><div class="small">Also from Always Luxe: <a href="https://facecouture.app/" target="_blank" rel="noopener">Face Couture</a></div></footer>';
     var ld = document.getElementById('loader'); if (ld && !ld.classList.contains('done')) { ld.classList.add('done'); setTimeout(function () { if (ld.parentNode) ld.parentNode.removeChild(ld); }, 450); }
     if (location.hash !== lastHash) window.scrollTo(0, 0);
     lastHash = location.hash;
@@ -954,7 +958,7 @@
           songs.map(function (sg) { var q = sg[0] + ' ' + sg[1]; return '<li><span class="grow"><b>' + esc(sg[0]) + '</b><span class="muted small"> ' + esc(sg[1]) + '</span></span><a class="link small" target="_blank" rel="noopener" href="' + sp(q) + '">Spotify</a><a class="link small" target="_blank" rel="noopener" href="' + am(q) + '">Apple Music</a></li>'; }).join('') +
           '</ol>' + more(ev, songsAll, songs.length, 'songs') + (preview(ev) ? '' : '<div class="row"><button class="btn small ghost" id="copySongs">Copy song list</button></div>') + '</div></div>';
       })()) +
-      '<div class="stack"><h3>What to wear</h3><div class="panel stack">' + dressBlock(ev) + dots(c.palette, c.styleName + ' colors') + '<p class="muted small">Want the hair and makeup to match? Try the look on your own photo in Face Couture.</p><div><a class="btn small ghost" target="_blank" rel="noopener" href="https://facecouture.app">Open Face Couture</a></div></div></div>';
+      '<div class="stack"><h3>What to wear</h3><div class="panel stack">' + dressBlock(ev) + dots(c.palette, c.styleName + ' colors') + faceCard('look') + '</div></div>';
   };
 
   /* Timeline: checklist and run of show */
