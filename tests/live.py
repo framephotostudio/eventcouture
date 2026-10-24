@@ -14,7 +14,7 @@ with sync_playwright() as p:
     page.route('https://api.test/api/drive', lambda r: r.fulfill(content_type='application/json', body=json.dumps({'times': [{'placeId': 'p1', 'minutes': 14, 'miles': 6.2}]})))
     page.goto(BASE + '#/new/1')
     page.fill('#text', 'black and gold birthday'); page.click('#next')
-    page.fill('#start', 'Downtown Houston'); page.click('#next')
+    page.fill('#start', 'Downtown Houston'); page.click('#setting [data-v=indoor]'); page.click('#next')
     if 'Pay $' not in page.inner_text('#pay'): problems.append('live checkout label missing price')
     page.click('#pay'); page.wait_for_selector('.concept')
     if 'Test Concept 0' not in page.inner_text('#cs'): problems.append('server concepts not used')

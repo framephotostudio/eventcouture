@@ -319,8 +319,6 @@
   function hexRgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
 
   /* ---------- new event wizard ---------- */
-  /* Brunches and dinners usually happen at a restaurant; everything else starts at an event venue until the host says otherwise. */
-  function defaultSetting(type) { return E.typeOf(type).style === 'dining' ? 'restaurant' : 'indoor'; }
   function guessSetting(text) {
     text = (text || '').toLowerCase();
     if (/private (dining )?room/.test(text)) return 'privateRoom';
@@ -331,7 +329,7 @@
   }
   function newDraft() {
     var t = D.EVENT_TYPES[0];
-    return { id: uid(), name: '', type: t.id, guests: t.defaultGuests, expected: t.defaultGuests, city: 'Houston, TX', budget: 0, setting: defaultSetting(t.id), hours: t.hours, date: '', time: '18:00', start: '', kids: false,
+    return { id: uid(), name: '', type: t.id, guests: t.defaultGuests, expected: t.defaultGuests, city: 'Houston, TX', budget: 0, setting: null, hours: t.hours, date: '', time: '18:00', start: '', kids: false,
       inspiration: { photos: [], links: [], text: '', vibes: [] }, priorities: [], guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, overrides: {}, exclude: [], include: [], tier: 'F', created: Date.now() };
   }
   function wizard(step, id) {
@@ -407,7 +405,7 @@
         '<label class="field"><span>Expected to attend</span><input class="input num" type="number" min="1" id="expected" value="' + draft.expected + '"></label>' +
         '<label class="field"><span>Total budget (USD, optional)</span><input class="input num" type="number" min="0" step="50" id="budget" value="' + (draft.budget || '') + '" placeholder="Leave blank to see typical prices"></label>' +
         '<label class="field"><span>Your starting point for drive times (optional)</span><input class="input" id="start" value="' + esc(draft.start) + '" placeholder="Home, hotel or ceremony address"></label>' +
-        '</div><div class="stack"><h3 id="whereLbl">Where is it?</h3><span class="muted small">This changes what we price. At a restaurant, everyone orders from the menu: no venue, catering or rentals.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + (draft.setting === st.id) + '">' + esc(st.name) + '</button>'; }).join('') + '</div>' +
+        '</div><div class="stack"><h3 id="whereLbl">Where is it? <span class="muted small" style="font-family:var(--body)">(required)</span></h3><span class="muted small">Restaurant: everyone orders from the menu, so we price what the bill will look like, with no venue or catering fees. Event venue: you rent the space and pay food per person, so we price the venue, catering and rentals.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + (draft.setting === st.id) + '">' + esc(st.name) + '</button>'; }).join('') + '</div>' +
         '<label class="row small"><input type="checkbox" id="kids"' + (draft.kids ? ' checked' : '') + '> Children will attend</label></div>' +
         '<div class="stack"><h3>Your must-haves</h3><span class="muted small">These are protected first when the plan is fitted to your budget.</span><div class="chips" id="musts">' + MUSTS.map(function (m) { return '<button type="button" class="chip" data-must="' + m[0] + '" aria-pressed="' + ((draft.priorities || []).indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div></div>' +
         '<div class="row" style="justify-content:space-between"><a class="btn ghost" href="' + W + '1/' + draft.id + '">Back</a>' + laterBtn() + '<button class="btn gold" id="next">See my price</button></div></div>');
@@ -416,7 +414,6 @@
       $('#names').addEventListener('click', function (e) { var b = e.target.closest('[data-name]'); if (!b) return; $('#name').value = b.dataset.name; draft.name = b.dataset.name; persist(); });
       $('#type').addEventListener('change', showNames);
       if (!draft.settingChosen) { var gs = guessSetting((draft.inspiration && draft.inspiration.text) || ''); if (gs) { draft.setting = gs; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === gs); }); } }
-      $('#type').addEventListener('change', function () { if (!draft.settingChosen && !guessSetting(draft.inspiration && draft.inspiration.text)) { var ds = defaultSetting(this.value); $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === ds); }); } });
       $('#type').addEventListener('change', function () { var t = E.typeOf(this.value); $('#hours').value = t.hours; if (+$('#guests').value === draft.guests) { $('#guests').value = t.defaultGuests; $('#expected').value = t.defaultGuests; } });
       $('#musts').addEventListener('click', function (e) { var b = e.target.closest('[data-must]'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
       $('#setting').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; draft.settingChosen = true; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); if (b.dataset.v === 'restaurant' && +$('#hours').value > 3) $('#hours').value = 2; });
@@ -424,13 +421,14 @@
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
         draft.type = $('#type').value; draft.name = $('#name').value.trim() || E.typeOf(draft.type).name; draft.city = $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || '18:00';
         draft.hours = Math.max(1, +$('#hours').value || 3); draft.guests = g; draft.expected = ex || g; draft.budget = Math.max(0, +$('#budget').value || 0); draft.start = $('#start').value.trim();
-        draft.setting = ($('#setting [aria-pressed="true"]') || {}).dataset ? $('#setting [aria-pressed="true"]').dataset.v : 'indoor'; draft.kids = $('#kids').checked; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
+        var sb = $('#setting [aria-pressed="true"]'); draft.setting = sb ? sb.dataset.v : null; draft.kids = $('#kids').checked; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
       }
       $('#later').addEventListener('click', function () { collect2(); if (!$('#name').value.trim()) draft.name = ''; persist(); toast('Saved as ' + (draft.name || 'Untitled event') + '. Pick it up anytime from My events.'); location.hash = '#/events'; });
       $('#next').addEventListener('click', function () {
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
         if (!(g >= 1)) return toast('Enter how many guests can come');
         if (ex > g) return toast('Expected guests can’t be more than the guest capacity');
+        if (!$('#setting [aria-pressed="true"]')) { $('#whereLbl').scrollIntoView({ block: 'center' }); return toast('Choose where it is: a restaurant, a venue, outdoors or at home'); }
         collect2(); persist(); location.hash = W + '3/' + draft.id;
       });
       return;
@@ -549,7 +547,7 @@
     var g = E.guardian(ev, b);
     return '<div class="stack"><h3>Your budget versions</h3><p class="muted">' + (ev.budget ? 'One plan made for your ' + money(ev.budget) + ' budget' + ((ev.priorities || []).length ? ' that protects your must-haves' : '') + ', plus the same ' + esc(ev.concept.styleName) + ' look at three set spending levels.' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
       all.map(function (t) { var pc = E.prosCons(ev, t);
-        return '<button class="tier" data-tier="' + t.tier.id + '" aria-pressed="' + (t.tier.id === ev.tier) + '"><span class="muted small">' + esc(t.tier.name) + '</span><span class="amt num">' + money(t.total) + '</span><span class="small muted">' + money(t.perGuest) + ' per guest, includes a 10% cushion</span>' +
+        return '<button class="tier" data-tier="' + t.tier.id + '" aria-pressed="' + (t.tier.id === ev.tier) + '"><span class="muted small">' + esc(t.tier.name) + '</span><span class="amt num">' + money(t.total) + '</span><span class="small muted">' + (ev.setting === 'restaurant' ? 'About ' + money(t.perGuest) + ' a person all in: the menu bill, cake and table decor, with a 10% cushion' : money(t.perGuest) + ' per guest, includes a 10% cushion') + '</span>' +
           '<div class="pc"><b>Pros</b><ul>' + pc.pros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><b>Cons</b><ul>' + pc.cons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></button>'; }).join('') + '</div></div>' +
       (g.over > 0 ? '<div class="panel stack"><div class="row" style="justify-content:space-between"><h3>Budget guardian</h3><span class="badge bad">' + money(g.over) + ' over</span></div><p class="muted">These swaps keep the look and bring the total down.</p><div class="list">' +
         g.swaps.map(function (s, i) { return '<div class="it"><span class="grow">' + esc(s.text) + '</span>' + (s.save ? '<span class="num muted">saves about ' + money(s.save) + '</span>' : '') + '<button class="btn small ghost" data-swap="' + i + '">Apply</button></div>'; }).join('') + '</div></div>' : '') +

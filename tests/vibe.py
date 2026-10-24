@@ -14,7 +14,7 @@ with sync_playwright() as p:
     pg.select_option('#type', 'wedding'); pg.fill('#guests', '200'); pg.fill('#expected', '180'); pg.fill('#budget', '45000')
     pg.click('[data-must="photographer"]'); pg.click('[data-must="florals"]')
     pg.screenshot(path=OUT + '/vibe-step2.png', full_page=True)
-    pg.click('#next'); pg.click('#pay'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(400)
+    pg.click('#setting [data-v=indoor]'); pg.click('#next'); pg.click('#pay'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(400)
     first = pg.inner_text('.concept h3')
     pg.click('.concept button.gold'); pg.wait_for_selector('.tier'); pg.wait_for_timeout(400)
     cards = pg.locator('.tier .muted.small').all_inner_texts()
