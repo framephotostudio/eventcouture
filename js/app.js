@@ -877,7 +877,7 @@
   };
   TAB_BIND.style = function (ev) {
     var b = $('#copySongs'); if (!b) return;
-    b.addEventListener('click', function () { copyText([].slice.call(document.querySelectorAll('.songs li')).map(function (li, i) { return (i + 1) + '. ' + li.querySelector('b').textContent + ' \u2014' + li.querySelector('.muted').textContent; }).join('\n')); });
+    b.addEventListener('click', function () { var nm = document.querySelector('.pl-name'); copyText((nm ? nm.textContent + '\n\n' : '') + [].slice.call(document.querySelectorAll('.songs li')).map(function (li, i) { return (i + 1) + '. ' + li.querySelector('b').textContent + ' \u2014' + li.querySelector('.muted').textContent; }).join('\n')); });
   };
   TAB_BIND.vendors = function (ev) {
     $$('[data-vendor]').forEach(function (btn) { btn.addEventListener('click', function () {
@@ -953,11 +953,12 @@
       (rest ? '' : (function () {
         var songs = (c.songs && c.songs.length >= 6 ? c.songs.map(function (x) { var t = String(x).split(/ \u2014 | - /); return [t[0], t[1] || '']; }) : []);
         var have = {}; songs.forEach(function (x) { have[x[0].toLowerCase()] = 1; });
-        window.EC_SONGS_FOR(c.music).forEach(function (x) { if (songs.length < 25 && !have[x[0].toLowerCase()]) { have[x[0].toLowerCase()] = 1; songs.push(x); } });
+        window.EC_SONGS[window.EC_SONG_KEY(c.music, ev.type)].forEach(function (x) { if (songs.length < 25 && !have[x[0].toLowerCase()]) { have[x[0].toLowerCase()] = 1; songs.push(x); } });
         songs = songs.slice(0, 25);
         var songsAll = songs.length; songs = cut(songs, 3, ev);
         var sp = function (q) { return 'https://open.spotify.com/search/' + encodeURIComponent(q); }, am = function (q) { return 'https://music.apple.com/us/search?term=' + encodeURIComponent(q); };
-        return '<div class="stack"><h3>Your playlist</h3><div class="panel stack"><p class="muted small">' + esc(songsAll) + ' songs picked for the ' + esc(c.styleName) + ' mood. Tap a song to play it, or hand this list to your DJ.</p><ol class="songs">' +
+        var plName = c.playlistName || window.EC_SONG_NAMES[window.EC_SONG_KEY(c.music, ev.type)] || 'Party Playlist';
+        return '<div class="stack"><h3>Your playlist</h3><div class="panel stack"><div class="pl-head"><span class="pl-name display">' + esc(plName) + '</span><span class="muted small">' + esc(songsAll) + ' songs for ' + esc(ev.name) + ', picked for the ' + esc(c.styleName) + ' look. Tap a song to play it, or hand this list to your DJ.</span></div><ol class="songs">' +
           songs.map(function (sg) { var q = sg[0] + ' ' + sg[1]; return '<li><span class="grow"><b>' + esc(sg[0]) + '</b><span class="muted small"> ' + esc(sg[1]) + '</span></span><a class="link small" target="_blank" rel="noopener" href="' + sp(q) + '">Spotify</a><a class="link small" target="_blank" rel="noopener" href="' + am(q) + '">Apple Music</a></li>'; }).join('') +
           '</ol>' + more(ev, songsAll, songs.length, 'songs') + (preview(ev) ? '' : '<div class="row"><button class="btn small ghost" id="copySongs">Copy song list</button></div>') + '</div></div>';
       })()) +
