@@ -16,7 +16,14 @@ jobs:
       - name: Load keys (spaces and line breaks removed)
         run: |
           for s in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do v=$(printf '%s' "${!s}" | tr -d '[:space:]'); echo "::add-mask::$v"; echo "$s=$v" >> $GITHUB_ENV; done
-          echo "Account ID length: $(printf '%s' "$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')" | wc -c) (should be 32)"
+      - name: Confirm the Cloudflare account (uses the token's own account if the saved ID doesn't match)
+        run: |
+          ids=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts?per_page=50" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);if(!j.success){console.error('Token check failed: '+JSON.stringify(j.errors));process.exit(0)}console.log(j.result.map(a=>a.id).join(' '))}catch(e){}})")
+          echo "Accounts this token can use: $(echo $ids | wc -w)"
+          if [ -n "$ids" ] && ! echo " $ids " | grep -q " $CLOUDFLARE_ACCOUNT_ID "; then
+            first=$(echo $ids | cut -d' ' -f1); echo "::add-mask::$first"; echo "CLOUDFLARE_ACCOUNT_ID=$first" >> $GITHUB_ENV
+            echo "::warning::The saved CLOUDFLARE_ACCOUNT_ID did not match; using the token's account instead."
+          fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
