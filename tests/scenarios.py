@@ -82,7 +82,7 @@ with sync_playwright() as p:
     # 6. tier boundary: 26 guests should be the 26-75 pass
     names, review, head, base = run(pg, 'birthday party', 'birthday', 26, 'indoor', '19:00')
     pg.goto(base + '/extras'); pg.wait_for_timeout(250)
-    if '$19.99' not in pg.inner_text('#tab'): problems.append('6: 26 guests not priced at $19.99')
+    if '26 to 75 guests' not in pg.inner_text('#tab'): problems.append('6: 26 guests not on the 26-75 pass')
 
     # 7. choosing the type first, then guests, also keeps the number
     names, review, head, base = run(pg, 'dinner party', 'dinner', 14, 'privateRoom', '19:00', guests_first=False)

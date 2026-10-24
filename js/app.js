@@ -107,6 +107,8 @@
   function drafts() { return store.get('drafts', {}); }
   function saveDraft(d) { var all = drafts(); d.updated = Date.now(); all[d.id] = d; return store.set('drafts', all); }
   function removeDraft(id) { var all = drafts(); delete all[id]; store.set('drafts', all); }
+  /* Paid extras stay hidden until each one has a working deliverable. Flip to true per item only when it really delivers. */
+  var SELL_EXTRAS = false;
   function wallet() { return store.get('wallet', { credits: 0, ledger: [] }); }
   function saveWallet(w) { store.set('wallet', w); }
   function addLedger(entry) { var w = wallet(); entry.id = uid(); entry.at = new Date().toISOString(); w.ledger.unshift(entry); saveWallet(w); return entry; }
@@ -270,12 +272,11 @@
   }
 
   function pricing() {
-    frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2><p class="muted">Exploring sample plans is free. You pay once per event, only when you’re ready to plan your own. No subscription.</p></div>' +
-      '<section class="stack"><h3>Event Pass</h3><p class="muted">Based on how many guests you expect. This is what Event Couture costs, separate from your event budget.</p>' +
+    frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2><p class="muted">Planning is free: build your concepts, budget and plan at no cost. You pay once per event, only if you want to keep your plan. No subscription.</p></div>' +
+      '<section class="stack"><h3>Event Pass</h3><p class="muted">Based on how many people you invite, including plus-ones. This is what Event Couture costs, separate from your event budget.</p>' +
       '<div class="panel price-grid">' + D.PASSES.map(function (ps) { return '<div><span class="muted small">Up to ' + ps.max.toLocaleString('en-US') + ' guests</span><b class="num">$' + ps.price.toFixed(2) + '</b></div>'; }).join('') + '<div><span class="muted small">Each extra 5,000</span><b class="num">+$150</b></div></div>' +
       '<p class="small muted">Guest list grows later? You pay only the difference.</p></section>' +
-      '<section class="stack"><h3>Optional extras</h3><div class="list panel">' + D.PACKAGES.concat(D.ADDONS).map(function (x) { return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b><div class="small muted">' + esc(x.desc) + '</div></div><span class="num">$' + x.price.toFixed(2) + '</span></div>'; }).join('') + '</div>' +
-      '<p class="small muted">AI credits: ' + D.CREDIT_PACKS.map(function (c) { return c.credits + ' for $' + c.price.toFixed(2); }).join(', ') + '. Charged only when delivered.</p></section>' +
+      '<section class="stack"><h3>How long you keep it</h3><p class="muted">Your plan stays available until 12 months after you keep it, or 30 days after your event, whichever is later. The exact date is shown before you pay.</p></section>' +
       '<div><a class="btn primary" href="#/new">Plan my event</a></div></div>');
   }
 
@@ -522,10 +523,11 @@
     });
     $('#more').addEventListener('click', function () {
       ev.seen = (ev.seen || []).concat(ev.concepts.map(function (c) { return c.id; }));
-      if (ev.usedMoreConcepts) {
+      if (ev.usedMoreConcepts && SELL_EXTRAS) {
         return buySheet({ name: 'Three more event concepts', price: 7.99, credits: 16, desc: D.PACKAGES[0].desc }, ev, function () { load(ev.seen); });
       }
-      ev.usedMoreConcepts = true; saveEvent(ev); load(ev.seen);
+      if (ev.usedMoreConcepts) return;
+      ev.usedMoreConcepts = true; saveEvent(ev); load(ev.seen); $('#more').closest('.row').remove();
     });
   }
 
@@ -539,11 +541,19 @@
     return '<div class="lock-card"><div class="ghost-rows" aria-hidden="true"><i></i><i></i><i></i></div><p><b>' + (total - shown) + ' more ' + esc(noun) + '</b> ' + (total - shown === 1 ? 'is' : 'are') + ' in your plan.</p><button class="btn small" data-keep>Keep my plan to see everything</button></div>';
   }
   var LOCKED_TABS = { guests: 'Your guest list, RSVPs and seating', votes: 'Voting with guests and co-hosts', after: 'Your shared album and thank-you notes' };
+  /* Access rule: 12 months after keeping, or 30 days after the event, whichever is later. */
+  function accessUntil(ev, from) {
+    var kept = from ? new Date(from) : new Date();
+    var a = new Date(kept); a.setFullYear(a.getFullYear() + 1);
+    if (ev.date) { var b = new Date(ev.date + 'T12:00:00'); b.setDate(b.getDate() + 30); if (b > a) a = b; }
+    return a.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
   function keepSheet(ev, why, onDone) {
     var pass = E.passFor(ev.guests);
     sheet('<h3>' + esc(why || 'Keep your plan') + '</h3><p class="muted">One payment for ' + esc(ev.name) + ', ' + esc(pass.label.toLowerCase()) + '. No subscription. Guests never pay to view, RSVP or vote.</p>' +
       '<div class="price-big num">$' + pass.price.toFixed(2) + '</div>' +
-      '<ul class="incl"><li>Your plan saved, with every edit kept</li><li>Invitation link and event page to share with guests</li><li>Guest list, RSVPs, voting, seating and registry</li><li>Checklist, timeline and run of show</li></ul>' +
+      '<ul class="incl"><li>Every section of your plan opened: full budget, all venues and vendors, menu, shopping, playlist</li><li>Your plan saved with every edit, available until <b>' + esc(accessUntil(ev)) + '</b></li><li>Guest list, RSVPs, seating, voting and registry tools</li><li>Checklist with due dates and your day-of schedule</li></ul>' +
+      (CFG.preview ? '<p class="muted small">Right now your plan is saved on this device. Sending your invitation to guests on their own phones turns on when accounts launch.</p>' : '') +
       '<p class="muted small">Guest list grows past ' + pass.max.toLocaleString('en-US') + '? You pay only the difference.</p>' +
       (CFG.preview ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
       '<button class="btn gold block" id="keepPay">' + (CFG.preview ? 'Keep my plan' : 'Pay $' + pass.price.toFixed(2) + ' and keep my plan') + '</button><button class="btn ghost block" data-close>Not now</button>', function (el, close) {
@@ -1020,7 +1030,7 @@
     var share = split.people.length ? (split.total || 0) / split.people.length : 0;
     return '<div class="stack"><h3>Invitation and event page</h3><div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ' at ' + fmtTime(ev.time) : '') + '</p><p class="muted">' + esc(ev.city) + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p></div></div></div>' +
       '<div class="row"><button class="btn gold" id="copy">Copy invite link</button><a class="btn ghost" href="#/g/' + ev.id + '">Preview as a guest</a></div>' +
-      (CFG.preview ? '<p class="muted small">Preview version: the link opens on this device only. Guests anywhere can open it once the app launches.</p>' : '<p class="muted small">Guests open it in any browser; no app needed.</p>') + '</div>' +
+      (CFG.preview ? '<p class="muted small">For now this link opens on this device only, so you can preview what guests will see. Sending it to guests on their own phones turns on when accounts launch.</p>' : '<p class="muted small">Guests open it in any browser; no app needed.</p>') + '</div>' +
       '<div class="stack"><h3>Your payment links</h3><p class="muted small">' + (canSplit(ev) ? 'Friends pay you directly for their share, and guests can send cash gifts.' : 'For cash gifts and funds from your registry.') + ' Event Couture never holds the money.</p><div class="grid3">' +
       [['venmo', 'Venmo username'], ['cashapp', 'Cash App $cashtag'], ['paypal', 'PayPal.me name']].map(function (x) { return '<label class="field"><span>' + x[1] + '</span><input class="input" data-pay="' + x[0] + '" value="' + esc(pl[x[0]] || '') + '"></label>'; }).join('') + '</div><div><button class="btn small" id="savePay">Save payment links</button></div></div>' +
       (!canSplit(ev) ? '' : '<div class="stack"><h3>Cost splitting</h3><div class="panel stack"><div class="grid2"><label class="field"><span>Amount to split (USD)</span><input class="input num" type="number" id="stot" value="' + (split.total || '') + '" placeholder="e.g. ' + Math.round(b.total) + '"></label><label class="field"><span>Add a person</span><form id="sadd" class="row"><input class="input" id="sname" style="flex:1"><button class="btn small">Add</button></form></label></div>' +
@@ -1060,17 +1070,17 @@
     }); });
   };
 
-  /* Extras: credits, packages, add-ons, upgrades, receipts */
+  /* Extras: Event Pass, upgrades, receipts (credits, packages and add-ons hidden until they deliver) */
   TAB_VIEWS.extras = function (ev) {
     var w = wallet(); var nextPass = E.passFor((ev.paid && ev.paid.max || ev.guests) + 1);
     var mine = w.ledger.filter(function (l) { return !ev.sample && l.event === ev.name; });
     if (!ev.sample && !isKept(ev)) return '<div class="stack"><h3>Your Event Pass</h3><div class="panel stack"><p>Your plan isn\u2019t kept yet. Keep it to save every edit and share it with guests.</p><div class="price-big num">$' + E.passFor(ev.guests).price.toFixed(2) + '</div><p class="muted small">' + esc(E.passFor(ev.guests).label) + ', one time, no subscription.</p><div><button class="btn" id="keepX">Keep my plan</button></div></div></div>';
-    return '<div class="stack"><h3>Your Event Pass</h3><div class="panel stack"><div class="row" style="justify-content:space-between"><span>' + (ev.sample ? 'Sample plan' : esc(E.passFor(ev.paid.max || ev.guests).label)) + '</span><span class="badge ok">Active</span></div>' +
+    return '<div class="stack"><h3>Your Event Pass</h3><div class="panel stack"><div class="row" style="justify-content:space-between"><span>' + (ev.sample ? 'Sample plan' : esc(E.passFor(ev.paid.max || ev.guests).label)) + '</span><span class="badge ok">Active</span></div>' + (ev.sample ? '' : '<p class="small muted">Available until ' + esc(accessUntil(ev, ev.paid && ev.paid.at)) + '.</p>') +
       '<p class="muted small">Need more places? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + (Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0)) % 1 ? '' : '') + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>' +
-      '<div class="stack"><div class="row" style="justify-content:space-between"><h3>AI credits</h3><span class="num">' + w.credits + ' credits</span></div><p class="muted small">For extra AI work beyond what your pass includes. The exact credit cost is shown before every action, and credits never top up automatically.</p><div class="packs">' +
+      (!SELL_EXTRAS ? '' : '<div class="stack"><div class="row" style="justify-content:space-between"><h3>AI credits</h3><span class="num">' + w.credits + ' credits</span></div><p class="muted small">For extra AI work beyond what your pass includes. The exact credit cost is shown before every action, and credits never top up automatically.</p><div class="packs">' +
       D.CREDIT_PACKS.map(function (p, i) { return '<button class="tier" data-pack="' + i + '"><span class="amt num">' + p.credits + '</span><span class="muted">credits</span><b class="num">$' + p.price.toFixed(2) + '</b></button>'; }).join('') + '</div></div>' +
       '<div class="stack"><h3>Creative packages</h3><div class="list panel">' + D.PACKAGES.map(function (p, i) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + esc(p.desc) + '</div></div><span class="num">$' + p.price.toFixed(2) + '</span><button class="btn small" data-pkg="' + i + '">Choose</button></div>'; }).join('') + '</div></div>' +
-      '<div class="stack"><h3>Optional add-ons</h3><p class="muted small">Never needed to finish your plan.</p><div class="list panel">' + D.ADDONS.map(function (a, i) { return '<div class="it"><div class="grow"><b>' + esc(a.name) + '</b><div class="small muted">' + esc(a.desc) + '</div></div><span class="num">$' + a.price.toFixed(2) + '</span><button class="btn small ghost" data-add="' + i + '">Choose</button></div>'; }).join('') + '</div></div>' +
+      '<div class="stack"><h3>Optional add-ons</h3><p class="muted small">Never needed to finish your plan.</p><div class="list panel">' + D.ADDONS.map(function (a, i) { return '<div class="it"><div class="grow"><b>' + esc(a.name) + '</b><div class="small muted">' + esc(a.desc) + '</div></div><span class="num">$' + a.price.toFixed(2) + '</span><button class="btn small ghost" data-add="' + i + '">Choose</button></div>'; }).join('') + '</div></div>') +
       (ev.sample ? '' : '<div class="stack"><h3>Delete this event</h3><p class="muted small">Removes the plan, guest list and uploaded photos from this device and our servers. Purchases can\u2019t be reused after deleting.</p><div><button class="btn small ghost" id="del" style="color:var(--bad)">Delete event</button></div></div>') +
       '<div class="stack"><h3>Receipts</h3><div class="panel list">' + (mine.length ? mine.map(function (l) { return '<div class="it"><span class="grow">' + esc(l.kind) + '<br><span class="small muted">' + new Date(l.at).toLocaleDateString('en-US') + (l.note ? ', ' + esc(l.note) : '') + '</span></span><span class="num">' + money(l.amount) + '</span></div>'; }).join('') : '<p class="muted">Purchases for this event show here.</p>') + '</div></div>';
   };
@@ -1175,13 +1185,13 @@
   var FAQ = [
     ['How much does it cost?', 'You pay once per event, based on guest capacity: $9.99 up to 25 guests, $19.99 up to 75, $39.99 up to 150, $69.99 up to 350, and more for larger events. Guests never pay to view, RSVP or vote.', 'price cost pay pass much'],
     ['What if my guest list grows?', 'Move up a size in Extras. You pay only the difference, and your plan stays exactly as it is.', 'grow more guests upgrade capacity bigger'],
-    ['Can I get a refund?', 'Purchases made in the iPhone or Android app are refunded through Apple or Google: request it from your purchase history. Purchases on the website are refunded automatically when something you paid for fails to deliver, and failed AI results never use your credits.', 'refund money back cancel'],
+    ['Can I get a refund?', 'Purchases made in the iPhone or Android app are refunded through Apple or Google: request it from your purchase history. Planning is free, so you only pay once you have seen your plan.', 'refund money back cancel'],
+    ['How long do I keep my plan?', 'Until 12 months after you keep it, or 30 days after your event, whichever is later. The exact date is shown before you pay and in Extras.', 'expire expiry how long access keep'],
     ['Are the prices real?', 'Each price is labeled. Planning estimates are sized to your city and guest count and include tax, service charges and tips. Vendor-published prices, quotes and bookings are marked as such. Add any quote you get under Budget, Add my price.', 'real accurate estimate price quote'],
-    ['Do my guests need the app?', 'No. Guests open your invite link in any browser to see the details, RSVP, vote, view the registry and see their share.', 'guests app download link rsvp'],
+    ['Do my guests need the app?', 'No. Once accounts launch, guests open your invite link in any browser to see the details, RSVP, vote and view the registry. Right now the link previews on your own device.', 'guests app download link rsvp'],
     ['How does cost splitting work?', 'Add your Venmo, Cash App or PayPal under Invite and registry. Each person sees their share and pays you directly; you tick them off as paid. Event Couture never holds the money.', 'split venmo cash share pay'],
     ['How do I add a co-host?', 'Open Guests and add them under Co-hosts. Choose whether they can edit, edit without seeing the budget, or only view and vote.', 'cohost co-host partner share plan'],
-    ['Can I change my concept?', 'Yes. Open Overview, Change concept. You can also see three different concepts once for free, then three more for $7.99 or 16 credits.', 'concept theme change different'],
-    ['What are AI credits?', 'Prepaid credits for extra AI work beyond what your pass includes. The exact cost is shown before every action, credits never top up automatically, and failed results are never charged.', 'credits ai tokens'],
+    ['Can I change my concept?', 'Yes. Open Overview, Change concept. You can also see three different concepts once, for free.', 'concept theme change different'],
     ['How do I delete my data?', 'Open the event, go to Extras and choose Delete event. The plan, guest list and uploaded photos are removed with it.', 'delete data privacy remove account'],
     ['How do vendors join?', 'Vendors list their business for free at For vendors, with packages, prices and policies. Hosts can then ask them for a price inside the app.', 'vendor business list join']
   ];
@@ -1191,7 +1201,7 @@
       '<div class="stack">' + FAQ.map(function (f) { return '<details class="panel"><summary style="cursor:pointer;font-weight:500">' + esc(f[0]) + '</summary><p class="muted" style="margin-top:10px">' + esc(f[1]) + '</p></details>'; }).join('') + '</div></div>');
     $('#ask').addEventListener('submit', function (e) { e.preventDefault(); var q = $('#q').value.trim(); if (!q) return;
       var words = q.toLowerCase().split(/\W+/); var best = FAQ.map(function (f) { return { f: f, s: words.filter(function (w) { return w.length > 2 && f[2].indexOf(w) >= 0; }).length }; }).sort(function (a, b) { return b.s - a.s; })[0];
-      var a = best.s ? best.f[1] : 'I couldn’t find an answer to that. Try asking about pricing, refunds, guests, co-hosts, cost splitting, credits or deleting your data.';
+      var a = best.s ? best.f[1] : 'I couldn’t find an answer to that. Try asking about pricing, refunds, guests, co-hosts, cost splitting, how long you keep your plan, or deleting your data.';
       $('#chat').insertAdjacentHTML('beforeend', '<div class="bubble me">' + esc(q) + '</div><div class="bubble ai">' + esc(a) + '</div>'); $('#q').value = ''; });
   }
 
@@ -1199,7 +1209,7 @@
   function legal(kind) {
     var body = kind === 'privacy'
       ? '<h2>Privacy</h2><p>Your events are private by default. We use your photos and event details only to build your plan. Guest names, contact details and dietary needs are visible only to you and the co-hosts you choose, never to vendors. When you ask a vendor for a price, they see only the event type, month, city and guest count.</p><p>You can download or delete your data at any time, and uploaded photos are deleted with your event. We don’t sell your data. Shopping links may earn us a commission; they’re disclosed where they appear.</p><p class="muted small">Draft for review before launch.</p>'
-      : '<h2>Terms</h2><p>Event Couture is planning software. Prices are labeled as planning estimates, vendor-published prices, confirmed quotes or confirmed bookings; estimates are not offers from vendors. You book and pay vendors directly, and vendors are responsible for their own services.</p><p>An Event Pass covers one event at the guest capacity you choose, with access for 12 months of planning and 30 days after the event. AI credits and add-ons are charged only when delivered. Menu ideas are suggestions and never guarantee allergy safety.</p><p class="muted small">Draft for review before launch.</p>';
+      : '<h2>Terms</h2><p>Event Couture is planning software. Prices are labeled as planning estimates, vendor-published prices, confirmed quotes or confirmed bookings; estimates are not offers from vendors. You book and pay vendors directly, and vendors are responsible for their own services.</p><p>An Event Pass covers one event at the number of people you invite. Your plan stays available until 12 months after you keep it, or 30 days after your event, whichever is later. Planning is free; you pay only to keep your plan. Menu ideas are suggestions and never guarantee allergy safety.</p><p class="muted small">Draft for review before launch.</p>';
     frame('<div class="wizard stack">' + body + '</div>');
   }
 

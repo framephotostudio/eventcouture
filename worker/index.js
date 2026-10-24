@@ -29,6 +29,9 @@ export default {
         return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env) });
       }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
+      // Per-visitor rate limit (free, best effort): 40 requests an hour per IP across AI and search.
+      if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown'))) return json({ error: 'You\u2019ve made a lot of requests. Please wait a few minutes and try again. Nothing was charged.' }, 429);
+      if (+(req.headers.get('content-length') || 0) > 12e6) return json({ error: 'Those photos are too large. Try fewer or smaller photos.' }, 413);
       const body = await req.json().catch(() => ({}));
       if (url.pathname === '/api/concepts') {
         if (!env.GEMINI_KEY) return json({ error: 'AI is not connected yet.' }, 503);
@@ -65,6 +68,13 @@ async function reserve(env, usd) {
 }
 
 /* ---------- concepts (Gemini) ---------- */
+async function rateOk(env, ip) {
+  const key = 'rl:' + ip + ':' + new Date().toISOString().slice(0, 13);
+  const n = parseInt(await env.EC_KV.get(key) || '0', 10);
+  if (n >= 40) return false;
+  await env.EC_KV.put(key, String(n + 1), { expirationTtl: 3700 });
+  return true;
+}
 /* Pick the newest Gemini Flash model the key can use, so retired model names never break the app. Cached for a day. */
 async function pickModel(env) {
   const cached = await env.EC_KV.get('model');
