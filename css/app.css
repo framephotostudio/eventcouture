@@ -409,3 +409,5 @@ footer.site .name { font-family: var(--display); font-weight: 600; color: var(--
 .loader.done { opacity: 0; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .loader { transition: none; } }
 .plan-head .meta span { white-space: nowrap; }
+.hero-logo { width: min(250px, 66vw); height: auto; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); margin-bottom: 6px; }
+@media (min-width: 900px) { .hero-logo { width: 280px; } }
