@@ -444,8 +444,7 @@
     return null;
   }
   function newDraft() {
-    var t = D.EVENT_TYPES[0];
-    return { id: uid(), name: '', type: t.id, guests: t.defaultGuests, expected: t.defaultGuests, city: '', budget: 0, setting: null, hours: t.hours, date: '', time: '18:00', start: '', kids: false,
+    return { id: uid(), name: '', type: '', guests: 20, expected: 20, city: '', budget: 0, setting: null, hours: 3, date: '', time: '18:00', start: '', kids: false,
       inspiration: { photos: [], links: [], text: '', vibes: [] }, priorities: [], guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, overrides: {}, exclude: [], include: [], tier: 'F', created: Date.now() };
   }
   function wizard(step, id) {
@@ -521,7 +520,7 @@
       frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>The details</h2><p class="muted">These set your prices, quantities and timeline. You can change them later.</p></div>' +
         '<div class="panel stack"><label class="field"><span>Name your event</span><input class="input" id="name" value="' + esc(draft.name) + '" placeholder="Name it, or tap an idea below" maxlength="80"></label><span class="muted small">Ideas from your inspiration</span><div class="chips" id="names"></div><span class="muted small">Your event saves under this name in My events, so you can come back and finish anytime.</span></div>' +
         '<div class="grid2">' +
-        '<label class="field"><span>Event type</span><select class="input" id="type">' + D.EVENT_TYPES.map(function (t) { return '<option value="' + t.id + '"' + (t.id === draft.type ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '</select></label>' +
+        '<label class="field"><span>Event type</span><select class="input" id="type">' + (draft.type ? '' : '<option value="" selected disabled>Choose your event type</option>') + D.EVENT_TYPES.map(function (t) { return '<option value="' + t.id + '"' + (t.id === draft.type ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '</select></label>' +
         '<label class="field"><span>City</span><select class="input" id="city">' + (function () {
           if (!draft.city) { var said = ((draft.inspiration && draft.inspiration.text) || '').toLowerCase(); var hit = D.CITIES.find(function (c) { return c.name !== 'Other US city' && said.indexOf(c.name.split(',')[0].toLowerCase()) >= 0; }); if (hit) draft.city = hit.name; }
           var known = !draft.city || D.CITIES.some(function (c) { return c.name === draft.city; }); return (draft.city ? '' : '<option value="" selected disabled>Choose your city</option>') + D.CITIES.map(function (c) { return '<option' + (c.name === draft.city || (!known && c.name === 'Other US city') ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join(''); })() + '</select></label>' +
@@ -539,10 +538,15 @@
         '<div class="stack"><h3 id="payLbl">Who\u2019s paying?</h3><div class="chips" id="payer" role="group" aria-labelledby="payLbl">' + [['host', 'I\u2019m hosting and paying'], ['own', 'Everyone pays their own'], ['shared', 'We\u2019re splitting the cost']].map(function (o) { return '<button type="button" class="chip" data-v="' + o[0] + '" aria-pressed="' + ((draft.payer || 'host') === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div></div>' +
         '<div class="stack"><h3>Your must-haves</h3><span class="muted small">These are protected first when the plan is fitted to your budget.' + ((draft.priorities || []).length && draft.mustsGuessed && !draft.mustsTouched ? ' We picked the highlighted ones from your description; tap to change.' : '') + '</span><div class="chips" id="musts">' + MUSTS.map(function (m) { return '<button type="button" class="chip" data-must="' + m[0] + '" aria-pressed="' + ((draft.priorities || []).indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div></div>' +
         '<div class="wiz-act"><button class="btn gold" id="next">Review details</button><a class="btn ghost" href="' + W + '1/' + draft.id + '">Back</a>' + laterBtn() + '</div></div>');
-      function showNames() { $('#names').innerHTML = suggestNames(draft, $('#type').value).map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join(''); }
+      var lastIdeas = [];
+      function showNames() { lastIdeas = suggestNames(draft, $('#type').value); $('#names').innerHTML = lastIdeas.map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join(''); }
       showNames();
       $('#names').addEventListener('click', function (e) { var b = e.target.closest('[data-name]'); if (!b) return; $('#name').value = b.dataset.name; draft.name = b.dataset.name; draft.nameAuto = false; persist(); });
-      $('#type').addEventListener('change', showNames);
+      $('#type').addEventListener('change', function () {
+        var old = lastIdeas || [], cur = $('#name').value.trim();
+        if (cur && old.indexOf(cur) >= 0) { $('#name').value = ''; draft.name = ''; draft.nameAuto = true; }
+        showNames();
+      });
       if (!draft.settingChosen) { var gs = guessSetting((draft.inspiration && draft.inspiration.text) || ''); if (gs) { draft.setting = gs; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === gs); }); } }
       /* Never replace a number the host typed: defaults only fill fields they haven't touched. */
       ['guests', 'expected'].forEach(function (f) { $('#' + f).addEventListener('input', function () { draft.guestsTouched = true; }); });
@@ -563,7 +567,7 @@
       $('#setting').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; draft.settingChosen = true; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); if ((b.dataset.v === 'restaurant' || b.dataset.v === 'privateRoom') && +$('#hours').value > 3 && !draft.hoursTouched) $('#hours').value = b.dataset.v === 'restaurant' ? 2 : 3; });
       function collect2() {
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
-        draft.type = $('#type').value; draft.nameAuto = !$('#name').value.trim() || draft.nameAuto && $('#name').value.trim() === draft.name; draft.name = $('#name').value.trim() || (suggestNames(draft, draft.type)[0]) || E.typeOf(draft.type).name; draft.city = !$('#city').value ? '' : $('#city').value === 'Other US city' ? ($('#cityOther').value.trim() || 'Other US city') : $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || defaultTime(draft.type);
+        draft.type = $('#type').value || ''; draft.nameAuto = !$('#name').value.trim() || draft.nameAuto && $('#name').value.trim() === draft.name; draft.name = $('#name').value.trim() || (suggestNames(draft, draft.type)[0]) || E.typeOf(draft.type).name; draft.city = !$('#city').value ? '' : $('#city').value === 'Other US city' ? ($('#cityOther').value.trim() || 'Other US city') : $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || defaultTime(draft.type);
         draft.hours = Math.max(1, +$('#hours').value || 3); draft.guests = g; draft.expected = ex || g; draft.budget = Math.max(0, +$('#budget').value || 0); draft.start = $('#start').value.trim();
         var sb = $('#setting [aria-pressed="true"]'); draft.settingOpen = !!(sb && sb.dataset.v === 'unsure'); draft.setting = sb ? (draft.settingOpen ? 'indoor' : sb.dataset.v) : null; draft.kids = $('#kids').checked; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
         var ab = $('#alcohol [aria-pressed="true"]'); draft.alcohol = ab ? ab.dataset.v : defaultAlcohol(draft.type, draft.inspiration && draft.inspiration.text);
@@ -572,6 +576,7 @@
       $('#later').addEventListener('click', function () { collect2(); if (!$('#name').value.trim()) draft.name = ''; persist(); var nm = draft.name || 'your event'; location.hash = '#/events'; setTimeout(function () { toast('Saved ' + nm + '. Pick it up anytime from My events.'); }, 80); });
       $('#next').addEventListener('click', function () {
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
+        if (!$('#type').value) { $('#type').focus(); return toast('Choose what you’re celebrating'); }
         if (!$('#city').value) { $('#city').focus(); return toast('Choose your city so prices match where you live'); }
         if (!(g >= 1)) return toast('Enter how many people you’re inviting');
         if (g > 20000) return toast('Event Couture plans events for up to 20,000 people');
