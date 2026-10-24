@@ -660,7 +660,13 @@
 
   /* Venues: types that fit, live search links, drive times */
   TAB_VIEWS.places = function (ev, b) {
-    var t = E.typeOf(ev.type); var types = D.VENUE_TYPES[ev.setting] || D.VENUE_TYPES[t.style] || D.VENUE_TYPES.party;
+    var t = E.typeOf(ev.type); var types = (D.VENUE_TYPES[ev.setting] || D.VENUE_TYPES[t.style] || D.VENUE_TYPES.party).slice();
+    /* Put the kinds of place the host asked for first (e.g. "hotel", "rooftop", "garden") */
+    var said = ((ev.inspiration && ev.inspiration.text) || '').toLowerCase() + ' ' + ((ev.inspiration && ev.inspiration.vibes) || []).join(' ').toLowerCase();
+    var WANT = [['hotel', /hotel|ballroom/], ['rooftop', /rooftop|skyline|view/], ['garden', /garden|outdoor|estate/], ['mansion', /mansion|historic/], ['vineyard', /vineyard|winery|barn|rustic/], ['loft', /loft|industrial/], ['museum', /museum|gallery|art/], ['steakhouse', /steak/], ['tea', /tea\b|tea party|high tea/], ['wine', /wine/], ['brunch', /brunch/], ['private dining', /private (dining|room)/]];
+    var score = function (v) { var lv = v.toLowerCase(); return WANT.reduce(function (n, w) { return n + (lv.indexOf(w[0]) >= 0 && w[1].test(said) ? 1 : 0); }, 0); };
+    if (/hotel|ballroom/.test(said) && !types.some(function (v) { return /hotel/i.test(v); })) types.unshift(ev.setting === 'restaurant' || ev.setting === 'privateRoom' ? 'Hotel tea room' : 'Hotel ballroom');
+    types.sort(function (x, y) { return score(y) - score(x); });
     var venueLine = b.items.find(function (i) { return i.id === 'venue' || i.id === 'privateDining'; });
     var city = ev.city.replace('Other US city', '');
     var foodLine = b.items.filter(function (i) { return i.id === 'restaurantFood' || i.id === 'restaurantDrinks'; }).reduce(function (s2, i) { return s2 + i.mid; }, 0);
@@ -668,17 +674,30 @@
       ? 'Your food and drinks come to about ' + money(foodLine / Math.max(1, ev.guests)) + ' per person with tax and tip. Look for restaurants that take reservations for ' + plural(ev.guests, 'guest') + '.'
       : (venueLine ? 'Your ' + esc(b.tier.name) + ' venue budget is about ' + money(venueLine.mid) + '. ' : '') + 'Look for spaces that hold ' + plural(ev.guests, 'guest') + (ev.setting === 'outdoor' ? ' outdoors' : '') + '.';
     return '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' +
+      '<p class="small muted">Searches are matched to your ' + esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[venueLevel(ev, b)]) + ' level: well-reviewed, polished places only, never budget chains.</p>' +
       (AI.live ? '' : '<div class="note">Live venue photos, ratings, hours and drive times appear here when venue search is connected at launch. For now, each idea opens a live map search.</div>') +
       '<div class="list panel">' + types.map(function (v) {
-        var q = v + ' near ' + city;
+        var q = venueQuery(v, ev, b) + ' in ' + city;
         var dir = ev.start ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(ev.start) + '&destination=' + encodeURIComponent(q) + '">Drive time</a>' : '';
         var pc = venueProsCons(v, ev);
-        if (AI.live) return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><button class="btn small" data-live="' + esc(v) + '">Find real places</button></span></div>';
+        if (AI.live) return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><button class="btn small" data-live="' + esc(v) + '" data-q="' + esc(venueQuery(v, ev, b)) + '" data-level="' + venueLevel(ev, b) + '">Find real places</button></span></div>';
         return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q) + '">See places</a>' + dir + '</span></div>';
       }).join('') + '</div><div id="live"></div>' +
       (ev.start ? '' : '<p class="muted small">Add your starting point in Settings below to see drive times.</p>') +
       '<div class="panel stack"><h3>Settings</h3><label class="field"><span>Starting point for drive times</span><input class="input" id="start" value="' + esc(ev.start || '') + '" placeholder="Home, hotel or ceremony address"></label><div><button class="btn small" id="saveStart">Save</button></div></div></div>';
   };
+  /* Turn a venue type into a search that finds polished places at the plan's level, never budget chains. */
+  var VENUE_SEARCH = {
+    'Hotel ballroom': 'hotel ballroom event venue', 'Hotel tea room': 'hotel afternoon tea room', 'Private dining room': 'restaurant private dining room',
+    'Rooftop restaurant': 'rooftop restaurant', 'Wine bar with a private space': 'wine bar private event space', 'Event loft': 'event loft venue',
+    'Garden venue': 'garden event venue', 'Tea room or bistro': 'tea room', 'Community or clubhouse room': 'clubhouse event room', 'Rooftop lounge': 'rooftop lounge private events',
+    'Restaurant buyout': 'restaurant private events buyout', 'Banquet hall': 'banquet hall', 'Museum or gallery': 'museum event venue', 'Historic mansion': 'historic mansion event venue',
+    'Estate or garden venue': 'estate wedding venue', 'Vineyard or barn': 'vineyard wedding venue', 'Rooftop with skyline views': 'rooftop event venue skyline view',
+    'Upscale brunch or lunch spot': 'brunch restaurant', 'Steakhouse or chophouse': 'steakhouse', 'Wine bar or bistro': 'wine bar bistro', 'Trendy dinner spot with a large table': 'trendy restaurant large groups'
+  };
+  var LEVEL_WORD = { L: 'stylish highly rated', S: 'upscale', U: 'luxury five-star', F: 'upscale' };
+  function venueLevel(ev, b) { var t = (b && b.tier && b.tier.id) || ev.tier || 'S'; if (t === 'F') { var pp = (b && b.total || 0) / Math.max(1, ev.guests || 1); t = pp > 250 ? 'U' : pp < 70 ? 'L' : 'S'; } return t; }
+  function venueQuery(v, ev, b) { return LEVEL_WORD[venueLevel(ev, b)] + ' ' + (VENUE_SEARCH[v] || v); }
   function venueProsCons(v, ev) {
     var m = {
       'Private dining room': ['food and space in one booking, no setup', 'food and drink minimums, set end time'],
@@ -709,9 +728,10 @@
   TAB_BIND.places = function (ev, save, rerender) {
     $$('[data-live]').forEach(function (btn) { btn.addEventListener('click', function () {
       var box = $('#live'); box.innerHTML = '<p class="muted">Searching\u2026</p>';
-      fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: btn.dataset.live, city: ev.city }) })
+      fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: btn.dataset.q || btn.dataset.live, level: btn.dataset.level || 'S', city: ev.city }) })
         .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.places; }); })
         .then(function (list) {
+          if (!list.length) { box.innerHTML = '<p class="muted">No well-reviewed matches nearby for this type. Try another venue type, or switch to a different budget version.</p>'; return; }
           var ids = list.map(function (p) { return p.id; });
           box.innerHTML = '<div class="list panel">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + esc(p.address || '') + (p.rating ? ', ' + p.rating + ' stars (' + (p.reviews || 0) + ' reviews)' : '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">Open in Maps</a></span></div>'; }).join('') + '</div><p class="muted small">Source: Google. Prices and availability aren\u2019t shown until the venue confirms them.</p>';
           if (ev.start && ids.length) fetch(CFG.apiUrl + '/api/drive', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ origin: ev.start, placeIds: ids }) })

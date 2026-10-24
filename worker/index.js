@@ -38,7 +38,7 @@ export default {
       if (url.pathname === '/api/places') {
         if (!env.GOOGLE_MAPS_KEY) return json({ error: 'Venue search is not connected yet.' }, 503);
         if (!(await reserve(env, COST.places))) return json({ error: 'Daily search limit reached. Try again tomorrow.' }, 429);
-        return json({ places: await places(env, String(body.query || '').slice(0, 120), String(body.city || '').slice(0, 80)) });
+        return json({ places: await places(env, String(body.query || '').slice(0, 120), String(body.city || '').slice(0, 80), ['L', 'S', 'U'].includes(body.level) ? body.level : 'S') });
       }
       if (url.pathname === '/api/drive') {
         if (!env.GOOGLE_MAPS_KEY) return json({ error: 'Drive times are not connected yet.' }, 503);
@@ -98,17 +98,41 @@ async function concepts(env, { event = {}, skip = [] }) {
 }
 
 /* ---------- venues and vendors (Places API, Text Search) ---------- */
-async function places(env, query, city) {
-  const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': env.GOOGLE_MAPS_KEY,
-      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions' },
-    body: JSON.stringify({ textQuery: `${query} in ${city}`, maxResultCount: 8 })
-  });
-  if (!r.ok) throw new Error('places');
-  const j = await r.json();
-  return (j.places || []).map(p => ({ id: p.id, name: p.displayName?.text, address: p.formattedAddress, rating: p.rating, reviews: p.userRatingCount,
-    priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, hours: p.regularOpeningHours?.weekdayDescriptions || [], source: 'Google' }));
+/* Quality rules so a host never gets random or cheap places:
+   - Google filters: minimum rating, and price levels that match the plan's level
+   - drop budget chains by name, require enough reviews, rank by rating weighted by review count */
+const BUDGET_CHAINS = /motel 6|super 8|red roof|la quinta|days inn|econo ?lodge|quality inn|comfort (inn|suites)|travelodge|extended stay|rodeway|americas best value|studio 6|howard johnson|knights inn|baymont|microtel|sleep inn|candlewood|holiday inn express|hampton inn|fairfield inn|best western(?! premier)|motel|hostel|wingate|super 8|country inn|woodspring|intown suites|home2|tru by hilton|springhill|towneplace|crossland|budget/i;
+const LEVEL = {
+  L: { minRating: 4.3, minReviews: 40, priceLevels: ['PRICE_LEVEL_MODERATE', 'PRICE_LEVEL_EXPENSIVE'] },
+  S: { minRating: 4.4, minReviews: 80, priceLevels: ['PRICE_LEVEL_MODERATE', 'PRICE_LEVEL_EXPENSIVE', 'PRICE_LEVEL_VERY_EXPENSIVE'] },
+  U: { minRating: 4.5, minReviews: 100, priceLevels: ['PRICE_LEVEL_EXPENSIVE', 'PRICE_LEVEL_VERY_EXPENSIVE'] }
+};
+async function places(env, query, city, level = 'S') {
+  const L = LEVEL[level] || LEVEL.S;
+  const search = async (withPrice) => {
+    const body = { textQuery: `${query} in ${city}`, maxResultCount: 20, minRating: L.minRating };
+    if (withPrice) body.priceLevels = L.priceLevels;
+    const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': env.GOOGLE_MAPS_KEY,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions,places.businessStatus' },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) throw new Error('places');
+    return (await r.json()).places || [];
+  };
+  let raw = await search(true);
+  // venues like ballrooms and estates often have no price level; fill in from an unpriced search, still rating-filtered
+  if (raw.length < 5) { const more = await search(false); const seen = new Set(raw.map(p => p.id)); raw = raw.concat(more.filter(p => !seen.has(p.id) && !(p.priceLevel === 'PRICE_LEVEL_INEXPENSIVE' || p.priceLevel === 'PRICE_LEVEL_FREE'))); }
+  return raw
+    .filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY' && p.businessStatus !== 'CLOSED_TEMPORARILY')
+    .filter(p => !BUDGET_CHAINS.test(p.displayName?.text || ''))
+    .filter(p => !p.priceLevel || L.priceLevels.includes(p.priceLevel))   // places with no price level (ballrooms, estates) are judged by rating alone
+    .filter(p => (p.rating || 0) >= L.minRating && (p.userRatingCount || 0) >= L.minReviews)
+    .sort((a, b) => (b.rating * Math.log10(10 + b.userRatingCount)) - (a.rating * Math.log10(10 + a.userRatingCount)))
+    .slice(0, 8)
+    .map(p => ({ id: p.id, name: p.displayName?.text, address: p.formattedAddress, rating: p.rating, reviews: p.userRatingCount,
+      priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, hours: p.regularOpeningHours?.weekdayDescriptions || [], source: 'Google' }));
 }
 
 /* ---------- drive times (Routes API) ---------- */
