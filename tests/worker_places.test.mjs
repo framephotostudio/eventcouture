@@ -19,3 +19,13 @@ assert.deepEqual(names.slice().sort(), ['Hotel ZaZa Museum District', 'The Post 
 assert(!names.some(n => /Motel|Hampton|Tiny|Closed|Cheap/.test(n)), names.join());
 assert.equal(bodies[0].minRating, 4.5); assert.deepEqual(bodies[0].priceLevels, ['PRICE_LEVEL_EXPENSIVE', 'PRICE_LEVEL_VERY_EXPENSIVE']);
 console.log('worker places ok:', names.join(', '));
+// vendors: planners are never shown for decor
+globalThis.fetch = async () => ({ ok: true, json: async () => ({ places: [
+  { id: 'v1', displayName: { text: 'Blush & Gold Event Rentals' }, rating: 4.8, userRatingCount: 120 },
+  { id: 'v2', displayName: { text: 'Elite Wedding Planners Houston' }, rating: 4.9, userRatingCount: 300 },
+  { id: 'v3', displayName: { text: 'Bella Event Planning & Design' }, rating: 4.9, userRatingCount: 200 }
+] }) });
+const vres = await src.default.fetch(new Request('https://w/api/places', { method: 'POST', headers: { origin: 'https://x', 'content-type': 'application/json' }, body: JSON.stringify({ query: 'upscale event decor rentals centerpieces backdrops', city: 'Houston, TX', level: 'S', kind: 'vendor' }) }), env);
+const vnames = (await vres.json()).places.map(p => p.name);
+assert.deepEqual(vnames, ['Blush & Gold Event Rentals']);
+console.log('vendor filter ok:', vnames.join(', '));

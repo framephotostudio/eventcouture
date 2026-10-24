@@ -769,21 +769,45 @@
   };
 
   /* Vendors: by category with estimates; ask for a price */
+  /* Vendors: the actual product or service for each category (never planners), with typical local prices. */
+  var VENDOR_SEARCH = {
+    decor: 'event decor rentals centerpieces backdrops', florals: 'florist', cake: 'custom cake bakery', photographer: 'event photographer',
+    videographer: 'event videographer', dj: 'event DJ', liveMusic: 'live band for events', balloons: 'balloon decor installations', lighting: 'event lighting rental',
+    rentals: 'party rentals tables chairs linens', catering: 'catering company', bartender: 'mobile bartending service', bar: 'mobile bar service',
+    hairMakeup: 'hair and makeup artist', photoBooth: 'photo booth rental', entertainment: 'event entertainment', kids: 'kids party entertainment', mc: 'event MC host',
+    transport: 'luxury transportation limo', security: 'event security', coordinator: 'day-of event coordinator', cleanup: 'event setup and cleanup crew',
+    officiant: 'wedding officiant', favors: 'custom party favors', invitations: 'custom invitations stationery', attire: 'formal wear boutique'
+  };
+  var VENDOR_NOTE = {
+    decor: 'Centerpieces, backdrop, linens styling and setup', florals: 'Centerpieces, bouquets and installations', cake: 'Custom cake sized to your guest count',
+    photographer: 'Coverage hours, edited gallery', dj: 'Music, sound system and announcements', balloons: 'Garland or arch with install',
+    lighting: 'Uplighting and setup', rentals: 'Tables, chairs, linens, tableware, delivery', hairMakeup: 'On-site styling for the guest of honor',
+    photoBooth: 'Booth, attendant and prints', catering: 'Food, staff and service', bartender: 'Licensed bartenders per hour', videographer: 'Coverage and edited film'
+  };
   TAB_VIEWS.vendors = function (ev, b) {
     var city = ev.city.replace('Other US city', '');
-    var cats = b.items.filter(function (i) { return ['venue', 'privateDining', 'rentals', 'tent', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'attire', 'favors', 'invitations', 'bar', 'restaurantFood', 'restaurantDrinks', 'cakeFee', 'tableDecor'].indexOf(i.id) < 0; });
-    var restNote = ev.setting === 'restaurant' ? '<div class="note">Your restaurant handles the food and drinks, so there is nothing to book for those here. Pick the restaurant on the Venues tab; table decor is on the Style tab.</div>' : '';
+    var cats = b.items.filter(function (i) { return ['venue', 'privateDining', 'tent', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'restaurantFood', 'restaurantDrinks', 'cakeFee', 'tableDecor'].indexOf(i.id) < 0; });
+    var restNote = ev.setting === 'restaurant' ? '<div class="note">Your restaurant handles the food and drinks. Pick the restaurant on the Venues tab; table decor is on the Style tab.</div>' : '';
     if (!cats.length) return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">No other vendors are needed for this plan.</p></div>';
-    return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">Listed vendors show their own packages and prices here. Until vendors in ' + esc(city || 'your city') + ' join, each category shows a labeled estimate and a live map search.</p>' +
+    var lvl = venueLevel(ev, b);
+    return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">Typical prices in ' + esc(city.split(',')[0] || 'your city') + ' for your guest count and ' + esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[lvl]) + ' level, including tax and tips where they apply. ' + (AI.live ? 'Tap a category to see top-rated businesses that provide it.' : '') + '</p>' +
       '<div class="list panel">' + cats.map(function (i) {
-        return '<div class="it"><div class="grow"><b>' + esc(i.name) + '</b><div class="small muted"><span class="badge ' + (i.label === 'Planning estimate' ? 'est' : 'ok') + '">' + esc(i.label) + '</span> ' + money(i.mid) + '</div></div>' +
-          '<span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(i.name.split(' (')[0] + ' near ' + city) + '">Find nearby</a><button class="btn small" data-ask="' + i.id + '">Ask for their price</button></span></div>';
-      }).join('') + '</div><p class="muted small">You pay vendors directly. Event Couture never holds your money.</p></div>';
+        var q = (LEVEL_WORD[lvl] + ' ' + (VENDOR_SEARCH[i.id] || i.name.split(' (')[0])).replace('luxury five-star', 'luxury');
+        return '<div class="it"><div class="grow"><b>' + esc(i.name) + '</b><div class="small">Typical cost <b class="num">' + money(i.lo) + ' to ' + money(i.hi) + '</b></div>' + (VENDOR_NOTE[i.id] ? '<div class="small muted">' + esc(VENDOR_NOTE[i.id]) + '</div>' : '') + '</div>' +
+          '<span class="acts">' + (AI.live ? '<button class="btn small ghost" data-vendor="' + esc(i.id) + '" data-q="' + esc(q) + '" data-level="' + lvl + '">View top-rated</button>' : '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q + ' in ' + city) + '">View on map</a>') + '</span></div><div class="live-res" data-for="v-' + esc(i.id) + '"></div>';
+      }).join('') + '</div><p class="muted small">Prices are planning ranges from typical local rates, not quotes. Add a real quote anytime under Budget and your totals update. You pay vendors directly; Event Couture never holds your money.</p></div>';
   };
   TAB_BIND.vendors = function (ev) {
-    $$('[data-ask]').forEach(function (btn) { btn.addEventListener('click', function () {
-      if (lockSample(ev)) return;
-      sheet('<h3>Ask for their price</h3><p class="muted">When you tap Ask on a listed vendor, Event Couture sends them your event type, month, city and guest count, never your name or contact details. Their reply arrives here.</p><div class="note">No vendors in this category have joined in ' + esc(ev.city) + ' yet. Use Find nearby, then add any quote you get under Budget, Add my price.</div><button class="btn block" data-close>Got it</button>');
+    $$('[data-vendor]').forEach(function (btn) { btn.addEventListener('click', function () {
+      $$('.live-res').forEach(function (x) { x.innerHTML = ''; });
+      var box = document.querySelector('.live-res[data-for="v-' + btn.dataset.vendor + '"]'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding top-rated businesses…</p>';
+      fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: btn.dataset.q, level: btn.dataset.level || 'S', kind: 'vendor', city: (ev.area ? ev.area + ', ' : '') + ev.city }) })
+        .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.places; }); })
+        .then(function (list) {
+          if (!list.length) { box.innerHTML = '<p class="muted small">No well-reviewed matches nearby. Try a different area on the Venues tab.</p>'; return; }
+          var PL = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
+          box.innerHTML = '<div class="curated">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.rating ? '★ ' + p.rating + ' · ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews' : '') + (PL[p.priceLevel] ? ' · ' + PL[p.priceLevel] : '') + (p.address ? ' · ' + esc(p.address.split(',').slice(0, 2).join(',')) : '') + '</div></div><span class="acts">' + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Exact pricing comes from each business when you inquire.</p></div>';
+        }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn’t available right now.') + '</p>'; });
     }); });
   };
 

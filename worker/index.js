@@ -38,7 +38,7 @@ export default {
       if (url.pathname === '/api/places') {
         if (!env.GOOGLE_MAPS_KEY) return json({ error: 'Venue search is not connected yet.' }, 503);
         if (!(await reserve(env, COST.places))) return json({ error: 'Daily search limit reached. Try again tomorrow.' }, 429);
-        return json({ places: await places(env, String(body.query || '').slice(0, 120), String(body.city || '').slice(0, 80), ['L', 'S', 'U'].includes(body.level) ? body.level : 'S') });
+        return json({ places: await places(env, String(body.query || '').slice(0, 120), String(body.city || '').slice(0, 120), ['L', 'S', 'U'].includes(body.level) ? body.level : 'S', body.kind === 'vendor') });
       }
       if (url.pathname === '/api/drive') {
         if (!env.GOOGLE_MAPS_KEY) return json({ error: 'Drive times are not connected yet.' }, 503);
@@ -130,8 +130,9 @@ const LEVEL = {
   S: { minRating: 4.4, minReviews: 80, priceLevels: ['PRICE_LEVEL_MODERATE', 'PRICE_LEVEL_EXPENSIVE', 'PRICE_LEVEL_VERY_EXPENSIVE'] },
   U: { minRating: 4.5, minReviews: 100, priceLevels: ['PRICE_LEVEL_EXPENSIVE', 'PRICE_LEVEL_VERY_EXPENSIVE'] }
 };
-async function places(env, query, city, level = 'S') {
-  const L = LEVEL[level] || LEVEL.S;
+const PLANNERS = /planner|planning|coordinat|wedding(s)? by|event management|wedding consult/i;
+async function places(env, query, city, level = 'S', vendor = false) {
+  const L = vendor ? { minRating: 4.5, minReviews: 15, priceLevels: [] } : (LEVEL[level] || LEVEL.S);
   const search = async (withPrice) => {
     const body = { textQuery: `${query} in ${city}`, maxResultCount: 20, minRating: L.minRating };
     if (withPrice) body.priceLevels = L.priceLevels;
@@ -144,13 +145,14 @@ async function places(env, query, city, level = 'S') {
     if (!r.ok) throw new Error('places');
     return (await r.json()).places || [];
   };
-  let raw = await search(true);
+  let raw = await search(!vendor);
   // venues like ballrooms and estates often have no price level; fill in from an unpriced search, still rating-filtered
-  if (raw.length < 5) { const more = await search(false); const seen = new Set(raw.map(p => p.id)); raw = raw.concat(more.filter(p => !seen.has(p.id) && !(p.priceLevel === 'PRICE_LEVEL_INEXPENSIVE' || p.priceLevel === 'PRICE_LEVEL_FREE'))); }
+  if (!vendor && raw.length < 5) { const more = await search(false); const seen = new Set(raw.map(p => p.id)); raw = raw.concat(more.filter(p => !seen.has(p.id) && !(p.priceLevel === 'PRICE_LEVEL_INEXPENSIVE' || p.priceLevel === 'PRICE_LEVEL_FREE'))); }
   return raw
     .filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY' && p.businessStatus !== 'CLOSED_TEMPORARILY')
     .filter(p => !BUDGET_CHAINS.test(p.displayName?.text || '') && (level === 'L' || !MID_CHAINS.test(p.displayName?.text || '')))
-    .filter(p => !p.priceLevel || L.priceLevels.includes(p.priceLevel))   // places with no price level (ballrooms, estates) are judged by rating alone
+    .filter(p => vendor || !p.priceLevel || L.priceLevels.includes(p.priceLevel))
+    .filter(p => !vendor || /coordinator/.test(query) || !PLANNERS.test(p.displayName?.text || ''))   // vendors means the actual service, never planners   // places with no price level (ballrooms, estates) are judged by rating alone
     .filter(p => (p.rating || 0) >= L.minRating && (p.userRatingCount || 0) >= L.minReviews)
     .sort((a, b) => (b.rating * Math.log10(10 + b.userRatingCount)) - (a.rating * Math.log10(10 + a.userRatingCount)))
     .slice(0, 8)
