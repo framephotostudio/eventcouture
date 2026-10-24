@@ -69,7 +69,8 @@
     return (list || []).map(function (x) {
       if (/neon sign/i.test(x)) return formal ? (couple ? 'Gold monogram with your initials lit on the dance floor' : 'Gold monogram lit on the dance floor') : couple ? 'Neon sign with your names' : x;
       if (kids && /candle|candelabra/i.test(x)) return 'Paper lanterns and fairy lights';
-      if (/guest of honor/.test(x) && couple) return x.replace(/the guest of honor\u2019s|the guest of honor's|guest-of-honor/g, 'the couple\u2019s');
+      if (/guest-of-honor chair/i.test(x)) return couple ? 'Throne-style chairs for the couple' : x;
+      if (/guest of honor/.test(x) && couple) return x.replace(/the guest of honor\u2019s|the guest of honor's/g, 'the couple\u2019s');
       return x;
     });
   }
