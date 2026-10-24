@@ -450,3 +450,11 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .curated .it { border-color: var(--line); }
 .venue-filter { display: grid; gap: 12px; }
 @media (min-width: 700px) { .venue-filter { grid-template-columns: 1fr 1fr auto; align-items: end; } }
+.songs { margin: 0; padding-left: 22px; display: grid; gap: 2px; }
+.songs li { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.songs li { display: list-item; }
+.songs li > * { vertical-align: middle; }
+.songs .grow { display: inline; margin-right: 10px; }
+.songs .link { margin-right: 12px; }
+.songs li .grow { display: block; margin: 0 0 2px; }
+.songs li .grow .muted { display: block; }

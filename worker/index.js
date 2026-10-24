@@ -95,7 +95,7 @@ async function concepts(env, { event = {}, skip = [] }) {
     `You are a luxury event stylist. Event: ${event.type}, ${event.guests} guests, ${event.city}, budget ${event.budget} USD, setting ${event.setting}.\n` +
     `Chosen vibes and colors: ${(event.vibes || []).slice(0, 12).join(', ') || 'none'}. Host notes: ${event.text || 'none'}. Links: ${(event.links || []).join(' ') || 'none'}.\n` +
     `Avoid these concepts already shown: ${skip.join(', ') || 'none'}.\n` +
-    'Return JSON: {"concepts":[{"id":"kebab-id","name":"","styleName":"","palette":["#hex x5"],"mood":"one sentence","decor":["4 items"],"dress":"one specific outfit idea for the person being celebrated (bride, birthday guest of honor, graduate, etc.), under 20 words","menuStyle":"garden|modern|elegant|rustic|coastal|tropical|classic|sweet|party","music":"3-word mood","fit":"Closest match to your inspiration|A close alternative|A fresh direction","outline":["Arrival: ...","Tables: ...","Moment: ...","Dress code: ..."]}]} with exactly 3 distinct concepts that keep what the host loves and feel luxurious at any budget.' });
+    'Return JSON: {"concepts":[{"id":"kebab-id","name":"","styleName":"","palette":["#hex x5"],"mood":"one sentence","decor":["4 items"],"dress":"one specific outfit idea for the person being celebrated (bride, birthday guest of honor, graduate, etc.), under 20 words","menuStyle":"garden|modern|elegant|rustic|coastal|tropical|classic|sweet|party","music":"3-word mood","songs":["10 well-known real songs that fit, as Title — Artist"],"fit":"Closest match to your inspiration|A close alternative|A fresh direction","outline":["Arrival: ...","Tables: ...","Moment: ...","Dress code: ..."]}]} with exactly 3 distinct concepts that keep what the host loves and feel luxurious at any budget.' });
   // Ask up to twice; a long or interrupted answer is retried once before failing
   let out = [];
   for (let attempt = 0; attempt < 2 && out.length < 3; attempt++) {
@@ -113,7 +113,7 @@ async function concepts(env, { event = {}, skip = [] }) {
     id: String(c.id || '').slice(0, 40), name: String(c.name || '').slice(0, 60), styleName: String(c.styleName || c.name || '').slice(0, 40),
     palette: (c.palette || []).filter(h => hex.test(h)).slice(0, 5), mood: String(c.mood || '').slice(0, 200),
     decor: (c.decor || []).map(String).slice(0, 4), dress: String(c.dress || '').slice(0, 160), menuStyle: String(c.menuStyle || 'party'),
-    music: String(c.music || 'feel-good party').slice(0, 40), fit: String(c.fit || ''), outline: (c.outline || []).map(String).slice(0, 4)
+    music: String(c.music || 'feel-good party').slice(0, 40), songs: (c.songs || []).map(String).filter(x => x.length < 90).slice(0, 12), fit: String(c.fit || ''), outline: (c.outline || []).map(String).slice(0, 4)
   })).filter(c => c.palette.length >= 3 && c.decor.length >= 3);
   if (clean.length < 3) throw new Error('ai shape');
   return clean;
