@@ -409,9 +409,11 @@
     coastal: ['beach', 'coastal', 'ocean', 'nautical', 'blue'], tropical: ['tropical', 'palm', 'island', 'luau'], disco: ['disco', 'sparkle', 'sequin', '70s'],
     vintage: ['vintage', 'hollywood', 'gatsby', 'roaring'], pastel: ['pastel', 'whimsy', 'baby pink', 'baby blue', 'candy', 'rainbow'], purple: ['purple', 'lavender', 'plum', 'lilac', 'royal'],
     red: ['red', 'burgundy', 'wine'], ivory: ['ivory', 'cream', 'chandelier', 'ballroom'], classic: ['classic', 'timeless', 'black tie', 'formal'],
-    lavender: ['lavender', 'lilac'], tea: ['tea party', 'high tea', 'afternoon tea'], dark: ['moody', 'dark', 'velvet'], outdoor: ['outdoor', 'backyard', 'park', 'garden'], romantic: ['romantic', 'love', 'romance'], celestial: ['moon', 'stars', 'starry', 'celestial', 'galaxy', 'navy', 'midnight', 'twinkle'], silver: ['silver', 'metallic', 'chrome'], autumn: ['fall ', 'autumn', 'harvest', 'thanksgiving']
+    lavender: ['lavender', 'lilac'], tea: ['tea party', 'high tea', 'afternoon tea'], dark: ['moody', 'dark', 'velvet'], outdoor: ['outdoor', 'backyard', 'park', 'garden'], romantic: ['romantic', 'love', 'romance'], celestial: ['moon', 'stars', 'starry', 'celestial', 'galaxy', 'navy', 'midnight', 'twinkle'], silver: ['silver', 'metallic', 'chrome'], autumn: ['fall ', 'autumn', 'harvest', 'thanksgiving'],
+    orange: ['orange', 'coral', 'citrus', 'tangerine', 'fuchsia', 'hot pink', 'magenta'], fiesta: ['fiesta', 'bougainvillea', 'cinco de mayo'], yellow: ['yellow', 'lemon', 'butter', 'sunshine', 'daisy', 'daisies', 'sunflower'],
+    chinoiserie: ['chinoiserie', 'blue and white', 'porcelain', 'toile', 'blue willow', 'ginger jar'], tuscan: ['tuscan', 'tuscany', 'italian villa', 'olive grove'], amalfi: ['amalfi', 'positano', 'capri', 'mediterranean', 'italian summer'], peach: ['peach', 'apricot']
   };
-  var COLOR_TAGS = ['emerald', 'boho', 'rustic', 'disco', 'vintage', 'pink', 'gold', 'black', 'white', 'green', 'purple', 'red', 'ivory', 'coastal', 'lavender', 'celestial', 'silver', 'pastel', 'tropical'];
+  var COLOR_TAGS = ['emerald', 'orange', 'yellow', 'chinoiserie', 'peach', 'boho', 'rustic', 'disco', 'vintage', 'pink', 'gold', 'black', 'white', 'green', 'purple', 'red', 'ivory', 'coastal', 'lavender', 'celestial', 'silver', 'pastel', 'tropical'];
   function matchStyles(colors, text, liked) {
     text = ((text || '') + ' ' + (liked || []).join(' ')).toLowerCase();
     /* The first color the host names breaks ties: "ivory and gold … florals" is ivory first. */
@@ -464,6 +466,28 @@
   var TYPE_TITLE = { brunch: 'Brunch', birthday: 'Birthday', milestone: 'Birthday', dinner: 'Dinner Party', 'bridal-shower': 'Bridal Shower', 'baby-shower': 'Baby Shower',
     'gender-reveal': 'Gender Reveal', bachelorette: 'Bachelorette', graduation: 'Graduation Party', engagement: 'Engagement Party', quince: 'Quincea\u00f1era', anniversary: 'Anniversary',
     holiday: 'Holiday Party', christmas: 'Christmas Party', retirement: 'Retirement Party', 'kids-birthday': 'Birthday', sweet16: 'Sweet 16', corporate: 'Corporate Event', wedding: 'Wedding', gala: 'Gala', other: 'Celebration' };
+  /* A host who starts from one of our AI-generated inspiration photos gets that photo as a concept, built from what is in it. */
+  function inspoOf(ev) { var id = ev && ev.inspiration && ev.inspiration.inspo; return id && root.EC_INSPO ? root.EC_INSPO.find(function (p) { return p.id === id; }) || null : null; }
+  function inspoText(p) { return p ? 'Inspiration photo "' + p.name + '" (an AI-generated sample): ' + p.mood + ' In the photo: ' + p.decor.join('; ') + '. Colors: ' + p.shop + '.' : ''; }
+  function inspoConcept(ev, p) {
+    var s = D.STYLES.find(function (x) { return x.id === p.style; }) || D.STYLES[0];
+    return { id: s.id, inspo: p.id, img: 'img/inspo/' + p.id + '.jpg', name: p.name, styleName: p.name, palette: p.palette, mood: p.mood, decor: p.decor.slice(), shop: p.shop,
+      dress: 'A standout look in ' + s.dress.charAt(0).toLowerCase() + s.dress.slice(1), menuStyle: p.menu, music: s.music, fit: 'The look in the photo you chose',
+      outline: ['Setting: ' + p.decor[0].toLowerCase(), 'Details: ' + p.decor[1].toLowerCase() + ', plus ' + p.decor[2].charAt(0).toLowerCase() + p.decor[2].slice(1), 'Moment: ' + p.decor[3].toLowerCase(), 'Dress code: ' + dressCode(ev).toLowerCase()] };
+  }
+  /* Colors the host typed herself win over the photo: the photo's look then comes second instead of first. */
+  function hostNamedColors(ev) {
+    var t = (((ev.inspiration && ev.inspiration.text) || '') + ' ' + ((ev.inspiration && ev.inspiration.vibes) || []).join(' ')).toLowerCase();
+    return COLOR_TAGS.some(function (tag) { return (WORDS[tag] || []).some(function (w) { return t.indexOf(w) >= 0; }); }) || /\b(navy|teal|beige|taupe|mauve|brown|grey|gray|turquoise|mint|copper|bronze|rose gold)\b/.test(t);
+  }
+  function withInspo(ev, list, skip) {
+    var p = inspoOf(ev); if (!p || (skip && skip.length)) return list;   /* "three different concepts" means new looks, not the photo again */
+    var pc = inspoConcept(ev, p);
+    var rest = list.filter(function (c) { return !c.inspo && c.id !== pc.id; });
+    var at = hostNamedColors(ev) ? 1 : 0;
+    rest.splice(Math.min(at, rest.length), 0, pc);
+    return rest.slice(0, 3).map(function (c, i) { if (!c.inspo && i === 0 && at === 1) c.fit = 'Closest match to your words'; return c; });
+  }
   function concepts(ev, colors, text, liked, skip) {
     skip = skip || [];
     /* Children's parties never get nightclub or black-tie looks. */
@@ -489,11 +513,62 @@
     });
   }
 
+  /* ---------- Get this look: the exact pieces to buy or hire ----------
+     Order: what the host asked for in her own words, what she marked in her photos, then the pieces in the chosen photo or look. */
+  var PIECE_WORDS = [
+    [/balloon (arch|garland|wall|cloud)|balloons/, 'Balloon $1', '', 'balloons', 'Balloon garland'], [/neon sign/, 'Custom neon sign', 'custom neon sign', ''], [/disco ball|mirror ball/, 'Disco balls', 'disco ball set', ''],
+    [/throne/, 'Throne chair for the guest of honor', '', 'rentals'], [/flower wall|floral wall/, 'Flower wall', '', 'decor'], [/(string|fairy|twinkle|bistro) lights/, 'String lights', 'outdoor string lights', ''],
+    [/lanterns?/, 'Lanterns', 'candle lanterns set', ''], [/chandeliers?/, 'Chandeliers', '', 'lighting'], [/uplighting/, 'Uplighting', '', 'lighting'], [/photo ?booth/, 'Photo booth', '', 'photoBooth'],
+    [/backdrop/, 'Photo backdrop', '', 'decor'], [/drap(e|es|ing)\b/, 'Draping', '', 'decor'], [/dessert table|candy (bar|table)/, 'Dessert table', '', 'cake'], [/macarons?/, 'Macaron tower', '', 'cake'],
+    [/\bcakes?\b/, 'Custom cake', '', 'cake'], [/grazing (table|board)|charcuterie/, 'Grazing table', '', 'catering'], [/tea ?cups|tea party|high tea|tea set/, 'Teacups and saucers', 'floral teacups set', ''],
+    [/\bbows?\b/, 'Chair bows', 'satin chair sash bows', 'C'], [/pampas/, 'Pampas grass', 'pampas grass bouquet', ''], [/monogram|initials/, 'Monogram sign', 'custom monogram sign', ''],
+    [/confetti/, 'Table confetti', 'table confetti', 'C'], [/donut wall/, 'Donut wall', 'donut wall stand', ''], [/sparklers?/, 'Sparklers for the send-off', 'wedding sparklers', ''],
+    [/dance floor/, 'Dance floor', '', 'rentals'], [/lounge/, 'Lounge furniture', '', 'rentals'], [/\btent\b/, 'Tent', '', 'rentals'],
+    [/(velvet|chiavari|ghost|cross-back|cane-back|cane|wishbone) chairs?/, '$1 chairs', '', 'rentals'], [/chargers?/, 'Charger plates', 'charger plates', 'C'], [/runners?/, 'Table runners', 'table runner', 'C'],
+    [/tablecloths?|\blinens\b/, 'Tablecloths', 'tablecloth', 'C'], [/napkins/, 'Napkins', 'linen napkins', 'C'], [/candles?|candlelit|candlelight/, 'Candles', 'pillar candles set', 'C'],
+    [/pi[ñn]ata/, 'Piñata', 'custom pinata', ''], [/bounce house/, 'Bounce house', '', 'kids'], [/face paint/, 'Face painter', '', 'kids'], [/mariachi/, 'Mariachi band', '', 'liveMusic'],
+    [/grad(uation)? cap/, 'Graduation cap decor', 'graduation cap centerpiece', ''], [/dinosaurs?|\bdino\b/, 'Dinosaur decorations', 'dinosaur party decorations', ''], [/mermaids?/, 'Mermaid decorations', 'mermaid party decorations', ''],
+    [/unicorns?/, 'Unicorn decorations', 'unicorn party decorations', ''], [/superhero/, 'Superhero decorations', 'superhero party decorations', ''], [/butterfl(y|ies)/, 'Butterfly decorations', 'butterfly party decorations', ''],
+    [/\bmoon\b|\bstars\b|celestial/, 'Moon and star decorations', 'gold moon and star hanging decorations', ''], [/rainbow/, 'Rainbow decorations', 'rainbow party decorations', ''], [/lemons?\b/, 'Lemon accents', 'faux lemons decor', ''],
+    [/(peon(?:y|ies)|hydrangeas?|garden roses|roses|orchids?|tulips|dahlias?|ranunculus|daisies|sunflowers?|wildflowers|lilies|magnolias?|calla lilies|baby'?s breath)/, 'Arrangements with $1', '', 'florals'],
+    [/\b(flowers|florals|floral)\b/, 'Flower arrangements', '', 'florals']
+  ];
+  var PIECE_COLORS = ['dusty blue', 'hot pink', 'rose gold', 'blush', 'pink', 'gold', 'silver', 'black', 'white', 'ivory', 'cream', 'sage', 'emerald', 'green', 'navy', 'royal blue', 'blue', 'lavender', 'lilac', 'purple', 'plum', 'burgundy', 'red', 'orange', 'coral', 'yellow', 'peach', 'terracotta', 'taupe', 'mauve', 'teal'];
+  var LOVE_PIECES = { Florals: ['Flowers like the ones in your photo', '', 'florals'], Cake: ['A cake like the one in your photo', '', 'cake'], Balloons: ['Balloons like the ones in your photo', '', 'balloons'], Backdrop: ['A backdrop like the one in your photo', '', 'decor'], Lighting: ['Lighting like your photo', '', 'lighting'], Signage: ['Signs like the ones in your photo', 'custom event sign', ''], 'Table setting': ['Table setting like your photo', '', 'rentals'], Food: ['Food like the spread in your photo', '', 'catering'] };
+  function cap(w) { return w.charAt(0).toUpperCase() + w.slice(1); }
+  function lookPieces(ev, c) {
+    c = c || ev.concept || {};
+    var said = (((ev.inspiration && ev.inspiration.text) || '') + ' ' + ((ev.inspiration && ev.inspiration.vibes) || []).join(' ')).toLowerCase();
+    var color = null, at = 1e9; PIECE_COLORS.forEach(function (w) { var i = said.search(new RegExp('\\b' + w + '\\b')); if (i >= 0 && i < at) { at = i; color = w; } });
+    var out = [], names = {}, hired = {};
+    function add(name, q, hire, why) {
+      var key = name.toLowerCase(); if (names[key]) return; if (hire && !q) { if (hired[hire]) return; hired[hire] = 1; }
+      names[key] = 1; out.push({ name: name, q: q, hire: hire && hire !== 'C' ? hire : '', why: why });
+    }
+    var kid = ev.kids && /birthday/.test(ev.type || '');
+    PIECE_WORDS.forEach(function (r) {
+      var m = said.match(r[0]); if (!m) return;
+      if (kid && /candle/i.test(r[1])) return;
+      var name = r[4] && !m[1] ? r[4] : r[1].replace('$1', m[1] || ''), q = r[2];
+      /* The color right before the word wins ("gold chargers" in a navy party), then the host's main color. Candles default to ivory. */
+      var near = null, win = said.slice(Math.max(0, m.index - 12), m.index); PIECE_COLORS.forEach(function (w) { var i = win.lastIndexOf(w), e = i + w.length; if (i >= 0 && (!near || e > near[1] || (e === near[1] && w.length > near[0].length))) near = [w, e]; });
+      var col = near ? near[0] : /candle/i.test(r[1]) ? 'ivory' : color;
+      if (r[3] === 'C' && col) { name = cap(col) + ' ' + name.charAt(0).toLowerCase() + name.slice(1); q = col + ' ' + q; }
+      add(cap(name), q, r[3], 'asked');
+    });
+    (ev.inspiration && ev.inspiration.photos || []).forEach(function (p) { (p.loves || []).forEach(function (l) { var x = LOVE_PIECES[l.label]; if (x) add(x[0], x[1], x[2], 'loved'); }); });
+    var list = c.pieces && c.pieces.length ? c.pieces.map(function (x) { return [x.name || x.item, x.q || x.search || '', x.hire && x.hire !== 'none' ? x.hire : '']; })
+      : c.inspo && root.EC_INSPO ? ((root.EC_INSPO.find(function (p) { return p.id === c.inspo; }) || {}).pieces || []).map(function (x) { return [x.name, x.q, x.hire]; })
+      : (D.STYLE_PIECES || {})[c.id] || [];
+    list.forEach(function (x) { if (x[0]) add(x[0], x[1], x[2], c.inspo ? 'photo' : c.pieces ? 'ai' : 'look'); });
+    return out;
+  }
+
   function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
 
   root.EC_ENGINE = {
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
-    placesUsed: placesUsed, concepts: concepts, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
+    placesUsed: placesUsed, concepts: concepts, inspoOf: inspoOf, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
   };
 })(typeof window !== 'undefined' ? window : globalThis);

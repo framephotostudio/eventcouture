@@ -132,7 +132,7 @@
 
   /* Style library used to build concepts. Palettes are hex values shown as swatches. */
   var STYLES = [
-    { id: 'champagne-garden', shop: 'champagne and sage green', name: 'Champagne Garden', palette: ['#F3E7D3', '#D9C29C', '#A9B89A', '#FFFFFF', '#6F7D63'], tags: ['garden', 'neutral', 'elegant', 'outdoor', 'green', 'gold', 'sage', 'cream'],
+    { id: 'champagne-garden', shop: 'sage green and ivory', name: 'Sage Garden', palette: ['#F3E7D3', '#D9C29C', '#A9B89A', '#FFFFFF', '#6F7D63'], tags: ['garden', 'neutral', 'elegant', 'outdoor', 'green', 'gold', 'sage', 'cream'],
       mood: 'Soft gold light, garden greenery and candlelit tables.', decor: ['Greenery runners with white blooms', 'Gold chargers and blush napkins', 'Floating candles in tall glass', 'Champagne tower welcome moment'],
       music: 'jazz brunch acoustic', dress: 'Soft neutrals, garden formal', menu: 'garden' },
     { id: 'modern-noir', shop: 'black and gold', name: 'Modern Noir', palette: ['#111111', '#2B2B2B', '#C9A86A', '#F5F2EC', '#7A6A55'], tags: ['black', 'dark', 'gold', 'modern', 'glam', 'evening'],
@@ -188,8 +188,51 @@
       music: 'kids party', dress: 'Cape and a bold primary color', menu: 'kids' },
     { id: 'midnight-celestial', shop: 'navy and gold celestial', name: 'Midnight Celestial', palette: ['#16203A', '#2C3A5E', '#C9A86A', '#C7CBD3', '#F4F1EA'], tags: ['celestial', 'navy', 'silver', 'gold', 'dark', 'evening', 'blue'],
       mood: 'Midnight blue, gold stars and soft twinkling light.', decor: ['Navy linens with gold star confetti', 'Hanging moon and star installation', 'Silver candle clusters', 'Twinkle-light backdrop for photos'],
-      music: 'neo soul candlelight', dress: 'Navy, silver and gold shimmer', menu: 'elegant' }
+      music: 'neo soul candlelight', dress: 'Navy, silver and gold shimmer', menu: 'elegant' },
+    { id: 'citrus-fiesta', shop: 'hot pink and orange', name: 'Citrus Fiesta', palette: ['#E23D7A', '#F07B2E', '#F6B26B', '#FFF6EE', '#2A9D9A'], tags: ['orange', 'fiesta', 'bright', 'colorful', 'summer', 'coral', 'citrus'],
+      mood: 'Hot pink and orange blooms, citrus and sunshine.', decor: ['Bright layered runners in hot pink and orange', 'Peony, dahlia and ranunculus centerpieces', 'Citrus slices, rattan chargers and colored glassware', 'Sunset toast under a flower-covered pergola'],
+      music: 'afrobeats reggaeton summer', dress: 'Bright pinks, corals and oranges', menu: 'garden' },
+    { id: 'amalfi-lemon', shop: 'lemon yellow and blue', name: 'Amalfi Lemon', palette: ['#F4D03F', '#3D6CB9', '#FFFFFF', '#A9C7E3', '#D9C29C'], tags: ['yellow', 'lemon', 'amalfi', 'mediterranean', 'summer'],
+      mood: 'Lemons, blue and white stripes and sunshine by the sea.', decor: ['Blue and white striped linens with yellow napkins', 'Lemons and yellow flowers in blue and white vases', 'Wicker chairs with patterned pillows', 'Lemonade and a potted lemon tree to welcome guests'],
+      music: 'jazz brunch acoustic', dress: 'Crisp whites, lemon yellow and blue', menu: 'garden' },
+    { id: 'blue-willow', shop: 'blue and white chinoiserie', name: 'Blue Willow', palette: ['#5B7FBF', '#A9C7E3', '#FFFFFF', '#F4F1EA', '#C9A86A'], tags: ['chinoiserie', 'tea', 'classic', 'porcelain'],
+      mood: 'Blue and white porcelain, toile linens and satin bows.', decor: ['Blue floral toile tablecloths', 'White roses and blue hydrangeas in porcelain vases', 'Floral teacups and tiered pastries', 'Powder blue bows tied on every chair'],
+      music: 'jazz brunch acoustic', dress: 'Blue and white, soft and polished', menu: 'sweet' },
+    { id: 'butter-bloom', shop: 'butter yellow and peach', name: 'Butter and Bloom', palette: ['#F6E3A6', '#F3C7A8', '#FFF8EC', '#F6C6C0', '#C9A86A'], tags: ['yellow', 'spring', 'soft', 'daisy', 'peach'],
+      mood: 'Butter yellow, peach and blush flowers in soft sunshine.', decor: ['Peach, butter yellow and white flower runners', 'Daisies and garden roses in white pitchers', 'Cane-back chairs and soft linen napkins', 'Pastry and cake table in butter yellow and blush'],
+      music: 'jazz brunch acoustic', dress: 'Soft yellows, peach and florals', menu: 'sweet' },
+    { id: 'tuscan-olive', shop: 'olive green and terracotta', name: 'Tuscan Olive', palette: ['#7E8C5A', '#C47C4E', '#F4EBDD', '#A47551', '#E9C9A6'], tags: ['tuscan', 'olive', 'terracotta', 'warm', 'italian'],
+      mood: 'Olive branches, terracotta and candlelight at sunset.', decor: ['Long rustic table on a stone terrace', 'Olive branches and dahlias in terracotta vases', 'Olive green linen napkins and stoneware', 'Candlelit supper as the sun goes down'],
+      music: 'jazz brunch acoustic', dress: 'Earthy linens, olive and terracotta', menu: 'gardenDinner' }
   ];
+
+  /* What to buy or hire for each look: [item, store search, who to hire]. A blank search means hire a pro for it. */
+  var STYLE_PIECES = {
+    'champagne-garden': [['Greenery table runners', 'faux eucalyptus garland table runner', ''], ['Gold charger plates', 'gold charger plates', ''], ['Blush napkins', 'blush linen napkins', ''], ['Floating candles in tall glass', 'floating candles tall glass cylinder', ''], ['White flower centerpieces', '', 'florals']],
+    'modern-noir': [['Black tablecloths', 'black tablecloth', ''], ['Gold flatware', 'gold flatware set', ''], ['Mirrored table numbers', 'mirror acrylic table numbers', ''], ['Black taper candles', 'black taper candles', ''], ['Custom neon sign', 'custom neon sign', '']],
+    'blush-romance': [['Sheer draped backdrop', 'sheer white backdrop drape', ''], ['Rose-gold candle holders', 'rose gold candle holders', ''], ['Pearl garland for the dessert table', 'pearl garland strand', ''], ['Blush napkins', 'blush linen napkins', ''], ['Blush and ivory rose centerpieces', '', 'florals']],
+    'boho-sunset': [['Pampas grass arrangements', 'pampas grass bouquet', ''], ['Floor cushions', 'boho floor cushions', ''], ['Macramé table runner', 'macrame table runner', ''], ['Lanterns for the pathway', 'candle lanterns set', ''], ['Terracotta napkins', 'terracotta linen napkins', '']],
+    'coastal-linen': [['Dusty blue linen tablecloths', 'dusty blue linen tablecloth', ''], ['Glass hurricanes with sand', 'glass hurricane candle holders', ''], ['Blue glass lanterns', 'blue glass lanterns', ''], ['Natural linen napkins', 'natural linen napkins', ''], ['Driftwood and white hydrangea', '', 'florals']],
+    'tropical-glam': [['Gold pineapple accents', 'gold pineapple decor', ''], ['Monstera leaf placemats', 'monstera leaf placemats', ''], ['Tropical print napkins', 'tropical print napkins', ''], ['Monstera and orchid centerpieces', '', 'florals'], ['Bright floral photo wall', '', 'decor']],
+    'old-hollywood': [['Gold sequin tablecloths', 'gold sequin tablecloth', ''], ['Film-reel table numbers', 'film reel table numbers', ''], ['Red carpet runner and stanchions', 'red carpet runner with stanchions', ''], ['Red rose centerpieces', '', 'florals'], ['Marquee light letters', '', 'decor']],
+    'pastel-whimsy': [['Pastel napkins', 'pastel napkins assorted', ''], ['Paper flower wall', 'paper flower backdrop', ''], ['Glass candy jars', 'glass apothecary candy jars', ''], ['Pastel balloon garland', '', 'balloons'], ['Macaron and candy table', '', 'cake']],
+    'ivory-ballroom': [['Ivory damask tablecloths', 'ivory damask tablecloth', ''], ['Gold beaded chargers', 'gold beaded charger plates', ''], ['Pillar candles in hurricanes', 'glass hurricane pillar candle holders', ''], ['Gold stands with white florals', '', 'florals'], ['Draped ivory backdrop', '', 'decor']],
+    'minimal-white': [['White tablecloths', 'white tablecloth', ''], ['Clear acrylic signs', 'clear acrylic sign', ''], ['White ceramic bud vases', 'white ceramic bud vases', ''], ['Single-stem sculptural florals', '', 'florals'], ['White balloon cloud', '', 'balloons']],
+    'disco-glam': [['Disco ball cluster', 'disco ball set', ''], ['Silver fringe backdrop', 'silver metallic fringe curtain', ''], ['Silver sequin table runner', 'silver sequin table runner', ''], ['Silver table confetti', 'silver glitter table confetti', ''], ['Dance floor lighting', '', 'lighting']],
+    'moody-floral': [['Burgundy velvet napkins', 'burgundy velvet napkins', ''], ['Brass candelabras', 'brass candelabra', ''], ['Burgundy taper candles', 'burgundy taper candles', ''], ['Burgundy and plum flower runners', '', 'florals'], ['Fruit and flower grazing table', '', 'catering']],
+    'rustic-elegance': [['Natural linen table runners', 'natural linen table runner', ''], ['Wood slice signs', 'wood slice sign', ''], ['Edison string lights', 'edison bulb string lights', ''], ['Wildflowers in vintage vessels', '', 'florals'], ['Farm tables', '', 'rentals']],
+    'royal-purple': [['Plum velvet tablecloths', 'plum velvet tablecloth', ''], ['Gold-rim glassware', 'gold rim glassware', ''], ['Purple taper candles', 'purple taper candles', ''], ['Lavender and orchid centerpieces', '', 'florals'], ['Throne-style chair for the guest of honor', '', 'rentals']],
+    'emerald-luxe': [['Emerald velvet runners', 'emerald green velvet table runner', ''], ['Gold charger plates', 'gold charger plates', ''], ['Gold candlesticks', 'gold taper candle holders', ''], ['Mercury glass votives', 'gold mercury glass votive holders', ''], ['Evergreen and white flower centerpieces', '', 'florals']],
+    'dino-adventure': [['Dinosaur figurines for the tables', 'dinosaur figurines set', ''], ['Explorer hats and binoculars', 'kids explorer hat and binoculars set', ''], ['Jungle leaf table runner', 'jungle leaf table runner', ''], ['Fossil dig kit', 'dinosaur fossil dig kit', ''], ['Volcano cake', '', 'cake']],
+    'under-the-sea': [['Aqua tablecloths', 'aqua blue tablecloth', ''], ['Seashell table scatter', 'seashell table confetti', ''], ['Bubble machine', 'bubble machine', ''], ['Treasure chest favors', 'treasure chest party favor', ''], ['Balloon waves', '', 'balloons']],
+    'hero-squad': [['Comic table covers', 'superhero comic table cover', ''], ['Capes and masks', 'kids superhero capes and masks set', ''], ['City skyline backdrop', 'superhero city skyline backdrop', ''], ['Obstacle course set', 'kids obstacle course set', ''], ['Hero cake', '', 'cake']],
+    'midnight-celestial': [['Navy tablecloths', 'navy blue tablecloth', ''], ['Gold star confetti', 'gold star table confetti', ''], ['Hanging moons and stars', 'gold moon and star hanging decorations', ''], ['Silver votive clusters', 'silver mercury glass votive holders', ''], ['Twinkle-light backdrop', 'fairy light curtain backdrop', '']],
+    'citrus-fiesta': [['Hot pink and orange runners', 'hot pink orange table runner', ''], ['Rattan chargers', 'rattan charger plates', ''], ['Pink and orange glassware', 'pink and orange drinking glasses', ''], ['Colorful paper flower garland', 'paper flower garland colorful', ''], ['Peony and dahlia centerpieces', '', 'florals']],
+    'amalfi-lemon': [['Blue and white striped tablecloths', 'blue and white striped tablecloth', ''], ['Yellow napkins', 'yellow linen napkins', ''], ['Blue and white vases', 'blue and white ceramic vase', ''], ['Potted lemon tree', 'faux potted lemon tree', ''], ['Lemons and yellow flowers', '', 'florals']],
+    'blue-willow': [['Blue toile tablecloths', 'blue floral toile tablecloth', ''], ['Blue and white teacups', 'blue and white floral teacups', ''], ['Powder blue chair bows', 'powder blue satin chair sash bows', ''], ['Ginger jar vases', 'blue and white ginger jar', ''], ['White rose and blue hydrangea arrangements', '', 'florals']],
+    'butter-bloom': [['Butter yellow tablecloth', 'butter yellow tablecloth', ''], ['White ceramic pitchers for daisies', 'white ceramic pitcher vase', ''], ['Peach linen napkins', 'peach linen napkins', ''], ['Peach and yellow flower runners', '', 'florals'], ['Pastry and cake table', '', 'cake']],
+    'tuscan-olive': [['Terracotta vases', 'terracotta vase set', ''], ['Olive green napkins', 'olive green linen napkins', ''], ['Stoneware plates', 'stoneware dinner plates', ''], ['Ivory pillar candles', 'ivory pillar candles set', ''], ['Olive branches and dahlias', '', 'florals']]
+  };
 
   var MENUS = {
     garden: ['Herb frittata and quiche duo', 'Citrus and burrata salad', 'Lemon ricotta pancakes', 'Mini croissant sandwiches', 'Berry pavlova', 'Elderflower spritz and mimosa bar'],
@@ -273,7 +316,18 @@
     };
   };
 
+  /* Newly opened event venues, checked by hand from the venue's own website. Shown as an idea only: no payment or partnership.
+     Remove a venue if its details change or it closes. */
+  var NEW_VENUES = [
+    { name: 'Deco House River Oaks', city: 'Houston, TX', area: 'River Oaks', address: '4235 Richmond Ave, Suite 200, Houston, TX 77027', seated: 160, standing: 200,
+      settings: ['indoor'], types: ['wedding', 'quince', 'milestone', 'birthday', 'baby-shower', 'bridal-shower', 'anniversary', 'dinner', 'gala', 'corporate', 'engagement', 'graduation', 'sweet16', 'retirement', 'holiday', 'christmas', 'other'],
+      about: 'A private Art Deco event space with a 4,000 sq ft event floor and statement lighting.',
+      details: ['Up to 160 seated or 200 standing', 'Catering through their partner caterers, quoted for your event; prep kitchen on site', '125+ parking spaces, valet on weekends', 'Tours by appointment; prices are quoted on request'],
+      site: 'https://www.decohousehtx.com/', checked: '2026-10-24' }
+  ];
+
   root.EC_DATA = {
+    NEW_VENUES: NEW_VENUES, STYLE_PIECES: STYLE_PIECES,
     SETTINGS: SETTINGS, SETTING_RULES: SETTING_RULES, GRATUITY: 0.20,
     EVENT_TYPES: EVENT_TYPES, CATEGORIES: CATEGORIES, PROFILES: PROFILES, ADJUST: ADJUST, TIERS: TIERS,
     CITIES: CITIES, STYLES: STYLES, MENUS: MENUS, DIETS: DIETS, CHECKLIST: CHECKLIST, PASSES: PASSES,
