@@ -16,7 +16,7 @@ with sync_playwright() as p:
         pg.goto(U); pg.wait_for_timeout(500)
         pg.click('[data-scroll=inspo]'); pg.wait_for_timeout(600); shot(pg, tag + '-1-home-gallery')
         cards = pg.query_selector_all('#igrid [data-inspo]')
-        check(len(cards) == 8, tag + ': home should show 8 photos, shows %d' % len(cards))
+        check(len(cards) == 7, tag + ': home should show 7 photos, shows %d' % len(cards))
         check(all('AI-generated inspiration' in c.inner_text() for c in cards), tag + ': a photo is missing its AI label')
         overflow = pg.evaluate('document.documentElement.scrollWidth > window.innerWidth + 1')
         check(not overflow, tag + ': page scrolls sideways')

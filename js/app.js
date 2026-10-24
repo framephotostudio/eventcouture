@@ -311,7 +311,9 @@
   /* ---------- AI-generated inspiration gallery: browse by occasion, then plan from a photo ---------- */
   var INSPO = window.EC_INSPO || [];
   function inspoTypes() { return D.EVENT_TYPES.filter(function (t) { return INSPO.some(function (p) { return p.types.indexOf(t.id) >= 0; }); }); }
-  function inspoFor(type) { return type ? INSPO.filter(function (p) { return p.types.indexOf(type) >= 0; }).sort(function (a, b) { return a.types.indexOf(type) - b.types.indexOf(type); }) : INSPO; }
+  /* "All occasions" mixes occasions so the first row isn't all weddings. */
+  var INSPO_MIX = (function () { var by = {}, order = []; INSPO.forEach(function (p) { var k = p.types[0]; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(p); }); var out = [], more = true; for (var i = 0; more; i++) { more = false; order.forEach(function (k) { if (by[k][i]) { out.push(by[k][i]); more = true; } }); } return out; })();
+  function inspoFor(type) { return type ? INSPO.filter(function (p) { return p.types.indexOf(type) >= 0; }).sort(function (a, b) { return a.types.indexOf(type) - b.types.indexOf(type); }) : INSPO_MIX; }
   function inspoCards(type, limit) {
     var list = inspoFor(type), shown = limit ? list.slice(0, limit) : list;
     return shown.map(function (p) { return '<button type="button" class="icard" data-inspo="' + p.id + '" aria-label="' + esc(p.name) + ', AI-generated inspiration photo"><div class="thumb"><img src="' + srcOf(INSPO_IMG + 'sm/' + p.id + '.jpg') + '" alt="' + esc(p.alt) + '" loading="lazy">' + AI_TAG + '</div><span class="iname">' + esc(p.name) + '</span></button>'; }).join('') +
@@ -379,7 +381,7 @@
       '<div class="demo-total"><span class="small muted">Estimated event budget</span><span class="display num">' + money(demo.total) + '</span></div></div>' +
       '<button class="link small" id="showBudget" aria-expanded="false" aria-controls="demoLines">See example budget</button>' +
       '<div id="demoLines" class="demo-lines" hidden>' + lines + '<p class="muted small" style="margin:8px 0 0">Every line already includes tax, service charges and tips.</p></div></section>' +
-      '<section id="inspo" class="stack section"><h2>What are you celebrating?</h2><p class="muted">No idea yet? Pick your occasion and tap a photo you love. Your whole plan is built around it.</p>' + inspoGallery('', 8) + '</section>' +
+      '<section id="inspo" class="stack section"><h2>What are you celebrating?</h2><p class="muted">No idea yet? Pick your occasion and tap a photo you love. Your whole plan is built around it.</p>' + inspoGallery('', 7) + '</section>' +
       '<section id="gallery" class="stack section"><h2>Explore sample plans</h2><p class="muted">Complete plans you can open for free. Photos are AI-generated inspiration, not events we organized.</p><div class="samples home-samples">' +
       FEATURED.map(function (i) { return sampleCard(SAMPLES[i], i); }).join('') + '</div>' +
       '<div class="samples" id="moreSamples" hidden>' + SAMPLES.map(function (s, i) { return FEATURED.indexOf(i) >= 0 ? '' : sampleCard(s, i); }).join('') + '</div>' +
@@ -395,7 +397,7 @@
     var hots = $$('.hot');
     hots.forEach(function (h) { h.addEventListener('click', function () { var open = h.getAttribute('aria-expanded') === 'true'; hots.forEach(function (o) { o.setAttribute('aria-expanded', 'false'); }); h.setAttribute('aria-expanded', open ? 'false' : 'true'); }); });
     $('#showBudget').addEventListener('click', function () { var l = $('#demoLines'), open = l.hidden; l.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Hide example budget' : 'See example budget'; });
-    bindInspo(8);
+    bindInspo(7);
     $('#allSamples').addEventListener('click', function () { var m = $('#moreSamples'), open = m.hidden; m.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Show fewer' : 'See all ' + SAMPLES.length + ' sample plans'; });
   }
 

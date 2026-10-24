@@ -576,3 +576,6 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .new-venue { gap: 10px; }
 @media (prefers-reduced-motion: reduce) { .icard img { transition: none; } }
 .concept, .concept .in, .concept ul { align-content: start; }
+/* The big photo in a pop-up keeps its own height so nothing slides under it */
+.thumb.ibig { aspect-ratio: auto; flex-shrink: 0; overflow: hidden; }
+.thumb.ibig img { height: auto; aspect-ratio: 3 / 2; }
