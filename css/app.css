@@ -437,3 +437,10 @@ footer.site .name { color: #F6EEE2; }
 footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .topbar { padding-top: calc(env(safe-area-inset-top, 0px) + 10px); padding-bottom: 10px; }
 @media (max-width: 899px) { .topbar nav { gap: 8px; } }
+/* banner: shorter, lettering spread to fill (capped so it never looks distorted) */
+.brand.logo-banner { --h: 66px; }
+@media (min-width: 900px) { .brand.logo-banner { --h: 82px; } }
+@media (max-width: 340px) { .brand.logo-banner { --h: 58px; } }
+.brand.logo-banner .frame { display: flex; justify-content: center; background-size: cover; background-position: center; }
+.brand.logo-banner img { height: var(--h); width: min(100%, calc(var(--h) * 1.667 * 1.55)); object-fit: fill; }
+@media (min-width: 700px) { .brand.logo-banner { flex: 0 1 auto; width: calc(var(--h) * 1.667 * 1.55 + 80px); margin: 0 auto; } .topbar nav { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); } }

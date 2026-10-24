@@ -97,3 +97,11 @@ for x in range(f):
 base.paste(cl, ((W - cw) // 2, 0), m)
 base.save(f'{OUT}/logo-banner-wide.jpg', quality=86, optimize=True, progressive=True)
 print('banner done', base.size)
+
+# Tight lettering (transparent soft edges) for the stretched header banner
+tc = logo.crop((150, 135, 1400, 885)).convert('RGBA'); tw, th = tc.size
+a = Image.new('L', tc.size, 255); d = ImageDraw.Draw(a); f = round(tw * 0.06)
+for x in range(f):
+    v = round(255 * (x / f) ** 1.5); d.line((x, 0, x, th), fill=v); d.line((tw - 1 - x, 0, tw - 1 - x, th), fill=v)
+tc.putalpha(a); tc = tc.resize((900, round(900 * th / tw)), Image.LANCZOS); tc.save(f'{OUT}/logo-letters.png', optimize=True)
+print('letters done', tc.size)

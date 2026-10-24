@@ -157,13 +157,13 @@
     help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
     events: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>'
   };
-  var BRAND = { mark: 'img/brand/ec-mark-128.png', logo: 'img/brand/logo-full.jpg', compact: 'img/brand/logo-compact.jpg', banner: 'img/brand/logo-banner-wide.jpg' };
+  var BRAND = { mark: 'img/brand/ec-mark-128.png', logo: 'img/brand/logo-full.jpg', compact: 'img/brand/logo-compact.jpg', banner: 'img/brand/logo-banner-wide.jpg', letters: 'img/brand/logo-letters.png' };
   var lastHash = null;
   function frame(inner, opts) {
     opts = opts || {};
     var ribbon = CFG.preview && !opts.noRibbon ? '<div class="preview-ribbon">Preview version: no real charges, and sharing works on this device only.</div>' : '';
     app.innerHTML = ribbon +
-      '<header class="topbar"><a class="brand logo-banner" href="#/" aria-label="Event Couture by Always Luxe, home"><span class="frame-outer"><span class="frame"><img src="' + srcOf(BRAND.banner) + '" alt="Event Couture by Always Luxe" width="6480" height="360"></span></span></a>' +
+      '<header class="topbar"><a class="brand logo-banner" href="#/" aria-label="Event Couture by Always Luxe, home"><span class="frame-outer"><span class="frame" style="background-image:url(' + srcOf(BRAND.banner) + ')"><img src="' + srcOf(BRAND.letters) + '" alt="Event Couture by Always Luxe" width="900" height="540"></span></span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
       '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div></footer>';

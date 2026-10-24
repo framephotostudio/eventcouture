@@ -12,6 +12,7 @@ def data_uri(path, width):
 embed = {'img/hero.jpg': data_uri('img/hero.jpg', 900)}
 for f in sorted(glob.glob('img/events/*.jpg')): embed[f] = data_uri(f, 900)
 embed['img/brand/logo-banner-wide.jpg'] = data_uri('img/brand/logo-banner-wide.jpg', 3200)
+embed['img/brand/logo-letters.png'] = 'data:image/png;base64,' + base64.b64encode(open('img/brand/logo-letters.png','rb').read()).decode()
 embed['img/brand/ec-mark-128.png'] = 'data:image/png;base64,' + base64.b64encode(open('img/brand/ec-mark-128.png','rb').read()).decode()
 js = 'window.EC_EMBED = ' + json.dumps(embed) + ';\n' + js
 icon = base64.b64encode(open('img/icon.svg','rb').read()).decode()
