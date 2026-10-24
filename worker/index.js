@@ -96,14 +96,18 @@ async function concepts(env, { event = {}, skip = [] }) {
     `Chosen vibes and colors: ${(event.vibes || []).slice(0, 12).join(', ') || 'none'}. Host notes: ${event.text || 'none'}. Links: ${(event.links || []).join(' ') || 'none'}.\n` +
     `Avoid these concepts already shown: ${skip.join(', ') || 'none'}.\n` +
     'Return JSON: {"concepts":[{"id":"kebab-id","name":"","styleName":"","palette":["#hex x5"],"mood":"one sentence","decor":["4 items"],"dress":"","menuStyle":"garden|modern|elegant|rustic|coastal|tropical|classic|sweet|party","music":"3-word mood","fit":"Closest match to your inspiration|A close alternative|A fresh direction","outline":["Arrival: ...","Tables: ...","Moment: ...","Dress code: ..."]}]} with exactly 3 distinct concepts that keep what the host loves and feel luxurious at any budget.' });
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_KEY },
-    body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0.8 } })
-  });
-  if (!r.ok) { let why = ''; try { why = (await r.json()).error?.status || ''; } catch (e) {} throw new Error('ai ' + r.status + ' ' + why); }
-  const j = await r.json();
-  const text = j.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-  const out = JSON.parse(text).concepts || [];
+  // Ask up to twice; a long or interrupted answer is retried once before failing
+  let out = [];
+  for (let attempt = 0; attempt < 2 && out.length < 3; attempt++) {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_KEY },
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0.8, maxOutputTokens: 8192 } })
+    });
+    if (!r.ok) { let why = ''; try { why = (await r.json()).error?.status || ''; } catch (e) {} throw new Error('ai ' + r.status + ' ' + why); }
+    const j = await r.json();
+    const text = (j.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
+    try { out = JSON.parse(text.replace(/^```json\s*|```$/g, '')).concepts || []; } catch (e) { out = []; }
+  }
   const hex = /^#[0-9a-f]{6}$/i;
   const clean = out.slice(0, 3).map(c => ({
     id: String(c.id || '').slice(0, 40), name: String(c.name || '').slice(0, 60), styleName: String(c.styleName || c.name || '').slice(0, 40),
