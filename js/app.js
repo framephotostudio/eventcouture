@@ -54,7 +54,7 @@
     var re = ev.alcohol === 'none' ? ALC : HARD;
     var out = (list || []).map(function (x) {
       if (!re.test(x)) return x;
-      if (kind === 'decor' && /tower/i.test(x)) return ev.alcohol === 'none' ? 'Sparkling cider tower welcome moment' : x;
+      if (kind === 'decor' && /tower/i.test(x)) return ev.alcohol === 'none' ? (ev.kids && /birthday/.test(ev.type) ? 'Pink lemonade station with fun straws' : 'Sparkling cider tower welcome moment') : x;
       if (kind === 'decor' && /bar setup|bar cart/i.test(x)) return ev.alcohol === 'none' ? 'Lemonade and mocktail station' : 'Wine and beer station';
       return null;
     }).filter(Boolean);
@@ -97,6 +97,7 @@
   /* Guests get a general dress code; the person being celebrated gets the concept's specific look. */
   function dressBlock(ev, cls) {
     var look = ev.concept && ev.concept.dress ? ev.concept.dress : '';
+    if (/^Black tie$|^White tie$/.test(E.dressCode(ev, ev.tier))) look = look.replace(/cocktail to black tie/i, 'black tie');
     return '<p class="' + (cls || '') + '"><b>Guest dress code:</b> ' + esc(E.dressCode(ev, ev.tier)) + '</p>' +
       (look ? '<p class="' + (cls || '') + '"><b>For ' + esc(honoree(ev)) + ':</b> ' + esc(look.charAt(0).toUpperCase() + look.slice(1)) + '</p>' : '');
   }
@@ -211,7 +212,7 @@
       return Promise.resolve(E.concepts(ev, colors, text, loves, skip));
     }
   };
-  function slim(ev) { return { type: ev.type, guests: ev.guests, city: ev.city, budget: ev.budget, setting: ev.setting, text: ev.inspiration.text, vibes: ev.inspiration.vibes || [], links: ev.inspiration.links, photos: (ev.inspiration.photos || []).map(function (p) { return { image: p.src, loves: p.loves }; }) }; }
+  function slim(ev) { return { type: ev.type, guests: ev.guests, city: ev.city, budget: ev.budget, setting: ev.setting, time: ev.time, kids: !!ev.kids, alcohol: ev.alcohol || 'full', text: ev.inspiration.text, vibes: ev.inspiration.vibes || [], links: ev.inspiration.links, photos: (ev.inspiration.photos || []).map(function (p) { return { image: p.src, loves: p.loves }; }) }; }
 
   /* ---------- layout ---------- */
   var ICON = {
@@ -387,14 +388,14 @@
     var STYLE_COLOR = { 'champagne-garden': 'Champagne', 'modern-noir': 'Black', 'blush-romance': 'Blush', 'boho-sunset': 'Terracotta', 'coastal-linen': 'Blue', 'tropical-glam': 'Tropical', 'old-hollywood': 'Red', 'pastel-whimsy': 'Pastel', 'ivory-ballroom': 'Ivory', 'minimal-white': 'White', 'disco-glam': 'Silver', 'moody-floral': 'Burgundy', 'rustic-elegance': 'Rustic', 'royal-purple': 'Plum', 'midnight-celestial': 'Midnight' };
     picked = picked.concat(typed.filter(function (w) { return picked.indexOf(w) < 0; }));
     var c1 = picked[0] || STYLE_COLOR[style.id] || 'Gold', c2 = picked[1];
-    var hr = +String(d.time || defaultTime(type)).split(':')[0];
+    var hr = +String(d.timeTouched && d.time ? d.time : defaultTime(type, d.kids)).split(':')[0];
     var partOfDay = (d.kids && /birthday/.test(type)) ? 'A Party' : hr < 12 ? 'A Morning' : hr < 16 ? 'An Afternoon' : 'An Evening';
     var vibe = vibes.filter(function (v) { return VIBE_NOUN[v]; })[0];
     var art = function (w) { return /^[AEIOU]/i.test(w) ? 'An ' : 'A '; };
     var out = [style.name + ' ' + word,
       c2 ? art(c1) + c1 + ' and ' + c2 + ' ' + (type === 'wedding' ? 'Affair' : word) : art(c1) + c1 + ' ' + word,
       (vibe ? VIBE_NOUN[vibe] : partOfDay) + ' in ' + c1,
-      'The ' + c1 + ' ' + (type === 'wedding' || type === 'gala' ? 'Soir\u00e9e' : word + ' Soir\u00e9e')];
+      'The ' + c1 + ' ' + (type === 'wedding' || type === 'gala' || / Party$/.test(word) ? 'Soir\u00e9e' : word + ' Soir\u00e9e')];
     return out.filter(function (n, i) { return out.indexOf(n) === i; });
   }
   var VIBE_COLORS = [['Blush', '#F2C9CF'], ['Ivory', '#F7F1E3'], ['Gold', '#C9A86A'], ['Champagne', '#E8D9BC'], ['White', '#FFFFFF'], ['Black', '#151515'], ['Sage', '#A9B89A'], ['Burgundy', '#7B2D3B'], ['Lavender', '#C9B3DD'], ['Dusty blue', '#A9C7D3'], ['Terracotta', '#C47C4E'], ['Silver', '#C0C0C8'], ['Pastels', '#F9E1EC'], ['Bright colors', '#F2B544']];
@@ -510,7 +511,7 @@
         draft.mustsGuessed = true;
       }
       frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>The details</h2><p class="muted">These set your prices, quantities and timeline. You can change them later.</p></div>' +
-        '<div class="panel stack"><label class="field"><span>Name your event</span><input class="input" id="name" value="' + esc(draft.name) + '" placeholder="Name it, or tap an idea below" maxlength="60"></label><span class="muted small">Ideas from your inspiration</span><div class="chips" id="names"></div><span class="muted small">Your event saves under this name in My events, so you can come back and finish anytime.</span></div>' +
+        '<div class="panel stack"><label class="field"><span>Name your event</span><input class="input" id="name" value="' + esc(draft.name) + '" placeholder="Name it, or tap an idea below" maxlength="80"></label><span class="muted small">Ideas from your inspiration</span><div class="chips" id="names"></div><span class="muted small">Your event saves under this name in My events, so you can come back and finish anytime.</span></div>' +
         '<div class="grid2">' +
         '<label class="field"><span>Event type</span><select class="input" id="type">' + D.EVENT_TYPES.map(function (t) { return '<option value="' + t.id + '"' + (t.id === draft.type ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '</select></label>' +
         '<label class="field"><span>City</span><select class="input" id="city">' + (function () {
@@ -528,7 +529,7 @@
         '<label class="row small"><input type="checkbox" id="kids"' + (draft.kids ? ' checked' : '') + '> Children will attend</label></div>' +
         '<div class="grid2"><div class="stack"><h3 id="alcLbl">Drinks</h3><div class="chips" id="alcohol" role="group" aria-labelledby="alcLbl">' + [['none', 'No alcohol'], ['wine', 'Beer and wine'], ['full', 'Full bar or cocktails']].map(function (o) { return '<button type="button" class="chip" data-v="' + o[0] + '" aria-pressed="' + ((draft.alcohol || defaultAlcohol(draft.type, draft.inspiration && draft.inspiration.text)) === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div>' +
         '<div class="stack"><h3 id="payLbl">Who\u2019s paying?</h3><div class="chips" id="payer" role="group" aria-labelledby="payLbl">' + [['host', 'I\u2019m hosting and paying'], ['own', 'Everyone pays their own'], ['shared', 'We\u2019re splitting the cost']].map(function (o) { return '<button type="button" class="chip" data-v="' + o[0] + '" aria-pressed="' + ((draft.payer || 'host') === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div></div>' +
-        '<div class="stack"><h3>Your must-haves</h3><span class="muted small">These are protected first when the plan is fitted to your budget.</span><div class="chips" id="musts">' + MUSTS.map(function (m) { return '<button type="button" class="chip" data-must="' + m[0] + '" aria-pressed="' + ((draft.priorities || []).indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div></div>' +
+        '<div class="stack"><h3>Your must-haves</h3><span class="muted small">These are protected first when the plan is fitted to your budget.' + ((draft.priorities || []).length && draft.mustsGuessed && !draft.mustsTouched ? ' We picked the highlighted ones from your description; tap to change.' : '') + '</span><div class="chips" id="musts">' + MUSTS.map(function (m) { return '<button type="button" class="chip" data-must="' + m[0] + '" aria-pressed="' + ((draft.priorities || []).indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div></div>' +
         '<div class="wiz-act"><button class="btn gold" id="next">Review details</button><a class="btn ghost" href="' + W + '1/' + draft.id + '">Back</a>' + laterBtn() + '</div></div>');
       function showNames() { $('#names').innerHTML = suggestNames(draft, $('#type').value).map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join(''); }
       showNames();
@@ -541,14 +542,17 @@
         if (!draft.timeTouched) $('#time').value = defaultTime(this.value, $('#kids').checked);
         if (!draft.alcoholTouched) { var da = defaultAlcohol(this.value, draft.inspiration && draft.inspiration.text); $$('#alcohol button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === da); }); } });
       $('#time').addEventListener('input', function () { draft.timeTouched = true; });
+      $('#hours').addEventListener('input', function () { draft.hoursTouched = true; });
       $('#kids').addEventListener('change', function () { draft.kidsTouched = true; if (!draft.timeTouched) $('#time').value = defaultTime($('#type').value, this.checked); });
       /* Everything typed here is saved as you go, so a refresh never loses it. */
-      var autoT; ['input', 'change', 'click'].forEach(function (evt) { $('#main').addEventListener(evt, function () { clearTimeout(autoT); autoT = setTimeout(function () { if (!$('#guests') || !(+$('#guests').value >= 1)) return; var typedName = $('#name').value.trim(); collect2(); if (!typedName) draft.name = ''; persist(); }, 400); }); });
+      var autoT; ['input', 'change', 'click'].forEach(function (evt) { $('#main').addEventListener(evt, function () { clearTimeout(autoT); autoT = setTimeout(saveNow, 150); }); });
+      function saveNow() { if (!$('#guests') || !(+$('#guests').value >= 1)) return; var typedName = $('#name').value.trim(); collect2(); if (!typedName) draft.name = ''; persist(); }
+      window.addEventListener('pagehide', saveNow, { once: true }); window.addEventListener('beforeunload', saveNow, { once: true });
       $('#city').addEventListener('change', function () { $('#cityOtherWrap').hidden = this.value !== 'Other US city'; if (this.value === 'Other US city') $('#cityOther').focus(); });
       $('#alcohol').addEventListener('click', function () { draft.alcoholTouched = true; });
       ['alcohol', 'payer'].forEach(function (g) { $('#' + g).addEventListener('click', function (e) { var bt = e.target.closest('button'); if (!bt) return; $$('#' + g + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === bt); }); }); });
-      $('#musts').addEventListener('click', function (e) { var b = e.target.closest('[data-must]'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
-      $('#setting').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; draft.settingChosen = true; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); if (b.dataset.v === 'restaurant' && +$('#hours').value > 3) $('#hours').value = 2; });
+      $('#musts').addEventListener('click', function (e) { var b = e.target.closest('[data-must]'); if (b) draft.mustsTouched = true; if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
+      $('#setting').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; draft.settingChosen = true; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); if ((b.dataset.v === 'restaurant' || b.dataset.v === 'privateRoom') && +$('#hours').value > 3 && !draft.hoursTouched) $('#hours').value = b.dataset.v === 'restaurant' ? 2 : 3; });
       function collect2() {
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
         draft.type = $('#type').value; draft.nameAuto = !$('#name').value.trim() || draft.nameAuto && $('#name').value.trim() === draft.name; draft.name = $('#name').value.trim() || (suggestNames(draft, draft.type)[0]) || E.typeOf(draft.type).name; draft.city = !$('#city').value ? '' : $('#city').value === 'Other US city' ? ($('#cityOther').value.trim() || 'Other US city') : $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || defaultTime(draft.type);
@@ -712,12 +716,12 @@
     }).join('') + '</nav>';
     var lockedTab = preview(ev) && LOCKED_TABS[tab];
     var body = lockedTab ? '<div class="stack"><div class="lock-card big"><h3>' + esc(LOCKED_TABS[tab]) + '</h3><p class="muted">Keep your plan to invite guests, track RSVPs and plan together. Your concept and estimates stay exactly as they are.</p><button class="btn" data-keep>Keep my plan</button></div></div>' : (TAB_VIEWS[tab] || TAB_VIEWS.overview)(ev, b);
-    var keepBar = isKept(ev) ? '' : '<div class="keep-bar"><span><b>Love this plan?</b> <span class="muted">Keep it to unlock every detail and plan with guests for ' + usd2(E.passFor(ev.guests).price) + ', one time.</span></span><button class="btn small" id="keepBtn">Keep my plan</button></div>';
+    var keepBar = isKept(ev) ? '' : '<div class="keep-bar"><span><b>' + (b.shortBy ? 'Keep this plan' : 'Love this plan?') + '</b> <span class="muted">Keep it to unlock every detail and plan with guests for ' + usd2(E.passFor(ev.guests).price) + ', one time.</span></span><button class="btn small" id="keepBtn">Keep my plan</button></div>';
     frame(head + keepBar + groupBar + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
     var kb = $('#keepBtn'); if (kb) kb.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { planView(ev, tab); }); });
     var cur = $('.rail [aria-current]'); if (cur && cur.scrollIntoView && window.innerWidth < 960) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
     var rn = $('#rename'); if (rn) rn.addEventListener('click', function () {
-      sheet('<h3>Rename your event</h3><input class="input" id="nn" maxlength="60" value="' + esc(ev.name) + '"><div class="chips">' + suggestNames(ev, ev.type).map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') + '</div><button class="btn gold block" id="ok">Save name</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
+      sheet('<h3>Rename your event</h3><input class="input" id="nn" maxlength="80" value="' + esc(ev.name) + '"><div class="chips">' + suggestNames(ev, ev.type).map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') + '</div><button class="btn gold block" id="ok">Save name</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
         el.addEventListener('click', function (e) { var b = e.target.closest('[data-name]'); if (b) $('#nn', el).value = b.dataset.name; });
         $('#ok', el).addEventListener('click', function () { var n = $('#nn', el).value.trim(); if (!n) return toast('Enter a name'); ev.name = n; ev.nameAuto = false; save(); close(); planView(ev, tab); });
       });
@@ -746,7 +750,7 @@
     var all = E.allBudgets(ev);
     if (ev.budget) all = [E.budgetFit(ev)];   /* with a budget, one clear answer; the three levels stay available below */
     var g = E.guardian(ev, b);
-    return '<div class="stack"><h3>' + (ev.budget ? 'Your plan' : 'Your budget versions') + '</h3><p class="muted">' + (ev.budget ? (all[0] && all[0].shortBy && all[0].shortBy <= ev.budget * 0.1 ? 'Your plan comes to ' + money(all[0].total) + ', about ' + money(all[0].shortBy) + ' over your ' + money(ev.budget) + ' maximum. One of the swaps below brings it under.' : all[0] && all[0].shortBy ? 'A ' + esc(E.typeOf(ev.type).name.toLowerCase()) + ' for ' + plural(ev.guests, 'guest') + ' usually costs more than ' + money(ev.budget) + ' in ' + esc(ev.city.split(',')[0]) + '. This is the closest plan, kept as lean as the look allows. The budget guardian below shows ways to close the gap, like fewer guests or a different setting.' : 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there.') + ' <button class="link small" id="cmpLevels">Compare spending levels</button>' : '') + (ev.budget ? '' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
+    return '<div class="stack"><h3>' + (ev.budget ? 'Your plan' : 'Your budget versions') + '</h3><p class="muted">' + (ev.budget ? (all[0] && all[0].shortBy && all[0].shortBy <= ev.budget * 0.1 ? 'Your plan comes to ' + money(all[0].total) + ', about ' + money(all[0].shortBy) + ' over your ' + money(ev.budget) + ' maximum. One of the swaps below brings it under.' : all[0] && all[0].shortBy ? (/^[aeiou]/i.test(E.typeOf(ev.type).name) ? 'An ' : 'A ') + esc(E.typeOf(ev.type).name.toLowerCase()) + ' for ' + plural(ev.guests, 'guest') + ' usually costs more than ' + money(ev.budget) + ' in ' + esc(ev.city.split(',')[0]) + '. This is the closest plan, kept as lean as the look allows. The budget guardian below shows ways to close the gap, like fewer guests or a different setting.' : 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there.') + ' <button class="link small" id="cmpLevels">Compare spending levels</button>' : '') + (ev.budget ? '' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
       all.map(function (t) { var pc = E.prosCons(ev, t);
         return '<button class="tier" data-tier="' + t.tier.id + '" aria-pressed="' + (t.tier.id === ev.tier) + '"><span class="muted small">' + esc(t.tier.name) + '</span><span class="amt num">' + money(t.total) + '</span><span class="small muted">estimated</span><span class="small muted">' + (ev.setting === 'restaurant' ? 'About ' + money(t.perGuest) + ' a person all in: the menu bill, cake and table decor, with a 10% cushion' : money(t.perGuest) + ' per guest, includes a 10% cushion') + '</span>' +
           '<div class="pc"><b>Pros</b><ul>' + pc.pros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><b>Cons</b><ul>' + pc.cons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></button>'; }).join('') + '</div></div>' +
@@ -919,13 +923,14 @@
       types = (daytime ? ['Upscale brunch or lunch spot', 'Hotel brunch or afternoon tea', 'Garden cafe or patio'] : ['Private dining room', 'Steakhouse or chophouse', 'Rooftop restaurant'].concat(ev.type === 'bachelorette' ? ['Cocktail lounge or speakeasy'] : [])).concat(types).filter(function (v, i, a) { return a.indexOf(v) === i; });
       if (ev.setting === 'privateRoom') types = types.filter(function (v) { return !/trendy dinner/i.test(v); });
     }
-    if (ev.kids || /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|kids?\b|children/i.test((ev.inspiration && ev.inspiration.text) || '')) { types = types.filter(function (v) { return !/lounge|wine bar|speakeasy|steakhouse/i.test(v); }); if (ev.setting === 'indoor') types.unshift('Kids party venue or play space'); }
+    if ((ev.kids && /birthday/.test(ev.type)) || /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|kids'? party/i.test((ev.inspiration && ev.inspiration.text) || '')) { types = types.filter(function (v) { return !/lounge|wine bar|speakeasy|steakhouse/i.test(v); }); if (ev.setting === 'indoor') types.unshift('Kids party venue or play space'); }
+    if (ev.setting === 'outdoor' && /\b(park|picnic)\b/i.test((ev.inspiration && ev.inspiration.text) || '')) types = ['Park pavilion or picnic area'].concat(types.filter(function (v) { return v !== 'Park pavilion or picnic area'; }));
     if (ev.setting === 'home') {
       return '<div class="stack"><h3>Your venue: home</h3><div class="panel stack"><p>Your event is at home, so there is no venue to book. Your plan already includes what a home event needs: ' + (ev.guests > 20 ? 'rentals, ' : '') + 'setup and cleanup, and enough seating for ' + plural(ev.guests, 'guest') + '.</p><ul class="incl"><li>Check parking and let neighbors know</li><li>Plan restrooms: one for every 25 to 30 guests</li><li>Clear a spot for food, drinks and gifts</li>' + (ev.guests > 40 ? '<li>Consider a small tent or canopy for overflow</li>' : '') + '</ul><div class="row"><button class="btn ghost small" id="whereAgain">Change where it is</button><a class="btn ghost small" href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/vendors">See rentals and vendors</a></div></div></div>';
     }
     /* Put the kinds of place the host asked for first (e.g. "hotel", "rooftop", "garden") */
     var said = ((ev.inspiration && ev.inspiration.text) || '').toLowerCase() + ' ' + ((ev.inspiration && ev.inspiration.vibes) || []).join(' ').toLowerCase();
-    var WANT = [['hotel', /hotel|ballroom/], ['rooftop', /rooftop|skyline|view/], ['garden', /garden|outdoor|estate/], ['mansion', /mansion|historic/], ['vineyard', /vineyard|winery|barn|rustic/], ['loft', /loft|industrial/], ['museum', /museum|gallery|art/], ['steakhouse', /steak/], ['tea', /tea\b|tea party|high tea/], ['wine', /wine/], ['brunch', /brunch/], ['private dining', /private (dining|room)/]];
+    var WANT = [['hotel', /hotel|ballroom/], ['rooftop', /rooftop|skyline|view/], ['garden', /garden|outdoor|estate/], ['mansion', /mansion|historic/], ['vineyard', /vineyard|winery|barn|rustic/], ['loft', /loft|industrial/], ['museum', /museum|gallery|art/], ['steakhouse', /steak/], ['tea', /tea\b|tea party|high tea/], ['wine', /wine/], ['brunch', /brunch/], ['private dining', /private (dining|room)/], ['park', /\bpark\b|picnic/], ['beach', /beach|waterfront|lake/]];
     var score = function (v) { var lv = v.toLowerCase(); return WANT.reduce(function (n, w) { return n + (lv.indexOf(w[0]) >= 0 && w[1].test(said) ? 1 : 0); }, 0); };
     if (/hotel|ballroom/.test(said) && !types.some(function (v) { return /hotel/i.test(v); })) types.unshift(ev.setting === 'restaurant' || ev.setting === 'privateRoom' ? 'Hotel tea room' : 'Hotel ballroom');
     var dinner = +String(ev.time || '18:00').split(':')[0] >= 15;
@@ -1096,7 +1101,9 @@
     if (/tea party|high tea|afternoon tea/.test(said)) mstyle = 'sweet';
     else if ((day || ev.type === 'brunch') && ['modern', 'elegant', 'classic', 'party', 'rustic'].indexOf(mstyle) >= 0) mstyle = 'garden';   /* daytime gets brunch and lunch dishes */
     if (mstyle === 'garden' && !day && ev.type !== 'brunch') mstyle = 'gardenDinner';
-    if (['gala', 'wedding', 'anniversary'].indexOf(ev.type) >= 0 && ['modern', 'party', 'sweet'].indexOf(mstyle) >= 0) mstyle = 'classic';   /* formal dinners get plated food, not sliders */
+    if (['gala', 'wedding', 'anniversary'].indexOf(ev.type) >= 0 && ['modern', 'party', 'sweet'].indexOf(mstyle) >= 0) mstyle = 'classic';
+    if (ev.type === 'holiday') mstyle = 'holiday';
+    if (ev.type === 'quince') mstyle = 'quince';   /* formal dinners get plated food, not sliders */
     if ((ev.setting === 'restaurant' || ev.setting === 'privateRoom') && ['party', 'sweet', 'rustic'].indexOf(mstyle) >= 0) mstyle = day ? 'garden' : 'modern';
     if (ev.budget && ev.budget / Math.max(1, ev.guests) < 60 && ['coastal', 'elegant', 'classic'].indexOf(mstyle) >= 0 && ev.setting !== 'restaurant') mstyle = 'rustic';   /* lean budgets get crowd-pleasers, not lobster */
     if (ev.kids && /birthday/.test(ev.type)) mstyle = 'kids';   /* garden looks at night get a garden dinner, not brunch */
@@ -1149,16 +1156,17 @@
     if (hired.indexOf('favors') >= 0) items = items.filter(function (it) { return it.name !== 'Favors'; });   /* already in the budget */
     var bigHired = !rest && g >= 100 && hired.indexOf('decor') >= 0;
     if (bigHired) items = items.filter(function (it) { return ['Table runners', 'Taper candles (set of 12)', 'Beverage napkins (pack of 50)', 'Photo backdrop'].indexOf(it.name) < 0; });
+    if (+String(ev.time || '18:00').split(':')[0] < 16) items = items.map(function (it) { return it.name === 'Taper candles (set of 12)' ? { q: color + ' bud vases', name: 'Bud vases (set of 12)', each: [14, 30], qty: Math.max(1, Math.ceil(tables / 2)) } : it; });
     if (ev.kids && /birthday/.test(ev.type)) items = items.map(function (it) { return it.name === 'Taper candles (set of 12)' ? { q: color + ' party plates and cups', name: 'Party plates and cups (pack of 24)', each: [10, 22], qty: Math.ceil(g / 24) } : it; });
     var decorLine = E.budget(ev, ev.tier).items.find(function (i) { return i.id === 'tableDecor'; });
     var usd = function (n) { return '$' + (n % 1 ? n.toFixed(2) : n); };
     var shopLo = items.reduce(function (t, it) { return t + it.each[0] * it.qty; }, 0), shopHi = items.reduce(function (t, it) { return t + it.each[1] * it.qty; }, 0);
     var pl = D.PLAYLIST_SEARCH(c.music);
     var itemsAll = items.length; items = cut(items, 2, ev);
-    return '<div class="stack"><h3>Shopping board</h3><p class="muted">' + (rest && decorLine ? 'Your budget includes about ' + money(decorLine.mid) + ' for table decor; these are the basics to buy with it, picked for the ' + esc(c.styleName) + ' look.' : bigHired ? 'For an event this size your decorator and rental company supply linens, candles and backdrops. These are personal touches to pick up yourself.' : 'Optional do-it-yourself picks for the ' + esc(c.styleName) + ' look. They\u2019re not counted in your budget.') + ' Links open the store, where you\u2019ll see live prices.' + (CFG.amazonTag ? ' Some links earn Event Couture a small commission at no cost to you.' : '') + '</p>' +
+    return '<div class="stack"><h3>Shopping board</h3><p class="muted">' + (rest && decorLine ? 'Your budget includes about ' + money(decorLine.mid) + ' for table decor; these are the basics to buy with it, picked for the ' + esc(c.styleName) + ' look.' : bigHired && items.length ? 'For an event this size your decorator and rental company supply linens, candles and backdrops. These are personal touches to pick up yourself.' : 'Optional do-it-yourself picks for the ' + esc(c.styleName) + ' look. They\u2019re not counted in your budget.') + ' Links open the store, where you\u2019ll see live prices.' + (CFG.amazonTag ? ' Some links earn Event Couture a small commission at no cost to you.' : '') + '</p>' +
       (!items.length ? '<p class="small muted">Everything for this look is already covered by your hired vendors in the budget.</p></div>' : '<div class="shop">' + items.map(function (it, k) { var l = shopLink(it.q);
         return '<div class="prod"><div class="pimg" aria-hidden="true" style="background:linear-gradient(135deg,' + c.palette[k % c.palette.length] + ',' + c.palette[(k + 2) % c.palette.length] + ')"></div><div class="pbody"><b>' + esc(it.name) + '</b>' + (it.qty > 1 ? '<span class="small muted">' + it.qty + ' \u00d7 ' + usd(it.each[0]) + ' to ' + usd(it.each[1]) + ' each</span>' : '') + '<span class="num">' + money(it.each[0] * it.qty) + ' to ' + money(it.each[1] * it.qty) + '</span><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Shop Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a></span></div></div>'; }).join('') + '</div>' + more(ev, itemsAll, items.length, 'shopping picks') +
-      '<p class="small muted">Estimated shopping total: <b class="num">' + money(shopLo) + ' to ' + money(shopHi) + '</b>. ' + (rest ? 'Sized to one table of ' + plural(g, 'guest') + '.' : 'Quantities are sized to ' + plural(g, 'guest') + ' and ' + plural(tables, 'table') + '.') + '</p></div>') +
+      '<p class="small muted">Estimated shopping total: <b class="num">' + money(shopLo) + ' to ' + money(shopHi) + '</b>. ' + (bigHired ? '' : rest ? 'Sized to one table of ' + plural(g, 'guest') + '.' : 'Quantities are sized to ' + plural(g, 'guest') + ' and ' + plural(tables, 'table') + '.') + '</p></div>') +
       (rest ? '' : (function () {
         var songs = (c.songs && c.songs.length >= 6 && !(ev.kids && /birthday/.test(ev.type)) ? c.songs.map(function (x) { var t = String(x).split(/ \u2014 | - /); return [t[0], t[1] || '']; }) : []);
         var have = {}; songs.forEach(function (x) { have[x[0].toLowerCase()] = 1; });
@@ -1188,7 +1196,7 @@
     var listAll = E.checklist(ev); var list = cut(listAll, 4, ev);
     var rosAll = ev.ros || E.runOfShow(ev); var ros = cut(rosAll, 3, ev);
     return '<div class="stack"><h3>Checklist</h3>' + (ev.date ? '' : '<p class="muted">Add your event date to see due dates.</p>') + '<div class="panel">' +
-      list.map(function (c) { var done = (ev.checklistDone && ev.checklistDone[c.text]) || (c.text.indexOf('Choose your concept') === 0 && ev.concept) || (/^Book the venue|^Reserve/.test(c.text) && statusOf(ev, venueCat(ev)) === 'booked'); return '<label class="check' + (done ? ' done' : '') + '"><input type="checkbox" data-ck="' + esc(c.text) + '"' + (done ? ' checked' : '') + '><span class="grow"><span class="t">' + esc(c.text) + '</span>' + (c.due ? '<br><span class="small ' + (c.overdue && !done ? '' : 'muted') + '" style="' + (c.overdue && !done ? 'color:var(--bad)' : '') + '">' + (c.overdue && !done ? 'Overdue, was due ' + shortDate(c.due) : c.soon ? 'Do this soon' : 'Due ' + shortDate(c.due)) + '</span>' : '') + '</span></label>'; }).join('') + '</div>' + more(ev, listAll.length, list.length, 'checklist steps with due dates') + '</div>' +
+      list.map(function (c) { var done = (ev.checklistDone && ev.checklistDone[c.text]) || (c.text.indexOf('Choose your concept') === 0 && ev.concept) || (c.text === 'Set the budget and guest count' && ev.guests && (ev.budget || ev.tier)) || (/^Book the venue|^Reserve/.test(c.text) && statusOf(ev, venueCat(ev)) === 'booked'); return '<label class="check' + (done ? ' done' : '') + '"><input type="checkbox" data-ck="' + esc(c.text) + '"' + (done ? ' checked' : '') + '><span class="grow"><span class="t">' + esc(c.text) + '</span>' + (c.due ? '<br><span class="small ' + (c.overdue && !done ? '' : 'muted') + '" style="' + (c.overdue && !done ? 'color:var(--bad)' : '') + '">' + (c.overdue && !done ? 'Overdue, was due ' + shortDate(c.due) : c.soon ? 'Do this soon' : 'Due ' + shortDate(c.due)) + '</span>' : '') + '</span></label>'; }).join('') + '</div>' + more(ev, listAll.length, list.length, 'checklist steps with due dates') + '</div>' +
       '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Run of show</h3><label class="row small">Start <input class="input" type="time" id="tm" value="' + esc(ev.time || '18:00') + '" style="width:130px;min-height:40px"></label></div><div class="panel ros">' + ros.map(function (r) { return '<div><b>' + esc(r.time) + '</b><span>' + esc(r.text) + '</span></div>'; }).join('') + '</div>' + more(ev, rosAll.length, ros.length, 'moments in your day-of schedule') +
       '<p class="muted small">Co-hosts see this same timeline on the day.</p></div>';
   };
@@ -1211,7 +1219,7 @@
         return '<div class="it"><div class="grow"><b>' + esc(g.name) + '</b>' + (g.plusOnes ? ' <span class="muted small">+' + g.plusOnes + '</span>' : '') + (g.diet && g.diet.length ? '<div class="small muted">' + esc(g.diet.join(', ')) + '</div>' : '') + '</div>' +
           '<select class="input" data-st="' + g.id + '" style="width:auto;min-height:40px" aria-label="RSVP status for ' + esc(g.name) + '">' + ['invited', 'yes', 'declined', 'waitlist'].map(function (s) { return '<option value="' + s + '"' + (g.status === s ? ' selected' : '') + '>' + { invited: 'Invited', yes: 'Coming', declined: 'Declined', waitlist: 'Waitlist' }[s] + '</option>'; }).join('') + '</select>' +
           '<button class="link small" data-rm="' + g.id + '">Remove</button></div>'; }).join('') : '<p class="muted">Add guests here, or share your event page and let guests RSVP themselves.</p>') + '</div></div>' +
-      (ev.setting === 'restaurant' ? '' : '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Seating</h3><button class="btn small ghost" id="seat">Seat everyone who is coming</button></div>' +
+      (ev.setting === 'restaurant' || ev.setting === 'privateRoom' ? '' : '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Seating</h3><button class="btn small ghost" id="seat">Seat everyone who is coming</button></div>' +
       (Object.keys(tables).length ? '<div class="tables">' + Object.keys(tables).sort(function (a, b2) { return a - b2; }).map(function (t) { return '<div class="tbl"><h4>Table ' + t + '</h4><ul>' + tables[t].map(function (g) { return '<li>' + esc(g.name) + (g.plusOnes ? ' +' + g.plusOnes : '') + '</li>'; }).join('') + '</ul></div>'; }).join('') + '</div>' : '<p class="muted">Seats 8 per table, keeping each guest with their plus-ones.</p>') + '</div>') +
       '<div class="stack"><h3>Co-hosts</h3><div class="panel list">' + ((ev.cohosts || []).length ? ev.cohosts.map(function (c, i) { return '<div class="it"><span class="grow">' + esc(c.name) + '</span><span class="badge">' + esc(c.role) + '</span><button class="link small" data-rmc="' + i + '">Remove</button></div>'; }).join('') : '<p class="muted">Add ' + ({ wedding: 'your partner, maid of honor or a parent', 'bridal-shower': 'the maid of honor or a bridesmaid', bachelorette: 'the maid of honor or a bridesmaid', gala: 'a committee member', holiday: 'a coworker or committee member' }[ev.type] || 'a friend or family member') + ' to plan with you.</p>') + '</div>' +
       '<form id="addc" class="row"><input class="input" aria-label="Co-host name" id="cn" placeholder="Co-host name" style="flex:2 1 180px"><select class="input" id="cr" aria-label="What this co-host can do" style="flex:1 1 150px"><option>Can edit</option><option>Can edit, no budget</option><option>Can view and vote</option></select><button class="btn">Add co-host</button></form></div>';

@@ -1,6 +1,6 @@
 # Event Couture by Always Luxe: developer handoff
 
-**Version 0.19 · October 24, 2026**
+**Version 0.20 · October 24, 2026**
 **Live site:** https://facecouture.app/eventcouture/
 **Code:** https://github.com/framephotostudio/eventcouture (public; every push to `main` deploys automatically)
 **Server:** https://event-couture-api.facecouture.workers.dev (status at `/api/status`)

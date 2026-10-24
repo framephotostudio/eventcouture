@@ -169,6 +169,9 @@
     { id: 'royal-purple', shop: 'purple and gold', name: 'Royal Plum', palette: ['#4B2353', '#7E4A8C', '#D8B4E2', '#F6EFF8', '#C9A86A'], tags: ['purple', 'lavender', 'royal', 'glam', 'gold'],
       mood: 'Rich plum, lavender and gold for a regal evening.', decor: ['Plum velvet linens', 'Lavender and orchid centerpieces', 'Gold-rimmed glassware', 'Throne-style guest-of-honor chair'],
       music: 'r&b soul classics', dress: 'Jewel tones and gold', menu: 'elegant' },
+    { id: 'emerald-luxe', shop: 'emerald green and gold', name: 'Emerald Luxe', palette: ['#0F4D3A', '#08332A', '#C9A86A', '#F5F0E6', '#6E1F2B'], tags: ['emerald', 'green', 'gold', 'jewel', 'holiday', 'evening', 'dark'],
+      mood: 'Deep emerald, polished gold and warm candlelight.', decor: ['Emerald velvet runners with gold chargers', 'Evergreen and white-flower centerpieces', 'Gold candlesticks and mercury glass', 'Glowing greenery arch for photos'],
+      music: 'swing jazz motown', dress: 'Jewel tones and gold', menu: 'classic' },
     { id: 'midnight-celestial', shop: 'navy and gold celestial', name: 'Midnight Celestial', palette: ['#16203A', '#2C3A5E', '#C9A86A', '#C7CBD3', '#F4F1EA'], tags: ['celestial', 'navy', 'silver', 'gold', 'dark', 'evening', 'blue'],
       mood: 'Midnight blue, gold stars and soft twinkling light.', decor: ['Navy linens with gold star confetti', 'Hanging moon and star installation', 'Silver candle clusters', 'Twinkle-light backdrop for photos'],
       music: 'neo soul candlelight', dress: 'Navy, silver and gold shimmer', menu: 'elegant' }
@@ -184,6 +187,8 @@
     classic: ['Beef tenderloin crostini', 'Crab cakes with remoulade', 'Caesar salad', 'Filet or vegetable Wellington', 'Champagne cake', 'Classic martinis'],
     gardenDinner: ['Burrata with heirloom tomatoes and basil', 'Herb-roasted chicken with lemon', 'Grilled vegetables with salsa verde', 'Spring pea and mint risotto', 'Berry pavlova', 'Elderflower spritz'],
     kids: ['Mini pizzas', 'Chicken tenders with dips', 'Fruit cups and veggie cups', 'Mac and cheese bites', 'Cupcakes or a fun cake', 'Pink lemonade and juice boxes'],
+    holiday: ['Herb-crusted beef tenderloin', 'Roasted winter vegetables', 'Baked brie with cranberry', 'Mini crab cakes', 'Peppermint chocolate tart', 'Spiced cider and a holiday punch'],
+    quince: ['Carne asada or chicken in mole', 'Arroz and frijoles charros', 'Elote cups', 'Taco or tostada station', 'Tres leches cake', 'Aguas frescas: horchata and jamaica'],
     sweet: ['Finger sandwiches', 'Fruit skewers', 'Mini quiches', 'Macaron tower', 'Cake pops', 'Pink lemonade'],
     party: ['Loaded slider bar', 'Wings and dips', 'Taco station', 'Veggie crudités', 'Cupcake tower', 'Glitter cocktail and mocktail']
   };
@@ -208,7 +213,7 @@
     { w: 4, t: 'Finalize menu and dietary needs', not: ['restaurant'] },
     { w: 3, t: 'Plan outfits and book hair and makeup', not: ['restaurant'] },
     { w: 2, t: 'Confirm final guest count with vendors', not: ['restaurant'] },
-    { w: 2, t: 'Finish seating chart', not: ['restaurant'], minGuests: 40 },
+    { w: 2, t: 'Finish seating chart', not: ['restaurant', 'privateRoom'], minGuests: 40 },
     { w: 1, t: 'Confirm the reservation and final headcount', in: ['restaurant', 'privateRoom'] },
     { w: 1, t: 'Confirm vendor arrival times and pay balances', not: ['restaurant'] },
     { w: 1, t: 'Share the day-of schedule with vendors and helpers' },
