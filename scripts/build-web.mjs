@@ -29,7 +29,7 @@ try {
 html = html.replace(/<link rel="manifest"[^>]*>\s*/, '');
 fs.writeFileSync(path.join(OUT, 'index.html'), html);
 if (process.env.EC_SHOT_TOUR === '1') {   /* simulator screenshots only, never in store builds */
-  html = html.replace('</body>', "<script>(function(){var r=['#/inspiration/all','#/new','#/sample/1','#/sample/1/style','#/events'],i=0;setTimeout(function n(){if(i<r.length){location.hash=r[i++];setTimeout(n,8000)}},12000)})()</script></body>");
+  html = html.replace('</body>', "<script>(function(){var r=['#/inspiration/all','#/new','#/sample/1','#/sample/1/style','#/events'],i=0;setTimeout(function n(){if(i<r.length){location.hash=r[i++];setTimeout(n,15000)}},15000)})()</script></body>");
   fs.writeFileSync(path.join(OUT, 'index.html'), html); console.log('SCREENSHOT TOUR build');
 }
 for (const f of ['app.css', 'app.js', 'app-early.js']) fs.copyFileSync(path.join('app', f), path.join(OUT, f));

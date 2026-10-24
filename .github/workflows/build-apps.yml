@@ -59,8 +59,8 @@ jobs:
           echo "Simulator $DEV"; xcrun simctl boot "$DEV" || true; xcrun simctl bootstatus "$DEV" -b
           xcrun simctl install "$DEV" ios/App/build/Build/Products/Debug-iphonesimulator/App.app
           mkdir -p shots; xcrun simctl launch "$DEV" app.facecouture.events
-          # test builds walk through the main screens by themselves (EC_SHOT_TOUR), 8 seconds each
-          sleep 8; for n in 1-home 2-inspiration 3-plan 4-sample-plan 5-get-this-look 6-my-events; do xcrun simctl io "$DEV" screenshot "shots/$n.png"; sleep 8; done
+          # test builds walk through the main screens by themselves (EC_SHOT_TOUR), 15 seconds each
+          sleep 7; for n in 1-home 2-inspiration 3-plan 4-sample-plan 5-get-this-look 6-my-events; do xcrun simctl io "$DEV" screenshot "shots/$n.png"; sleep 15; done
           xcrun simctl spawn "$DEV" log show --last 4m --style compact --predicate 'process == "App"' 2>/dev/null | tail -c 40000 > shots/app-log-tail.txt || true
       - name: Publish screenshots to the ci-output branch for review
         if: always()
