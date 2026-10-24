@@ -84,7 +84,7 @@ fg.save(f'{OUT}/store/play-feature-graphic-1024x500.png', optimize=True)
 print('feature graphic done')
 
 # Wide header banner: the compact logo centred on its own satin, extended sideways so it can fill any header width
-CROP = (110, 70, 1460, 915)
+CROP = (95, 118, 1450, 890)   # tight around the lettering, ribbons and tagline
 cl = logo.crop(CROP); H = 360; cw = round(cl.size[0] * H / cl.size[1]); cl = cl.resize((cw, H), Image.LANCZOS)
 W = H * 18
 base = satin_from(logo.crop((0, CROP[1], 1536, CROP[3])), 0, 112, W, H)

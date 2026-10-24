@@ -163,7 +163,7 @@
     opts = opts || {};
     var ribbon = CFG.preview && !opts.noRibbon ? '<div class="preview-ribbon">Preview version: no real charges, and sharing works on this device only.</div>' : '';
     app.innerHTML = ribbon +
-      '<header class="topbar"><a class="brand logo-banner" href="#/" aria-label="Event Couture by Always Luxe, home"><span class="frame"><img src="' + srcOf(BRAND.banner) + '" alt="Event Couture by Always Luxe" width="6480" height="360"></span></a>' +
+      '<header class="topbar"><a class="brand logo-banner" href="#/" aria-label="Event Couture by Always Luxe, home"><span class="frame-outer"><span class="frame"><img src="' + srcOf(BRAND.banner) + '" alt="Event Couture by Always Luxe" width="6480" height="360"></span></span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
       '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div></footer>';
