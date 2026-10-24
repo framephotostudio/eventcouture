@@ -163,7 +163,7 @@
     opts = opts || {};
     var ribbon = CFG.preview && !opts.noRibbon ? '<div class="preview-ribbon">Preview version: no real charges, and sharing works on this device only.</div>' : '';
     app.innerHTML = ribbon +
-      '<header class="topbar"><a class="brand" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.mark) + '" alt="" width="44" height="44"><span class="bt"><b>Event Couture</b><span>by Always Luxe</span></span></a>' +
+      '<header class="topbar"><a class="brand logo-banner" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.compact) + '" alt="Event Couture by Always Luxe" width="900" height="563"></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
       '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div></footer>';
@@ -230,7 +230,7 @@
     var tags = [['Candles and decor', pick('decor').mid, 36, 30], ['Cake', pick('cake').mid, 80, 36], ['Florals', pick('florals').mid, 52, 62], ['Linens and tableware', pick('rentals').mid, 34, 86]];
     var lines = [['Venue', 'venue'], ['Catering', 'catering'], ['Florals', 'florals'], ['Candles and decor', 'decor'], ['Cake', 'cake'], ['Photographer', 'photographer']].map(function (l) { return '<div class="line"><span>' + l[0] + '</span><span class="num">' + money(pick(l[1]).mid) + '</span></div>'; }).join('');
     frame(
-      '<section class="hero"><div class="hero-copy"><img class="hero-logo" src="' + srcOf(BRAND.compact) + '" alt="Event Couture by Always Luxe" width="900" height="563"><h1>Your inspiration. A beautifully planned event.</h1>' +
+      '<section class="hero"><div class="hero-copy"><h1>Your inspiration. A beautifully planned event.</h1>' +
       '<p class="lead">Turn photos or ideas into three event concepts, a detailed budget and a step-by-step plan.</p>' +
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="gallery">Explore sample plans</button></div></div>' +
       '<figure class="hero-photo"><div class="scene">' +

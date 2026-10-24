@@ -411,3 +411,9 @@ footer.site .name { font-family: var(--display); font-weight: 600; color: var(--
 .plan-head .meta span { white-space: nowrap; }
 .hero-logo { width: min(250px, 66vw); height: auto; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); margin-bottom: 6px; }
 @media (min-width: 900px) { .hero-logo { width: 280px; } }
+/* header: the approved logo as a small banner */
+.brand.logo-banner { display: block; line-height: 0; }
+.brand.logo-banner img { width: auto; height: 68px; border-radius: 10px; box-shadow: 0 0 0 1px var(--line); }
+@media (min-width: 900px) { .brand.logo-banner img { height: 80px; } }
+@media (max-width: 340px) { .brand.logo-banner img { height: 60px; } }
+.topbar { padding-top: calc(env(safe-area-inset-top, 0px) + 10px); padding-bottom: 10px; }
