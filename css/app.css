@@ -411,9 +411,25 @@ footer.site .name { font-family: var(--display); font-weight: 600; color: var(--
 .plan-head .meta span { white-space: nowrap; }
 .hero-logo { width: min(250px, 66vw); height: auto; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); margin-bottom: 6px; }
 @media (min-width: 900px) { .hero-logo { width: 280px; } }
-/* header: the approved logo as a small banner */
-.brand.logo-banner { display: block; line-height: 0; }
-.brand.logo-banner img { width: auto; height: 68px; border-radius: 10px; box-shadow: 0 0 0 1px var(--line); }
-@media (min-width: 900px) { .brand.logo-banner img { height: 80px; } }
-@media (max-width: 340px) { .brand.logo-banner img { height: 60px; } }
-.topbar { padding-top: calc(env(safe-area-inset-top, 0px) + 10px); padding-bottom: 10px; }
+/* header: deep plum band with the logo in a gold frame with cut corners */
+.topbar { position: relative; background: linear-gradient(135deg, #36091F 0%, #4B1235 50%, #5E1B46 100%); border-bottom: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px 12px; gap: 12px; align-items: stretch; }
+.brand.logo-banner { flex: 1; min-width: 0; display: block; text-decoration: none; --cut: 14px; --h: 100px;
+  background: linear-gradient(135deg, #D9C08F, #B69A68 45%, #E6D2A6 70%, #A9884F); padding: 1.5px;
+  clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut)); }
+.brand.logo-banner .frame { display: flex; justify-content: center; align-items: center; overflow: hidden; height: var(--h); line-height: 0;
+  clip-path: polygon(calc(var(--cut) - 1px) 0, calc(100% - var(--cut) + 1px) 0, 100% calc(var(--cut) - 1px), 100% calc(100% - var(--cut) + 1px), calc(100% - var(--cut) + 1px) 100%, calc(var(--cut) - 1px) 100%, 0 calc(100% - var(--cut) + 1px), 0 calc(var(--cut) - 1px));
+  background: radial-gradient(ellipse 70% 90% at 50% 45%, #FBF1DF 0%, #F3E1C2 55%, #E7CDA6 100%); }
+.brand.logo-banner img { height: var(--h); width: 100%; max-width: none; flex: none; object-fit: cover; object-position: 50% 50%; border-radius: 0; box-shadow: none; }
+@media (min-width: 900px) { .brand.logo-banner { --cut: 18px; --h: 128px; } }
+@media (max-width: 340px) { .brand.logo-banner { --h: 86px; } }
+.topbar nav { flex-direction: column; justify-content: center; gap: 8px; margin-left: 0; }
+@media (min-width: 900px) { .topbar nav { flex-direction: row; align-items: center; } }
+.topbar .icon-btn { background: rgba(255, 255, 255, .06); border: 1px solid rgba(214, 190, 140, .55); color: #F6EEE2; }
+.topbar .icon-btn:hover { background: rgba(255, 255, 255, .14); }
+.preview-ribbon { background: #2E0819; color: #E9DCCB; border-bottom: 0; }
+/* footer in plum to balance the gold */
+footer.site { background: linear-gradient(135deg, #36091F 0%, #4B1235 60%, #5E1B46 100%); border-top: 0; color: #E9DCCB; }
+footer.site a { color: #F6EEE2; text-decoration-color: rgba(214, 190, 140, .7); }
+footer.site .name { color: #F6EEE2; }
+footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }

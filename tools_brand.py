@@ -82,3 +82,18 @@ lw = 640; lg = logo.resize((lw, round(lw * 1024 / 1536)), Image.LANCZOS)
 fg = feathered_paste(fg, lg, ((1024 - lw) // 2, (500 - lg.size[1]) // 2), 0.1)
 fg.save(f'{OUT}/store/play-feature-graphic-1024x500.png', optimize=True)
 print('feature graphic done')
+
+# Wide header banner: the compact logo centred on its own satin, extended sideways so it can fill any header width
+CROP = (110, 70, 1460, 915)
+cl = logo.crop(CROP); H = 360; cw = round(cl.size[0] * H / cl.size[1]); cl = cl.resize((cw, H), Image.LANCZOS)
+W = H * 18
+base = satin_from(logo.crop((0, CROP[1], 1536, CROP[3])), 0, 112, W, H)
+centre = tuple(int(v) for v in cl.resize((1, 1), Image.LANCZOS).getpixel((0, 0)))
+base = glow(base, centre, 0.9, 0.8 * cw / W, 0.75)          # light the middle like the logo's own lit centre
+m = Image.new('L', cl.size, 255); f = round(cw * 0.16); d = ImageDraw.Draw(m)
+for x in range(f):
+    v = round(255 * (x / f) ** 1.6)
+    d.line((x, 0, x, H), fill=v); d.line((cw - 1 - x, 0, cw - 1 - x, H), fill=v)
+base.paste(cl, ((W - cw) // 2, 0), m)
+base.save(f'{OUT}/logo-banner-wide.jpg', quality=86, optimize=True, progressive=True)
+print('banner done', base.size)
