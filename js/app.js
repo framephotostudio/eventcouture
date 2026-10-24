@@ -174,7 +174,7 @@
 
   /* ---------- samples (prepared plans; free to explore) ---------- */
   var SAMPLES = [
-    { title: 'Blush brunch for 10', type: 'brunch', guests: 10, city: 'Houston, TX', budget: 2500, style: 'blush-romance', setting: 'indoor', hours: 3, img: 'blush-tea' },
+    { title: 'Blush brunch for 10', type: 'brunch', guests: 10, city: 'Houston, TX', budget: 0, style: 'blush-romance', setting: 'restaurant', time: '11:00', hours: 2, img: 'blush-tea' },
     { title: 'Black and gold 30th', type: 'milestone', guests: 60, city: 'Dallas, TX', budget: 9000, style: 'modern-noir', setting: 'indoor', hours: 5, img: 'noir-skyline' },
     { title: 'Garden baby shower', type: 'baby-shower', guests: 30, city: 'Atlanta, GA', budget: 6000, style: 'champagne-garden', setting: 'outdoor', hours: 3, img: 'sage-garden-shower' },
     { title: 'Plum and blush birthday', type: 'birthday', guests: 40, city: 'Chicago, IL', budget: 8000, style: 'royal-purple', setting: 'indoor', hours: 4, img: 'plum-birthday' },
@@ -189,7 +189,7 @@
     var c = E.concepts({ type: s.type }, st.palette.map(function (h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }), st.tags.join(' '), []);
     var concept = c.find(function (x) { return x.id === s.style; }) || c[0];
     var d = new Date(Date.now() + 70 * 864e5).toISOString().slice(0, 10);
-    return { id: 'sample-' + i, sample: true, name: s.title, type: s.type, guests: s.guests, expected: s.guests, city: s.city, budget: s.budget, setting: s.setting, hours: s.hours, date: d, time: '18:00',
+    return { id: 'sample-' + i, sample: true, name: s.title, type: s.type, guests: s.guests, expected: s.guests, city: s.city, budget: s.budget, setting: s.setting, hours: s.hours, date: d, time: s.time || '18:00',
       inspiration: { photos: [], links: [], text: '' }, photo: samplePhoto(s), concepts: c, concept: concept, tier: 'S', guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, paid: { price: 0, max: 0 } };
   }
 
@@ -221,7 +221,7 @@
   function sampleCard(s, i) {
     var stl = D.STYLES.find(function (x) { return x.id === s.style; }); var b = E.budget(s, 'S');
     return '<a class="sample" href="#/sample/' + i + '">' + thumb(samplePhoto(s)) + '<div class="in"><h3>' + esc(s.title) + '</h3>' + dots(stl.palette, stl.name + ' colors') +
-      '<span class="muted small">' + esc(s.city) + ', ' + s.guests + ' guests</span><span class="small">Estimated event budget <b class="num">' + money(b.total) + '</b></span></div></a>';
+      '<span class="muted small">' + esc(s.city) + ', ' + s.guests + ' guests' + (s.setting === 'restaurant' ? ', at a restaurant' : '') + '</span></div></a>';
   }
   function home() {
     var demoEv = { type: 'wedding', guests: 150, city: 'Houston, TX' };
