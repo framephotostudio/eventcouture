@@ -1,0 +1,63 @@
+# Deploys Event Couture on every push to main:
+#   1. the small server (Cloudflare Worker) with the AI and Maps keys
+#   2. the website (GitHub Pages), pointed at that server
+# Needs four repository secrets: GEMINI_KEY, GOOGLE_MAPS_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+name: Deploy
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+permissions: { contents: read, pages: write, id-token: write }
+concurrency: { group: deploy, cancel-in-progress: true }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: '${{ steps.pages.outputs.page_url }}' }
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Check secrets are saved
+        run: |
+          missing=""
+          for s in GEMINI_KEY GOOGLE_MAPS_KEY CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do [ -z "${!s}" ] && missing="$missing $s"; done
+          if [ -n "$missing" ]; then echo "::warning::Missing secrets:$missing. The site will deploy in preview mode without the server."; echo "SERVER=no" >> $GITHUB_ENV; else echo "SERVER=yes" >> $GITHUB_ENV; fi
+        env:
+          GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
+          GOOGLE_MAPS_KEY: ${{ secrets.GOOGLE_MAPS_KEY }}
+      - name: Server storage (create once)
+        if: env.SERVER == 'yes'
+        working-directory: worker
+        run: |
+          id=$(npx -y wrangler@3 kv namespace list | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const n=JSON.parse(d).find(x=>/EC_KV/.test(x.title));console.log(n?n.id:'')})")
+          if [ -z "$id" ]; then id=$(npx -y wrangler@3 kv namespace create EC_KV | grep -oE '[0-9a-f]{32}' | head -1); fi
+          sed -i "s/REPLACE_WITH_KV_ID/$id/" wrangler.toml
+      - name: Deploy server
+        if: env.SERVER == 'yes'
+        id: worker
+        working-directory: worker
+        run: |
+          origin="https://${{ github.repository_owner }}.github.io"
+          sed -i "s#ALLOWED_ORIGINS = \"#ALLOWED_ORIGINS = \"$origin,#" wrangler.toml
+          npx -y wrangler@3 deploy | tee out.txt
+          url=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' out.txt | head -1)
+          echo "url=$url" >> $GITHUB_OUTPUT
+          printf '%s' "${{ secrets.GEMINI_KEY }}" | npx -y wrangler@3 secret put GEMINI_KEY
+          printf '%s' "${{ secrets.GOOGLE_MAPS_KEY }}" | npx -y wrangler@3 secret put GOOGLE_MAPS_KEY
+      - name: Point the site at the server
+        if: env.SERVER == 'yes'
+        run: |
+          sed -i "s#apiUrl: ''#apiUrl: '${{ steps.worker.outputs.url }}'#" js/config.js   # stays in preview mode for payments until real checkout exists
+          cat js/config.js
+      - name: Package site
+        run: mkdir _site && cp -r index.html manifest.json css js img _site/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+      - id: pages
+        uses: actions/deploy-pages@v4
+      - name: Check the server answers
+        if: env.SERVER == 'yes'
+        run: curl -s "${{ steps.worker.outputs.url }}/api/status"
