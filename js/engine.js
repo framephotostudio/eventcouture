@@ -319,7 +319,8 @@
     green: ['green', 'garden', 'greenery', 'botanical'], boho: ['boho', 'pampas', 'bohemian'], rustic: ['rustic', 'barn', 'wood', 'farm'],
     coastal: ['beach', 'coastal', 'ocean', 'nautical', 'blue'], tropical: ['tropical', 'palm', 'island', 'luau'], disco: ['disco', 'sparkle', 'sequin', '70s'],
     vintage: ['vintage', 'hollywood', 'gatsby', 'roaring'], pastel: ['pastel', 'whimsy', 'baby', 'candy'], purple: ['purple', 'lavender', 'plum', 'lilac', 'royal'],
-    red: ['red', 'burgundy', 'wine'], dark: ['moody', 'dark', 'velvet'], outdoor: ['outdoor', 'backyard', 'park', 'garden'], romantic: ['romantic', 'love', 'romance']
+    red: ['red', 'burgundy', 'wine'], ivory: ['ivory', 'cream', 'chandelier', 'ballroom'], classic: ['classic', 'timeless', 'black tie', 'formal'],
+    lavender: ['lavender', 'lilac'], tea: ['tea party', 'high tea', 'afternoon tea'], dark: ['moody', 'dark', 'velvet'], outdoor: ['outdoor', 'backyard', 'park', 'garden'], romantic: ['romantic', 'love', 'romance']
   };
   function matchStyles(colors, text, liked) {
     text = ((text || '') + ' ' + (liked || []).join(' ')).toLowerCase();
@@ -343,13 +344,16 @@
     }).sort(function (a, b) { return b.score - a.score; });
     return scored;
   }
+  var TYPE_TITLE = { brunch: 'Brunch', birthday: 'Birthday', milestone: 'Birthday', dinner: 'Dinner Party', 'bridal-shower': 'Bridal Shower', 'baby-shower': 'Baby Shower',
+    'gender-reveal': 'Gender Reveal', bachelorette: 'Bachelorette', graduation: 'Graduation Party', engagement: 'Engagement Party', quince: 'Quincea\u00f1era', anniversary: 'Anniversary',
+    holiday: 'Holiday Party', wedding: 'Wedding', gala: 'Gala', other: 'Celebration' };
   function concepts(ev, colors, text, liked, skip) {
     skip = skip || [];
     var ranked = matchStyles(colors, text, liked).filter(function (r) { return skip.indexOf(r.style.id) < 0; });
     var t = typeOf(ev.type);
     return ranked.slice(0, 3).map(function (r, i) {
       var s = r.style;
-      var name = s.name + ' ' + (t.style === 'wedding' ? 'Wedding' : t.name.replace(/^Girls' /, '').replace(/ party$/i, '') .replace(/^\w/, function (m) { return m.toUpperCase(); }));
+      var name = s.name + ' ' + (TYPE_TITLE[ev.type] || 'Celebration');
       return {
         id: s.id, name: name, styleName: s.name, palette: s.palette, mood: s.mood, decor: s.decor, dress: s.dress,
         menuStyle: s.menu, music: s.music, fit: i === 0 ? 'Closest match to your inspiration' : (i === 1 ? 'A close alternative' : 'A fresh direction'),

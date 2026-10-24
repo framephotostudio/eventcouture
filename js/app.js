@@ -666,6 +666,8 @@
     var WANT = [['hotel', /hotel|ballroom/], ['rooftop', /rooftop|skyline|view/], ['garden', /garden|outdoor|estate/], ['mansion', /mansion|historic/], ['vineyard', /vineyard|winery|barn|rustic/], ['loft', /loft|industrial/], ['museum', /museum|gallery|art/], ['steakhouse', /steak/], ['tea', /tea\b|tea party|high tea/], ['wine', /wine/], ['brunch', /brunch/], ['private dining', /private (dining|room)/]];
     var score = function (v) { var lv = v.toLowerCase(); return WANT.reduce(function (n, w) { return n + (lv.indexOf(w[0]) >= 0 && w[1].test(said) ? 1 : 0); }, 0); };
     if (/hotel|ballroom/.test(said) && !types.some(function (v) { return /hotel/i.test(v); })) types.unshift(ev.setting === 'restaurant' || ev.setting === 'privateRoom' ? 'Hotel tea room' : 'Hotel ballroom');
+    var dinner = +String(ev.time || '18:00').split(':')[0] >= 15;
+    types = types.filter(function (v) { return dinner ? !/brunch or lunch|tea room/i.test(v) || /tea/.test(said) : !/dinner spot/i.test(v); });
     types.sort(function (x, y) { return score(y) - score(x); });
     var venueLine = b.items.find(function (i) { return i.id === 'venue' || i.id === 'privateDining'; });
     var city = ev.city.replace('Other US city', '');
@@ -762,7 +764,12 @@
 
   /* Food and drink: menu, dietary needs, quantities */
   TAB_VIEWS.food = function (ev) {
-    var menu = D.MENUS[ev.concept.menuStyle] || D.MENUS.party;
+    var day = +String(ev.time || '18:00').split(':')[0] < 15;
+    var said = ((ev.inspiration && ev.inspiration.text) || '').toLowerCase();
+    var mstyle = ev.concept.menuStyle;
+    if (/tea party|high tea|afternoon tea/.test(said)) mstyle = 'sweet';
+    else if ((day || ev.type === 'brunch') && ['modern', 'elegant', 'classic', 'party', 'rustic'].indexOf(mstyle) >= 0) mstyle = 'garden';   /* daytime gets brunch and lunch dishes */
+    var menu = D.MENUS[mstyle] || D.MENUS.party;
     var diets = {}; (ev.guestsList || []).forEach(function (g) { (g.diet || []).forEach(function (d) { diets[d] = (diets[d] || 0) + 1; }); });
     var q = E.quantities(ev);
     var rest = ev.setting === 'restaurant';
