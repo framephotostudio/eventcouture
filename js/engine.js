@@ -41,6 +41,7 @@
     if (ev.type === 'wedding' && list.indexOf('officiant') < 0) list.push('officiant');
     if (ev.type !== 'wedding') list = list.filter(function (c) { return c !== 'officiant'; });
     if (ev.setting === 'home') list = list.filter(function (c) { return c !== 'venue' && c !== 'privateDining'; }).concat(t.style === 'dining' ? ['catering', 'rentals'] : []);
+    if (ev.alcohol === 'none') list = list.filter(function (c) { return c !== 'bartender'; });
     var seen = {};
     return list.filter(function (c) { if (seen[c] || (ev.exclude || []).indexOf(c) >= 0) return false; seen[c] = 1; return true; });
   }
@@ -70,7 +71,12 @@
       lo += c.perPerson[0] * people; hi += c.perPerson[1] * people;
     }
     lo *= mult; hi *= mult;
-    var mealNote = '';
+    var mealNote = '', label = c.name;
+    /* Drinks follow the host's alcohol choice: none = soft drinks and mocktails, wine = beer and wine only */
+    if (catId === 'bar' || catId === 'restaurantDrinks') {
+      if (ev.alcohol === 'none') { lo *= 0.4; hi *= 0.4; label = catId === 'bar' ? 'Non-alcoholic drinks (mocktails, soft drinks, coffee)' : 'Non-alcoholic drinks'; }
+      else if (ev.alcohol === 'wine') { lo *= 0.75; hi *= 0.75; label = catId === 'bar' ? 'Beer and wine' : 'Drinks (beer and wine, about two per person)'; }
+    }
     if (c.meal && isDaytime(ev)) { lo *= 0.8; hi *= 0.8; mealNote = ', lunch or brunch prices'; }
     var extras = [];
     if (c.service) extras.push({ label: 'Service charge (20%)', rate: D.SERVICE });
@@ -82,7 +88,7 @@
     var ov = ev.overrides && ev.overrides[catId];
     if (ov && ov.amount > 0) { lo = hi = ov.amount; }
     return {
-      id: catId, name: c.name, group: c.group,
+      id: catId, name: label, group: c.group,
       lo: roundTo(lo, 5), hi: roundTo(hi, 5), mid: roundTo((lo + hi) / 2, 5),
       extras: extras.map(function (e) { return e.label; }),
       label: ov ? ({ vendor: 'Vendor-published price', quote: 'Confirmed quote', booking: 'Confirmed booking' }[ov.source] || 'Your price') : 'Planning estimate',
@@ -104,7 +110,7 @@
   function allBudgets(ev) { return D.TIERS.map(function (t) { return budget(ev, t.id); }); }
 
   /* Made for your budget: one plan that lands at the host's number, protecting must-haves. */
-  var FIT_TIER = { id: 'F', name: 'Made for your budget', mult: 1, blurb: 'One plan built to your exact budget, with your must-haves protected.' };
+  var FIT_TIER = { id: 'F', name: 'Your budget plan', mult: 1, blurb: 'One plan built to your exact budget, with your must-haves protected.' };
   /* Never auto-dropped: venue, food, security and insurance (venues often require the last two). They can be trimmed, not removed. */
   var OPTIONAL = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'cleanup', 'hairMakeup', 'florals', 'balloons'];
   function budgetFit(ev) {
@@ -148,10 +154,9 @@
       var lk = Math.min(1, lroom ? (total() - target) / lroom : 0);
       lean.forEach(function (r) { r.amt -= (r.amt - r.floor * 0.7) * lk; });
     }
-    // money left over: upgrade priorities first, then everything toward the Ultra level
+    // money left over: the budget is a maximum, not a target. Only the host's must-haves are upgraded; everything else stays at the Signature level.
     if (total() < target * 0.995) {
-      var addExtras = ev.setting !== 'restaurant';
-      [rows.filter(function (r) { return r.pri && !r.fixed; }), rows.filter(function (r) { return !r.pri && !r.fixed && dropped.indexOf(r.id) < 0 && (addExtras || r.amt > 0); })].forEach(function (grp) {
+      [rows.filter(function (r) { return r.pri && !r.fixed; })].forEach(function (grp) {
         var gap = target - total(); if (gap <= 0) return;
         var up = grp.reduce(function (s, r) { return s + Math.max(0, r.ceil - r.amt); }, 0);
         var uk = Math.min(1, up ? gap / up : 0);
@@ -168,7 +173,8 @@
     var mid = sum('mid'); var contingency = roundTo(mid * D.CONTINGENCY, 5);
     var res = { tier: FIT_TIER, items: items, lo: sum('lo'), hi: sum('hi'), mid: mid, contingency: contingency, total: mid + contingency,
       perGuest: Math.round((mid + contingency) / Math.max(1, ev.guests || 1)), dropped: dropped };
-    res.shortBy = ev.budget && res.total > ev.budget + 5 ? res.total - ev.budget : 0;
+    res.shortBy = ev.budget && res.total > ev.budget ? res.total - ev.budget : 0;
+    res.spare = ev.budget && res.total < ev.budget ? ev.budget - res.total : 0;
     return res;
   }
 
@@ -242,8 +248,12 @@
     if (food && !isDaytime(ev)) swaps.push({ kind: 'note', id: 'restaurantFood', text: 'Make it lunch or brunch instead of dinner', save: Math.round(food.mid * 0.2) });
     var hours = ev.hours || typeOf(ev.type).hours;
     if (hours > 3) swaps.push({ kind: 'hours', id: 'hours', text: 'Shorten the event by one hour', save: Math.round(b.items.filter(function (i) { return D.CATEGORIES[i.id].perHour; }).reduce(function (s, i) { return s + i.mid / hours; }, 0)) });
-    if (b.tier.id !== 'L') swaps.push({ kind: 'tier', id: 'tier', text: 'Switch to the ' + (b.tier.id === 'U' ? 'Signature' : 'Luxe for Less') + ' version', save: 0 });
-    swaps = swaps.filter(function (s) { return s.save > 0 || s.kind === 'tier'; }).slice(0, 6);
+    D.TIERS.forEach(function (t) {
+      if (t.id === b.tier.id) return;
+      var alt = budget(ev, t.id).total;
+      if (alt < b.total) swaps.push({ kind: 'tier', id: 'tier', to: t.id, text: 'Switch to the ' + t.name + ' version (total ' + money(alt) + ')', save: b.total - alt });
+    });
+    swaps = swaps.filter(function (s) { return s.save > 0; }).sort(function (a, c) { return c.save - a.save; }).slice(0, 6);
     return { over: over, swaps: swaps };
   }
 
@@ -254,7 +264,7 @@
     var tables = Math.ceil(g / 8);
     var drinks = g * (1 + hours);
     if (ev.setting === 'restaurant') return [
-      { item: 'Reservation', qty: g, unit: 'seats', note: 'Book for everyone who said yes, plus the guest of honor' },
+      { item: 'Reservation', qty: g, unit: 'seats', note: 'Book for everyone who said yes, including you' },
       { item: 'Cake or dessert', qty: Math.ceil(g * 1.1), unit: 'servings', note: 'Or order dessert from the menu and skip the cake-cutting fee' },
       { item: 'Candles', qty: 1, unit: 'set', note: 'Ask the restaurant before lighting anything' },
       { item: 'Small centerpieces', qty: Math.max(1, Math.ceil(g / 6)), unit: 'pieces', note: 'One for every six seats' },
@@ -262,8 +272,9 @@
     ];
     return [
       { item: 'Drinks (all kinds)', qty: drinks, unit: 'servings', note: '2 in the first hour, then 1 per hour per guest' },
+    ].concat(ev.alcohol === 'none' ? [{ item: 'Sparkling cider or mocktail for a toast', qty: Math.ceil(g / 6), unit: 'bottles', note: '6 toast pours per bottle' }] : [
       { item: 'Wine', qty: Math.ceil(drinks * 0.4 / 5), unit: 'bottles', note: 'If 40% of drinks are wine; 5 glasses per bottle' },
-      { item: 'Champagne for a toast', qty: Math.ceil(g / 6), unit: 'bottles', note: '6 toast pours per bottle' },
+      { item: 'Champagne for a toast', qty: Math.ceil(g / 6), unit: 'bottles', note: '6 toast pours per bottle' }]).concat([
       { item: 'Ice', qty: Math.ceil(g * 1.5), unit: 'lb', note: '1.5 lb per guest; double it outdoors in summer' },
       { item: 'Appetizers', qty: g * (ev.mealServed === false ? 10 : 4), unit: 'pieces', note: ev.mealServed === false ? 'No full meal: 10 pieces per guest' : '4 pieces per guest before a meal' },
       { item: 'Cake or dessert', qty: Math.ceil(g * 1.1), unit: 'servings', note: '10% extra' },
@@ -273,7 +284,7 @@
       { item: 'Round tables (seat 8)', qty: tables, unit: 'tables', note: 'Plus 2 to 3 for cake, gifts and food' },
       { item: 'Tablecloths', qty: tables + 3, unit: 'linens', note: 'Guest tables plus service tables' },
       { item: 'Favors', qty: Math.ceil(g * 1.05), unit: 'favors', note: '5% extra' }
-    ];
+    ]);
   }
 
   /* ---------- Timeline ---------- */
@@ -293,7 +304,7 @@
     var parts = start.split(':'); var base = (+parts[0]) * 60 + (+parts[1] || 0);
     var hours = ev.hours || t.hours;
     var plan = ev.setting === 'restaurant'
-      ? [[-30, 'Host arrives to set the table decor'], [0, 'Guests arrive and order drinks'], [20, 'Order food'], [Math.round(hours * 60 * 0.55), 'Toasts'], [Math.round(hours * 60 * 0.75), 'Cake or dessert and the birthday song'], [hours * 60 - 10, 'Pay the bill (separate checks or your split)'], [hours * 60, 'Goodbyes and photos outside']]
+      ? [[-30, 'Host arrives to set the table decor'], [0, 'Guests arrive and order drinks'], [20, 'Order food'], [Math.round(hours * 60 * 0.55), 'Toasts'], [Math.round(hours * 60 * 0.75), /birthday|milestone/.test(ev.type) ? 'Cake or dessert and the birthday song' : 'Dessert'], [hours * 60 - 10, 'Pay the bill (separate checks or your split)'], [hours * 60, 'Goodbyes and photos outside']]
       : t.style === 'wedding'
       ? [[-180, 'Vendors arrive and setup begins'], [-120, 'Hair and makeup finishing touches'], [-30, 'Guests arrive'], [0, 'Ceremony'], [30, 'Cocktail hour'], [90, 'Grand entrance and dinner'], [150, 'Toasts and first dance'], [180, 'Cake cutting and dancing'], [hours * 60 - 15, 'Send-off'], [hours * 60, 'Breakdown and cleanup']]
       : [[-120, 'Setup begins and vendors arrive'], [-30, 'Host ready for photos'], [0, 'Guests arrive, welcome drinks'], [45, 'Food is served'], [Math.round(hours * 60 * 0.5), 'Toasts or the main moment'], [Math.round(hours * 60 * 0.65), 'Cake or dessert'], [Math.round(hours * 60 * 0.75), 'Games, dancing or photo booth'], [hours * 60, 'Goodbyes and favors'], [hours * 60 + 30, 'Cleanup']];

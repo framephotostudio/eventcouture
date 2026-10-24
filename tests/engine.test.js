@@ -95,7 +95,8 @@ t('plan made for your budget lands at the budget and protects must-haves', () =>
   assert(f.items.find(i => i.id === 'photographer').mid >= s * 0.99, 'photographer protected');
   assert(f.dropped.length > 0);
   const rich = E.budgetFit({ ...ev, budget: 90000 });
-  assert(rich.total <= 90000 && rich.total > 85000, 'uses a big budget: ' + rich.total);
+  assert(rich.total <= 90000 && rich.spare > 0, 'a budget is a maximum, never filled just because: ' + rich.total);
+  assert(rich.items.find(i => i.id === 'photographer').mid > s, 'leftover money upgrades the must-have');
   const tight = E.budgetFit({ type: 'birthday', guests: 40, city: 'Dallas, TX', budget: 800 });
   assert(tight.shortBy > 0, 'reports when a budget is too small');
   assert.equal(E.budget(ev, 'F').tier.id, 'F');
@@ -113,5 +114,35 @@ t('restaurant lunch prices menu ordering, not a venue event', () => {
   assert(fit.total < 1500, 'does not spend money just because it is there: ' + fit.total);
   assert(E.checklist(ev).some(c => /reserve a table/.test(c.text)) && !E.checklist(ev).some(c => /Book key vendors/.test(c.text)));
   assert(E.runOfShow(ev).some(r => /Pay the bill/.test(r.text)));
+});
+t('ChatGPT scenario: Houston birthday dinner, 10 people, $1,000 max, no alcohol', () => {
+  const ev = { type: 'birthday', guests: 10, expected: 10, city: 'Houston, TX', setting: 'restaurant', time: '19:00', hours: 2, budget: 1000, alcohol: 'none' };
+  const f = E.budgetFit(ev);
+  assert(f.total <= 1000 && !f.shortBy, 'fits under the maximum: ' + f.total);
+  assert(f.items.some(i => /Non-alcoholic/.test(i.name)) && !f.items.some(i => /beer|wine/i.test(i.name)), 'no alcohol priced');
+  assert.equal(E.passFor(10).price, 9.99);
+});
+t('budget guardian only suggests real savings, with true totals', () => {
+  const ev = { type: 'birthday', guests: 60, city: 'Los Angeles, CA', budget: 3000 };
+  for (const tier of ['L', 'S', 'U', 'F']) {
+    const b = E.budget(ev, tier);
+    E.guardian(ev, b).swaps.forEach(s => {
+      assert(s.save > 0, 'every suggestion saves money');
+      if (s.kind === 'tier') assert(E.budget(ev, s.to).total < b.total, 'switching versions really costs less');
+    });
+  }
+});
+t('impossible budget is labeled honestly', () => {
+  const f = E.budgetFit({ type: 'wedding', guests: 150, city: 'New York, NY', budget: 5000 });
+  assert(f.shortBy > 0 && f.total > 5000);
+});
+t('pass tier boundaries', () => {
+  assert.equal(E.passFor(25).price, 9.99); assert.equal(E.passFor(26).price, 19.99);
+  assert.equal(E.passFor(75).price, 19.99); assert.equal(E.passFor(76).price, 39.99);
+  assert.equal(E.upgradeCost(9.99, 26).due, 10);
+});
+t('brunch timeline has no birthday song unless it is a birthday', () => {
+  assert(!E.runOfShow({ type: 'brunch', setting: 'restaurant', time: '11:00', hours: 2 }).some(r => /birthday/.test(r.text)));
+  assert(E.runOfShow({ type: 'birthday', setting: 'restaurant', time: '19:00', hours: 2 }).some(r => /birthday/.test(r.text)));
 });
 console.log(n + ' checks passed');

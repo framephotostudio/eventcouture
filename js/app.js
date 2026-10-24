@@ -54,11 +54,11 @@
   function outlineFor(c, ev) {
     if (!ev || ev.setting !== 'restaurant') return (c.outline || []).filter(function (o) { return !/^dress code/i.test(o); }).slice(0, 3).concat(ev ? ['Dress code: ' + E.dressCode(ev).toLowerCase()] : []);
     var d = decorFor(c, ev);
-    return ['Table: ' + d[0].toLowerCase(), 'Details: ' + d[1].toLowerCase(), 'Moment: cake or dessert brought out with candles and a song', 'Dress code: ' + E.dressCode(ev).toLowerCase()];
+    return ['Table: ' + d[0].toLowerCase(), 'Details: ' + d[1].toLowerCase(), (/birthday|milestone/.test(ev.type) ? 'Moment: cake brought out with candles and the birthday song' : 'Moment: dessert and a toast'), 'Dress code: ' + E.dressCode(ev).toLowerCase()];
   }
   var HONOREE = { wedding: 'the couple', engagement: 'the couple', anniversary: 'the couple', 'bridal-shower': 'the bride-to-be', bachelorette: 'the bride-to-be', 'baby-shower': 'the parent-to-be', 'gender-reveal': 'the parents-to-be', birthday: 'the birthday guest of honor', milestone: 'the birthday guest of honor', graduation: 'the graduate', quince: 'the quincea\u00f1era' };
   /* Cost splitting only for events friends usually chip in on together, not weddings, galas or graduations. */
-  function canSplit(ev) { return ['brunch', 'birthday', 'milestone', 'dinner', 'bachelorette', 'bridal-shower', 'baby-shower', 'gender-reveal', 'holiday', 'other'].indexOf(ev.type) >= 0; }
+  function canSplit(ev) { if (ev.payer) return ev.payer === 'shared'; return ['brunch', 'birthday', 'milestone', 'dinner', 'bachelorette', 'bridal-shower', 'baby-shower', 'gender-reveal', 'holiday', 'other'].indexOf(ev.type) >= 0; }
   function honoree(ev) { return HONOREE[ev.type] || 'the host'; }
   /* Guests get a general dress code; the person being celebrated gets the concept's specific look. */
   function dressBlock(ev, cls) {
@@ -223,7 +223,7 @@
       notFound();
     } catch (err) { console.error(err); frame('<div class="stack"><h2>Something went wrong on this screen</h2><p class="muted">Your events are saved. Go back to <a href="#/events">My events</a> and open it again.</p></div>'); }
   }
-  window.addEventListener('hashchange', function () { clearToasts(); route(); });
+  window.addEventListener('hashchange', function () { clearToasts(); $$('.sheet-back').forEach(function (x) { x.remove(); }); route(); });   /* pop-ups never follow you to another page */
   function notFound() { frame('<div class="stack"><h2>This page doesn’t exist</h2><p class="muted">It may have been removed. <a href="#/">Go to the home page</a>.</p></div>'); }
 
   /* ---------- home ---------- */
@@ -282,7 +282,7 @@
   function myEvents() {
     var all = Object.values(events()).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); });
     var ds = Object.values(drafts()).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); });
-    var stepName = { 1: 'Inspiration', 2: 'Details', 3: 'Event Pass' };
+    var stepName = { 1: 'Inspiration', 2: 'Details', 3: 'Review details' };
     frame('<div class="stack-lg"><div class="row" style="justify-content:space-between"><h2>My events</h2><a class="btn gold small" href="#/new">Plan a new event</a></div>' +
       (ds.length ? '<div class="stack"><h3>In progress</h3><p class="muted small">Saved automatically. Pick up right where you left off.</p><div class="list panel">' + ds.map(function (d) {
         var thumb = d.inspiration.photos[0] ? '<img src="' + d.inspiration.photos[0].src + '" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:8px">' : '<span style="width:52px;height:52px;border-radius:8px;background:var(--champagne-soft);display:block"></span>';
@@ -340,6 +340,15 @@
   function hexRgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
 
   /* ---------- new event wizard ---------- */
+  function guessType(text) {
+    text = (text || '').toLowerCase();
+    var rules = [['wedding', /wedding|reception|bride and groom/], ['bachelorette', /bachelorette|bach party/], ['bridal-shower', /bridal shower/], ['baby-shower', /baby shower|sprinkle/],
+      ['gender-reveal', /gender reveal/], ['quince', /quince|sweet 16|sweet sixteen/], ['graduation', /graduat/], ['engagement', /engagement/], ['anniversary', /anniversary/],
+      ['milestone', /\b(30|40|50|60|70)th\b|milestone/], ['birthday', /birthday|bday/], ['gala', /gala|fundraiser/], ['holiday', /holiday|christmas|new year/],
+      ['brunch', /brunch/], ['dinner', /dinner party|dinner/]];
+    for (var i = 0; i < rules.length; i++) if (rules[i][1].test(text)) return rules[i][0];
+    return null;
+  }
   function guessSetting(text) {
     text = (text || '').toLowerCase();
     if (/private (dining )?room/.test(text)) return 'privateRoom';
@@ -408,6 +417,7 @@
         draft.inspiration.links = $('#links').value.split(/\s+/).filter(function (s) { return /^https?:\/\//.test(s); });
         draft.inspiration.text = $('#text').value.trim();
         if (!draft.inspiration.photos.length && !draft.inspiration.text && !draft.inspiration.links.length && !(draft.inspiration.vibes || []).length) return toast('Add a photo, a description, or pick a few colors and a vibe');
+        if (!draft.typeChosen) { var gt = guessType(draft.inspiration.text); if (gt) { draft.type = gt; var tt = E.typeOf(gt); if (!draft.guestsTouched) { draft.guests = tt.defaultGuests; draft.expected = tt.defaultGuests; } draft.hours = tt.hours; } }
         persist(); location.hash = W + '2/' + draft.id;
       });
       $('#later').addEventListener('click', function () { draft.inspiration.links = $('#links').value.split(/\s+/).filter(function (x) { return /^https?:\/\//.test(x); }); draft.inspiration.text = $('#text').value.trim(); persist(); toast('Saved. Pick it up anytime from My events.'); location.hash = '#/events'; });
@@ -422,20 +432,25 @@
         '<label class="field"><span>Date</span><input class="input" type="date" id="date" value="' + esc(draft.date) + '"></label>' +
         '<label class="field"><span>Start time</span><input class="input" type="time" id="time" value="' + esc(draft.time) + '"></label>' +
         '<label class="field"><span>How many hours</span><input class="input" type="number" min="1" max="16" id="hours" value="' + draft.hours + '"></label>' +
-        '<label class="field"><span>Guest capacity (everyone invited, including plus-ones)</span><input class="input num" type="number" min="1" max="100000" id="guests" value="' + draft.guests + '"></label>' +
+        '<label class="field"><span>How many people are you inviting? (include plus-ones and yourself)</span><input class="input num" type="number" min="1" max="100000" id="guests" value="' + draft.guests + '"></label>' +
         '<label class="field"><span>Expected to attend</span><input class="input num" type="number" min="1" id="expected" value="' + draft.expected + '"></label>' +
-        '<label class="field"><span>Total budget (USD, optional)</span><input class="input num" type="number" min="0" step="50" id="budget" value="' + (draft.budget || '') + '" placeholder="Leave blank to see typical prices"></label>' +
+        '<label class="field"><span>Maximum budget for the event (USD, optional)</span><input class="input num" type="number" min="0" step="50" id="budget" value="' + (draft.budget || '') + '" placeholder="Leave blank to see typical prices"></label>' +
         '<label class="field"><span>Your starting point for drive times (optional)</span><input class="input" id="start" value="' + esc(draft.start) + '" placeholder="Home, hotel or ceremony address"></label>' +
         '</div><div class="stack"><h3 id="whereLbl">Where is it? <span class="muted small" style="font-family:var(--body)">(required)</span></h3><span class="muted small">Restaurant: everyone orders from the menu, so we price what the bill will look like, with no venue or catering fees. Event venue: you rent the space and pay food per person, so we price the venue, catering and rentals.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + (draft.setting === st.id) + '">' + esc(st.name) + '</button>'; }).join('') + '</div>' +
         '<label class="row small"><input type="checkbox" id="kids"' + (draft.kids ? ' checked' : '') + '> Children will attend</label></div>' +
+        '<div class="grid2"><div class="stack"><h3 id="alcLbl">Drinks</h3><div class="chips" id="alcohol" role="group" aria-labelledby="alcLbl">' + [['none', 'No alcohol'], ['wine', 'Beer and wine'], ['full', 'Full bar or cocktails']].map(function (o) { return '<button type="button" class="chip" data-v="' + o[0] + '" aria-pressed="' + ((draft.alcohol || 'full') === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div>' +
+        '<div class="stack"><h3 id="payLbl">Who\u2019s paying?</h3><div class="chips" id="payer" role="group" aria-labelledby="payLbl">' + [['host', 'I\u2019m hosting and paying'], ['own', 'Everyone pays their own'], ['shared', 'We\u2019re splitting the cost']].map(function (o) { return '<button type="button" class="chip" data-v="' + o[0] + '" aria-pressed="' + ((draft.payer || 'host') === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div></div>' +
         '<div class="stack"><h3>Your must-haves</h3><span class="muted small">These are protected first when the plan is fitted to your budget.</span><div class="chips" id="musts">' + MUSTS.map(function (m) { return '<button type="button" class="chip" data-must="' + m[0] + '" aria-pressed="' + ((draft.priorities || []).indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div></div>' +
-        '<div class="row" style="justify-content:space-between"><a class="btn ghost" href="' + W + '1/' + draft.id + '">Back</a>' + laterBtn() + '<button class="btn gold" id="next">See my price</button></div></div>');
+        '<div class="row" style="justify-content:space-between"><a class="btn ghost" href="' + W + '1/' + draft.id + '">Back</a>' + laterBtn() + '<button class="btn gold" id="next">Review details</button></div></div>');
       function showNames() { $('#names').innerHTML = suggestNames(draft, $('#type').value).map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join(''); }
       showNames();
       $('#names').addEventListener('click', function (e) { var b = e.target.closest('[data-name]'); if (!b) return; $('#name').value = b.dataset.name; draft.name = b.dataset.name; persist(); });
       $('#type').addEventListener('change', showNames);
       if (!draft.settingChosen) { var gs = guessSetting((draft.inspiration && draft.inspiration.text) || ''); if (gs) { draft.setting = gs; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === gs); }); } }
-      $('#type').addEventListener('change', function () { var t = E.typeOf(this.value); $('#hours').value = t.hours; if (+$('#guests').value === draft.guests) { $('#guests').value = t.defaultGuests; $('#expected').value = t.defaultGuests; } });
+      /* Never replace a number the host typed: defaults only fill fields they haven't touched. */
+      ['guests', 'expected'].forEach(function (f) { $('#' + f).addEventListener('input', function () { draft.guestsTouched = true; }); });
+      $('#type').addEventListener('change', function () { draft.typeChosen = true; var t = E.typeOf(this.value); $('#hours').value = t.hours; if (!draft.guestsTouched) { $('#guests').value = t.defaultGuests; $('#expected').value = t.defaultGuests; } });
+      ['alcohol', 'payer'].forEach(function (g) { $('#' + g).addEventListener('click', function (e) { var bt = e.target.closest('button'); if (!bt) return; $$('#' + g + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === bt); }); }); });
       $('#musts').addEventListener('click', function (e) { var b = e.target.closest('[data-must]'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
       $('#setting').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; draft.settingChosen = true; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); if (b.dataset.v === 'restaurant' && +$('#hours').value > 3) $('#hours').value = 2; });
       function collect2() {
@@ -443,6 +458,8 @@
         draft.type = $('#type').value; draft.name = $('#name').value.trim() || E.typeOf(draft.type).name; draft.city = $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || '18:00';
         draft.hours = Math.max(1, +$('#hours').value || 3); draft.guests = g; draft.expected = ex || g; draft.budget = Math.max(0, +$('#budget').value || 0); draft.start = $('#start').value.trim();
         var sb = $('#setting [aria-pressed="true"]'); draft.setting = sb ? sb.dataset.v : null; draft.kids = $('#kids').checked; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
+        var ab = $('#alcohol [aria-pressed="true"]'); draft.alcohol = ab ? ab.dataset.v : 'full';
+        var pb = $('#payer [aria-pressed="true"]'); draft.payer = pb ? pb.dataset.v : 'host';
       }
       $('#later').addEventListener('click', function () { collect2(); if (!$('#name').value.trim()) draft.name = ''; persist(); toast('Saved as ' + (draft.name || 'Untitled event') + '. Pick it up anytime from My events.'); location.hash = '#/events'; });
       $('#next').addEventListener('click', function () {
@@ -454,26 +471,28 @@
       });
       return;
     }
-    // step 3: price and checkout
-    var pass = E.passFor(draft.guests); var A = D.ALLOWANCE;
-    frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>Your Event Pass</h2><p class="muted">One payment for this event. Guests never pay to view, RSVP or vote.</p></div>' +
-      '<div class="panel price-card"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="muted small">' + esc(draft.name) + ', ' + esc(pass.label) + '</div><div class="price-big num">$' + pass.price.toFixed(2) + '</div></div><span class="badge">One-time, no subscription</span></div>' +
-      '<hr class="rule"><b>Included</b><ul class="incl">' +
-      '<li>Three event concepts, then three budget versions of the one you choose</li>' +
-      '<li>Full plan with every cost labeled, live budget and budget guardian</li>' +
-      '<li>' + A.photoAnalyses + ' photo analyses, ' + A.aiChanges + ' AI concierge changes and ' + A.venueSearches + ' venue searches</li>' +
-      '<li>Invitations, event page, RSVPs, voting, co-hosts, seating, registry and cost-splitting tracker</li>' +
-      '<li>Checklist, timeline, reminders, run of show and PDF export</li>' +
-      '<li>' + A.storageMB + ' MB of photo storage; access for ' + A.accessMonths + ' months and ' + A.afterEventDays + ' days after the event</li></ul>' +
-      '<p class="muted small">Simple edits never use your allowance. Optional extras are always shown with their price first, and you can always continue without them. If your guest list grows past ' + pass.max.toLocaleString('en-US') + ', you pay only the difference to move up.</p>' +
-      (CFG.preview ? '<div class="note">Preview version: checkout is free and no payment is taken.</div>' : '') +
-      '<button class="btn gold block" id="pay">' + (CFG.preview ? 'Unlock my plan' : 'Pay $' + pass.price.toFixed(2) + ' and build my plan') + '</button></div>' +
-      '<div class="row"><a class="btn ghost" href="' + W + '2/' + draft.id + '">Back</a>' + laterBtn() + '</div></div>');
+    // step 3: confirm the details before anything is generated. Planning is free; payment comes at the end, to keep and share.
+    var setName = (D.SETTINGS.find(function (x) { return x.id === draft.setting; }) || {}).name || 'Not chosen';
+    var rowsHtml = [
+      ['Event', esc(E.typeOf(draft.type).name) + (draft.name && draft.name !== E.typeOf(draft.type).name ? ' · ' + esc(draft.name) : '')],
+      ['Where', esc(setName) + ', ' + esc(draft.city)],
+      ['When', draft.date ? esc(fmtDate(draft.date)) + ' at ' + esc(fmtTime(draft.time)) : 'Date not set yet, ' + esc(fmtTime(draft.time))],
+      ['People', draft.guests + (draft.guests === 1 ? ' person' : ' people') + ' invited' + (draft.expected && draft.expected !== draft.guests ? ', about ' + draft.expected + ' expected' : '') + (draft.kids ? ', children attending' : '')],
+      ['Budget', draft.budget ? 'Up to ' + money(draft.budget) + ' for the event' : 'No limit set; you’ll see three spending levels'],
+      ['Drinks', { none: 'No alcohol', wine: 'Beer and wine', full: 'Full bar or cocktails' }[draft.alcohol || 'full']],
+      ['Who’s paying', { host: 'You’re hosting and paying', own: 'Everyone pays their own', shared: 'Splitting the cost' }[draft.payer || 'host']],
+      ['Must-haves', (draft.priorities || []).length ? esc(draft.priorities.map(function (id) { var m = MUSTS.find(function (x) { return x[0] === id; }); return m ? m[1] : id; }).join(', ')) : 'None picked'],
+      ['Inspiration', [draft.inspiration.photos.length ? plural(draft.inspiration.photos.length, 'photo') : '', draft.inspiration.text ? '“' + esc(draft.inspiration.text.slice(0, 120)) + (draft.inspiration.text.length > 120 ? '…' : '') + '”' : '', (draft.inspiration.vibes || []).length ? esc(draft.inspiration.vibes.join(', ')) : ''].filter(Boolean).join(' · ') || 'None']
+    ];
+    frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>Does this look right?</h2><p class="muted">Your concepts, prices and timeline are built from these details. Fix anything before we start.</p></div>' +
+      '<div class="panel confirm">' + rowsHtml.map(function (r) { return '<div class="crow"><span class="muted small">' + r[0] + '</span><span>' + r[1] + '</span></div>'; }).join('') + '</div>' +
+      '<p class="muted small">Planning is free. You only pay if you want to keep your plan and share it with guests.</p>' +
+      '<div class="row" style="justify-content:space-between"><a class="btn ghost" href="' + W + '2/' + draft.id + '">Edit details</a>' + laterBtn() + '<button class="btn gold" id="go">Create my concepts</button></div></div>');
     $('#later').addEventListener('click', function () { persist(); toast('Saved. Pick it up anytime from My events.'); location.hash = '#/events'; });
-    $('#pay').addEventListener('click', function () {
-      var ev = draft; ev.paid = { price: pass.price, max: pass.max, at: new Date().toISOString() };
-      addLedger({ kind: 'Event Pass', event: ev.name, amount: CFG.preview ? 0 : pass.price, note: pass.label + (CFG.preview ? ' (preview)' : '') });
-      if (!saveEvent(ev)) return;
+    $('#go').addEventListener('click', function () {
+      var btn = this; if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Starting…';   // no double submits
+      var ev = draft; ev.paid = null;
+      if (!saveEvent(ev)) { btn.disabled = false; btn.textContent = 'Create my concepts'; return; }
       removeDraft(ev.id); draft = null;
       location.hash = '#/e/' + ev.id + '/concepts';
     });
@@ -510,6 +529,23 @@
     });
   }
 
+  /* ---------- Keep this plan: the Event Pass, asked for once the plan is built ---------- */
+  function isKept(ev) { return ev.sample || !!(ev.paid && ev.paid.price !== undefined); }
+  function keepSheet(ev, why, onDone) {
+    var pass = E.passFor(ev.guests);
+    sheet('<h3>' + esc(why || 'Keep your plan') + '</h3><p class="muted">One payment for ' + esc(ev.name) + ', ' + esc(pass.label.toLowerCase()) + '. No subscription. Guests never pay to view, RSVP or vote.</p>' +
+      '<div class="price-big num">$' + pass.price.toFixed(2) + '</div>' +
+      '<ul class="incl"><li>Your plan saved, with every edit kept</li><li>Invitation link and event page to share with guests</li><li>Guest list, RSVPs, voting, seating and registry</li><li>Checklist, timeline and run of show</li></ul>' +
+      '<p class="muted small">Guest list grows past ' + pass.max.toLocaleString('en-US') + '? You pay only the difference.</p>' +
+      (CFG.preview ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
+      '<button class="btn gold block" id="keepPay">' + (CFG.preview ? 'Keep my plan' : 'Pay $' + pass.price.toFixed(2) + ' and keep my plan') + '</button><button class="btn ghost block" data-close>Not now</button>', function (el, close) {
+      $('#keepPay', el).addEventListener('click', function () {
+        ev.paid = { price: pass.price, max: pass.max, at: new Date().toISOString() };
+        addLedger({ kind: 'Event Pass', event: ev.name, amount: CFG.preview ? 0 : pass.price, note: pass.label + (CFG.preview ? ' (preview)' : '') });
+        saveEvent(ev); close(); toast('Your plan is kept'); onDone && onDone();
+      });
+    });
+  }
   /* ---------- purchase sheet (fair-selling: exact scope, price, continue without) ---------- */
   function buySheet(item, ev, onDone) {
     var w = wallet();
@@ -536,11 +572,13 @@
     var hp = eventPhoto(ev);
     var head = '<div class="plan-head">' + (hp ? thumb(hp, 'banner') : '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>') +
       '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta"><span>' + esc(ev.concept.styleName) + '</span><span>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span><span>' + (ev.sample ? esc(settingName(ev)) : '<button class="link small" id="where" aria-label="Where it happens: ' + esc(settingName(ev)) + '. Change">' + esc(settingName(ev)) + '</button>') + '</span></div></div>' +
-      '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + (b.tier.id === 'F' ? 'Planned to your budget' : esc(b.tier.name) + ' estimate') + '</div></div></div>' +
+      '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + (b.tier.id === 'F' ? (b.shortBy ? 'Closest plan, ' + money(b.shortBy) + ' over your budget' : 'Fits your ' + money(ev.budget) + ' budget') : esc(b.tier.name) + ' estimate') + '</div></div></div>' +
       (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new">Start your own</a> to edit it with your details.</div>' : '') + '</div>';
     var rail = '<nav class="rail" aria-label="Plan sections">' + TABS.map(function (t) { return '<a href="' + base + '/' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>';
     var body = (TAB_VIEWS[tab] || TAB_VIEWS.overview)(ev, b);
-    frame(head + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
+    var keepBar = isKept(ev) ? '' : '<div class="keep-bar"><span><b>Love this plan?</b> <span class="muted">Keep it and share it with guests for $' + E.passFor(ev.guests).price.toFixed(2) + ', one time.</span></span><button class="btn small" id="keepBtn">Keep my plan</button></div>';
+    frame(head + keepBar + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
+    var kb = $('#keepBtn'); if (kb) kb.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { planView(ev, tab); }); });
     var cur = $('.rail [aria-current]'); if (cur && cur.scrollIntoView && window.innerWidth < 960) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
     var rn = $('#rename'); if (rn) rn.addEventListener('click', function () {
       sheet('<h3>Rename your event</h3><input class="input" id="nn" maxlength="60" value="' + esc(ev.name) + '"><div class="chips">' + suggestNames(ev, ev.type).map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') + '</div><button class="btn gold block" id="ok">Save name</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
@@ -564,9 +602,9 @@
   /* Overview: three budget versions, pros and cons, guardian, concierge */
   TAB_VIEWS.overview = function (ev, b) {
     var all = E.allBudgets(ev);
-    if (ev.budget) all.unshift(E.budgetFit(ev));
+    if (ev.budget) all = [E.budgetFit(ev)];   /* with a budget, one clear answer; the three levels stay available below */
     var g = E.guardian(ev, b);
-    return '<div class="stack"><h3>Your budget versions</h3><p class="muted">' + (ev.budget ? 'One plan made for your ' + money(ev.budget) + ' budget' + ((ev.priorities || []).length ? ' that protects your must-haves' : '') + ', plus the same ' + esc(ev.concept.styleName) + ' look at three set spending levels.' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
+    return '<div class="stack"><h3>Your budget versions</h3><p class="muted">' + (ev.budget ? 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there. <button class="link small" id="cmpLevels">Compare spending levels</button>' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
       all.map(function (t) { var pc = E.prosCons(ev, t);
         return '<button class="tier" data-tier="' + t.tier.id + '" aria-pressed="' + (t.tier.id === ev.tier) + '"><span class="muted small">' + esc(t.tier.name) + '</span><span class="amt num">' + money(t.total) + '</span><span class="small muted">' + (ev.setting === 'restaurant' ? 'About ' + money(t.perGuest) + ' a person all in: the menu bill, cake and table decor, with a 10% cushion' : money(t.perGuest) + ' per guest, includes a 10% cushion') + '</span>' +
           '<div class="pc"><b>Pros</b><ul>' + pc.pros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><b>Cons</b><ul>' + pc.cons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></button>'; }).join('') + '</div></div>' +
@@ -577,6 +615,12 @@
       '<div class="panel stack"><h3>Your concept</h3>' + dots(ev.concept.palette, ev.concept.styleName + ' colors') + '<p>' + esc(ev.concept.mood) + '</p><ul class="incl">' + decorFor(ev.concept, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' + dressBlock(ev, 'muted small') + (ev.sample ? '' : '<div><a class="btn ghost small" href="#/e/' + ev.id + '/concepts">Change concept</a></div>') + '</div>';
   };
   TAB_BIND.overview = function (ev, save, rerender) {
+    var cl = $('#cmpLevels'); if (cl) cl.addEventListener('click', function () {
+      var levels = E.allBudgets(ev);
+      sheet('<h3>Spending levels for this look</h3><p class="muted">The same concept at three levels, for comparison. Your plan stays within your maximum unless you pick one of these.</p>' + levels.map(function (t) { return '<div class="it"><span class="grow"><b>' + esc(t.tier.name) + '</b><span class="muted small"> ' + esc(t.tier.blurb) + '</span></span><span class="num">' + money(t.total) + '</span><button class="btn small ghost" data-pick="' + t.tier.id + '">Use</button></div>'; }).join('') + '<button class="btn ghost block" data-pick="F">Keep my budget plan</button>', function (el, close) {
+        el.addEventListener('click', function (e) { var bt = e.target.closest('[data-pick]'); if (!bt) return; ev.tier = bt.dataset.pick; save(); close(); rerender(); });
+      });
+    });
     $$('[data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { ev.tier = btn.dataset.tier; save(); rerender(); }); });
     var g = E.guardian(ev, E.budget(ev, ev.tier));
     $$('[data-swap]').forEach(function (btn) { btn.addEventListener('click', function () {
@@ -603,7 +647,7 @@
     var s = q.toLowerCase().replace(/,/g, ''); var m; var changes = [];
     if ((m = s.match(/(\d+)\s*(guests|people|person)/))) {
       var n = +m[1];
-      if (n > ev.paid.max) { var up = E.upgradeCost(ev.paid.price, n); return { text: plural(n, 'guest') + ' is more than your pass covers (' + ev.paid.max + '). Moving up costs ' + money(up.due) + '. Open Extras to upgrade; your plan stays as it is.' }; }
+      if (ev.paid && ev.paid.max && n > ev.paid.max) { var up = E.upgradeCost(ev.paid.price, n); return { text: plural(n, 'guest') + ' is more than your pass covers (' + ev.paid.max + '). Moving up costs ' + money(up.due) + '. Open Extras to upgrade; your plan stays as it is.' }; }
       ev.guests = n; ev.expected = Math.min(ev.expected || n, n); changes.push('guest capacity is now ' + n);
     }
     if ((m = s.match(/(budget|under|max|spend)[^\d]*\$?\s*(\d+)(k)?/))) { ev.budget = +m[2] * (m[3] ? 1000 : 1); changes.push('budget is now ' + money(ev.budget)); }
@@ -611,6 +655,8 @@
     else if (/luxe for less|cheaper version|lowest/.test(s)) { ev.tier = 'L'; changes.push('switched to Luxe for Less'); }
     else if (/signature/.test(s)) { ev.tier = 'S'; changes.push('switched to Signature'); }
     else if (/ultra|splurge|fanciest/.test(s)) { ev.tier = 'U'; changes.push('switched to Ultra Luxe'); }
+    if (/no alcohol|alcohol[- ]free|dry event|no drinking/.test(s)) { ev.alcohol = 'none'; changes.push('set to no alcohol'); }
+    else if (/beer and wine|wine only/.test(s)) { ev.alcohol = 'wine'; changes.push('set to beer and wine'); }
     if (/private (dining )?room/.test(s)) { ev.setting = 'privateRoom'; changes.push('moved to a private room at a restaurant'); }
     else if (/restaurant|order(ing)? from the menu/.test(s)) { ev.setting = 'restaurant'; changes.push('moved to a restaurant, ordering from the menu (no venue, catering or rentals)'); }
     else if (/outdoor|outside/.test(s)) { ev.setting = 'outdoor'; changes.push('moved outdoors (tent, permits and restrooms added)'); }
@@ -640,7 +686,9 @@
     var groups = {}; b.items.forEach(function (i) { (groups[i.group] = groups[i.group] || []).push(i); });
     var excluded = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
     return '<div class="stack"><div class="row" style="justify-content:space-between"><h3>' + esc(b.tier.name) + ' budget</h3><div class="seg" id="tierseg">' + (ev.budget ? [{ id: 'F', name: 'My budget' }] : []).concat(D.TIERS).map(function (t) { return '<button data-tier="' + t.id + '" aria-pressed="' + (t.id === ev.tier) + '">' + t.name + '</button>'; }).join('') + '</div></div>' +
-      '<p class="muted small">Every price is labeled. Planning estimates are sized to ' + esc(ev.city) + ' and ' + plural(ev.guests, 'guest') + ', and include tax, service charges and tips where they apply. Add a real quote anytime and the totals update.</p>' +
+      (ev.payer === 'own' ? (function () { var own = b.items.filter(function (i) { return i.id === 'restaurantFood' || i.id === 'restaurantDrinks' || i.id === 'privateDining'; }).reduce(function (t, i) { return t + i.mid; }, 0); return own ? '<div class="note">Everyone pays their own meal and drinks: about <b>' + money(own / Math.max(1, ev.guests) * (1 + 0.1)) + ' a person</b>. You cover the rest, about <b>' + money(Math.max(0, b.total - own * 1.1)) + '</b>. The total below is still the full cost of the event.</div>' : ''; })() : '') +
+      (ev.payer === 'shared' ? '<div class="note">Splitting the cost: about <b>' + money(b.total / Math.max(1, ev.guests)) + ' a person</b> if everyone shares equally. Track who has paid under Invite and registry.</div>' : '') +
+      '<p class="muted small">Prices are planning estimates, not quotes. Planning estimates are sized to ' + esc(ev.city) + ' and ' + plural(ev.guests, 'guest') + ', and include tax, service charges and tips where they apply. Add a real quote anytime and the totals update.</p>' +
       (ev.budget ? '<div class="stack" style="gap:6px"><div class="meter' + (b.total > ev.budget ? ' over' : '') + '"><i style="width:' + Math.min(100, b.total / ev.budget * 100) + '%"></i></div><span class="small muted num">' + money(b.total) + ' of your ' + money(ev.budget) + ' budget</span></div>' : '') +
       '<div class="panel"><div class="lines">' + Object.keys(groups).map(function (gname) {
         return '<div class="group-h">' + esc(gname) + '</div>' + groups[gname].map(function (i) {
@@ -966,7 +1014,7 @@
       '<p class="muted small">Cash funds go straight to your payment links above.</p></div>';
   };
   TAB_BIND.invite = function (ev, save, rerender) {
-    $('#copy').addEventListener('click', function () { copyText(location.href.split('#')[0] + '#/g/' + ev.id); });
+    $('#copy').addEventListener('click', function () { if (!isKept(ev)) return keepSheet(ev, 'Keep your plan to share it', function () { copyText(location.href.split('#')[0] + '#/g/' + ev.id); }); copyText(location.href.split('#')[0] + '#/g/' + ev.id); });
     $('#savePay').addEventListener('click', function () { if (lockSample(ev)) return; ev.payLinks = {}; $$('[data-pay]').forEach(function (i) { ev.payLinks[i.dataset.pay] = i.value.trim().replace(/^[@$]/, ''); }); save(); toast('Payment links saved'); });
     if ($('#stot')) $('#stot').addEventListener('change', function () { if (lockSample(ev)) return; ev.split.total = Math.max(0, +this.value || 0); save(); rerender(); });
     if ($('#sadd')) $('#sadd').addEventListener('submit', function (e) { e.preventDefault(); if (lockSample(ev)) return; var n = $('#sname').value.trim(); if (!n) return; ev.split.people.push({ name: n, paid: false }); save(); rerender(); });
@@ -998,6 +1046,7 @@
   TAB_VIEWS.extras = function (ev) {
     var w = wallet(); var nextPass = E.passFor((ev.paid && ev.paid.max || ev.guests) + 1);
     var mine = w.ledger.filter(function (l) { return !ev.sample && l.event === ev.name; });
+    if (!ev.sample && !isKept(ev)) return '<div class="stack"><h3>Your Event Pass</h3><div class="panel stack"><p>Your plan isn\u2019t kept yet. Keep it to save every edit and share it with guests.</p><div class="price-big num">$' + E.passFor(ev.guests).price.toFixed(2) + '</div><p class="muted small">' + esc(E.passFor(ev.guests).label) + ', one time, no subscription.</p><div><button class="btn" id="keepX">Keep my plan</button></div></div></div>';
     return '<div class="stack"><h3>Your Event Pass</h3><div class="panel stack"><div class="row" style="justify-content:space-between"><span>' + (ev.sample ? 'Sample plan' : esc(E.passFor(ev.paid.max || ev.guests).label)) + '</span><span class="badge ok">Active</span></div>' +
       '<p class="muted small">Need more places? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + (Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0)) % 1 ? '' : '') + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>' +
       '<div class="stack"><div class="row" style="justify-content:space-between"><h3>AI credits</h3><span class="num">' + w.credits + ' credits</span></div><p class="muted small">For extra AI work beyond what your pass includes. The exact credit cost is shown before every action, and credits never top up automatically.</p><div class="packs">' +
@@ -1014,6 +1063,7 @@
       buySheet(p, ev, function () { if (p.id === 'concepts3') { ev.seen = (ev.seen || []).concat((ev.concepts || []).map(function (c) { return c.id; })); AI.concepts(ev, ev.seen).then(function (list) { ev.concepts = list; save(); location.hash = '#/e/' + ev.id + '/concepts'; }); } }); }); });
     $$('[data-add]').forEach(function (b) { b.addEventListener('click', function () { if (lockSample(ev)) return; buySheet(D.ADDONS[+b.dataset.add], ev, rerender); }); });
     var del = $('#del'); if (del) del.addEventListener('click', function () { sheet('<h3>Delete ' + esc(ev.name) + '?</h3><p class="muted">This can\u2019t be undone.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete event</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { var all = events(); delete all[ev.id]; store.set('events', all); close(); toast('Event deleted'); location.hash = '#/events'; }); }); });
+    var kx = $('#keepX'); if (kx) { kx.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', rerender); }); return; }
     $('#upg').addEventListener('click', function () { if (lockSample(ev)) return; var cur = ev.paid.max || ev.guests; var nx = E.passFor(cur + 1); var due = Math.max(0, Math.round((nx.price - ev.paid.price) * 100) / 100);
       buySheet({ name: 'Move up to ' + nx.label.toLowerCase(), price: due, desc: 'Your plan, guests and purchases stay exactly as they are.' }, ev, function () { ev.paid = { price: nx.price, max: nx.max, at: new Date().toISOString() }; save(); rerender(); }); });
   };

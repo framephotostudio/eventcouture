@@ -458,3 +458,10 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .songs .link { margin-right: 12px; }
 .songs li .grow { display: block; margin: 0 0 2px; }
 .songs li .grow .muted { display: block; }
+/* review details */
+.confirm { display: grid; gap: 0; padding: 4px 18px; }
+.confirm .crow { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.confirm .crow:last-child { border-bottom: 0; }
+@media (max-width: 420px) { .confirm .crow { grid-template-columns: 1fr; gap: 2px; } }
+/* keep this plan */
+.keep-bar { position: sticky; top: 8px; z-index: 15; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--ink); border-radius: var(--r-md); padding: 12px 14px; margin: 0 0 18px; box-shadow: 0 6px 18px rgba(30, 18, 26, .06); }
