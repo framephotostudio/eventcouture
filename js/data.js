@@ -5,8 +5,9 @@
   'use strict';
 
   var EVENT_TYPES = [
-    { id: 'brunch', name: "Girls' brunch", hours: 3, style: 'dining', defaultGuests: 10 },
+    { id: 'brunch', name: 'Brunch or tea party', hours: 3, style: 'dining', defaultGuests: 10 },
     { id: 'birthday', name: 'Birthday party', hours: 4, style: 'party', defaultGuests: 40 },
+    { id: 'kids-birthday', name: 'Kids\u2019 themed birthday', hours: 3, style: 'party', defaultGuests: 25 },
     { id: 'milestone', name: 'Milestone birthday', hours: 5, style: 'party', defaultGuests: 80 },
     { id: 'dinner', name: 'Dinner party', hours: 3, style: 'dining', defaultGuests: 12 },
     { id: 'bridal-shower', name: 'Bridal shower', hours: 3, style: 'shower', defaultGuests: 30 },
@@ -15,11 +16,15 @@
     { id: 'bachelorette', name: 'Bachelorette', hours: 5, style: 'party', defaultGuests: 12 },
     { id: 'graduation', name: 'Graduation party', hours: 4, style: 'party', defaultGuests: 50 },
     { id: 'engagement', name: 'Engagement party', hours: 4, style: 'party', defaultGuests: 60 },
-    { id: 'quince', name: 'Quinceañera or sweet 16', hours: 5, style: 'gala', defaultGuests: 150 },
+    { id: 'quince', name: 'Quinceañera', hours: 5, style: 'gala', defaultGuests: 150 },
+    { id: 'sweet16', name: 'Sweet 16', hours: 4, style: 'party', defaultGuests: 60 },
     { id: 'anniversary', name: 'Anniversary', hours: 4, style: 'party', defaultGuests: 50 },
+    { id: 'retirement', name: 'Retirement party', hours: 4, style: 'party', defaultGuests: 50 },
+    { id: 'christmas', name: 'Christmas party', hours: 4, style: 'party', defaultGuests: 40 },
     { id: 'holiday', name: 'Holiday party', hours: 4, style: 'party', defaultGuests: 40 },
     { id: 'wedding', name: 'Wedding', hours: 6, style: 'wedding', defaultGuests: 120 },
     { id: 'gala', name: 'Gala or fundraiser', hours: 5, style: 'gala', defaultGuests: 200 },
+    { id: 'corporate', name: 'Corporate event', hours: 3, style: 'party', defaultGuests: 80 },
     { id: 'other', name: 'Other celebration', hours: 4, style: 'party', defaultGuests: 30 }
   ];
 
@@ -172,6 +177,15 @@
     { id: 'emerald-luxe', shop: 'emerald green and gold', name: 'Emerald Luxe', palette: ['#0F4D3A', '#08332A', '#C9A86A', '#F5F0E6', '#6E1F2B'], tags: ['emerald', 'green', 'gold', 'jewel', 'holiday', 'evening', 'dark'],
       mood: 'Deep emerald, polished gold and warm candlelight.', decor: ['Emerald velvet runners with gold chargers', 'Evergreen and white-flower centerpieces', 'Gold candlesticks and mercury glass', 'Glowing greenery arch for photos'],
       music: 'swing jazz motown', dress: 'Jewel tones and gold', menu: 'classic' },
+    { id: 'dino-adventure', kidsOnly: true, shop: 'dinosaur party', name: 'Dino Adventure', palette: ['#5E8C4A', '#A7C957', '#F2E8CF', '#E07A2F', '#6B4F3A'], tags: ['dinosaur', 'dino', 'jungle', 'green', 'kids', 'adventure'],
+      mood: 'Leafy greens, explorer gear and a dinosaur dig.', decor: ['Leafy table runners with dino figurines', 'Explorer hats and binoculars for every guest', 'Volcano cake table', 'Fossil dig in the sandbox'],
+      music: 'kids party', dress: 'Explorer outfit in greens and khaki', menu: 'kids' },
+    { id: 'under-the-sea', kidsOnly: true, shop: 'under the sea party', name: 'Under the Sea', palette: ['#4FB3BF', '#A0E7E5', '#FFF4E0', '#F7A9A8', '#3D5A80'], tags: ['mermaid', 'ocean', 'sea', 'beach', 'blue', 'kids', 'shell'],
+      mood: 'Ocean blues, shimmering shells and a mermaid lagoon.', decor: ['Sea-glass blue linens with shell scatter', 'Bubble machine and balloon waves', 'Pearl and shell treasure chests', 'Mermaid lagoon photo spot'],
+      music: 'kids party', dress: 'Shimmering ocean blues', menu: 'kids' },
+    { id: 'hero-squad', kidsOnly: true, shop: 'superhero party', name: 'Hero Squad', palette: ['#D62828', '#003049', '#FCBF49', '#FFFFFF', '#2A9D8F'], tags: ['superhero', 'hero', 'comic', 'bright', 'kids', 'red', 'blue'],
+      mood: 'Bold primary colors, capes and comic-book action.', decor: ['Comic-panel table covers', 'Capes and masks for every guest', 'City skyline backdrop', 'Hero training obstacle course'],
+      music: 'kids party', dress: 'Cape and a bold primary color', menu: 'kids' },
     { id: 'midnight-celestial', shop: 'navy and gold celestial', name: 'Midnight Celestial', palette: ['#16203A', '#2C3A5E', '#C9A86A', '#C7CBD3', '#F4F1EA'], tags: ['celestial', 'navy', 'silver', 'gold', 'dark', 'evening', 'blue'],
       mood: 'Midnight blue, gold stars and soft twinkling light.', decor: ['Navy linens with gold star confetti', 'Hanging moon and star installation', 'Silver candle clusters', 'Twinkle-light backdrop for photos'],
       music: 'neo soul candlelight', dress: 'Navy, silver and gold shimmer', menu: 'elegant' }

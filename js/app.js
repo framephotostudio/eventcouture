@@ -21,8 +21,8 @@
     { src: IMG + 'sage-garden-shower.jpg', styles: ['champagne-garden'], types: ['baby-shower', 'gender-reveal'], alt: 'Garden baby shower with sage and ivory balloons, white roses and a long table under a pergola' },
     { src: IMG + 'plum-graduation.jpg', styles: ['royal-purple', 'moody-floral'], types: ['graduation'], alt: 'Plum, ivory and gold graduation table with a cap-topped cake and cupcakes' },
     { src: IMG + 'plum-birthday.jpg', styles: ['royal-purple', 'moody-floral'], types: ['birthday', 'milestone'], alt: 'Plum velvet lounge with a blush floral cake, candles and a plum and blush balloon arch' },
-    { src: IMG + 'noir-skyline.jpg', styles: ['modern-noir', 'old-hollywood'], types: ['birthday', 'milestone', 'bachelorette', 'holiday'], alt: 'Black and gold table at dusk with orchids, candles and a skyline view' },
-    { src: IMG + 'ivory-ballroom.jpg', styles: ['ivory-ballroom', 'minimal-white'], types: ['wedding', 'gala', 'quince', 'engagement', 'anniversary'], alt: 'Ivory and gold ballroom with a tiered cake, chandeliers and white rose centerpieces' },
+    { src: IMG + 'noir-skyline.jpg', styles: ['modern-noir', 'old-hollywood'], types: ['birthday', 'milestone', 'bachelorette', 'holiday', 'christmas', 'retirement'], alt: 'Black and gold table at dusk with orchids, candles and a skyline view' },
+    { src: IMG + 'ivory-ballroom.jpg', styles: ['ivory-ballroom', 'minimal-white'], types: ['wedding', 'gala', 'quince', 'corporate', 'engagement', 'anniversary'], alt: 'Ivory and gold ballroom with a tiered cake, chandeliers and white rose centerpieces' },
     { src: 'img/hero.jpg', styles: ['blush-romance'], types: ['wedding', 'engagement', 'anniversary', 'gala', 'quince'], alt: 'Candlelit table with blush and ivory roses, gold candlesticks and a tiered cake' }
   ];
   function photoFor(styleId, type) {
@@ -91,13 +91,15 @@
     var d = decorFor(c, ev);
     return ['Table: ' + d[0].toLowerCase(), 'Details: ' + d[1].toLowerCase(), (/birthday|milestone/.test(ev.type) ? 'Moment: cake brought out with candles and the birthday song' : 'Moment: ' + ({ 'blush-romance': 'a pink toast with petit fours', 'modern-noir': 'espresso and dark chocolate to finish', 'champagne-garden': 'a toast with berries and cream', 'boho-sunset': 'shared desserts passed family-style', 'coastal-linen': 'key lime pie and a toast', 'tropical-glam': 'a tropical dessert platter', 'old-hollywood': 'a toast with a classic cake', 'pastel-whimsy': 'macarons and a sweet surprise', 'ivory-ballroom': 'a toast with a small tiered cake', 'minimal-white': 'a single elegant dessert for everyone', 'disco-glam': 'a sparkler dessert moment', 'moody-floral': 'a candlelit dessert course', 'rustic-elegance': 'pie and coffee to finish', 'royal-purple': 'a toast to the guest of honor', 'midnight-celestial': 'a toast under the stars' }[c.id] || 'dessert and a toast')), 'Dress code: ' + E.dressCode(ev).toLowerCase()];
   }
-  var HONOREE = { wedding: 'the couple', engagement: 'the couple', anniversary: 'the couple', 'bridal-shower': 'the bride-to-be', bachelorette: 'the bride-to-be', 'baby-shower': 'the parent-to-be', 'gender-reveal': 'the parents-to-be', birthday: 'the birthday guest of honor', milestone: 'the birthday guest of honor', graduation: 'the graduate', quince: 'the quincea\u00f1era' };
+  var HONOREE = { wedding: 'the couple', engagement: 'the couple', anniversary: 'the couple', 'bridal-shower': 'the bride-to-be', bachelorette: 'the bride-to-be', 'baby-shower': 'the parent-to-be', 'gender-reveal': 'the parents-to-be', birthday: 'the birthday guest of honor', milestone: 'the birthday guest of honor', graduation: 'the graduate', quince: 'the quincea\u00f1era', retirement: 'the retiree', 'kids-birthday': 'the birthday child', sweet16: 'the birthday girl or boy', corporate: 'the host' };
   /* Cost splitting only for events friends usually chip in on together, not weddings, galas or graduations. */
-  function canSplit(ev) { if (ev.payer) return ev.payer === 'shared'; return ['brunch', 'birthday', 'milestone', 'dinner', 'bachelorette', 'bridal-shower', 'baby-shower', 'gender-reveal', 'holiday', 'other'].indexOf(ev.type) >= 0; }
+  function canSplit(ev) { if (ev.payer) return ev.payer === 'shared'; return ['brunch', 'birthday', 'milestone', 'dinner', 'bachelorette', 'bridal-shower', 'baby-shower', 'gender-reveal', 'holiday', 'christmas', 'retirement', 'kids-birthday', 'other'].indexOf(ev.type) >= 0; }
   function honoree(ev) { return HONOREE[ev.type] || 'the host'; }
   /* Guests get a general dress code; the person being celebrated gets the concept's specific look. */
   function dressBlock(ev, cls) {
     var look = ev.concept && ev.concept.dress ? ev.concept.dress : '';
+    if (honoree(ev) === 'the host' && ev.concept) look = 'A standout look in the ' + ev.concept.styleName + ' colors';   /* no one is the guest of honor: a gentle idea for the host */
+    if (ev.kids && /birthday/.test(ev.type) && ev.concept && !/explorer|ocean|cape/i.test(look)) look = 'A fun party outfit in the ' + ev.concept.styleName + ' colors';
     if (/^Black tie$|^White tie$/.test(E.dressCode(ev, ev.tier))) look = look.replace(/cocktail to black tie/i, 'black tie');
     return '<p class="' + (cls || '') + '"><b>Guest dress code:</b> ' + esc(E.dressCode(ev, ev.tier)) + '</p>' +
       (look ? '<p class="' + (cls || '') + '"><b>For ' + esc(honoree(ev)) + ':</b> ' + esc(look.charAt(0).toUpperCase() + look.slice(1)) + '</p>' : '');
@@ -377,7 +379,7 @@
       btn.setAttribute('aria-pressed', 'true'); btn.querySelector('span').textContent = 'Listening, tap to stop'; hint.textContent = 'Speak naturally about colors, vibe, guests and budget.';
     });
   }
-  var TYPE_WORD = { brunch: 'Brunch', birthday: 'Birthday', milestone: 'Birthday', dinner: 'Dinner', 'bridal-shower': 'Bridal Shower', 'baby-shower': 'Baby Shower', 'gender-reveal': 'Gender Reveal', bachelorette: 'Bachelorette', graduation: 'Graduation', engagement: 'Engagement Party', quince: 'Quincea\u00f1era', anniversary: 'Anniversary', holiday: 'Holiday Party', wedding: 'Wedding', gala: 'Gala', other: 'Celebration' };
+  var TYPE_WORD = { brunch: 'Brunch', birthday: 'Birthday', milestone: 'Birthday', dinner: 'Dinner', 'bridal-shower': 'Bridal Shower', 'baby-shower': 'Baby Shower', 'gender-reveal': 'Gender Reveal', bachelorette: 'Bachelorette', graduation: 'Graduation', engagement: 'Engagement Party', quince: 'Quincea\u00f1era', anniversary: 'Anniversary', holiday: 'Holiday Party', christmas: 'Christmas Party', retirement: 'Retirement Party', 'kids-birthday': 'Birthday', sweet16: 'Sweet 16', corporate: 'Corporate Event', wedding: 'Wedding', gala: 'Gala', other: 'Celebration' };
   var VIBE_NOUN = { Romantic: 'Romance', Glam: 'Glamour', Garden: 'A Garden Party', Modern: 'Modern Luxe', Classic: 'Classic Elegance', Boho: 'Boho Dreams', Rustic: 'Rustic Charm', Tropical: 'A Tropical Escape', Coastal: 'A Coastal Breeze', Playful: 'Sweet Moments', Minimal: 'Quiet Luxury', Vintage: 'Vintage Glamour', Disco: 'Disco Nights', Moody: 'Moody Elegance' };
   function suggestNames(d, type) {
     var vibes = (d.inspiration && d.inspiration.vibes) || [];
@@ -418,19 +420,21 @@
     if (/no alcohol|alcohol[- ]free|\bdry\b|mocktail|sober|no drinking/.test(text)) return 'none';
     if (/wine|mimosa|champagne|beer/.test(text) && !/cocktail|open bar|full bar/.test(text)) return 'wine';
     if (/cocktail|open bar|full bar|tequila|whiskey|martini/.test(text)) return 'full';
-    if (['baby-shower', 'gender-reveal', 'quince'].indexOf(type) >= 0) return 'none';
+    if (['baby-shower', 'gender-reveal', 'quince', 'sweet16', 'kids-birthday'].indexOf(type) >= 0) return 'none';
+    if (type === 'corporate') return 'wine';
     if (['brunch', 'bridal-shower', 'graduation'].indexOf(type) >= 0) return 'wine';
     return 'full';
   }
   function defaultTime(type, kids) {
     if (kids && /birthday/.test(type)) return '14:00';
+    if (type === 'kids-birthday') return '14:00';
     return { brunch: '11:00', 'baby-shower': '13:00', 'bridal-shower': '13:00', 'gender-reveal': '14:00', graduation: '15:00', wedding: '17:00', other: '18:00' }[type] || '19:00';
   }
   function guessType(text) {
     text = (text || '').toLowerCase();
     var rules = [['wedding', /wedding|reception|bride and groom/], ['bachelorette', /bachelorette|bach party/], ['bridal-shower', /bridal shower/], ['baby-shower', /baby shower|sprinkle/],
-      ['gender-reveal', /gender reveal/], ['quince', /quince|sweet 16|sweet sixteen/], ['graduation', /graduat/], ['engagement', /engagement/], ['anniversary', /anniversary/],
-      ['milestone', /\b(30|40|50|60|70)th\b|milestone/], ['birthday', /birthday|bday/], ['gala', /gala|fundraiser/], ['holiday', /holiday|christmas|new year/],
+      ['gender-reveal', /gender reveal/], ['quince', /quince/], ['sweet16', /sweet 16|sweet sixteen|16th birthday/], ['corporate', /corporate|company|office|client|team (event|dinner|party)|product launch|conference/], ['graduation', /graduat/], ['engagement', /engagement/], ['anniversary', /anniversary/],
+      ['retirement', /retire/], ['kids-birthday', /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|kids'? (party|birthday)|birthday for my (son|daughter)|(son|daughter)'s birthday/], ['milestone', /\b(30|40|50|60|70)th\b|milestone/], ['birthday', /birthday|bday/], ['gala', /gala|fundraiser/], ['christmas', /christmas|xmas/], ['holiday', /holiday|new year/],
       ['brunch', /brunch/], ['dinner', /dinner party|dinner/]];
     for (var i = 0; i < rules.length; i++) if (rules[i][1].test(text)) return rules[i][0];
     return null;
@@ -550,7 +554,7 @@
       if (!draft.settingChosen) { var gs = guessSetting((draft.inspiration && draft.inspiration.text) || ''); if (gs) { draft.setting = gs; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === gs); }); } }
       /* Never replace a number the host typed: defaults only fill fields they haven't touched. */
       ['guests', 'expected'].forEach(function (f) { $('#' + f).addEventListener('input', function () { draft.guestsTouched = true; }); });
-      $('#type').addEventListener('change', function () { draft.typeChosen = true; var t = E.typeOf(this.value); $('#hours').value = t.hours; if (!draft.guestsTouched) { $('#guests').value = t.defaultGuests; $('#expected').value = t.defaultGuests; }
+      $('#type').addEventListener('change', function () { draft.typeChosen = true; var t = E.typeOf(this.value); if (this.value === 'kids-birthday') $('#kids').checked = true; $('#hours').value = t.hours; if (!draft.guestsTouched) { $('#guests').value = t.defaultGuests; $('#expected').value = t.defaultGuests; }
         if (!draft.timeTouched) $('#time').value = defaultTime(this.value, $('#kids').checked);
         if (!draft.alcoholTouched) { var da = defaultAlcohol(this.value, draft.inspiration && draft.inspiration.text); $$('#alcohol button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === da); }); } });
       $('#time').addEventListener('input', function () { draft.timeTouched = true; });
@@ -569,7 +573,7 @@
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
         draft.type = $('#type').value || ''; draft.nameAuto = !$('#name').value.trim() || draft.nameAuto && $('#name').value.trim() === draft.name; draft.name = $('#name').value.trim() || (suggestNames(draft, draft.type)[0]) || E.typeOf(draft.type).name; draft.city = !$('#city').value ? '' : $('#city').value === 'Other US city' ? ($('#cityOther').value.trim() || 'Other US city') : $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || defaultTime(draft.type);
         draft.hours = Math.max(1, +$('#hours').value || 3); draft.guests = g; draft.expected = ex || g; draft.budget = Math.max(0, +$('#budget').value || 0); draft.start = $('#start').value.trim();
-        var sb = $('#setting [aria-pressed="true"]'); draft.settingOpen = !!(sb && sb.dataset.v === 'unsure'); draft.setting = sb ? (draft.settingOpen ? 'indoor' : sb.dataset.v) : null; draft.kids = $('#kids').checked; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
+        var sb = $('#setting [aria-pressed="true"]'); draft.settingOpen = !!(sb && sb.dataset.v === 'unsure'); draft.setting = sb ? (draft.settingOpen ? 'indoor' : sb.dataset.v) : null; draft.kids = $('#kids').checked || draft.type === 'kids-birthday'; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
         var ab = $('#alcohol [aria-pressed="true"]'); draft.alcohol = ab ? ab.dataset.v : defaultAlcohol(draft.type, draft.inspiration && draft.inspiration.text);
         var pb = $('#payer [aria-pressed="true"]'); draft.payer = pb ? pb.dataset.v : 'host';
       }
@@ -622,7 +626,7 @@
   /* ---------- concepts ---------- */
   function conceptsView(id) {
     var ev = getEvent(id); if (!ev) return notFound();
-    frame('<div class="stack-lg"><div class="stack"><h2>Three looks for ' + (ev.nameAuto ? 'your ' + esc(E.typeOf(ev.type).name.toLowerCase().replace(/^girls' /, 'girls\u2019 ')) : esc(ev.name)) + '</h2><p class="muted">Each look has its own colors, atmosphere and decor. Pick one to see what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">' + (function () { var ins = ev.inspiration || {}, src = []; if ((ins.photos || []).length) src.push('your photos'); if (ins.text) src.push('your description'); if ((ins.vibes || []).length) src.push('the colors and vibes you picked'); return src.length ? 'Built from ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' and ' + src[src.length - 1] : src[0]) + '.' : 'Built from your event details.'; })() + '</p></div><div id="cs" class="concepts"><div class="loading-concepts" role="status"><span class="spin" aria-hidden="true"></span><span id="lmsg">Reading your inspiration…</span></div></div>' +
+    frame('<div class="stack-lg"><div class="stack"><h2>Three looks for ' + (ev.nameAuto ? 'your ' + esc(E.typeOf(ev.type).name.toLowerCase().replace(/christmas/, 'Christmas')) : esc(ev.name)) + '</h2><p class="muted">Each look has its own colors, atmosphere and decor. Pick one to see what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">' + (function () { var ins = ev.inspiration || {}, src = []; if ((ins.photos || []).length) src.push('your photos'); if (ins.text) src.push('your description'); if ((ins.vibes || []).length) src.push('the colors and vibes you picked'); return src.length ? 'Built from ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' and ' + src[src.length - 1] : src[0]) + '.' : 'Built from your event details.'; })() + '</p></div><div id="cs" class="concepts"><div class="loading-concepts" role="status"><span class="spin" aria-hidden="true"></span><span id="lmsg">Reading your inspiration…</span></div></div>' +
       '<p class="small muted" id="srcNote" hidden></p><div class="row"><button class="btn ghost" id="more">Show three different concepts</button><span class="muted small">You can see three new looks once, free.</span></div></div>');
     var msgs = ['Reading your inspiration…', 'Choosing colors and decor…', 'Matching the look to your event…', 'Almost ready…'], mi = 0;
     var tick = setInterval(function () { var m = $('#lmsg'); if (!m) return clearInterval(tick); mi = Math.min(msgs.length - 1, mi + 1); m.textContent = msgs[mi]; }, 2500);
@@ -1135,7 +1139,7 @@
     else if ((day || ev.type === 'brunch') && ['modern', 'elegant', 'classic', 'party', 'rustic'].indexOf(mstyle) >= 0) mstyle = 'garden';   /* daytime gets brunch and lunch dishes */
     if (mstyle === 'garden' && !day && ev.type !== 'brunch') mstyle = 'gardenDinner';
     if (['gala', 'wedding', 'anniversary'].indexOf(ev.type) >= 0 && ['modern', 'party', 'sweet'].indexOf(mstyle) >= 0) mstyle = 'classic';
-    if (ev.type === 'holiday') mstyle = 'holiday';
+    if ((ev.type === 'holiday' || ev.type === 'christmas')) mstyle = 'holiday';
     if (ev.type === 'quince') mstyle = 'quince';   /* formal dinners get plated food, not sliders */
     if ((ev.setting === 'restaurant' || ev.setting === 'privateRoom') && ['party', 'sweet', 'rustic'].indexOf(mstyle) >= 0) mstyle = day ? 'garden' : 'modern';
     if (ev.budget && ev.budget / Math.max(1, ev.guests) < 60 && ['coastal', 'elegant', 'classic'].indexOf(mstyle) >= 0 && ev.setting !== 'restaurant') mstyle = 'rustic';   /* lean budgets get crowd-pleasers, not lobster */
@@ -1292,8 +1296,8 @@
 
   /* Invite, event page, registry, cost splitting */
   /* A registry only shows for occasions where gifts are expected. */
-  function hasRegistry(ev) { return ['wedding', 'bridal-shower', 'baby-shower', 'gender-reveal', 'engagement', 'graduation', 'quince', 'birthday', 'milestone', 'anniversary'].indexOf(ev.type) >= 0 || ((ev.registry && ev.registry.items) || []).length > 0; }
-  var FUND_IDEA = { wedding: 'Honeymoon fund', engagement: 'Honeymoon fund', 'bridal-shower': 'New home fund', 'baby-shower': 'Diaper and nursery fund', 'gender-reveal': 'Nursery fund', graduation: 'College or first apartment fund', quince: 'College fund', anniversary: 'Anniversary trip fund' };
+  function hasRegistry(ev) { return ['wedding', 'bridal-shower', 'baby-shower', 'gender-reveal', 'engagement', 'graduation', 'quince', 'sweet16', 'birthday', 'kids-birthday', 'milestone', 'anniversary', 'retirement'].indexOf(ev.type) >= 0 || ((ev.registry && ev.registry.items) || []).length > 0; }
+  var FUND_IDEA = { wedding: 'Honeymoon fund', engagement: 'Honeymoon fund', 'bridal-shower': 'New home fund', 'baby-shower': 'Diaper and nursery fund', 'gender-reveal': 'Nursery fund', graduation: 'College or first apartment fund', quince: 'College fund', sweet16: 'First car or college fund', anniversary: 'Anniversary trip fund', retirement: 'Retirement trip fund' };
   /* Each person's share: the amount (the plan total unless the host typed one) divided by everyone sharing it. */
   function splitTotal(ev) { var sp = ev.split || {}; return sp.total || E.budget(ev, ev.tier).total; }
   function splitCount(ev) { var sp = ev.split || {}; return Math.max(1, sp.count || ev.expected || ev.guests || 1); }

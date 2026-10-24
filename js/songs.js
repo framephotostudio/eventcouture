@@ -30,12 +30,14 @@
   };
   /* Keep each playlist right for the occasion: romance only for couples' events, no club mixes at family showers. */
   var ROMANTIC = { wedding: 1, engagement: 1, anniversary: 1, 'bridal-shower': 1, bachelorette: 1, dinner: 1 };
-  var FAMILY = { 'baby-shower': 1, 'gender-reveal': 1, quince: 1 };
+  var FAMILY = { 'baby-shower': 1, 'gender-reveal': 1, quince: 1, sweet16: 1, 'kids-birthday': 1 };
   root.EC_SONG_FIT = function (key, type, kids) {
     if (kids && /birthday/.test(type || '')) return 'kids party';
-    if (type === 'holiday') return 'holiday classics';
+    if (type === 'holiday' || type === 'christmas') return 'holiday classics';
+    if (type === 'kids-birthday') return 'kids party';
     if (type === 'quince') return 'quinceanera';
-    if (type === 'gala' && (key === 'r&b lounge house' || key === 'deep house chill' || key === 'afrobeats reggaeton summer')) return 'swing jazz motown';
+    if (type === 'corporate' && key === 'neo soul candlelight') return 'swing jazz motown';
+    if ((type === 'gala' || type === 'corporate') && (key === 'r&b lounge house' || key === 'deep house chill' || key === 'afrobeats reggaeton summer')) return 'swing jazz motown';
     if (key === 'love songs soul' && type && !ROMANTIC[type]) return FAMILY[type] ? 'jazz brunch acoustic' : 'r&b soul classics';
     if ((key === 'r&b lounge house' || key === 'deep house chill') && FAMILY[type]) return 'pop feel-good';
     if (key === 'neo soul candlelight' && FAMILY[type]) return 'jazz brunch acoustic';

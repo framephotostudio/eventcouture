@@ -24,6 +24,11 @@ P = [
   dict(id='kids-birthday', text='rainbow pastel 7th birthday for my daughter with a bounce house', type='birthday', guests=30, city='Houston, TX', setting='home', time='14:00', budget=600, alcohol='none', kids=True),
   dict(id='other-city', text='classic dinner party', type='dinner', guests=16, city='Other US city', setting='privateRoom', time='19:00', budget=2500, alcohol='wine'),
   dict(id='tiny-anniversary', text='romantic anniversary dinner for the two of us', type='anniversary', guests=2, city='San Francisco, CA', setting='restaurant', time='20:00', budget=400, alcohol='wine'),
+  dict(id='retirement', text='retirement party for my dad after 35 years, classic and warm', type='retirement', guests=60, city='Chicago, IL', setting='privateRoom', time='18:00', budget=6000, alcohol='wine'),
+  dict(id='christmas', text='red and gold christmas party with family', type='christmas', guests=35, city='Houston, TX', setting='home', time='18:00', budget=2500, alcohol=None),
+  dict(id='kids-themed', text='dinosaur themed birthday', type='kids-birthday', guests=20, city='Dallas, TX', setting='outdoor', time=None, budget=1200, alcohol=None),
+  dict(id='sweet16', text='pink and silver sweet 16 dance party', type='sweet16', guests=60, city='Atlanta, GA', setting='indoor', time='19:00', budget=5000, alcohol=None),
+  dict(id='corporate', text='client appreciation evening, navy and gold, modern', type='corporate', guests=100, city='Dallas, TX', setting='indoor', time='18:00', budget=15000, alcohol='wine'),
   dict(id='huge-wedding', text='grand wedding, ivory and gold', type='wedding', guests=1000, city='Houston, TX', setting='indoor', time='17:00', budget=None, alcohol='full'),
 ]
 
@@ -102,7 +107,7 @@ with sync_playwright() as p:
         if 'Your playlist' in st and st.count('Spotify') < 25 and 'Show all 25 songs' not in st: bad(pid, 'playlist has %d songs' % st.count('Spotify'))
         # timeline
         tl = pages['timeline']
-        if 'birthday song' in tl.lower() and c['type'] not in ('birthday', 'milestone', 'quince'): bad(pid, 'birthday song at a ' + c['type'])
+        if 'birthday song' in tl.lower() and c['type'] not in ('birthday', 'milestone', 'quince', 'kids-birthday', 'sweet16'): bad(pid, 'birthday song at a ' + c['type'])
         if c['setting'] == 'restaurant' and 'Book the venue' in tl: bad(pid, 'restaurant asked to book a venue')
         # name ideas
         if 'brunch' in name.lower() and c['type'] != 'brunch': bad(pid, 'brunch name for ' + c['type'])
@@ -110,6 +115,10 @@ with sync_playwright() as p:
         if c['setting'] == 'home' and 'Black tie' in pages['style']: bad(pid, 'black tie at home')
         for junk in ['undefined', 'NaN', '[object', 'null']:
             if junk in txt + head + review + concepts: bad(pid, 'text shows ' + junk)
+        if c['type'] == 'kids-birthday' and 'Kids’ Dance Party' not in pages['style']: bad(pid, 'kids themed birthday without the kids playlist')
+        if c['type'] == 'christmas' and 'Holiday Classics' not in pages['style']: bad(pid, 'christmas party without holiday music')
+        if c['type'] == 'retirement' and 'the retiree' not in pages['overview']: bad(pid, 'retirement look not for the retiree')
+        if c['type'] == 'kids-birthday' and time_default >= '17:00': bad(pid, 'kids themed birthday defaults to evening ' + time_default)
         if errs: bad(pid, 'errors ' + str(errs[:2]))
         ctx.close()
     b.close()
