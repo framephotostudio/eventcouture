@@ -47,7 +47,7 @@ export default {
       }
       return json({ error: 'Not found' }, 404);
     } catch (e) {
-      return json({ error: 'Something went wrong on our side. Nothing was charged.' }, 500);
+      return json({ error: 'Something went wrong on our side. Nothing was charged.', code: String(e && e.message || '').slice(0, 60) }, 500);
     }
   }
 };
@@ -78,11 +78,11 @@ async function concepts(env, { event = {}, skip = [] }) {
     `Chosen vibes and colors: ${(event.vibes || []).slice(0, 12).join(', ') || 'none'}. Host notes: ${event.text || 'none'}. Links: ${(event.links || []).join(' ') || 'none'}.\n` +
     `Avoid these concepts already shown: ${skip.join(', ') || 'none'}.\n` +
     'Return JSON: {"concepts":[{"id":"kebab-id","name":"","styleName":"","palette":["#hex x5"],"mood":"one sentence","decor":["4 items"],"dress":"","menuStyle":"garden|modern|elegant|rustic|coastal|tropical|classic|sweet|party","music":"3-word mood","fit":"Closest match to your inspiration|A close alternative|A fresh direction","outline":["Arrival: ...","Tables: ...","Moment: ...","Dress code: ..."]}]} with exactly 3 distinct concepts that keep what the host loves and feel luxurious at any budget.' });
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_KEY}`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_KEY },
     body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0.8 } })
   });
-  if (!r.ok) throw new Error('ai');
+  if (!r.ok) { let why = ''; try { why = (await r.json()).error?.status || ''; } catch (e) {} throw new Error('ai ' + r.status + ' ' + why); }
   const j = await r.json();
   const text = j.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
   const out = JSON.parse(text).concepts || [];
@@ -101,7 +101,7 @@ async function concepts(env, { event = {}, skip = [] }) {
 /* Quality rules so a host never gets random or cheap places:
    - Google filters: minimum rating, and price levels that match the plan's level
    - drop budget chains by name, require enough reviews, rank by rating weighted by review count */
-const BUDGET_CHAINS = /motel 6|super 8|red roof|la quinta|days inn|econo ?lodge|quality inn|comfort (inn|suites)|travelodge|extended stay|rodeway|americas best value|studio 6|howard johnson|knights inn|baymont|microtel|sleep inn|candlewood|holiday inn express|hampton inn|fairfield inn|best western(?! premier)|motel|hostel|wingate|super 8|country inn|woodspring|intown suites|home2|tru by hilton|springhill|towneplace|crossland|budget/i;
+const BUDGET_CHAINS = /motel 6|super 8|red roof|la quinta|days inn|econo ?lodge|quality inn|comfort (inn|suites)|travelodge|extended stay|rodeway|americas best value|studio 6|howard johnson|knights inn|baymont|microtel|sleep inn|candlewood|holiday inn express|hampton inn|fairfield inn|best western(?! premier)|motel|hostel|wingate|super 8|country inn|woodspring|intown suites|home2|tru by hilton|springhill|towneplace|crossland|budget|hyatt place|hilton garden inn|homewood suites|residence inn|staybridge|holiday inn|courtyard by marriott|four points|aloft|avid hotel|cambria|la quinta|drury|embassy suites|doubletree|radisson|ramada|wyndham garden/i;
 const LEVEL = {
   L: { minRating: 4.3, minReviews: 40, priceLevels: ['PRICE_LEVEL_MODERATE', 'PRICE_LEVEL_EXPENSIVE'] },
   S: { minRating: 4.4, minReviews: 80, priceLevels: ['PRICE_LEVEL_MODERATE', 'PRICE_LEVEL_EXPENSIVE', 'PRICE_LEVEL_VERY_EXPENSIVE'] },
