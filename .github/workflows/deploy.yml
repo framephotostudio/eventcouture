@@ -12,17 +12,22 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: { name: github-pages, url: '${{ steps.pages.outputs.page_url }}' }
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
+      - name: Load keys (spaces and line breaks removed)
+        run: |
+          for s in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do v=$(printf '%s' "${!s}" | tr -d '[:space:]'); echo "::add-mask::$v"; echo "$s=$v" >> $GITHUB_ENV; done
+          echo "Account ID length: $(printf '%s' "$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]')" | wc -c) (should be 32)"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - name: Check secrets are saved
         run: |
           missing=""
-          for s in GEMINI_KEY GOOGLE_MAPS_KEY CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do [ -z "${!s}" ] && missing="$missing $s"; done
+          for s in GEMINI_KEY GOOGLE_MAPS_KEY; do [ -z "${!s}" ] && missing="$missing $s"; done
+          [ -z "$CLOUDFLARE_API_TOKEN" ] && missing="$missing CLOUDFLARE_API_TOKEN"; [ -z "$CLOUDFLARE_ACCOUNT_ID" ] && missing="$missing CLOUDFLARE_ACCOUNT_ID"
           if [ -n "$missing" ]; then echo "::warning::Missing secrets:$missing. The site will deploy in preview mode without the server."; echo "SERVER=no" >> $GITHUB_ENV; else echo "SERVER=yes" >> $GITHUB_ENV; fi
         env:
           GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
@@ -44,8 +49,8 @@ jobs:
           npx -y wrangler@3 deploy | tee out.txt
           url=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' out.txt | head -1)
           echo "url=$url" >> $GITHUB_OUTPUT
-          printf '%s' "${{ secrets.GEMINI_KEY }}" | npx -y wrangler@3 secret put GEMINI_KEY
-          printf '%s' "${{ secrets.GOOGLE_MAPS_KEY }}" | npx -y wrangler@3 secret put GOOGLE_MAPS_KEY
+          printf '%s' "${{ secrets.GEMINI_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put GEMINI_KEY
+          printf '%s' "${{ secrets.GOOGLE_MAPS_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put GOOGLE_MAPS_KEY
       - name: Point the site at the server
         if: env.SERVER == 'yes'
         run: |
