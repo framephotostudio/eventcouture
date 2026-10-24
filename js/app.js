@@ -78,6 +78,21 @@
     var t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
     document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600);
   }
+  /* Undo: big plan changes show a message with an Undo button for 8 seconds. */
+  var UNDO_KEYS = ['tier', 'exclude', 'include', 'overrides', 'hours', 'guests', 'expected', 'budget', 'alcohol', 'setting', 'city', 'shortlist'];
+  function snap(ev) { var o = {}; UNDO_KEYS.forEach(function (k) { o[k] = ev[k] === undefined ? undefined : JSON.parse(JSON.stringify(ev[k])); }); return o; }
+  function undoToast(ev, before, msg, rerender) {
+    clearToasts();
+    var t = document.createElement('div'); t.className = 'toast undo'; t.setAttribute('role', 'status');
+    t.innerHTML = '<span>' + esc(msg) + '</span><button type="button">Undo</button>';
+    document.body.appendChild(t);
+    var timer = setTimeout(function () { t.remove(); }, 8000);
+    t.querySelector('button').addEventListener('click', function () {
+      clearTimeout(timer); t.remove();
+      UNDO_KEYS.forEach(function (k) { if (before[k] === undefined) delete ev[k]; else ev[k] = before[k]; });
+      if (!ev.sample) saveEvent(ev); rerender(); toast('Change undone');
+    });
+  }
   function sheet(html, mount) {
     var back = document.createElement('div'); back.className = 'sheet-back';
     back.innerHTML = '<div class="sheet fade" role="dialog" aria-modal="true">' + html + '</div>';
@@ -586,6 +601,15 @@
 
   /* ---------- plan workspace ---------- */
   var TABS = [['overview', 'Overview'], ['budget', 'Budget'], ['places', 'Venues'], ['vendors', 'Vendors'], ['food', 'Food and drink'], ['style', 'Style and music'], ['timeline', 'Timeline'], ['guests', 'Guests'], ['votes', 'Voting'], ['invite', 'Invite and registry'], ['after', 'Photos and thank-yous'], ['extras', 'Extras']];
+  /* The 12 pages, grouped into 4 sections so the plan is easy to find your way around on a phone. */
+  var TAB_GROUPS = [
+    ['Overview', [['overview', 'Summary'], ['style', 'Style and music'], ['extras', 'Your pass']]],
+    ['Budget & bookings', [['budget', 'Budget'], ['places', 'Venues'], ['vendors', 'Vendors'], ['food', 'Food and drink']]],
+    ['Guests & invitations', [['guests', 'Guests'], ['invite', 'Invite and registry'], ['votes', 'Voting'], ['after', 'Photos and thank-yous']]],
+    ['Tasks & timeline', [['timeline', 'Checklist and schedule']]]
+  ];
+  function tierName(id) { if (id === 'F') return 'Your budget plan'; var t = D.TIERS.find(function (x) { return x.id === id; }); return t ? t.name : id; }
+  function groupOf(tab) { for (var i = 0; i < TAB_GROUPS.length; i++) if (TAB_GROUPS[i][1].some(function (t) { return t[0] === tab; })) return i; return 0; }
   function planView(ev, tab) {
     if (!ev.concept) { location.hash = '#/e/' + ev.id + '/concepts'; return; }
     var base = ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id;
@@ -596,11 +620,16 @@
       '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta"><span>' + esc(ev.concept.styleName) + '</span><span>' + esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span><span>' + (ev.sample ? esc(settingName(ev)) : '<button class="link small" id="where" aria-label="Where it happens: ' + esc(settingName(ev)) + '. Change">' + esc(settingName(ev)) + '</button>') + '</span></div></div>' +
       '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + 'Estimated total \u00b7 ' + (b.tier.id === 'F' ? (b.shortBy ? 'Closest plan, ' + money(b.shortBy) + ' over your budget' : 'Fits your ' + money(ev.budget) + ' budget') : esc(b.tier.name)) + '</div></div></div>' +
       (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new">Start your own</a> to edit it with your details.</div>' : '') + '</div>';
-    var rail = '<nav class="rail" aria-label="Plan sections">' + TABS.map(function (t) { return '<a href="' + base + '/' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>';
+    if (!TAB_VIEWS[tab]) tab = 'overview';
+    var gi = groupOf(tab);
+    var groupBar = '<nav class="groupbar" aria-label="Plan sections">' + TAB_GROUPS.map(function (g, i) { return '<a href="' + base + '/' + g[1][0][0] + '"' + (i === gi ? ' aria-current="true"' : '') + '>' + esc(g[0]) + '</a>'; }).join('') + '</nav>';
+    var rail = '<nav class="rail" aria-label="Pages in this section">' + TAB_GROUPS.map(function (g, i) {
+      return '<div class="rg' + (i === gi ? ' on' : '') + (g[1].length === 1 ? ' solo' : '') + '"><span class="rg-h">' + esc(g[0]) + '</span>' + g[1].map(function (t) { return '<a href="' + base + '/' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</div>';
+    }).join('') + '</nav>';
     var lockedTab = preview(ev) && LOCKED_TABS[tab];
     var body = lockedTab ? '<div class="stack"><div class="lock-card big"><h3>' + esc(LOCKED_TABS[tab]) + '</h3><p class="muted">Keep your plan to invite guests, track RSVPs and plan together. Your concept and estimates stay exactly as they are.</p><button class="btn" data-keep>Keep my plan</button></div></div>' : (TAB_VIEWS[tab] || TAB_VIEWS.overview)(ev, b);
     var keepBar = isKept(ev) ? '' : '<div class="keep-bar"><span><b>Love this plan?</b> <span class="muted">Keep it and share it with guests for $' + E.passFor(ev.guests).price.toFixed(2) + ', one time.</span></span><button class="btn small" id="keepBtn">Keep my plan</button></div>';
-    frame(head + keepBar + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
+    frame(head + keepBar + groupBar + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
     var kb = $('#keepBtn'); if (kb) kb.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { planView(ev, tab); }); });
     var cur = $('.rail [aria-current]'); if (cur && cur.scrollIntoView && window.innerWidth < 960) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
     var rn = $('#rename'); if (rn) rn.addEventListener('click', function () {
@@ -611,7 +640,7 @@
     });
     var wh = $('#where'); if (wh) wh.addEventListener('click', function () {
       sheet('<h3>Where is it?</h3><p class="muted">Prices, venues, checklist and timeline update to match.</p><div class="stack">' + D.SETTINGS.map(function (st) { return '<button class="btn ' + (st.id === (ev.setting || 'indoor') ? 'gold' : 'ghost') + ' block" data-set="' + st.id + '">' + esc(st.name) + '</button>'; }).join('') + '</div><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
-        el.addEventListener('click', function (e) { var bt = e.target.closest('[data-set]'); if (!bt) return; ev.setting = bt.dataset.set; if (ev.setting === 'restaurant' && ev.hours > 3) ev.hours = 2; save(); close(); planView(ev, tab); toast('Updated for ' + settingName(ev).toLowerCase()); });
+        el.addEventListener('click', function (e) { var bt = e.target.closest('[data-set]'); if (!bt) return; var bf = snap(ev); ev.setting = bt.dataset.set; if (ev.setting === 'restaurant' && ev.hours > 3) ev.hours = 2; save(); close(); planView(ev, tab); undoToast(ev, bf, 'Updated for ' + settingName(ev).toLowerCase(), function () { planView(ev, tab); }); });
       });
     });
     var bind = TAB_BIND[tab]; if (bind && !lockedTab) bind(ev, save, function () { planView(ev, tab); });
@@ -628,7 +657,7 @@
     var all = E.allBudgets(ev);
     if (ev.budget) all = [E.budgetFit(ev)];   /* with a budget, one clear answer; the three levels stay available below */
     var g = E.guardian(ev, b);
-    return '<div class="stack"><h3>Your budget versions</h3><p class="muted">' + (ev.budget ? 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there. <button class="link small" id="cmpLevels">Compare spending levels</button>' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
+    return '<div class="stack"><h3>Your budget versions</h3><p class="muted">' + (ev.budget ? (all[0] && all[0].shortBy ? 'A ' + esc(E.typeOf(ev.type).name.toLowerCase()) + ' for ' + plural(ev.guests, 'guest') + ' usually costs more than ' + money(ev.budget) + ' in ' + esc(ev.city.split(',')[0]) + '. This is the closest plan, kept as lean as the look allows. The budget guardian below shows ways to close the gap, like fewer guests or a different setting.' : 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there.') + ' <button class="link small" id="cmpLevels">Compare spending levels</button>' : '') + (ev.budget ? '' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
       all.map(function (t) { var pc = E.prosCons(ev, t);
         return '<button class="tier" data-tier="' + t.tier.id + '" aria-pressed="' + (t.tier.id === ev.tier) + '"><span class="muted small">' + esc(t.tier.name) + '</span><span class="amt num">' + money(t.total) + '</span><span class="small muted">estimated</span><span class="small muted">' + (ev.setting === 'restaurant' ? 'About ' + money(t.perGuest) + ' a person all in: the menu bill, cake and table decor, with a 10% cushion' : money(t.perGuest) + ' per guest, includes a 10% cushion') + '</span>' +
           '<div class="pc"><b>Pros</b><ul>' + pc.pros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><b>Cons</b><ul>' + pc.cons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></button>'; }).join('') + '</div></div>' +
@@ -642,26 +671,26 @@
     var cl = $('#cmpLevels'); if (cl) cl.addEventListener('click', function () {
       var levels = E.allBudgets(ev);
       sheet('<h3>Spending levels for this look</h3><p class="muted">The same concept at three levels, for comparison. Your plan stays within your maximum unless you pick one of these.</p>' + levels.map(function (t) { return '<div class="it"><span class="grow"><b>' + esc(t.tier.name) + '</b><span class="muted small"> ' + esc(t.tier.blurb) + '</span></span><span class="num">about ' + money(t.total) + '</span><button class="btn small ghost" data-pick="' + t.tier.id + '">Use</button></div>'; }).join('') + '<button class="btn ghost block" data-pick="F">Keep my budget plan</button>', function (el, close) {
-        el.addEventListener('click', function (e) { var bt = e.target.closest('[data-pick]'); if (!bt) return; ev.tier = bt.dataset.pick; save(); close(); rerender(); });
+        el.addEventListener('click', function (e) { var bt = e.target.closest('[data-pick]'); if (!bt) return; var bf = snap(ev); ev.tier = bt.dataset.pick; save(); close(); rerender(); if (bf.tier !== ev.tier) undoToast(ev, bf, 'Switched to ' + tierName(ev.tier), rerender); });
       });
     });
-    $$('[data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { ev.tier = btn.dataset.tier; save(); rerender(); }); });
+    $$('[data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { var bf = snap(ev); ev.tier = btn.dataset.tier; save(); rerender(); if (bf.tier !== ev.tier) undoToast(ev, bf, 'Switched to ' + tierName(ev.tier), rerender); }); });
     var g = E.guardian(ev, E.budget(ev, ev.tier));
     $$('[data-swap]').forEach(function (btn) { btn.addEventListener('click', function () {
       if (lockSample(ev)) return;
-      var s = g.swaps[+btn.dataset.swap];
+      var s = g.swaps[+btn.dataset.swap]; var bf = snap(ev);
       if (s.kind === 'drop') ev.exclude = (ev.exclude || []).concat(s.id);
       else if (s.kind === 'hours') ev.hours = Math.max(1, (ev.hours || 3) - 1);
       else if (s.kind === 'tier') ev.tier = ev.tier === 'U' ? 'S' : 'L';
       else ev.overrides = Object.assign({}, ev.overrides, (function () { var o = {}; var it = E.budget(ev, ev.tier).items.find(function (i) { return i.id === s.id; }); if (it) o[s.id] = { amount: Math.round(it.mid - s.save), source: 'yours', note: s.text }; return o; })());
-      save(); toast('Applied: ' + s.text); rerender();
+      save(); rerender(); undoToast(ev, bf, 'Applied: ' + s.text, rerender);
     }); });
     $('#ask').addEventListener('submit', function (e) {
       e.preventDefault(); var q = $('#q').value.trim(); if (!q) return;
-      var reply = concierge(ev, q); var chat = $('#chat');
+      var bf = snap(ev); var reply = concierge(ev, q); var chat = $('#chat');
       chat.insertAdjacentHTML('beforeend', '<div class="bubble me">' + esc(q) + '</div><div class="bubble ai">' + esc(reply.text) + '</div>');
       $('#q').value = '';
-      if (reply.changed && !ev.sample) { save(); setTimeout(rerender, 1100); }
+      if (reply.changed && !ev.sample) { save(); setTimeout(function () { rerender(); undoToast(ev, bf, 'Plan updated', rerender); }, 1100); }
     });
   };
 
@@ -705,6 +734,48 @@
     return { text: 'For bigger redesigns like that, choose “Show three different concepts” on the concept page. Smart redesigns by AI turn on when the app launches.' };
   }
 
+  /* Bookings: save businesses to a shortlist, then record a quote or a booking. Status comes from what the host saved. */
+  var FOUND = {};
+  function venueCat(ev) { var b = E.budget(ev, ev.tier); var ids = b.items.map(function (i) { return i.id; }); return ['venue', 'privateDining', 'restaurantFood'].filter(function (x) { return ids.indexOf(x) >= 0; })[0] || 'venue'; }
+  function savedFor(ev, cat) { return (ev.shortlist || []).filter(function (x) { return x.cat === cat; }); }
+  function statusOf(ev, cat) {
+    var ov = (ev.overrides || {})[cat];
+    if (ov && ov.source === 'booking') return 'booked';
+    if (ov && (ov.source === 'quote' || ov.source === 'vendor')) return 'quote';
+    return savedFor(ev, cat).length ? 'short' : 'todo';
+  }
+  var STATUS_TXT = { booked: 'Booked', quote: 'Got a price', short: 'Shortlisted', todo: 'To book' };
+  function statusBadge(ev, cat) { var st = statusOf(ev, cat); return '<span class="badge st-' + st + '">' + STATUS_TXT[st] + (st === 'short' ? ' (' + savedFor(ev, cat).length + ')' : '') + '</span>'; }
+  function saveBtn(ev, p, cat) {
+    FOUND[p.id] = { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', maps: p.mapsUrl || '', address: p.address || '' };
+    var on = (ev.shortlist || []).some(function (x) { return x.id === p.id; });
+    return '<button class="btn small' + (on ? ' gold' : ' ghost') + '" data-short="' + esc(p.id) + '" aria-pressed="' + on + '">' + (on ? 'Saved' : 'Save') + '</button>';
+  }
+  function bindSave(ev, box) {
+    box.addEventListener('click', function (e) {
+      var bt = e.target.closest('[data-short]'); if (!bt) return;
+      if (lockSample(ev)) return;
+      var id = bt.dataset.short, list = ev.shortlist = ev.shortlist || [];
+      var i = list.findIndex(function (x) { return x.id === id; });
+      if (i >= 0) { list.splice(i, 1); bt.textContent = 'Save'; bt.className = 'btn small ghost'; bt.setAttribute('aria-pressed', 'false'); toast('Removed from your shortlist'); }
+      else if (FOUND[id]) { list.push(FOUND[id]); bt.textContent = 'Saved'; bt.className = 'btn small gold'; bt.setAttribute('aria-pressed', 'true'); toast('Saved to your shortlist. See it under Budget.'); }
+      saveEvent(ev);
+    });
+  }
+  function bookingsPanel(ev, b) {
+    var lines = b.items.filter(function (i) { return D.CATEGORIES[i.id]; });
+    var booked = lines.filter(function (i) { return statusOf(ev, i.id) === 'booked'; });
+    var quoted = lines.filter(function (i) { return statusOf(ev, i.id) === 'quote'; });
+    var bookedAmt = booked.reduce(function (t, i) { return t + i.mid; }, 0);
+    var sl = ev.shortlist || [];
+    return '<div class="panel stack bookings"><div class="row" style="justify-content:space-between"><h3>Bookings</h3><span class="small muted num">' + booked.length + ' of ' + lines.length + ' booked</span></div>' +
+      '<div class="meter"><i style="width:' + (lines.length ? Math.round(booked.length / lines.length * 100) : 0) + '%"></i></div>' +
+      '<div class="bk-stats"><div><b class="num">' + money(bookedAmt) + '</b><span class="small muted">confirmed</span></div><div><b class="num">' + quoted.length + '</b><span class="small muted">with a price</span></div><div><b class="num">' + sl.length + '</b><span class="small muted">saved</span></div></div>' +
+      (sl.length ? '<div class="list">' + sl.map(function (x, k) { var cat = D.CATEGORIES[x.cat]; return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b><div class="small muted">' + esc(cat ? cat.name : '') + (x.rating ? ' · ★ ' + x.rating : '') + '</div>' + (((ev.overrides || {})[x.cat] || {}).note === x.name ? '<div style="margin-top:4px">' + statusBadge(ev, x.cat) + '</div>' : '') + '</div><span class="acts">' + (x.url ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.url) + '">Contact</a>' : '') + '<button class="btn small" data-bookit="' + k + '">Add price</button><button class="link small" data-unsave="' + k + '">Remove</button></span></div>'; }).join('') + '</div>'
+        : '<p class="muted small">Tap Save on any venue or vendor in Venues or Vendors to build your shortlist here. When you get a quote or book, add the price and your totals update.</p>') +
+      '</div>';
+  }
+
   /* Budget: every line labeled; add your own prices */
   TAB_VIEWS.budget = function (ev, b) {
     var groups = {}; cut(b.items, 3, ev).forEach(function (i) { (groups[i.group] = groups[i.group] || []).push(i); });
@@ -714,11 +785,12 @@
       (ev.payer === 'shared' ? '<div class="note">Splitting the cost: about <b>' + money(b.total / Math.max(1, ev.guests)) + ' a person</b> if everyone shares equally. Track who has paid under Invite and registry.</div>' : '') +
       '<p class="muted small"><b>All prices are estimates</b>, not quotes. Real prices come from each venue and vendor. Estimates are sized to ' + esc(ev.city) + ' and ' + plural(ev.guests, 'guest') + ', and include tax, service charges and tips where they apply. Add a real quote anytime and the totals update.</p>' +
       (ev.budget ? '<div class="stack" style="gap:6px"><div class="meter' + (b.total > ev.budget ? ' over' : '') + '"><i style="width:' + Math.min(100, b.total / ev.budget * 100) + '%"></i></div><span class="small muted num">' + money(b.total) + ' of your ' + money(ev.budget) + ' budget</span></div>' : '') +
+      bookingsPanel(ev, b) +
       '<div class="panel"><div class="lines">' + Object.keys(groups).map(function (gname) {
         return '<div class="group-h">' + esc(gname) + '</div>' + groups[gname].map(function (i) {
           return '<div class="ln"><span>' + esc(i.name) + '</span><span class="amt">' + (i.lo === i.hi ? money(i.mid) : money(i.mid) + '<br><span class="small muted">' + money(i.lo) + ' to ' + money(i.hi) + '</span>') + '</span>' +
-            '<div class="sub"><span class="badge ' + (i.label === 'Planning estimate' ? 'est' : 'ok') + '">' + esc(i.label) + '</span><span class="small muted">' + esc(i.source) + (i.extras.length ? '; ' + esc(i.extras.join(', ')) : '') + '</span>' +
-            '<button class="link small" data-price="' + i.id + '">Add my price</button><button class="link small" data-drop="' + i.id + '">Remove</button></div></div>';
+            '<div class="sub">' + statusBadge(ev, i.id) + '<span class="badge ' + (i.label === 'Planning estimate' ? 'est' : 'ok') + '">' + esc(i.label) + '</span><span class="small muted">' + esc(i.source) + (i.extras.length ? '; ' + esc(i.extras.join(', ')) : '') + '</span>' +
+            '<button class="link small" data-price="' + i.id + '">Add quote or booking</button><button class="link small" data-drop="' + i.id + '">Remove</button></div></div>';
         }).join('');
       }).join('') + '</div></div>' + more(ev, b.items.length, Math.min(3, b.items.length), 'budget lines, with quantities and sources') +
       '<div class="panel sum"><div><span>Subtotal</span><span class="num">' + money(b.mid) + '</span></div><div><span>Cushion for surprises (10%)</span><span class="num">' + money(b.contingency) + '</span></div><div class="grand"><span>Estimated total</span><span class="num">' + money(b.total) + '</span></div><div class="small muted"><span>Range</span><span class="num">' + money(b.lo * 1.1) + ' to ' + money(b.hi * 1.1) + '</span></div></div>' +
@@ -726,18 +798,21 @@
       '<p class="muted small">Estimates are a starting point, not quotes. Restaurant price symbols are never treated as a private-event price, and missing availability means unknown.</p></div>';
   };
   TAB_BIND.budget = function (ev, save, rerender) {
-    $$('#tierseg [data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { ev.tier = btn.dataset.tier; save(); rerender(); }); });
-    $$('[data-drop]').forEach(function (btn) { btn.addEventListener('click', function () { if (lockSample(ev)) return; ev.exclude = (ev.exclude || []).concat(btn.dataset.drop); ev.include = (ev.include || []).filter(function (x) { return x !== btn.dataset.drop; }); save(); rerender(); }); });
+    $$('#tierseg [data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { var bf = snap(ev); ev.tier = btn.dataset.tier; save(); rerender(); if (bf.tier !== ev.tier) undoToast(ev, bf, 'Switched to ' + tierName(ev.tier), rerender); }); });
+    $$('[data-drop]').forEach(function (btn) { btn.addEventListener('click', function () { if (lockSample(ev)) return; var bf = snap(ev); ev.exclude = (ev.exclude || []).concat(btn.dataset.drop); ev.include = (ev.include || []).filter(function (x) { return x !== btn.dataset.drop; }); save(); rerender(); undoToast(ev, bf, 'Removed ' + D.CATEGORIES[btn.dataset.drop].name.toLowerCase(), rerender); }); });
     $$('[data-restore]').forEach(function (btn) { btn.addEventListener('click', function () { ev.exclude = ev.exclude.filter(function (x) { return x !== btn.dataset.restore; }); ev.include = (ev.include || []).concat(btn.dataset.restore); save(); rerender(); }); });
-    $$('[data-price]').forEach(function (btn) { btn.addEventListener('click', function () {
-      if (lockSample(ev)) return; var id = btn.dataset.price; var cur = (ev.overrides || {})[id] || {};
-      sheet('<h3>Add your price for ' + esc(D.CATEGORIES[id].name.toLowerCase()) + '</h3><label class="field"><span>Total amount (USD), including fees</span><input class="input num" type="number" min="0" id="amt" value="' + (cur.amount || '') + '"></label>' +
+    var priceSheet = function (id, note) {
+      if (lockSample(ev)) return; var cur = (ev.overrides || {})[id] || {}; if (note && !cur.note) cur = Object.assign({}, cur, { note: note, source: cur.source || 'quote' });
+      sheet('<h3>Add a price for ' + esc(D.CATEGORIES[id].name.toLowerCase()) + '</h3><p class="muted small">Add a quote you received or a confirmed booking. Your budget uses this instead of the estimate.</p><label class="field"><span>Total amount (USD), including fees</span><input class="input num" type="number" min="0" id="amt" value="' + (cur.amount || '') + '"></label>' +
         '<label class="field"><span>What is this price?</span><select class="input" id="src"><option value="vendor">Price published by the vendor</option><option value="quote"' + (cur.source === 'quote' ? ' selected' : '') + '>Quote I received</option><option value="booking"' + (cur.source === 'booking' ? ' selected' : '') + '>Booked and confirmed</option></select></label>' +
         '<label class="field"><span>Vendor or note (optional)</span><input class="input" id="nt" value="' + esc(cur.note || '') + '"></label><button class="btn gold block" id="ok">Save price</button>' + (cur.amount ? '<button class="btn ghost block" id="clr">Use the estimate again</button>' : '') + '<button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
-        $('#ok', el).addEventListener('click', function () { var a = +$('#amt', el).value; if (!(a > 0)) return toast('Enter an amount'); ev.overrides = ev.overrides || {}; ev.overrides[id] = { amount: a, source: $('#src', el).value, note: $('#nt', el).value.trim() }; save(); close(); rerender(); });
-        var c = $('#clr', el); if (c) c.addEventListener('click', function () { delete ev.overrides[id]; save(); close(); rerender(); });
+        $('#ok', el).addEventListener('click', function () { var a = +$('#amt', el).value; if (!(a > 0)) return toast('Enter an amount'); var bf = snap(ev); ev.overrides = ev.overrides || {}; ev.overrides[id] = { amount: a, source: $('#src', el).value, note: $('#nt', el).value.trim() }; save(); close(); rerender(); undoToast(ev, bf, 'Price saved. Totals updated.', rerender); });
+        var c = $('#clr', el); if (c) c.addEventListener('click', function () { var bf = snap(ev); delete ev.overrides[id]; save(); close(); rerender(); undoToast(ev, bf, 'Back to the estimate', rerender); });
       });
-    }); });
+    };
+    $$('[data-price]').forEach(function (btn) { btn.addEventListener('click', function () { priceSheet(btn.dataset.price); }); });
+    $$('[data-bookit]').forEach(function (btn) { btn.addEventListener('click', function () { var x = ev.shortlist[+btn.dataset.bookit]; if (x) priceSheet(x.cat, x.name); }); });
+    $$('[data-unsave]').forEach(function (btn) { btn.addEventListener('click', function () { if (lockSample(ev)) return; var bf = snap(ev); ev.shortlist.splice(+btn.dataset.unsave, 1); save(); rerender(); undoToast(ev, bf, 'Removed from your shortlist', rerender); }); });
   };
 
   /* Venues: types that fit, live search links, drive times */
@@ -812,6 +887,7 @@
     return m[v] || ['fits your guest count', 'check what is included'];
   }
   TAB_BIND.places = function (ev, save, rerender) {
+    bindSave(ev, $('#tab'));
     $$('[data-live]').forEach(function (btn) { btn.addEventListener('click', function () {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; }); ev.lastVenue = btn.dataset.live;
       var box = document.querySelector('.live-res[data-for="' + btn.dataset.live.replace(/"/g, '') + '"]') || $('#live'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding venues\u2026</p>';
@@ -821,7 +897,7 @@
           if (!list.length) { box.innerHTML = '<p class="muted">No well-reviewed matches nearby for this type. Try another venue type, or switch to a different budget version.</p>'; return; }
           var placesAll = list.length; list = cut(list, 3, ev);
           var ids = list.map(function (p) { return p.id; });
-          box.innerHTML = '<div class="curated"><p class="eyebrow">Top-rated ' + esc(btn.dataset.live.toLowerCase()) + 's in ' + esc(ev.city.split(',')[0]) + '</p>' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.rating ? '\u2605 ' + p.rating + ' \u00b7 ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews \u00b7 ' : '') + esc(p.address || '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Pricing and availability come directly from each venue when you inquire.</p></div>' + more(ev, placesAll, list.length, 'top-rated places');
+          box.innerHTML = '<div class="curated"><p class="eyebrow">Top-rated ' + esc(btn.dataset.live.toLowerCase()) + 's in ' + esc(ev.city.split(',')[0]) + '</p>' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.rating ? '\u2605 ' + p.rating + ' \u00b7 ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews \u00b7 ' : '') + esc(p.address || '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts">' + saveBtn(ev, p, venueCat(ev)) + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Pricing and availability come directly from each venue when you inquire.</p></div>' + more(ev, placesAll, list.length, 'top-rated places');
           $$('[data-keep]', box).forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { location.reload(); }); }); });
           if (ev.start && ids.length) {
             var origin = /,|\d{5}/.test(ev.start) ? ev.start : ev.start + ', ' + ev.city;
@@ -871,7 +947,7 @@
     return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">Estimated prices in ' + esc(city.split(',')[0] || 'your city') + ' for your guest count and ' + esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[lvl]) + ' level, including tax and tips where they apply. ' + (AI.live ? 'Tap a category to see top-rated businesses that provide it.' : '') + '</p>' +
       '<div class="list panel">' + cats.map(function (i) {
         var q = (LEVEL_WORD[lvl] + ' ' + (VENDOR_SEARCH[i.id] || i.name.split(' (')[0])).replace('luxury five-star', 'luxury');
-        return '<div class="it"><div class="grow"><b>' + esc(i.name) + '</b><div class="small">Estimated cost <b class="num">about ' + money(i.lo) + ' to ' + money(i.hi) + '</b></div>' + (VENDOR_NOTE[i.id] ? '<div class="small muted">' + esc(VENDOR_NOTE[i.id]) + '</div>' : '') + '</div>' +
+        return '<div class="it"><div class="grow"><b>' + esc(i.name) + '</b> ' + statusBadge(ev, i.id) + '<div class="small">Estimated cost <b class="num">about ' + money(i.lo) + ' to ' + money(i.hi) + '</b></div>' + (VENDOR_NOTE[i.id] ? '<div class="small muted">' + esc(VENDOR_NOTE[i.id]) + '</div>' : '') + '</div>' +
           '<span class="acts">' + (AI.live ? '<button class="btn small ghost" data-vendor="' + esc(i.id) + '" data-q="' + esc(q) + '" data-level="' + lvl + '">View top-rated</button>' : '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q + ' in ' + city) + '">View on map</a>') + '</span></div><div class="live-res" data-for="v-' + esc(i.id) + '"></div>';
       }).join('') + '</div>' + more(ev, catsAll, cats.length, 'vendor categories with prices') + '<p class="muted small"><b>All prices are estimates</b> from typical local rates, not quotes. Real prices come from each vendor. Add a real quote anytime under Budget and your totals update. You pay vendors directly; Event Couture never holds your money.</p></div>';
   };
@@ -880,6 +956,7 @@
     b.addEventListener('click', function () { var nm = document.querySelector('.pl-name'); copyText((nm ? nm.textContent + '\n\n' : '') + [].slice.call(document.querySelectorAll('.songs li')).map(function (li, i) { return (i + 1) + '. ' + li.querySelector('b').textContent + ' \u2014' + li.querySelector('.muted').textContent; }).join('\n')); });
   };
   TAB_BIND.vendors = function (ev) {
+    bindSave(ev, $('#tab'));
     $$('[data-vendor]').forEach(function (btn) { btn.addEventListener('click', function () {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; });
       var box = document.querySelector('.live-res[data-for="v-' + btn.dataset.vendor + '"]'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding top-rated businesses…</p>';
@@ -889,7 +966,7 @@
           if (!list.length) { box.innerHTML = '<p class="muted small">No well-reviewed matches nearby. Try a different area on the Venues tab.</p>'; return; }
           var bizAll = list.length; list = cut(list, 3, ev);
           var PL = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
-          box.innerHTML = '<div class="curated">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.rating ? '★ ' + p.rating + ' · ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews' : '') + (PL[p.priceLevel] ? ' · ' + PL[p.priceLevel] : '') + (p.address ? ' · ' + esc(p.address.split(',').slice(0, 2).join(',')) : '') + '</div></div><span class="acts">' + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Exact pricing comes from each business when you inquire.</p></div>' + more(ev, bizAll, list.length, 'top-rated businesses');
+          box.innerHTML = '<div class="curated">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.rating ? '★ ' + p.rating + ' · ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews' : '') + (PL[p.priceLevel] ? ' · ' + PL[p.priceLevel] : '') + (p.address ? ' · ' + esc(p.address.split(',').slice(0, 2).join(',')) : '') + '</div></div><span class="acts">' + saveBtn(ev, p, btn.dataset.vendor) + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Exact pricing comes from each business when you inquire.</p></div>' + more(ev, bizAll, list.length, 'top-rated businesses');
           $$('[data-keep]', box).forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { location.reload(); }); }); });
         }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn’t available right now.') + '</p>'; });
     }); });

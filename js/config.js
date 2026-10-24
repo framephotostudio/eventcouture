@@ -7,5 +7,5 @@ window.EC_CONFIG = {
   amazonTag: '',
   preview: true,
   supportEmail: '',
-  version: '0.16.3'
+  version: '0.17.0'
 };

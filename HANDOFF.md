@@ -1,6 +1,6 @@
 # Event Couture by Always Luxe: developer handoff
 
-**Version 0.14 · October 24, 2026**
+**Version 0.17 · October 24, 2026**
 **Live site:** https://facecouture.app/eventcouture/
 **Code:** https://github.com/framephotostudio/eventcouture (public; every push to `main` deploys automatically)
 **Server:** https://event-couture-api.facecouture.workers.dev (status at `/api/status`)
@@ -12,7 +12,7 @@ Event Couture turns a host's inspiration (photos, a description, spoken words, o
 1. The host shares inspiration and event details.
 2. They confirm the details on a review screen.
 3. The AI creates three original concepts (look, decor, menu style, music, dress code).
-4. The host picks one and gets the full plan: budget, venues, vendors, food and drink, style and shopping, a 25-song playlist, timeline, guests, voting, invitations and registry.
+4. The host picks one and gets the full plan, in four sections: Overview (summary, style and music with a named 25-song playlist, the pass), Budget & bookings (budget, venues, vendors, food and drink), Guests & invitations (guests, invite and registry, voting, photos and thank-yous) and Tasks & timeline (checklist and day-of schedule).
 5. Planning is free. At the end the host pays once (the Event Pass) to keep the plan and share it with guests.
 
 ## 2. Ground rules from the owner (do not change without her sign-off)
@@ -44,7 +44,7 @@ Event Couture turns a host's inspiration (photos, a description, spoken words, o
 | 5,001 to 10,000 | $349.99 |
 | Each extra 5,000 | +$150 |
 
-Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $9.99, 60 for $19.99. Package: three more concepts, $7.99. Add-ons: matching graphics $6.99; outfit boards, multilingual page, album space, more vendor options and thank-you drafts at $4.99 each; planner branding $9.99. **Add-ons are listed but do not deliver anything yet** (see section 9). The removed AI picture products (venue illustrations, invitation artwork) must stay removed.
+Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $9.99, 60 for $19.99. Package: three more concepts, $7.99. Add-ons: matching graphics $6.99; outfit boards, multilingual page, album space, more vendor options and thank-you drafts at $4.99 each; planner branding $9.99. **Credits, packages and add-ons are hidden** (`SELL_EXTRAS = false` in `app.js`) until each one delivers something real (see section 9). The one free extra set of concepts stays. The removed AI picture products (venue illustrations, invitation artwork) must stay removed.
 
 ## 4. How it is built
 
@@ -96,6 +96,10 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 - **Vendor search:** shows the actual service (decor rentals, florists, bakeries and so on), never planners. Each category shows a typical local price range. "Ask for their price" is hidden until vendors join.
 - **Dress code:** a general code for guests (Cocktail attire, Smart casual and so on) plus a specific look for the person being celebrated.
 - **Free preview:** before the plan is kept, each section shows a taste (3 budget lines, 2 venue styles, 3 places, 3 vendor categories, 3 menu ideas, 2 shopping picks, 3 songs, 4 checklist steps) with a "Keep my plan" card. Guests, voting and the album open after keeping. Totals, concepts and budget fit are always free. This lock lives in the browser, so it can be bypassed until accounts exist; once there is a backend, the server should only send the locked details after payment.
+- **Bookings:** Save any venue or vendor from a search to the shortlist. The Budget page shows a Bookings panel (booked count, confirmed amount, prices received, saved businesses). Each line shows To book, Shortlisted, Got a price or Booked. Adding a quote or booking replaces the estimate in the totals.
+- **Undo:** tier changes, budget-guardian swaps, concierge changes, setting changes, removed lines, saved prices and shortlist removals show an Undo button for 8 seconds.
+- **Playlists:** 14 ready-made named playlists of 25 songs (`js/songs.js`), matched to the event type (romantic lists only for couples' events; no club lists at showers). AI plans name their own playlist and are topped up to 25.
+- **Face Couture:** a card under What to wear and a footer link open facecouture.app. Nothing else is connected yet.
 - **Pop-ups and messages** close when the page changes. The keep-my-plan button cannot be double-submitted.
 
 ## 7. How to run and test
@@ -109,6 +113,7 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
   - `python3 tests/live.py`
   - `python3 tests/vibe.py <folder>`
   - `python3 tests/drafts.py <folder>`
+  - `python3 tests/bookings.py <folder>` (shortlist and bookings with a stand-in server)
 - **Single-file preview:** `python3 tests/build_preview.py <out.html>`
 - **Brand assets:** `python3 tools_brand.py`
 
@@ -126,7 +131,6 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 - Saving.
 - Guest page, RSVPs, voting, co-hosts.
 - Keep-my-plan checkout (no charge).
-- Credits and add-on purchases (ledger entry only).
 - Vendor sign-up (not published anywhere).
 
 ## 9. Still to build (needs a backend or outside service)
@@ -135,11 +139,7 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 2. **Real checkout:** Stripe on the web, Apple and Google in-app purchase in the apps. Server-verified entitlements, no double charges, refunds on failure.
 3. **Deliverables for each paid add-on** before selling it. Keep them hidden until they work.
 4. **iPhone and Android apps:** wrap with Capacitor (the in-app browser handler is already in `app.js`) and submit using the icons in `img/brand/`.
-5. **Phase 2 from the ChatGPT review:**
-   - Regroup the 12 plan tabs into Overview, Budget and bookings, Guests and invitations, Tasks and timeline.
-   - Shortlist, quote and booked status for venues and vendors, tied to the budget.
-   - Undo for big changes.
-   - Clear allowance rules, and the exact access-expiry date.
+5. **Done in 0.17:** tabs grouped into four sections, shortlist and booking status, undo, and the access-expiry date.
 6. **Security before real payments:** sign-in checks on server routes, rate limits, and an atomic spending counter.
 7. **Basic analytics** for the customer journey (start, review done, concepts viewed, plan kept, venue shortlisted, return visit).
 8. **Key hygiene:** the Google Maps key was shown in a screenshot. Rotate it and restrict it to Places API (New) and Routes API.
