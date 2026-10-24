@@ -6,6 +6,8 @@ window.EC_CONFIG = {
   apiUrl: '',
   amazonTag: '',
   preview: true,
-  supportEmail: '',
-  version: '0.20.0'
+  supportEmail: 'hello@facecouture.app',
+  legalName: 'Always Luxe',   /* the business name on Privacy and Terms */
+  governingState: '',        /* e.g. 'Texas': the state whose laws govern the Terms */
+  version: '0.21.0'
 };

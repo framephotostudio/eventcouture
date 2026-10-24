@@ -1456,11 +1456,10 @@
 
   /* ---------- legal ---------- */
   function legal(kind) {
-    var body = kind === 'privacy'
-      ? '<h2>Privacy</h2><p>Your events are private. Right now your plans, guest lists and photos are saved on your own device, not in an Event Couture account.</p><p>To create your concepts, your event details, description, chosen colors and inspiration photos are sent through our server to Google\u2019s Gemini AI. Venue and vendor searches and drive times send the city, area, starting point and kind of place to Google Maps. Event Couture doesn\u2019t keep copies of these requests; Google handles them under its own terms.</p><p>Guest names, contact details and dietary needs are visible only to you and the co-hosts you choose, never to vendors. We don\u2019t sell your data. You can delete an event and everything in it at any time under Overview, Your pass. Shopping links to Amazon may earn us a small commission, and are disclosed where they appear.</p><p class="muted small">Draft for review before launch.</p>'
-      : '<h2>Terms</h2><p>Event Couture is planning software. Prices are labeled as planning estimates, vendor-published prices, confirmed quotes or confirmed bookings; estimates are not offers from vendors. You book and pay vendors directly, and vendors are responsible for their own services.</p><p>An Event Pass covers one event at the number of people you invite. Your plan stays available until 12 months after you keep it, or 30 days after your event, whichever is later. Planning is free; you pay only to keep your plan. Menu ideas are suggestions and never guarantee allergy safety.</p><p class="muted small">Draft for review before launch.</p>';
-    frame('<div class="wizard stack">' + body + '</div>');
+    var L = window.EC_LEGAL || {};
+    frame('<div class="wizard stack legal">' + (kind === 'privacy' ? L.privacy : L.terms) + '<p class="small muted"><a href="#/' + (kind === 'privacy' ? 'terms">Terms of Use' : 'privacy">Privacy Policy') + '</a> \u00b7 <a href="#/help">Help</a></p></div>');
   }
+
 
   /* In the phone app, outside links open in an in-app window that returns to the plan when closed. */
   document.addEventListener('click', function (e) {

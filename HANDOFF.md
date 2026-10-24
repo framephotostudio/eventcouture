@@ -1,6 +1,6 @@
 # Event Couture by Always Luxe: developer handoff
 
-**Version 0.20 · October 24, 2026**
+**Version 0.21 · October 24, 2026**
 **Live site:** https://facecouture.app/eventcouture/
 **Code:** https://github.com/framephotostudio/eventcouture (public; every push to `main` deploys automatically)
 **Server:** https://event-couture-api.facecouture.workers.dev (status at `/api/status`)
@@ -73,6 +73,7 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 | `js/config.js` | Server address (filled in by deploy), preview flag, Amazon tag, version |
 | `js/data.js` | Catalogs: event types, vendor categories and cost models, settings (restaurant, private room, venue, outdoors, home), cities, styles, menus, checklist, passes, credits, packages, add-ons, venue types |
 | `js/engine.js` | Planning math: budgets per level, budget plan (maximum-based), pros and cons, Budget Guardian, quantities, checklist, run of show, concept matching, dress codes, pass pricing |
+| `js/legal.js` | Privacy Policy and Terms of Use (business name, email and governing state come from `js/config.js`) |
 | `js/songs.js` | Ready-made 25-song playlists for each music mood, plus matching for AI moods |
 | `js/app.js` | Every screen: home, wizard (inspiration, details, review), concepts, plan tabs, venues and vendors search, guests, voting, invitations, registry, cost splitting, extras, keep-my-plan checkout, pricing, help, legal |
 | `css/app.css` | All styling. The design tokens at the top set the colors |

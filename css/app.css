@@ -533,3 +533,10 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
   .rail { position: static; overflow: visible; padding-top: 0; }
   .rail .rg.on { flex-wrap: wrap; }
 }
+.legal h3 { margin-top: 10px; }
+.legal p, .legal li { line-height: 1.6; }
+.legal-table { display: grid; gap: 0; padding: 4px 18px; }
+.legal-table > div { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.legal-table > div:last-child { border-bottom: 0; }
+.legal-table span { color: var(--muted); font-size: .92rem; }
+@media (min-width: 760px) { .legal-table > div { grid-template-columns: 1fr 1.2fr; gap: 18px; } }

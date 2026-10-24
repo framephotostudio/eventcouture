@@ -2,7 +2,7 @@
 import re, base64, sys
 out = sys.argv[1]
 css = open('css/app.css').read()
-js = ''.join(open(f).read() + '\n' for f in ['js/config.js', 'js/data.js', 'js/engine.js', 'js/songs.js', 'js/app.js'])
+js = ''.join(open(f).read() + '\n' for f in ['js/config.js', 'js/data.js', 'js/engine.js', 'js/songs.js', 'js/legal.js', 'js/app.js'])
 import glob, io, json
 from PIL import Image
 def data_uri(path, width):
