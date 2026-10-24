@@ -31,6 +31,7 @@
   root.EC_SONG_FIT = function (key, type) {
     if (key === 'love songs soul' && type && !ROMANTIC[type]) return FAMILY[type] ? 'jazz brunch acoustic' : 'r&b soul classics';
     if ((key === 'r&b lounge house' || key === 'deep house chill') && FAMILY[type]) return 'pop feel-good';
+    if (key === 'neo soul candlelight' && FAMILY[type]) return 'jazz brunch acoustic';
     return key;
   };
   root.EC_SONG_KEY = function (mood, type) {

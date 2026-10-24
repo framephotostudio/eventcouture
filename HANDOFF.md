@@ -1,6 +1,6 @@
 # Event Couture by Always Luxe: developer handoff
 
-**Version 0.17 · October 24, 2026**
+**Version 0.18 · October 24, 2026**
 **Live site:** https://facecouture.app/eventcouture/
 **Code:** https://github.com/framephotostudio/eventcouture (public; every push to `main` deploys automatically)
 **Server:** https://event-couture-api.facecouture.workers.dev (status at `/api/status`)
@@ -100,6 +100,8 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 - **Undo:** tier changes, budget-guardian swaps, concierge changes, setting changes, removed lines, saved prices and shortlist removals show an Undo button for 8 seconds.
 - **Playlists:** 14 ready-made named playlists of 25 songs (`js/songs.js`), matched to the event type (romantic lists only for couples' events; no club lists at showers). AI plans name their own playlist and are topped up to 25.
 - **Face Couture:** a card under What to wear and a footer link open facecouture.app. Nothing else is connected yet.
+- **Fits the occasion:** drinks follow the host's choice everywhere (menus, decor, swaps, schedule); family events default to no alcohol; start times default by event type; venues match home, outdoor, daytime and kids' events; registries only show where gifts are expected; weddings get a ceremony, dinner and dancing playlist; elegant events skip balloons; dinner parties and galas don't budget an outfit.
+- **Budget guardian:** for big gaps it offers real levers (how many guests fit, an indoor venue instead of outdoors, hosting at home); the smallest change that closes the gap comes first. Rounding never tips a realistic plan over the maximum. Prices the host enters show exactly as entered.
 - **Pop-ups and messages** close when the page changes. The keep-my-plan button cannot be double-submitted.
 
 ## 7. How to run and test
@@ -114,6 +116,8 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
   - `python3 tests/vibe.py <folder>`
   - `python3 tests/drafts.py <folder>`
   - `python3 tests/bookings.py <folder>` (shortlist and bookings with a stand-in server)
+  - `python3 tests/interactions.py` (every control after a plan is made: date, levels, undo, prices, guests, co-hosts, seating, splitting, album, gifts, notes, pass upgrade, new concepts, delete, help, vendor form, drafts)
+  - `python3 tests/personas.py <folder>` (18 different clients, from a $600 kids' party to a 1,000-guest wedding; every page of each plan is read and checked)
 - **Single-file preview:** `python3 tests/build_preview.py <out.html>`
 - **Brand assets:** `python3 tools_brand.py`
 

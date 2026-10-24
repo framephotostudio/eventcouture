@@ -127,9 +127,9 @@
 
   /* Style library used to build concepts. Palettes are hex values shown as swatches. */
   var STYLES = [
-    { id: 'champagne-garden', shop: 'champagne and sage green', name: 'Champagne Garden', palette: ['#F3E7D3', '#D9C29C', '#A9B89A', '#FFFFFF', '#6F7D63'], tags: ['garden', 'neutral', 'elegant', 'outdoor', 'green', 'gold'],
+    { id: 'champagne-garden', shop: 'champagne and sage green', name: 'Champagne Garden', palette: ['#F3E7D3', '#D9C29C', '#A9B89A', '#FFFFFF', '#6F7D63'], tags: ['garden', 'neutral', 'elegant', 'outdoor', 'green', 'gold', 'sage', 'cream'],
       mood: 'Soft gold light, garden greenery and candlelit tables.', decor: ['Greenery runners with white blooms', 'Gold chargers and blush napkins', 'Floating candles in tall glass', 'Champagne tower welcome moment'],
-      music: 'jazz brunch acoustic', dress: 'Garden formal in soft neutrals', menu: 'garden' },
+      music: 'jazz brunch acoustic', dress: 'Soft neutrals, garden formal', menu: 'garden' },
     { id: 'modern-noir', shop: 'black and gold', name: 'Modern Noir', palette: ['#111111', '#2B2B2B', '#C9A86A', '#F5F2EC', '#7A6A55'], tags: ['black', 'dark', 'gold', 'modern', 'glam', 'evening'],
       mood: 'Black and gold, sharp lines and dramatic low light.', decor: ['Black linens with gold flatware', 'Mirrored table numbers', 'Tall black taper candles', 'Neon sign with the guest of honor’s name'],
       music: 'r&b lounge house', dress: 'All black, cocktail to black tie', menu: 'modern' },
@@ -139,7 +139,7 @@
     { id: 'boho-sunset', shop: 'terracotta boho', name: 'Boho Sunset', palette: ['#E9C9A6', '#C47C4E', '#8C5A3C', '#F4EBDD', '#6B7A55'], tags: ['boho', 'terracotta', 'warm', 'rustic', 'orange', 'outdoor'],
       mood: 'Warm sunset tones, pampas grass and low lounge seating.', decor: ['Pampas and dried-flower arrangements', 'Low tables with floor cushions', 'Rattan and macramé accents', 'Lantern-lit pathway'],
       music: 'indie acoustic sunset', dress: 'Flowy earth tones', menu: 'rustic' },
-    { id: 'coastal-linen', shop: 'dusty blue', name: 'Coastal Linen', palette: ['#EAF1F4', '#A9C7D3', '#5D8AA0', '#FBF8F2', '#D8C8A8'], tags: ['blue', 'coastal', 'beach', 'light', 'white'],
+    { id: 'coastal-linen', shop: 'dusty blue', name: 'Coastal Linen', palette: ['#EAF1F4', '#A9C7D3', '#5D8AA0', '#FBF8F2', '#D8C8A8'], tags: ['blue', 'coastal', 'beach', 'light'],
       mood: 'Breezy linen, ocean blues and natural textures.', decor: ['Linen tablecloths in sea-glass blue', 'Driftwood and white hydrangea', 'Glass hurricanes with sand', 'Seafood raw bar display'],
       music: 'yacht rock bossa nova', dress: 'Linen and light blues', menu: 'coastal' },
     { id: 'tropical-glam', shop: 'tropical', name: 'Tropical Glam', palette: ['#0F5C4D', '#F2B544', '#E5677A', '#FFF6E5', '#1B3B36'], tags: ['tropical', 'green', 'bright', 'colorful', 'summer'],
@@ -147,13 +147,13 @@
       music: 'afrobeats reggaeton summer', dress: 'Bold tropical prints', menu: 'tropical' },
     { id: 'old-hollywood', shop: 'red and gold', name: 'Old Hollywood', palette: ['#7A0E1B', '#111111', '#D4AF37', '#F7F1E3', '#4A0A12'], tags: ['red', 'gold', 'glam', 'vintage', 'evening'],
       mood: 'Red carpet, gold accents and vintage glamour.', decor: ['Red carpet entrance with stanchions', 'Gold sequin linens', 'Marquee light letters', 'Vintage film-reel table numbers'],
-      music: 'swing jazz motown', dress: 'Black tie glamour', menu: 'classic' },
+      music: 'swing jazz motown', dress: 'Old Hollywood glamour, black tie', menu: 'classic' },
     { id: 'pastel-whimsy', shop: 'pastel', name: 'Pastel Whimsy', palette: ['#F9E1EC', '#D9ECF5', '#FFF3C4', '#DCEFD9', '#B9A3D6'], tags: ['pastel', 'colorful', 'playful', 'soft', 'baby', 'lavender', 'tea'],
       mood: 'Soft pastels, balloons and playful sweetness.', decor: ['Pastel balloon garland', 'Macaron and candy table', 'Paper flower wall', 'Mismatched pastel napkins'],
       music: 'pop feel-good', dress: 'Pastels and florals', menu: 'sweet' },
     { id: 'ivory-ballroom', shop: 'ivory and gold', name: 'Ivory Elegance', palette: ['#FBF6EC', '#EFE3CF', '#D9C4A0', '#B8925A', '#FFFFFF'], tags: ['ivory', 'cream', 'gold', 'classic', 'elegant', 'ballroom', 'champagne', 'formal'],
       mood: 'Candlelit ivory and gold, sparkling crystal and lush white roses.', decor: ['Gold stands with white rose and hydrangea arrangements', 'Ivory damask linens and gold beaded chargers', 'Pillar candles in glass hurricanes', 'Draped ivory backdrop with a floral garland'],
-      music: 'string quartet classics', dress: 'Ivory, cream and gold, dressy', menu: 'elegant' },
+      music: 'string quartet classics', dress: 'Dressy ivory, cream and gold', menu: 'elegant' },
     { id: 'minimal-white', shop: 'white', name: 'Minimal White', palette: ['#FFFFFF', '#F1EFEA', '#D6D2C8', '#8C8A84', '#2E2E2C'], tags: ['white', 'minimal', 'modern', 'neutral', 'clean', 'lavender'],
       mood: 'Clean white space, sculptural florals and quiet luxury.', decor: ['White-on-white table design', 'Single-stem sculptural florals', 'Clear acrylic signage', 'Statement white balloon cloud'],
       music: 'deep house chill', dress: 'All white', menu: 'modern' },
@@ -163,12 +163,15 @@
     { id: 'moody-floral', shop: 'burgundy', name: 'Moody Floral', palette: ['#3B1F2B', '#7B2D3B', '#B5838D', '#E8D5C4', '#2F3A2F'], tags: ['burgundy', 'dark', 'floral', 'romantic', 'autumn', 'purple'],
       mood: 'Deep jewel tones, abundant florals and candlelight.', decor: ['Burgundy and plum floral runners', 'Velvet napkins', 'Brass candelabras', 'Fruit and flower grazing table'],
       music: 'neo soul candlelight', dress: 'Jewel tones', menu: 'elegant' },
-    { id: 'rustic-elegance', shop: 'rustic', name: 'Rustic Elegance', palette: ['#EADBC8', '#A47551', '#5C4033', '#F8F4EE', '#7D8C6A'], tags: ['rustic', 'wood', 'brown', 'barn', 'warm', 'neutral'],
+    { id: 'rustic-elegance', shop: 'rustic', name: 'Rustic Elegance', palette: ['#EADBC8', '#A47551', '#5C4033', '#F8F4EE', '#7D8C6A'], tags: ['rustic', 'wood', 'brown', 'barn', 'warm', 'neutral', 'autumn'],
       mood: 'Natural wood, warm lighting and refined country charm.', decor: ['Farm tables with linen runners', 'Edison string lights', 'Wildflowers in vintage vessels', 'Wood slice signage'],
-      music: 'country folk acoustic', dress: 'Rustic chic', menu: 'rustic' },
+      music: 'country folk acoustic', dress: 'Rustic chic textures and warm neutrals', menu: 'rustic' },
     { id: 'royal-purple', shop: 'purple and gold', name: 'Royal Plum', palette: ['#4B2353', '#7E4A8C', '#D8B4E2', '#F6EFF8', '#C9A86A'], tags: ['purple', 'lavender', 'royal', 'glam', 'gold'],
       mood: 'Rich plum, lavender and gold for a regal evening.', decor: ['Plum velvet linens', 'Lavender and orchid centerpieces', 'Gold-rimmed glassware', 'Throne-style guest-of-honor chair'],
-      music: 'r&b soul classics', dress: 'Jewel tones and gold', menu: 'elegant' }
+      music: 'r&b soul classics', dress: 'Jewel tones and gold', menu: 'elegant' },
+    { id: 'midnight-celestial', shop: 'navy and gold celestial', name: 'Midnight Celestial', palette: ['#16203A', '#2C3A5E', '#C9A86A', '#C7CBD3', '#F4F1EA'], tags: ['celestial', 'navy', 'silver', 'gold', 'dark', 'evening', 'blue'],
+      mood: 'Midnight blue, gold stars and soft twinkling light.', decor: ['Navy linens with gold star confetti', 'Hanging moon and star installation', 'Silver candle clusters', 'Twinkle-light backdrop for photos'],
+      music: 'neo soul candlelight', dress: 'Navy, silver and gold shimmer', menu: 'elegant' }
   ];
 
   var MENUS = {
@@ -179,6 +182,7 @@
     coastal: ['Raw bar or shrimp cocktail', 'Fish tacos with mango salsa', 'Grilled corn salad', 'Lobster or crab rolls', 'Key lime tarts', 'Blue Hawaiian mocktail'],
     tropical: ['Jerk chicken skewers', 'Coconut rice', 'Plantain chips with guac', 'Tropical fruit display', 'Pineapple upside-down cupcakes', 'Passion-fruit punch'],
     classic: ['Beef tenderloin crostini', 'Crab cakes with remoulade', 'Caesar salad', 'Filet or vegetable Wellington', 'Champagne cake', 'Classic martinis'],
+    gardenDinner: ['Burrata with heirloom tomatoes and basil', 'Herb-roasted chicken with lemon', 'Grilled vegetables with salsa verde', 'Spring pea and mint risotto', 'Berry pavlova', 'Elderflower spritz'],
     sweet: ['Finger sandwiches', 'Fruit skewers', 'Mini quiches', 'Macaron tower', 'Cake pops', 'Pink lemonade'],
     party: ['Loaded slider bar', 'Wings and dips', 'Taco station', 'Veggie crudités', 'Cupcake tower', 'Glitter cocktail and mocktail']
   };
@@ -188,11 +192,11 @@
   /* Checklist: weeks before the event. */
   var CHECKLIST = [
     { w: 52, t: 'Set the budget and guest count', only: ['wedding', 'gala', 'quince'] },
-    { w: 40, t: 'Book the venue', only: ['wedding', 'gala', 'quince'] },
+    { w: 40, t: 'Book the venue', only: ['wedding', 'gala', 'quince'], not: ['home'] },
     { w: 32, t: 'Book photographer, caterer and music', only: ['wedding', 'gala', 'quince'] },
     { w: 24, t: 'Send save-the-dates', only: ['wedding'] },
     { w: 10, t: 'Choose your concept and budget version', not: ['restaurant'] },
-    { w: 9, t: 'Book the venue or reserve private dining', not: ['restaurant'] },
+    { w: 9, t: 'Book the venue or reserve private dining', not: ['restaurant', 'home'] },
     { w: 8, t: 'Book key vendors (food, photos, music)', not: ['restaurant', 'privateRoom'] },
     { w: 4, t: 'Choose the restaurant and reserve a table for your group', in: ['restaurant'] },
     { w: 3, t: 'Ask the restaurant about large-party rules: automatic tip, cake-cutting fee, decor and separate checks', in: ['restaurant', 'privateRoom'] },
@@ -203,7 +207,7 @@
     { w: 4, t: 'Finalize menu and dietary needs', not: ['restaurant'] },
     { w: 3, t: 'Plan outfits and book hair and makeup', not: ['restaurant'] },
     { w: 2, t: 'Confirm final guest count with vendors', not: ['restaurant'] },
-    { w: 2, t: 'Finish seating chart', not: ['restaurant'] },
+    { w: 2, t: 'Finish seating chart', not: ['restaurant'], minGuests: 40 },
     { w: 1, t: 'Confirm the reservation and final headcount', in: ['restaurant', 'privateRoom'] },
     { w: 1, t: 'Confirm vendor arrival times and pay balances', not: ['restaurant'] },
     { w: 1, t: 'Build the day-of run of show' },

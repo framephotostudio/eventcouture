@@ -32,6 +32,7 @@
     var t = typeOf(ev.type);
     if (ev.setting === 'restaurant' || ev.setting === 'privateRoom') {
       var rl = D.PROFILES[ev.setting].slice(); if (ev.kids && ev.setting === 'privateRoom') rl.push('kids');
+      if (['gala', 'wedding', 'anniversary', 'engagement', 'dinner'].indexOf(ev.type) >= 0) rl = rl.filter(function (c) { return c !== 'balloons'; });
       var rs = {};
       return rl.concat(ev.include || []).filter(function (c) { if (rs[c] || !D.CATEGORIES[c] || (ev.exclude || []).indexOf(c) >= 0) return false; rs[c] = 1; return true; });
     }
@@ -42,6 +43,10 @@
     if (ev.type !== 'wedding') list = list.filter(function (c) { return c !== 'officiant'; });
     if (ev.setting === 'home') list = list.filter(function (c) { return c !== 'venue' && c !== 'privateDining'; }).concat(t.style === 'dining' ? ['catering', 'rentals'] : []);
     if (ev.alcohol === 'none') list = list.filter(function (c) { return c !== 'bartender'; });
+    /* No one is being dressed for a dinner party, holiday party or gala: guests bring their own look. */
+    if (['dinner', 'holiday', 'gala', 'other'].indexOf(ev.type) >= 0) list = list.filter(function (c) { return c !== 'attire' && c !== 'hairMakeup'; });
+    /* Balloon installations don't suit black-tie or romantic occasions unless the host adds them. */
+    if (['gala', 'wedding', 'anniversary', 'engagement', 'dinner'].indexOf(ev.type) >= 0) list = list.filter(function (c) { return c !== 'balloons' || (ev.include || []).indexOf('balloons') >= 0; });
     var seen = {};
     return list.filter(function (c) { if (seen[c] || (ev.exclude || []).indexOf(c) >= 0) return false; seen[c] = 1; return true; });
   }
@@ -89,8 +94,9 @@
     if (ov && ov.amount > 0) { lo = hi = ov.amount; }
     return {
       id: catId, name: label, group: c.group,
-      lo: roundTo(lo, 5), hi: roundTo(hi, 5), mid: roundTo((lo + hi) / 2, 5),
-      extras: extras.map(function (e) { return e.label; }),
+      /* A price the host entered is shown exactly as entered, already including fees. */
+      lo: ov && ov.amount > 0 ? ov.amount : roundTo(lo, 5), hi: ov && ov.amount > 0 ? ov.amount : roundTo(hi, 5), mid: ov && ov.amount > 0 ? ov.amount : roundTo((lo + hi) / 2, 5),
+      extras: ov && ov.amount > 0 ? [] : extras.map(function (e) { return e.label; }),
       label: ov ? ({ vendor: 'Vendor-published price', quote: 'Confirmed quote', booking: 'Confirmed booking' }[ov.source] || 'Your price') : 'Planning estimate',
       source: ov ? (ov.note || '') : (city.name + ' estimate, ' + guests + ' guests' + mealNote)
     };
@@ -113,6 +119,9 @@
   var FIT_TIER = { id: 'F', name: 'Your budget plan', mult: 1, blurb: 'One plan built to your exact budget, with your must-haves protected.' };
   /* Never auto-dropped: venue, food, security and insurance (venues often require the last two). They can be trimmed, not removed. */
   var OPTIONAL = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'cleanup', 'hairMakeup', 'florals', 'balloons'];
+  /* Lowercase a category name for a sentence, keeping DJ, MC and LED as they are. */
+  function lc(name) { return String(name).toLowerCase().replace(/\b(dj|mc|led)\b/g, function (m) { return m.toUpperCase(); }); }
+  function listJoin(a) { return a.length < 2 || a.some(function (x) { return / and /.test(x); }) ? a.join(', ') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
   function budgetFit(ev) {
     var pri = ev.priorities || [];
     var target = (ev.budget || 0) / (1 + D.CONTINGENCY);
@@ -138,8 +147,14 @@
       flex.forEach(function (r) { r.amt -= (r.amt - r.floor) * k; });
     }
     if (total() > target) {
-      rows.filter(function (r) { return !r.pri && !r.fixed && OPTIONAL.indexOf(r.id) >= 0 && r.amt > 0; })
+      /* Some things are part of the occasion itself: hair and makeup for a bride or quinceañera, flowers at a wedding. */
+      var essential = { wedding: ['hairMakeup', 'florals'], quince: ['hairMakeup'] }[ev.type] || [];
+      var optional = OPTIONAL.concat(['dinner', 'holiday', 'brunch'].indexOf(ev.type) >= 0 ? ['photographer', 'decor'] : []).concat(ev.kids && /birthday/.test(ev.type) ? ['dj', 'photographer'] : []);
+      rows.filter(function (r) { return !r.pri && !r.fixed && optional.indexOf(r.id) >= 0 && essential.indexOf(r.id) < 0 && r.amt > 0; })
         .sort(function (a, b) { return b.amt - a.amt; })
+        .forEach(function (r) { if (total() > target) { dropped.push(r.id); r.amt = 0; } });
+      /* Essentials go only if the host's own must-haves would otherwise be cut. */
+      rows.filter(function (r) { return !r.pri && !r.fixed && essential.indexOf(r.id) >= 0 && r.amt > 0; })
         .forEach(function (r) { if (total() > target) { dropped.push(r.id); r.amt = 0; } });
     }
     if (total() > target) {
@@ -166,11 +181,21 @@
     var tierItems = U.items.concat(S.items.filter(function (i) { return ids.indexOf(i.id) < 0; }));
     var items = rows.filter(function (r) { return r.amt > 0; }).map(function (r) {
       var base = tierItems.find(function (i) { return i.id === r.id; });
-      var mid = roundTo(r.amt, 5);
+      var mid = r.fixed ? r.amt : roundTo(r.amt, 5);
       return Object.assign({}, base, { mid: mid, lo: base.label === 'Planning estimate' ? roundTo(mid * 0.85, 5) : mid, hi: base.label === 'Planning estimate' ? roundTo(mid * 1.15, 5) : mid, priority: r.pri });
     });
     var sum = function (key) { return items.reduce(function (s, i) { return s + i[key]; }, 0); };
     var mid = sum('mid'); var contingency = roundTo(mid * D.CONTINGENCY, 5);
+    /* Rounding each line to $5 can tip a plan a few dollars over a realistic maximum; take it from the largest flexible line. */
+    var tip = ev.budget ? mid + contingency - ev.budget : 0;
+    if (tip > 0 && tip <= 25 * items.length) {
+      var flexItems = items.filter(function (i) { return !i.priority && !fixed(i.id); }).sort(function (a, b) { return b.mid - a.mid; });
+      for (var fi = 0; fi < flexItems.length && mid + contingency > ev.budget; fi++) {
+        var it = flexItems[fi], cut = Math.min(it.mid * 0.2, Math.ceil((mid + contingency - ev.budget) / (1 + D.CONTINGENCY) / 5) * 5 + 5);
+        it.mid = roundTo(it.mid - cut, 5); if (it.label === 'Planning estimate') { it.lo = roundTo(it.mid * 0.85, 5); it.hi = roundTo(it.mid * 1.15, 5); } else { it.lo = it.hi = it.mid; }
+        mid = sum('mid'); contingency = roundTo(mid * D.CONTINGENCY, 5);
+      }
+    }
     var res = { tier: FIT_TIER, items: items, lo: sum('lo'), hi: sum('hi'), mid: mid, contingency: contingency, total: mid + contingency,
       perGuest: Math.round((mid + contingency) / Math.max(1, ev.guests || 1)), dropped: dropped };
     res.shortBy = ev.budget && res.total > ev.budget ? res.total - ev.budget : 0;
@@ -184,11 +209,11 @@
     var has = function (x) { return ids.indexOf(x) >= 0; };
     var pros = [], cons = [];
     if (b.tier.id === 'F') {
-      var pri = (ev.priorities || []).map(function (id) { return D.CATEGORIES[id] ? D.CATEGORIES[id].name.toLowerCase() : id; });
+      var pri = (ev.priorities || []).map(function (id) { return D.CATEGORIES[id] ? lc(D.CATEGORIES[id].name) : id; });
       pros.push(b.shortBy ? 'As close to your budget as this guest count allows' : 'Lands at your budget, cushion included');
       if (pri.length) pros.push('Protects your must-haves: ' + pri.join(', '));
-      pros.push('Every category sized to ' + (ev.city || 'your city'));
-      if (b.dropped && b.dropped.length) cons.push('Leaves out ' + b.dropped.map(function (id) { return D.CATEGORIES[id].name.toLowerCase(); }).join(', '));
+      pros.push(D.CITIES.some(function (c) { return c.name === ev.city && c.name !== 'Other US city'; }) ? 'Every category sized to ' + ev.city : 'Every category priced at typical US rates');
+      if (b.dropped && b.dropped.length) cons.push('Leaves out ' + listJoin(b.dropped.map(function (id) { return lc(D.CATEGORIES[id].name); })));
       if (b.shortBy) cons.push('Still about ' + money(b.shortBy) + ' over; fewer guests or a home venue would close the gap');
       if (!cons.length) cons.push('Less room to add extras later');
       return { pros: pros, cons: cons };
@@ -237,11 +262,13 @@
     var optional = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'security'];
     var swaps = b.items.filter(function (i) { return optional.indexOf(i.id) >= 0; })
       .sort(function (a, b2) { return b2.mid - a.mid; })
-      .map(function (i) { return { kind: 'drop', id: i.id, text: 'Skip ' + i.name.toLowerCase(), save: Math.round(i.mid * (1 + D.CONTINGENCY)) }; });
+      .map(function (i) { return { kind: 'drop', id: i.id, text: 'Skip ' + lc(i.name), save: Math.round(i.mid * (1 + D.CONTINGENCY)) }; });
     var florals = b.items.find(function (i) { return i.id === 'florals'; });
     if (florals) swaps.push({ kind: 'note', id: 'florals', text: 'Use seasonal flowers and greenery-heavy designs', save: Math.round(florals.mid * 0.35) });
     var bar = b.items.find(function (i) { return i.id === 'bar'; });
-    if (bar) swaps.push({ kind: 'note', id: 'bar', text: 'Beer, wine and one signature cocktail instead of a full bar', save: Math.round(bar.mid * 0.3) });
+    if (bar && ev.alcohol !== 'none' && ev.alcohol !== 'wine') swaps.push({ kind: 'note', id: 'bar', text: 'Beer, wine and one signature cocktail instead of a full bar', save: Math.round(bar.mid * 0.3) });
+    else if (bar && ev.alcohol === 'wine') swaps.push({ kind: 'note', id: 'bar', text: 'Serve wine with dinner only, and one welcome drink', save: Math.round(bar.mid * 0.25) });
+    else if (bar) swaps.push({ kind: 'note', id: 'bar', text: 'Lemonade and iced tea stations instead of a mocktail bar', save: Math.round(bar.mid * 0.3) });
     var drinks = b.items.find(function (i) { return i.id === 'restaurantDrinks'; });
     if (drinks) swaps.push({ kind: 'note', id: 'restaurantDrinks', text: 'One drink each, or guests buy their own drinks', save: Math.round(drinks.mid * 0.5) });
     var food = b.items.find(function (i) { return i.id === 'restaurantFood'; });
@@ -253,7 +280,22 @@
       var alt = budget(ev, t.id).total;
       if (alt < b.total) swaps.push({ kind: 'tier', id: 'tier', to: t.id, text: 'Switch to the ' + t.name + ' version (total ' + money(alt) + ')', save: b.total - alt });
     });
-    swaps = swaps.filter(function (s) { return s.save > 0; }).sort(function (a, c) { return c.save - a.save; }).slice(0, 6);
+    /* Bigger levers for big gaps: fewer guests, or a setting without venue costs. */
+    var curTotal = function (e2) { return (e2.tier === 'F' && e2.budget ? budgetFit(e2) : budget(e2, e2.tier || 'S')).total; };
+    var gN = ev.guests || 0, with_ = function (o) { return Object.assign({}, ev, o); };
+    if (gN > 2) {
+      var lo = 1, hi = gN - 1, best = 0;
+      while (lo <= hi) { var md = (lo + hi) >> 1; if (curTotal(with_({ guests: md, expected: Math.min(ev.expected || md, md) })) <= ev.budget) { best = md; lo = md + 1; } else hi = md - 1; }
+      if (best >= 2) swaps.push({ kind: 'guests', id: 'guests', to: best, text: 'Invite ' + best + ' people instead of ' + gN + ' (fits your budget)', save: b.total - curTotal(with_({ guests: best, expected: Math.min(ev.expected || best, best) })) });
+    }
+    if (ev.setting === 'outdoor') { var ib = curTotal(with_({ setting: 'indoor' })); if (ib < b.total) swaps.push({ kind: 'setting', id: 'setting', to: 'indoor', text: 'Choose an indoor venue (no tent, restroom trailer or generator)', save: b.total - ib }); }
+    if (ev.setting !== 'home' && ev.setting !== 'restaurant' && gN <= 80) { var hb = curTotal(with_({ setting: 'home' })); if (hb < b.total) swaps.push({ kind: 'setting', id: 'setting', to: 'home', text: 'Hold it at home or a friend\u2019s place', save: b.total - hb }); }
+    /* Smallest change that closes the gap first; then the rest, biggest saving first. */
+    swaps = swaps.filter(function (s) { return s.save > 0; }).sort(function (a, c) {
+      var ac = a.save >= over, cc = c.save >= over;
+      if (ac !== cc) return ac ? -1 : 1;
+      return ac ? a.save - c.save : c.save - a.save;
+    }).slice(0, 6);
     return { over: over, swaps: swaps };
   }
 
@@ -288,13 +330,22 @@
   }
 
   /* ---------- Timeline ---------- */
+  /* Checklist wording follows what is actually in the plan (no "book hair and makeup" when it was left out). */
+  function fitStep(t, ev) {
+    var have; try { have = (ev.tier === 'F' && ev.budget ? budgetFit(ev) : budget(ev, ev.tier || 'S')).items.map(function (i) { return i.id; }); } catch (e) { return t; }
+    if (t === 'Order decor, balloons and florals') { var parts = ['decor'].concat(have.indexOf('balloons') >= 0 ? ['balloons'] : []).concat(have.indexOf('florals') >= 0 ? ['florals'] : []); return 'Order ' + (parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0]); }
+    if (t === 'Plan outfits and book hair and makeup') return have.indexOf('hairMakeup') >= 0 ? t : 'Plan outfits';
+    if (t === 'Book key vendors (food, photos, music)') { var k = [have.indexOf('catering') >= 0 ? 'food' : null, have.indexOf('photographer') >= 0 ? 'photos' : null, (have.indexOf('dj') >= 0 || have.indexOf('liveMusic') >= 0) ? 'music' : null].filter(Boolean); return k.length ? 'Book key vendors (' + k.join(', ') + ')' : 'Book your vendors'; }
+    return t;
+  }
   function checklist(ev, today) {
     var date = ev.date ? new Date(ev.date + 'T12:00:00') : null;
     today = today || new Date();
     var st = ev.setting || 'indoor';
-    return D.CHECKLIST.filter(function (c) { return (!c.only || c.only.indexOf(ev.type) >= 0) && (!c.not || c.not.indexOf(st) < 0) && (!c.in || c.in.indexOf(st) >= 0); }).map(function (c, i) {
+    var bigEvent = ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0;
+    return D.CHECKLIST.filter(function (c) { return !(bigEvent && /^Book the venue or reserve|^Book key vendors/.test(c.t)) && (!c.only || c.only.indexOf(ev.type) >= 0) && (!c.not || c.not.indexOf(st) < 0) && (!c.in || c.in.indexOf(st) >= 0) && (!c.minGuests || (ev.guests || 0) >= c.minGuests || ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0); }).map(function (c, i) {
       var due = date ? new Date(date.getTime() - c.w * 7 * 864e5) : null;
-      return { id: 'c' + i, text: c.t, due: due ? due.toISOString().slice(0, 10) : null, overdue: !!(due && due < today && c.w > 0) };
+      return { id: 'c' + i, text: fitStep(c.t, ev), due: due ? due.toISOString().slice(0, 10) : null, overdue: !!(due && due < today && c.w > 0) };
     });
   }
 
@@ -307,9 +358,20 @@
       ? [[-30, 'Host arrives to set the table decor'], [0, 'Guests arrive and order drinks'], [20, 'Order food'], [Math.round(hours * 60 * 0.55), 'Toasts'], [Math.round(hours * 60 * 0.75), /birthday|milestone/.test(ev.type) ? 'Cake or dessert and the birthday song' : 'Dessert'], [hours * 60 - 10, 'Pay the bill (separate checks or your split)'], [hours * 60, 'Goodbyes and photos outside']]
       : t.style === 'wedding'
       ? [[-180, 'Vendors arrive and setup begins'], [-120, 'Hair and makeup finishing touches'], [-30, 'Guests arrive'], [0, 'Ceremony'], [30, 'Cocktail hour'], [90, 'Grand entrance and dinner'], [150, 'Toasts and first dance'], [180, 'Cake cutting and dancing'], [hours * 60 - 15, 'Send-off'], [hours * 60, 'Breakdown and cleanup']]
-      : [[-120, 'Setup begins and vendors arrive'], [-30, 'Host ready for photos'], [0, 'Guests arrive, welcome drinks'], [45, 'Food is served'], [Math.round(hours * 60 * 0.5), 'Toasts or the main moment'], [Math.round(hours * 60 * 0.65), 'Cake or dessert'], [Math.round(hours * 60 * 0.75), 'Games, dancing or photo booth'], [hours * 60, 'Goodbyes and favors'], [hours * 60 + 30, 'Cleanup']];
+      : (function () {
+        var T = ev.type, H = hours * 60;
+        var kidsParty = ev.kids && /birthday/.test(T);
+        var moment = { birthday: kidsParty ? 'Cake and the birthday song' : 'Toast, cake and the birthday song', milestone: 'Toast, cake and the birthday song', 'baby-shower': 'Shower games', 'bridal-shower': 'Shower games', 'gender-reveal': 'The big reveal', graduation: 'Toast to the graduate', engagement: 'Toast to the couple', anniversary: 'Toasts to the couple', quince: 'Grand entrance and the waltz', holiday: 'Welcome toast', gala: 'Welcome remarks and program', bachelorette: 'Games and toasts', dinner: 'Toasts' }[T] || 'Toasts or the main moment';
+        var cakeSep = !/birthday|milestone/.test(T);
+        var has = function (id) { try { return budget(ev, ev.tier || 'S').items.some(function (i) { return i.id === id; }); } catch (e) { return false; } };
+        var fun = kidsParty ? 'Games, activities and gifts' : /shower/.test(T) ? 'Gift opening' : T === 'gender-reveal' ? 'Photos and games' : (has('dj') || has('liveMusic')) ? (has('photoBooth') ? 'Dancing and photo booth' : 'Dancing') : has('photoBooth') ? 'Photo booth and mingling' : 'Mingling and photos';
+        var p = [[-120, 'Setup begins and vendors arrive'], [-30, 'Host ready for photos'], [0, kidsParty ? 'Guests arrive, drinks and snacks' : ev.alcohol === 'none' ? 'Guests arrive, welcome drinks and mocktails' : 'Guests arrive, welcome drinks'], [45, ev.setting === 'home' && !has('catering') ? 'Food is out' : 'Food is served'], [Math.round(H * 0.5), moment]];
+        if (cakeSep) p.push([Math.round(H * 0.65), 'Cake or dessert']);
+        p.push([Math.round(H * 0.72), fun], [H, 'Goodbyes and favors'], [H + 30, 'Cleanup']);
+        return p;
+      })();
     return plan.map(function (p) {
-      var m = base + p[0]; m = ((m % 1440) + 1440) % 1440;
+      var m = Math.round((base + p[0]) / 5) * 5; m = ((m % 1440) + 1440) % 1440;
       var h = Math.floor(m / 60), mm = m % 60;
       var label = ((h + 11) % 12 + 1) + ':' + (mm < 10 ? '0' : '') + mm + (h < 12 ? ' AM' : ' PM');
       return { time: label, text: p[1] };
@@ -327,11 +389,11 @@
   function dist(a, b) { var dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2]; return Math.sqrt(2 * dr * dr + 4 * dg * dg + 3 * db * db); }
   var WORDS = {
     pink: ['pink', 'blush', 'rose'], gold: ['gold', 'champagne', 'glam'], black: ['black', 'noir'], white: ['white', 'minimal', 'clean'],
-    green: ['green', 'garden', 'greenery', 'botanical'], boho: ['boho', 'pampas', 'bohemian'], rustic: ['rustic', 'barn', 'wood', 'farm'],
+    green: ['green', 'garden', 'greenery', 'botanical', 'sage', 'eucalyptus', 'olive', 'emerald', 'mint'], boho: ['boho', 'pampas', 'bohemian'], rustic: ['rustic', 'barn', 'wood', 'farm'],
     coastal: ['beach', 'coastal', 'ocean', 'nautical', 'blue'], tropical: ['tropical', 'palm', 'island', 'luau'], disco: ['disco', 'sparkle', 'sequin', '70s'],
-    vintage: ['vintage', 'hollywood', 'gatsby', 'roaring'], pastel: ['pastel', 'whimsy', 'baby', 'candy'], purple: ['purple', 'lavender', 'plum', 'lilac', 'royal'],
+    vintage: ['vintage', 'hollywood', 'gatsby', 'roaring'], pastel: ['pastel', 'whimsy', 'baby pink', 'baby blue', 'candy', 'rainbow'], purple: ['purple', 'lavender', 'plum', 'lilac', 'royal'],
     red: ['red', 'burgundy', 'wine'], ivory: ['ivory', 'cream', 'chandelier', 'ballroom'], classic: ['classic', 'timeless', 'black tie', 'formal'],
-    lavender: ['lavender', 'lilac'], tea: ['tea party', 'high tea', 'afternoon tea'], dark: ['moody', 'dark', 'velvet'], outdoor: ['outdoor', 'backyard', 'park', 'garden'], romantic: ['romantic', 'love', 'romance']
+    lavender: ['lavender', 'lilac'], tea: ['tea party', 'high tea', 'afternoon tea'], dark: ['moody', 'dark', 'velvet'], outdoor: ['outdoor', 'backyard', 'park', 'garden'], romantic: ['romantic', 'love', 'romance'], celestial: ['moon', 'stars', 'starry', 'celestial', 'galaxy', 'navy', 'midnight', 'twinkle'], silver: ['silver', 'metallic', 'chrome'], autumn: ['fall ', 'autumn', 'harvest', 'thanksgiving']
   };
   function matchStyles(colors, text, liked) {
     text = ((text || '') + ' ' + (liked || []).join(' ')).toLowerCase();
@@ -382,8 +444,8 @@
         id: s.id, name: name, styleName: s.name, palette: s.palette, mood: s.mood, decor: s.decor, dress: 'A standout look in ' + s.dress.charAt(0).toLowerCase() + s.dress.slice(1),
         menuStyle: s.menu, music: s.music, fit: i === 0 ? 'Closest match to your inspiration' : (i === 1 ? 'A close alternative' : 'A fresh direction'),
         outline: [
-          'Arrival: ' + s.decor[0].toLowerCase() + ' sets the tone at the entrance',
-          'Tables: ' + s.decor[1].toLowerCase(),
+          'Setting: ' + s.decor[0].toLowerCase(),
+          'Details: ' + s.decor[1].toLowerCase() + ', plus ' + s.decor[2].charAt(0).toLowerCase() + s.decor[2].slice(1),
           'Moment: ' + s.decor[3].toLowerCase(),
           'Dress code: ' + dressCode(ev).toLowerCase()
         ]
@@ -396,6 +458,6 @@
   root.EC_ENGINE = {
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
-    placesUsed: placesUsed, concepts: concepts, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
+    placesUsed: placesUsed, concepts: concepts, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
   };
 })(typeof window !== 'undefined' ? window : globalThis);

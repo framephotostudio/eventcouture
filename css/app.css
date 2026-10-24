@@ -505,3 +505,19 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .bk-stats b { font-size: 1.1rem; color: var(--ink); }
 .toast.undo { width: max-content; max-width: calc(100vw - 32px); display: flex; align-items: center; gap: 14px; padding: 10px 10px 10px 18px; }
 .toast.undo button { background: transparent; color: #E9D7B4; border: 1px solid rgba(233,215,180,.6); border-radius: 999px; padding: 7px 14px; font: inherit; font-weight: 600; cursor: pointer; min-height: 36px; white-space: nowrap; }
+/* Wizard actions: the main button comes first and full width on phones; Back and Save later sit under it. */
+.wiz-act { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.wiz-act .btn.gold { order: 3; margin-left: auto; }
+.wiz-act .btn.ghost { order: 1; }
+.wiz-act .link { order: 2; }
+@media (max-width: 600px) { .wiz-act .btn.gold { order: 0; width: 100%; margin-left: 0; } .wiz-act .link { margin-left: auto; } }
+.songs .sec-h { display: block; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gold-text, #8A7148); margin: 6px 0 4px; }
+.songs.short li:nth-child(n+11) { display: none; }
+/* Phone: plan header stacks so the total gets its own line; spending levels wrap into a tidy grid */
+@media (max-width: 600px) {
+  .plan-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .plan-total { text-align: left; max-width: none; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+  .plan-total .muted + .muted::before { content: ''; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; border-radius: 16px; width: 100%; }
+  .seg button { border-radius: 12px; text-align: center; }
+}
