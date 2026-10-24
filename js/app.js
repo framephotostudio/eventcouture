@@ -166,7 +166,7 @@
       '<header class="topbar"><a class="brand" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.mark) + '" alt="" width="44" height="44"><span class="bt"><b>Event Couture</b><span>by Always Luxe</span></span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
-      '<footer class="site"><img src="' + srcOf(BRAND.compact) + '" alt="Event Couture by Always Luxe" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div></footer>';
+      '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div></footer>';
     var ld = document.getElementById('loader'); if (ld && !ld.classList.contains('done')) { ld.classList.add('done'); setTimeout(function () { if (ld.parentNode) ld.parentNode.removeChild(ld); }, 450); }
     if (location.hash !== lastHash) window.scrollTo(0, 0);
     lastHash = location.hash;
@@ -182,7 +182,7 @@
     { title: 'Moon and stars baby shower', type: 'baby-shower', guests: 35, city: 'Phoenix, AZ', budget: 5500, style: 'blush-romance', setting: 'indoor', hours: 3, img: 'moon-shower' },
     { title: 'Plum and gold graduation', type: 'graduation', guests: 75, city: 'Washington, DC', budget: 7500, style: 'royal-purple', setting: 'indoor', hours: 4, img: 'plum-graduation' }
   ];
-  var FEATURED = [0, 3, 5];
+  var FEATURED = [1, 2, 0]; /* varied: black and gold, sage garden, blush */
   function samplePhoto(s) { return PHOTOS.find(function (x) { return x.src === IMG + s.img + '.jpg'; }); }
   function sampleEvent(i) {
     var s = SAMPLES[i]; var st = D.STYLES.find(function (x) { return x.id === s.style; });
@@ -230,29 +230,27 @@
     var tags = [['Candles and decor', pick('decor').mid, 36, 30], ['Cake', pick('cake').mid, 80, 36], ['Florals', pick('florals').mid, 52, 62], ['Linens and tableware', pick('rentals').mid, 34, 86]];
     var lines = [['Venue', 'venue'], ['Catering', 'catering'], ['Florals', 'florals'], ['Candles and decor', 'decor'], ['Cake', 'cake'], ['Photographer', 'photographer']].map(function (l) { return '<div class="line"><span>' + l[0] + '</span><span class="num">' + money(pick(l[1]).mid) + '</span></div>'; }).join('');
     frame(
-      '<section class="welcome satin bleed"><img class="wlogo" src="' + srcOf(BRAND.compact) + '" alt="Event Couture by Always Luxe">' +
-      '<div class="wcopy"><h1>Your inspiration. A beautifully planned event.</h1>' +
+      '<section class="hero"><div class="hero-copy"><span class="eyebrow">Event planning for every budget</span><h1>Your inspiration. A beautifully planned event.</h1>' +
       '<p class="lead">Turn photos or ideas into three event concepts, a detailed budget and a step-by-step plan.</p>' +
-      '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link" data-scroll="gallery">Explore sample plans</button></div>' +
-      '</div></section>' +
-      '<div class="showcase"><figure class="hero-photo"><div class="scene">' +
+      '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="gallery">Explore sample plans</button></div></div>' +
+      '<figure class="hero-photo"><div class="scene">' +
       '<img src="' + srcOf(HERO_IMG) + '" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
       tags.map(function (t) { return '<button class="hot' + (t[2] > 65 ? ' r' : t[2] < 30 ? ' l' : '') + '" style="left:' + t[2] + '%;top:' + t[3] + '%" aria-expanded="false" aria-label="' + esc(t[0]) + ', ' + money(t[1]) + '"><span class="dot" aria-hidden="true"></span><span class="lbl" aria-hidden="true"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span></button>'; }).join('') +
-      '</div><figcaption class="small muted">AI-generated sample concept. Tap a gold dot to see what that piece costs.</figcaption></figure>' +
+      '</div><figcaption>AI-generated sample concept. Tap a dot to see what that piece costs.</figcaption></figure></section>' +
       '<section class="demo panel"><div class="demo-head"><div><span class="small muted">Example plan</span><h3>Blush and gold wedding</h3><span class="small muted">Houston, TX · 150 guests · Signature version</span></div>' +
       '<div class="demo-total"><span class="small muted">Estimated event budget</span><span class="display num">' + money(demo.total) + '</span></div></div>' +
       '<button class="link small" id="showBudget" aria-expanded="false" aria-controls="demoLines">See example budget</button>' +
-      '<div id="demoLines" class="demo-lines" hidden>' + lines + '<p class="muted small" style="margin:8px 0 0">The total also includes tax, service charges, tips and a 10% cushion.</p></div></section></div>' +
-      '<section id="gallery" class="stack" style="margin-top:44px"><h2>Find your kind of celebration</h2><p class="muted">Sample plans you can open for free. Photos are AI-generated inspiration, not events we organized.</p><div class="samples">' +
+      '<div id="demoLines" class="demo-lines" hidden>' + lines + '<p class="muted small" style="margin:8px 0 0">The total also includes tax, service charges, tips and a 10% cushion.</p></div></section>' +
+      '<section id="gallery" class="stack section"><h2>Find your kind of celebration</h2><p class="muted">Sample plans you can open for free. Photos are AI-generated inspiration, not events we organized.</p><div class="samples">' +
       FEATURED.map(function (i) { return sampleCard(SAMPLES[i], i); }).join('') + '</div>' +
       '<div class="samples" id="moreSamples" hidden>' + SAMPLES.map(function (s, i) { return FEATURED.indexOf(i) >= 0 ? '' : sampleCard(s, i); }).join('') + '</div>' +
       '<div><button class="btn ghost" id="allSamples" aria-expanded="false" aria-controls="moreSamples">See all ' + SAMPLES.length + ' sample plans</button></div></section>' +
-      '<section class="stack-lg" style="margin-top:44px"><h2>How it works</h2><ol class="steps-line">' +
+      '<section class="stack-lg section"><h2>How it works</h2><ol class="steps-line">' +
       '<li><h3>Share your inspiration</h3><p class="muted">Several photos, Pinterest or TikTok links, a few words, or just say it out loud.</p></li>' +
       '<li><h3>Pick a concept</h3><p class="muted">Three creative directions. Then see the one you choose in three spending versions, or one made for your budget.</p></li>' +
       '<li><h3>See every cost</h3><p class="muted">Venue, food, decor, music, photos and the fees people forget, sized to your city and guest count.</p></li>' +
       '<li><h3>Plan it together</h3><p class="muted">Co-hosts, voting, RSVPs, a registry and cost splitting, without anyone downloading an app.</p></li></ol></section>' +
-      '<section class="stack" style="margin-top:44px;text-align:center;justify-items:center"><h2>Ready when you are</h2><p class="muted">Start with a photo, a few words or just your colors.</p><div><a class="btn primary" href="#/new">Plan my event</a></div></section>'
+      '<section class="stack section" style="text-align:center;justify-items:center"><h2>Ready when you are</h2><p class="muted">Start with a photo, a few words or just your colors.</p><div><a class="btn primary" href="#/new">Plan my event</a></div></section>'
     );
     $$('[data-scroll]').forEach(function (b) { b.addEventListener('click', function () { var t = document.getElementById(b.dataset.scroll); if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }); });
     var hots = $$('.hot');
