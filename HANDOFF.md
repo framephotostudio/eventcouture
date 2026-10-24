@@ -149,3 +149,11 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 6. **Security before real payments:** sign-in checks on server routes, rate limits, and an atomic spending counter.
 7. **Basic analytics** for the customer journey (start, review done, concepts viewed, plan kept, venue shortlisted, return visit).
 8. **Key hygiene:** the Google Maps key was shown in a screenshot. Rotate it and restrict it to Places API (New) and Routes API.
+
+## 0.24.0: AI-generated inspiration gallery (branch inspiration-gallery, awaiting owner sign-off on names)
+- 40 photos in img/inspo (large + sm), described in js/inspo.js, built by tools_inspo.py (edit the list there).
+- Home "What are you celebrating?" + #/inspiration/<type>[/<draftId>]; every AI photo carries an "AI-generated inspiration" label.
+- "Use this inspiration" starts a draft with ev.inspiration.inspo; E.withInspo puts the photo's concept first (second when the host names her own colors).
+- New looks: citrus-fiesta, amalfi-lemon, blue-willow, butter-bloom, tuscan-olive.
+- D.NEW_VENUES: hand-checked newly opened venues (Deco House River Oaks, Houston). Not paid placement.
+- Test: tests/inspiration.py

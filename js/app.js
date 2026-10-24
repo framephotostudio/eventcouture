@@ -14,16 +14,16 @@
   /* Small palette dots: the photo carries the mood, the dots name the colors. */
   function dots(p, label) { return '<span class="dots" role="img" aria-label="' + esc(label || 'Color palette') + '">' + p.slice(0, 5).map(function (c) { return '<i style="background:' + esc(c) + '"></i>'; }).join('') + '</span>'; }
   /* Curated inspiration photos (AI-generated samples). Matched by style and, where the scene is event-specific, by event type. */
-  var IMG = 'img/events/';
+  var IMG = 'img/events/', INSPO_IMG = 'img/inspo/';
   var PHOTOS = [
-    { src: IMG + 'blush-tea.jpg', styles: ['blush-romance', 'pastel-whimsy'], types: ['brunch', 'bridal-shower'], alt: 'Blush and ivory brunch table with tiered pastries, roses and gold-rimmed teacups' },
-    { src: IMG + 'moon-shower.jpg', styles: ['blush-romance', 'pastel-whimsy'], types: ['baby-shower', 'gender-reveal'], alt: 'Blush and gold baby shower dessert table with a moon cake, teddy bear and balloon garland' },
-    { src: IMG + 'sage-garden-shower.jpg', styles: ['champagne-garden'], types: ['baby-shower', 'gender-reveal'], alt: 'Garden baby shower with sage and ivory balloons, white roses and a long table under a pergola' },
-    { src: IMG + 'plum-graduation.jpg', styles: ['royal-purple', 'moody-floral'], types: ['graduation'], alt: 'Plum, ivory and gold graduation table with a cap-topped cake and cupcakes' },
-    { src: IMG + 'plum-birthday.jpg', styles: ['royal-purple', 'moody-floral'], types: ['birthday', 'milestone'], alt: 'Plum velvet lounge with a blush floral cake, candles and a plum and blush balloon arch' },
-    { src: IMG + 'noir-skyline.jpg', styles: ['modern-noir', 'old-hollywood'], types: ['birthday', 'milestone', 'bachelorette', 'holiday', 'christmas', 'retirement'], alt: 'Black and gold table at dusk with orchids, candles and a skyline view' },
-    { src: IMG + 'ivory-ballroom.jpg', styles: ['ivory-ballroom', 'minimal-white'], types: ['wedding', 'gala', 'quince', 'corporate', 'engagement', 'anniversary'], alt: 'Ivory and gold ballroom with a tiered cake, chandeliers and white rose centerpieces' },
-    { src: 'img/hero.jpg', styles: ['blush-romance'], types: ['wedding', 'engagement', 'anniversary', 'gala', 'quince'], alt: 'Candlelit table with blush and ivory roses, gold candlesticks and a tiered cake' }
+    { src: IMG + 'blush-tea.jpg', ai: true, styles: ['blush-romance', 'pastel-whimsy'], types: ['brunch', 'bridal-shower'], alt: 'Blush and ivory brunch table with tiered pastries, roses and gold-rimmed teacups' },
+    { src: IMG + 'moon-shower.jpg', ai: true, styles: ['blush-romance', 'pastel-whimsy'], types: ['baby-shower', 'gender-reveal'], alt: 'Blush and gold baby shower dessert table with a moon cake, teddy bear and balloon garland' },
+    { src: IMG + 'sage-garden-shower.jpg', ai: true, styles: ['champagne-garden'], types: ['baby-shower', 'gender-reveal'], alt: 'Garden baby shower with sage and ivory balloons, white roses and a long table under a pergola' },
+    { src: IMG + 'plum-graduation.jpg', ai: true, styles: ['royal-purple', 'moody-floral'], types: ['graduation'], alt: 'Plum, ivory and gold graduation table with a cap-topped cake and cupcakes' },
+    { src: IMG + 'plum-birthday.jpg', ai: true, styles: ['royal-purple', 'moody-floral'], types: ['birthday', 'milestone'], alt: 'Plum velvet lounge with a blush floral cake, candles and a plum and blush balloon arch' },
+    { src: IMG + 'noir-skyline.jpg', ai: true, styles: ['modern-noir', 'old-hollywood'], types: ['birthday', 'milestone', 'bachelorette', 'holiday', 'christmas', 'retirement'], alt: 'Black and gold table at dusk with orchids, candles and a skyline view' },
+    { src: IMG + 'ivory-ballroom.jpg', ai: true, styles: ['ivory-ballroom', 'minimal-white'], types: ['wedding', 'gala', 'quince', 'corporate', 'engagement', 'anniversary'], alt: 'Ivory and gold ballroom with a tiered cake, chandeliers and white rose centerpieces' },
+    { src: 'img/hero.jpg', ai: true, styles: ['blush-romance'], types: ['wedding', 'engagement', 'anniversary', 'gala', 'quince'], alt: 'Candlelit table with blush and ivory roses, gold candlesticks and a tiered cake' }
   ];
   function photoFor(styleId, type) {
     /* Only show a photo when it fits both the look and the kind of event. A wedding scene is never shown for a brunch. */
@@ -42,6 +42,7 @@
   function eventPhoto(ev) {
     var up = ev.inspiration && ev.inspiration.photos && ev.inspiration.photos[0];
     if (up) return { src: up.src, alt: 'Your inspiration photo' };
+    var ip = E.inspoOf(ev); if (ip) return { src: INSPO_IMG + ip.id + '.jpg', alt: ip.alt, ai: true };
     return ev.photo || null; /* sample plans only; we never generate or substitute pictures for a host's event */
   }
   /* At a restaurant only table-sized decor makes sense: no backdrops, arches or dessert tables. */
@@ -105,7 +106,9 @@
       (look ? '<p class="' + (cls || '') + '"><b>For ' + esc(honoree(ev)) + ':</b> ' + esc(look.charAt(0).toUpperCase() + look.slice(1)) + '</p>' : '');
   }
   function srcOf(u) { return (window.EC_EMBED && window.EC_EMBED[u]) || u; }
-  function thumb(photo, cls) { return photo ? '<div class="thumb ' + (cls || '') + '"><img src="' + srcOf(photo.src) + '" alt="' + esc(photo.alt) + '" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()"></div>' : ''; }
+  function thumb(photo, cls) { return photo ? '<div class="thumb ' + (cls || '') + '"><img src="' + srcOf(photo.src) + '" alt="' + esc(photo.alt) + '" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' + (photo.ai ? AI_TAG : '') + '</div>' : ''; }
+  /* Every AI-made picture says so, so no one mistakes it for a real event we organized. */
+  var AI_TAG = '<span class="ai-tag">AI-generated inspiration</span>';
   function fmtDate(d) { if (!d) return 'Date not set'; var x = new Date(d + 'T12:00:00'); return x.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }); }
   function shortDate(d) { if (!d) return ''; return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
   function fmtTime(t) { if (!t) return ''; var p = t.split(':'); var h = +p[0]; return ((h + 11) % 12 + 1) + ':' + p[1] + (h < 12 ? ' AM' : ' PM'); }
@@ -205,24 +208,27 @@
       var vibes = ev.inspiration.vibes || [];
       VIBE_COLORS.forEach(function (c) { if (vibes.indexOf(c[0]) >= 0) { colors.push(hexRgb(c[1])); colors.push(hexRgb(c[1])); } });
       var text = (ev.inspiration.text || '') + ' ' + vibes.join(' ').toLowerCase() + ' ' + (ev.inspiration.links || []).join(' ');
+      /* A chosen inspiration photo counts like the host's own photo; her own words come first, so they win. */
+      var ip = E.inspoOf(ev); if (ip) { ip.palette.forEach(function (h) { colors.push(hexRgb(h)); }); text += ' ' + E.inspoText(ip).toLowerCase(); }
+      var fin = function (list) { return E.withInspo(ev, list, skip); };
       if (AI.live) {
         /* Started early on the review screen, so the concepts are usually ready when the host taps Create. */
-        var key = JSON.stringify(slim(ev)).length + ':' + JSON.stringify([ev.type, ev.guests, ev.city, ev.budget, ev.setting, ev.time, ev.kids, ev.alcohol, ev.inspiration.text, ev.inspiration.vibes, (ev.inspiration.photos || []).length]);
+        var key = JSON.stringify(slim(ev)).length + ':' + JSON.stringify([ev.inspiration.inspo || '', ev.type, ev.guests, ev.city, ev.budget, ev.setting, ev.time, ev.kids, ev.alcohol, ev.inspiration.text, ev.inspiration.vibes, (ev.inspiration.photos || []).length]);
         if (!(skip && skip.length) && AI.pre && AI.pre.key === key) return AI.pre.p;
-        var library = function () { AI.source = 'library'; return E.concepts(ev, colors, text, loves, skip); };
+        var library = function () { AI.source = 'library'; return fin(E.concepts(ev, colors, text, loves, skip)); };
         var call = fetch(CFG.apiUrl + '/api/concepts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ event: slim(ev), skip: skip || [] }) })
           .then(function (r) { if (!r.ok) throw new Error('server'); return r.json(); })
-          .then(function (j) { AI.source = 'ai'; return j.concepts; });
+          .then(function (j) { AI.source = 'ai'; return fin(j.concepts); });
         /* Never keep a host waiting: after 20 seconds the style library answers instead. */
         var p = Promise.race([call, new Promise(function (_, no) { setTimeout(function () { no(new Error('slow')); }, 20000); })]).catch(library);
         if (!(skip && skip.length)) AI.pre = { key: key, p: p };
         return p;
       }
       AI.source = 'library';
-      return Promise.resolve(E.concepts(ev, colors, text, loves, skip));
+      return Promise.resolve(fin(E.concepts(ev, colors, text, loves, skip)));
     }
   };
-  function slim(ev) { return { type: ev.type, guests: ev.guests, city: ev.city, budget: ev.budget, setting: ev.setting, time: ev.time, kids: !!ev.kids, alcohol: ev.alcohol || 'full', text: ev.inspiration.text, vibes: ev.inspiration.vibes || [], links: ev.inspiration.links, photos: (ev.inspiration.photos || []).map(function (p) { return { image: p.src, loves: p.loves }; }) }; }
+  function slim(ev) { return { type: ev.type, guests: ev.guests, city: ev.city, budget: ev.budget, setting: ev.setting, time: ev.time, kids: !!ev.kids, alcohol: ev.alcohol || 'full', text: [ev.inspiration.text, E.inspoText(E.inspoOf(ev))].filter(Boolean).join(' '), vibes: ev.inspiration.vibes || [], links: ev.inspiration.links, photos: (ev.inspiration.photos || []).map(function (p) { return { image: p.src, loves: p.loves }; }) }; }
 
   /* ---------- layout ---------- */
   var ICON = {
@@ -279,6 +285,7 @@
       if (!p.length) return home();
       if (p[0] === 'new') return wizard(+(p[1] || 1), p[2]);
       if (p[0] === 'events') return myEvents();
+      if (p[0] === 'inspiration') return inspirationPage(p[1] && p[1] !== 'all' ? decodeURIComponent(p[1]) : '', p[2]);
       if (p[0] === 'sample') { var se = sampleEvent(+p[1] || 0); return se ? planView(se, p[2] || 'overview') : notFound(); }
       if (p[0] === 'e' && p[2] === 'concepts') return conceptsView(p[1]);
       if (p[0] === 'e') { var ev = getEvent(p[1]); if (!ev) return notFound(); return planView(ev, p[2] || 'overview'); }
@@ -301,6 +308,58 @@
     return '<a class="sample" href="#/sample/' + i + '">' + thumb(samplePhoto(s)) + '<div class="in"><h3>' + esc(s.title) + '</h3>' + dots(stl.palette, stl.name + ' colors') +
       '<span class="muted small">' + esc(s.city) + ', ' + s.guests + ' guests' + (s.setting === 'restaurant' ? ', at a restaurant' : '') + '</span></div></a>';
   }
+  /* ---------- AI-generated inspiration gallery: browse by occasion, then plan from a photo ---------- */
+  var INSPO = window.EC_INSPO || [];
+  function inspoTypes() { return D.EVENT_TYPES.filter(function (t) { return INSPO.some(function (p) { return p.types.indexOf(t.id) >= 0; }); }); }
+  function inspoFor(type) { return type ? INSPO.filter(function (p) { return p.types.indexOf(type) >= 0; }).sort(function (a, b) { return a.types.indexOf(type) - b.types.indexOf(type); }) : INSPO; }
+  function inspoCards(type, limit) {
+    var list = inspoFor(type), shown = limit ? list.slice(0, limit) : list;
+    return shown.map(function (p) { return '<button type="button" class="icard" data-inspo="' + p.id + '" aria-label="' + esc(p.name) + ', AI-generated inspiration photo"><div class="thumb"><img src="' + srcOf(INSPO_IMG + 'sm/' + p.id + '.jpg') + '" alt="' + esc(p.alt) + '" loading="lazy">' + AI_TAG + '</div><span class="iname">' + esc(p.name) + '</span></button>'; }).join('') +
+      (limit && list.length > limit ? '<a class="icard more" href="#/inspiration' + (type ? '/' + type : '') + '"><span>See all ' + list.length + (type ? ' ' + esc(E.typeOf(type).name.toLowerCase().replace(/christmas/, 'Christmas')) : '') + ' photos</span></a>' : '');
+  }
+  function inspoGallery(type, limit) {
+    return '<div class="chips iscroll" id="ifilter" role="group" aria-label="Filter by occasion"><button type="button" class="chip" data-t="" aria-pressed="' + !type + '">All occasions</button>' +
+      inspoTypes().map(function (t) { return '<button type="button" class="chip" data-t="' + t.id + '" aria-pressed="' + (t.id === type) + '">' + esc(t.name) + '</button>'; }).join('') + '</div>' +
+      '<div class="igrid" id="igrid">' + inspoCards(type, limit) + '</div>' +
+      '<p class="muted small">Every photo here is AI-generated inspiration, not a real event we organized. Venues, vendors and prices in your plan are real and matched to your city.</p>';
+  }
+  function bindInspo(limit, onType) {
+    var cur = ($('#ifilter [aria-pressed="true"]') || {}).dataset; cur = cur ? cur.t : '';
+    $('#ifilter').addEventListener('click', function (e) { var b = e.target.closest('[data-t]'); if (!b) return; cur = b.dataset.t; $$('#ifilter [data-t]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); $('#igrid').innerHTML = inspoCards(cur, limit); if (onType) onType(cur); });
+    $('#igrid').addEventListener('click', function (e) { var b = e.target.closest('[data-inspo]'); if (b) openInspo(b.dataset.inspo, cur); });
+  }
+  function openInspo(id, type) {
+    var p = INSPO.find(function (x) { return x.id === id; }); if (!p) return;
+    var pick = type && p.types.indexOf(type) >= 0 ? type : p.types[0];
+    sheet('<div class="thumb ibig"><img src="' + srcOf(INSPO_IMG + p.id + '.jpg') + '" alt="' + esc(p.alt) + '">' + AI_TAG + '</div>' +
+      '<div class="stack"><h3>' + esc(p.name) + '</h3>' + dots(p.palette, p.name + ' colors') + '<p class="muted">' + esc(p.mood) + '</p></div>' +
+      '<div class="stack"><b class="small">In this photo</b><ul class="incl">' + p.decor.map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul></div>' +
+      '<div class="stack"><b class="small" id="iforLbl">Plan it for</b><div class="chips" id="ifor" role="group" aria-labelledby="iforLbl">' + p.types.map(function (t) { return '<button type="button" class="chip" data-t="' + t + '" aria-pressed="' + (t === pick) + '">' + esc(E.typeOf(t).name) + '</button>'; }).join('') + '</div><span class="muted small">Planning something else? Choose any occasion on the next steps.</span></div>' +
+      '<p class="muted small">Your concepts, decor, shopping list, menu and playlist follow this photo. Next, add anything you want different, like colors, guest count or budget. Your words always win.</p>' +
+      '<button class="btn gold block" id="useInspo">Use this inspiration</button><button class="btn ghost block" data-close>Keep browsing</button>', function (el, close) {
+      $('#ifor', el).addEventListener('click', function (e) { var b = e.target.closest('[data-t]'); if (!b) return; pick = b.dataset.t; $$('#ifor [data-t]', el).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
+      $('#useInspo', el).addEventListener('click', function () { close(); startFromInspo(p, pick); });
+    });
+  }
+  var inspoFor_ = null;   /* the draft a host is choosing a different photo for */
+  function startFromInspo(p, type) {
+    var keep = inspoFor_ && drafts()[inspoFor_]; inspoFor_ = null;
+    var d = keep || newDraft(), tt = E.typeOf(type);
+    d.inspiration.inspo = p.id;
+    if (d.type !== type) { d.type = type; d.hours = tt.hours; if (!d.guestsTouched) d.guests = d.expected = tt.defaultGuests; }
+    d.typeChosen = true;
+    if (!d.settingChosen) { d.setting = p.setting; if ((d.setting === 'restaurant' || d.setting === 'privateRoom') && d.hours > 3) d.hours = 3; }
+    if (type === 'kids-birthday') d.kids = true;
+    if (!saveDraft(d)) return;
+    location.hash = '#/new/1/' + d.id;
+  }
+  function inspirationPage(type, forId) {
+    inspoFor_ = forId && drafts()[forId] ? forId : null;
+    if (type && !inspoTypes().some(function (t) { return t.id === type; })) type = '';
+    frame('<div class="stack-lg"><div class="stack"><h2>Inspiration by occasion</h2><p class="muted">Tap a photo you love. Your plan, from the decor to the playlist, is built around what’s in it.</p></div>' + inspoGallery(type) + '</div>');
+    bindInspo(0, function (t) { history.replaceState(null, '', '#/inspiration/' + (t || 'all') + (inspoFor_ ? '/' + inspoFor_ : '')); });
+  }
+
   function home() {
     var demoEv = { type: 'wedding', guests: 150, city: 'Houston, TX' };
     var demo = E.budget(demoEv, 'S');
@@ -311,7 +370,7 @@
     frame(
       '<section class="hero"><div class="hero-copy"><h1>Your inspiration. A beautifully planned event.</h1>' +
       '<p class="lead">Turn photos or ideas into three event concepts, a detailed budget and a step-by-step plan.</p>' +
-      '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="gallery">Explore sample plans</button></div></div>' +
+      '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div></div>' +
       '<figure class="hero-photo"><div class="scene">' +
       '<img src="' + srcOf(HERO_IMG) + '" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
       tags.map(function (t) { return '<button class="hot' + (t[2] > 65 ? ' r' : t[2] < 30 ? ' l' : '') + '" style="left:' + t[2] + '%;top:' + t[3] + '%" aria-expanded="false" aria-label="' + esc(t[0]) + ', ' + money(t[1]) + '"><span class="dot" aria-hidden="true"></span><span class="lbl" aria-hidden="true"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span></button>'; }).join('') +
@@ -320,7 +379,8 @@
       '<div class="demo-total"><span class="small muted">Estimated event budget</span><span class="display num">' + money(demo.total) + '</span></div></div>' +
       '<button class="link small" id="showBudget" aria-expanded="false" aria-controls="demoLines">See example budget</button>' +
       '<div id="demoLines" class="demo-lines" hidden>' + lines + '<p class="muted small" style="margin:8px 0 0">Every line already includes tax, service charges and tips.</p></div></section>' +
-      '<section id="gallery" class="stack section"><h2>Find your kind of celebration</h2><p class="muted">Sample plans you can open for free. Photos are AI-generated inspiration, not events we organized.</p><div class="samples home-samples">' +
+      '<section id="inspo" class="stack section"><h2>What are you celebrating?</h2><p class="muted">No idea yet? Pick your occasion and tap a photo you love. Your whole plan is built around it.</p>' + inspoGallery('', 8) + '</section>' +
+      '<section id="gallery" class="stack section"><h2>Explore sample plans</h2><p class="muted">Complete plans you can open for free. Photos are AI-generated inspiration, not events we organized.</p><div class="samples home-samples">' +
       FEATURED.map(function (i) { return sampleCard(SAMPLES[i], i); }).join('') + '</div>' +
       '<div class="samples" id="moreSamples" hidden>' + SAMPLES.map(function (s, i) { return FEATURED.indexOf(i) >= 0 ? '' : sampleCard(s, i); }).join('') + '</div>' +
       '<div><button class="btn ghost" id="allSamples" aria-expanded="false" aria-controls="moreSamples">See all ' + SAMPLES.length + ' sample plans</button></div></section>' +
@@ -335,6 +395,7 @@
     var hots = $$('.hot');
     hots.forEach(function (h) { h.addEventListener('click', function () { var open = h.getAttribute('aria-expanded') === 'true'; hots.forEach(function (o) { o.setAttribute('aria-expanded', 'false'); }); h.setAttribute('aria-expanded', open ? 'false' : 'true'); }); });
     $('#showBudget').addEventListener('click', function () { var l = $('#demoLines'), open = l.hidden; l.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Hide example budget' : 'See example budget'; });
+    bindInspo(8);
     $('#allSamples').addEventListener('click', function () { var m = $('#moreSamples'), open = m.hidden; m.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Show fewer' : 'See all ' + SAMPLES.length + ' sample plans'; });
   }
 
@@ -353,7 +414,8 @@
     var stepName = { 1: 'Inspiration', 2: 'Details', 3: 'Review details' };
     frame('<div class="stack-lg"><div class="row" style="justify-content:space-between"><h2>My events</h2><a class="btn gold small" href="#/new">Plan a new event</a></div>' +
       (ds.length ? '<div class="stack"><h3>In progress</h3><p class="muted small">Saved automatically. Pick up right where you left off.</p><div class="list panel">' + ds.map(function (d) {
-        var thumb = d.inspiration.photos[0] ? '<img src="' + d.inspiration.photos[0].src + '" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:8px">' : '<span style="width:52px;height:52px;border-radius:8px;background:var(--champagne-soft);display:block"></span>';
+        var dsrc = d.inspiration.photos[0] ? d.inspiration.photos[0].src : E.inspoOf(d) ? INSPO_IMG + 'sm/' + E.inspoOf(d).id + '.jpg' : '';
+        var thumb = dsrc ? '<img src="' + srcOf(dsrc) + '" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:8px">' : '<span style="width:52px;height:52px;border-radius:8px;background:var(--champagne-soft);display:block"></span>';
         return '<div class="it">' + thumb + '<div class="grow"><b>' + esc(d.name || (d.inspiration && d.inspiration.text ? '\u201c' + d.inspiration.text.slice(0, 40) + (d.inspiration.text.length > 40 ? '\u2026' : '') + '\u201d' : 'Untitled event')) + '</b><div class="small muted">Next: ' + stepName[d.step || 1] + (d.updated ? ', saved ' + new Date(d.updated).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '') + '</div></div><span class="acts"><a class="btn small" href="#/new/' + (d.step || 1) + '/' + d.id + '">Continue</a><button class="link small" data-rmd="' + d.id + '">Delete</button></span></div>';
       }).join('') + '</div></div>' : '') +
       (all.length ? (ds.length ? '<h3>Planned</h3>' : '') + '<div class="samples">' + all.map(function (ev) {
@@ -391,6 +453,7 @@
       Object.keys(count).sort(function (a, b) { return count[b] - count[a]; }).forEach(function (c) { if (picked.indexOf(c) < 0) picked.push(c); });
     }
     var text = ((d.inspiration && d.inspiration.text) || '') + ' ' + vibes.join(' ').toLowerCase();
+    var ip0 = E.inspoOf(d); if (ip0) { ip0.palette.slice(0, 2).forEach(function (h) { colors.push(hexRgb(h)); }); text += ' ' + ip0.shop; }
     var style = E.matchStyles(colors, text, [])[0].style;
     var word = TYPE_WORD[type] || 'Celebration';
     /* Names use real colors: the ones picked, else the ones typed, else the look's main color. */
@@ -406,6 +469,7 @@
       c2 ? art(c1) + c1 + ' and ' + c2 + ' ' + (type === 'wedding' ? 'Affair' : word) : art(c1) + c1 + ' ' + word,
       (vibe ? VIBE_NOUN[vibe] : partOfDay) + ' in ' + c1,
       'The ' + c1 + ' ' + (type === 'wedding' || type === 'gala' || / Party$/.test(word) ? 'Soir\u00e9e' : word + ' Soir\u00e9e')];
+    var ip = E.inspoOf(d); if (ip) out.unshift(ip.name);
     return out.filter(function (n, i) { return out.indexOf(n) === i; });
   }
   var VIBE_COLORS = [['Blush', '#F2C9CF'], ['Ivory', '#F7F1E3'], ['Gold', '#C9A86A'], ['Champagne', '#E8D9BC'], ['White', '#FFFFFF'], ['Black', '#151515'], ['Sage', '#A9B89A'], ['Burgundy', '#7B2D3B'], ['Lavender', '#C9B3DD'], ['Dusty blue', '#A9C7D3'], ['Terracotta', '#C47C4E'], ['Silver', '#C0C0C8'], ['Pastels', '#F9E1EC'], ['Bright colors', '#F2B544']];
@@ -460,13 +524,16 @@
     function laterBtn() { return '<button type="button" class="link" id="later">Save and finish later</button>'; }
     var prog = '<div class="progress" aria-label="Step ' + step + ' of 3">' + [1, 2, 3].map(function (i) { return '<i class="' + (i <= step ? 'on' : '') + '"></i>'; }).join('') + '</div>';
     if (step === 1) {
-      frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>Share your inspiration</h2><p class="muted">Add as many photos as you like: Pinterest saves, Instagram or TikTok screenshots, or your own pictures. Then tap the parts you love in each one.</p></div>' +
+      var ip = E.inspoOf(draft);
+      frame('<div class="wizard stack-lg">' + prog + (ip ? '<div class="stack"><h2>Your inspiration</h2><p class="muted">Your plan starts from this photo. Add your own photos or words below for anything you want different.</p></div>' +
+        '<div class="panel inspo-chosen">' + thumb({ src: INSPO_IMG + 'sm/' + ip.id + '.jpg', alt: ip.alt, ai: true }) + '<div class="stack"><b>' + esc(ip.name) + '</b><span class="muted small">' + esc(ip.mood) + '</span><div class="row"><a class="btn ghost small" href="#/inspiration/' + esc(draft.type || 'all') + '/' + draft.id + '">Choose a different photo</a><button type="button" class="link small" id="noInspo">Remove</button></div></div></div>'
+        : '<div class="stack"><h2>Share your inspiration</h2><p class="muted">Add as many photos as you like: Pinterest saves, Instagram or TikTok screenshots, or your own pictures. Then tap the parts you love in each one.</p></div>') +
         '<label class="drop" id="drop"><input type="file" id="files" accept="image/*" multiple class="sr"><b>Add inspiration photos</b><span class="muted small">Tap to choose, or drop photos here</span></label>' +
         '<div class="photos" id="photos"></div>' +
         '<div class="field"><span>Links to posts or boards (optional)</span><textarea class="input" id="links" placeholder="Paste Pinterest, Instagram or TikTok links, one per line">' + esc(draft.inspiration.links.join('\n')) + '</textarea><span class="muted small">If a link can’t be opened, add a screenshot of it as a photo.</span></div>' +
-        '<div class="field"><span>Describe your dream event (optional)</span><textarea class="input" id="text" placeholder="Example: pink and gold girls’ brunch for 10, chic and girly, under $2,000">' + esc(draft.inspiration.text) + '</textarea>' +
+        '<div class="field"><span>' + (ip ? 'Anything you\u2019d change or add? (optional)' : 'Describe your dream event (optional)') + '</span><textarea class="input" id="text" placeholder="' + (ip ? 'Example: same look in navy and silver, 40 guests, at home, under $5,000' : 'Example: pink and gold girls’ brunch for 10, chic and girly, under $2,000') + '">' + esc(draft.inspiration.text) + '</textarea>' +
         '<div class="row"><button type="button" class="btn ghost small" id="speak" aria-pressed="false">' + MIC + '<span>Speak it</span></button><span class="muted small" id="speakHint">Talk about your colors, vibe, guests and budget.</span></div></div>' +
-        '<div class="stack"><h3>No inspiration yet? Pick what you like</h3><span class="muted small">Colors</span><div class="chips" id="vcolors">' + VIBE_COLORS.map(function (c) { return '<button type="button" class="chip vchip" aria-pressed="' + ((draft.inspiration.vibes || []).indexOf(c[0]) >= 0) + '" data-vibe="' + esc(c[0]) + '"><i style="background:' + c[1] + '"></i>' + esc(c[0]) + '</button>'; }).join('') + '</div>' +
+        (ip ? '' : '<div class="panel row inspo-nudge"><span class="grow"><b>No inspiration yet?</b> <span class="muted small">Browse AI-generated photos by occasion and start from one you love.</span></span><a class="btn small" id="browseInspo" href="#/inspiration/' + esc(draft.type || 'all') + '/' + draft.id + '">Browse inspiration</a></div>') + '<div class="stack"><h3>' + (ip ? 'Change the colors or vibe (optional)' : 'Or pick the colors and vibe you like') + '</h3><span class="muted small">Colors</span><div class="chips" id="vcolors">' + VIBE_COLORS.map(function (c) { return '<button type="button" class="chip vchip" aria-pressed="' + ((draft.inspiration.vibes || []).indexOf(c[0]) >= 0) + '" data-vibe="' + esc(c[0]) + '"><i style="background:' + c[1] + '"></i>' + esc(c[0]) + '</button>'; }).join('') + '</div>' +
         '<span class="muted small">Vibe</span><div class="chips" id="vvibes">' + VIBES.map(function (v) { return '<button type="button" class="chip" aria-pressed="' + ((draft.inspiration.vibes || []).indexOf(v) >= 0) + '" data-vibe="' + esc(v) + '">' + esc(v) + '</button>'; }).join('') + '</div></div>' +
         '<div class="wiz-act"><button class="btn gold" id="next">Continue</button>' + laterBtn() + '</div></div>');
       var drop = $('#drop'), files = $('#files');
@@ -503,10 +570,12 @@
       });
       $$('[data-vibe]').forEach(function (b) { b.addEventListener('click', function () { var on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); var v = b.dataset.vibe; draft.inspiration.vibes = (draft.inspiration.vibes || []).filter(function (x) { return x !== v; }); if (on) draft.inspiration.vibes.push(v); persist(); }); });
       setupSpeak($('#speak'), $('#text'), $('#speakHint'));
+      if ($('#browseInspo')) $('#browseInspo').addEventListener('click', function () { var t = $('#text').value.trim(); if (t || draft.inspiration.photos.length) { draft.inspiration.text = t; persist(); } });
+      if ($('#noInspo')) $('#noInspo').addEventListener('click', function () { draft.inspiration.text = $('#text').value.trim(); delete draft.inspiration.inspo; persist(); wizard(1, draft.id); });
       $('#next').addEventListener('click', function () {
         draft.inspiration.links = $('#links').value.split(/\s+/).filter(function (s) { return /^https?:\/\//.test(s); });
         draft.inspiration.text = $('#text').value.trim();
-        if (!draft.inspiration.photos.length && !draft.inspiration.text && !draft.inspiration.links.length && !(draft.inspiration.vibes || []).length) return toast('Add a photo, a description, or pick a few colors and a vibe');
+        if (!E.inspoOf(draft) && !draft.inspiration.photos.length && !draft.inspiration.text && !draft.inspiration.links.length && !(draft.inspiration.vibes || []).length) return toast('Add a photo, a description, or pick a few colors and a vibe');
         if (!draft.typeChosen) { var gt = guessType(draft.inspiration.text); if (gt) { draft.type = gt; var tt = E.typeOf(gt); if (!draft.guestsTouched) { draft.guests = tt.defaultGuests; draft.expected = tt.defaultGuests; } draft.hours = tt.hours; } }
         persist(); location.hash = W + '2/' + draft.id;
       });
@@ -606,7 +675,7 @@
       ['Drinks', { none: 'No alcohol', wine: 'Beer and wine', full: 'Full bar or cocktails' }[draft.alcohol || 'full']],
       ['Who’s paying', { host: 'You’re hosting and paying', own: 'Everyone pays their own', shared: 'Splitting the cost' }[draft.payer || 'host']],
       ['Must-haves', (draft.priorities || []).length ? esc(draft.priorities.map(function (id) { var m = MUSTS.find(function (x) { return x[0] === id; }); return m ? m[1] : id; }).join(', ')) : 'None picked'],
-      ['Inspiration', [draft.inspiration.photos.length ? plural(draft.inspiration.photos.length, 'photo') : '', draft.inspiration.text ? '“' + esc(draft.inspiration.text.slice(0, 120)) + (draft.inspiration.text.length > 120 ? '…' : '') + '”' : '', (draft.inspiration.vibes || []).length ? esc(draft.inspiration.vibes.join(', ')) : ''].filter(Boolean).join(' · ') || 'None']
+      ['Inspiration', [E.inspoOf(draft) ? 'Inspiration photo: ' + esc(E.inspoOf(draft).name) : '', draft.inspiration.photos.length ? plural(draft.inspiration.photos.length, 'photo') : '', draft.inspiration.text ? '“' + esc(draft.inspiration.text.slice(0, 120)) + (draft.inspiration.text.length > 120 ? '…' : '') + '”' : '', (draft.inspiration.vibes || []).length ? esc(draft.inspiration.vibes.join(', ')) : ''].filter(Boolean).join(' · ') || 'None']
     ];
     frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>Does this look right?</h2><p class="muted">Your concepts, prices and timeline are built from these details. Fix anything before we start.</p></div>' +
       '<div class="panel confirm">' + rowsHtml.map(function (r) { return '<div class="crow"><span class="muted small">' + r[0] + '</span><span>' + r[1] + '</span></div>'; }).join('') + '</div>' +
@@ -626,7 +695,7 @@
   /* ---------- concepts ---------- */
   function conceptsView(id) {
     var ev = getEvent(id); if (!ev) return notFound();
-    frame('<div class="stack-lg"><div class="stack"><h2>Three looks for ' + (ev.nameAuto ? 'your ' + esc(E.typeOf(ev.type).name.toLowerCase().replace(/christmas/, 'Christmas')) : esc(ev.name)) + '</h2><p class="muted">Each look has its own colors, atmosphere and decor. Pick one to see what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">' + (function () { var ins = ev.inspiration || {}, src = []; if ((ins.photos || []).length) src.push('your photos'); if (ins.text) src.push('your description'); if ((ins.vibes || []).length) src.push('the colors and vibes you picked'); return src.length ? 'Built from ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' and ' + src[src.length - 1] : src[0]) + '.' : 'Built from your event details.'; })() + '</p></div><div id="cs" class="concepts"><div class="loading-concepts" role="status"><span class="spin" aria-hidden="true"></span><span id="lmsg">Reading your inspiration…</span></div></div>' +
+    frame('<div class="stack-lg"><div class="stack"><h2>Three looks for ' + (ev.nameAuto ? 'your ' + esc(E.typeOf(ev.type).name.toLowerCase().replace(/christmas/, 'Christmas')) : esc(ev.name)) + '</h2><p class="muted">Each look has its own colors, atmosphere and decor. Pick one to see what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">' + (function () { var ins = ev.inspiration || {}, src = []; if (ins.inspo) src.push('the inspiration photo you chose'); if ((ins.photos || []).length) src.push('your photos'); if (ins.text) src.push('your description'); if ((ins.vibes || []).length) src.push('the colors and vibes you picked'); return src.length ? 'Built from ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' and ' + src[src.length - 1] : src[0]) + '.' : 'Built from your event details.'; })() + '</p></div><div id="cs" class="concepts"><div class="loading-concepts" role="status"><span class="spin" aria-hidden="true"></span><span id="lmsg">Reading your inspiration…</span></div></div>' +
       '<p class="small muted" id="srcNote" hidden></p><div class="row"><button class="btn ghost" id="more">Show three different concepts</button><span class="muted small">You can see three new looks once, free.</span></div></div>');
     var msgs = ['Reading your inspiration…', 'Choosing colors and decor…', 'Matching the look to your event…', 'Almost ready…'], mi = 0;
     var tick = setInterval(function () { var m = $('#lmsg'); if (!m) return clearInterval(tick); mi = Math.min(msgs.length - 1, mi + 1); m.textContent = msgs[mi]; }, 2500);
@@ -634,7 +703,7 @@
       clearInterval(tick);
       $('#cs').innerHTML = list.map(function (c, i) {
         var sel = ev.concept && ev.concept.id === c.id;
-        return '<article class="concept' + (sel ? ' selected' : '') + '">' + '<div class="in"><span class="concept-num">Concept ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(moodFor(c, ev)) + '</p><ul>' + outlineFor(c, ev).map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
+        return '<article class="concept' + (sel ? ' selected' : '') + '">' + (c.img ? thumb({ src: c.img.replace(INSPO_IMG, INSPO_IMG + 'sm/'), alt: 'The inspiration photo you chose', ai: true }) : '') + '<div class="in"><span class="concept-num">Concept ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(moodFor(c, ev)) + '</p><ul>' + outlineFor(c, ev).map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
       }).join('');
     }
     function load(skip) {
@@ -985,7 +1054,7 @@
       '<div><button class="btn small">Apply</button></div></form>';
     return (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' + filters +
       '<p class="small muted">' + (AI.live ? 'Tap View venues to see top-rated places in ' + esc(city) + '. Open any one to see photos, hours and contact details, then reach out to schedule a tour. ' : '') + 'Every list is matched to ' + (b.tier.id === 'F' ? 'your budget' : 'your ' + esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[venueLevel(ev, b)]) + ' level') + ': well-reviewed, polished places only, never budget chains.</p>' +
-      (AI.live ? '' : '<div class="note">Live venue photos, ratings, hours and drive times appear here when venue search is connected at launch. For now, each idea opens a live map search.</div>') +
+      newVenues(ev) + (AI.live ? '' : '<div class="note">Live venue photos, ratings, hours and drive times appear here when venue search is connected at launch. For now, each idea opens a live map search.</div>') +
       '<div class="list panel">' + types.map(function (v) {
         var q = venueQuery(v, ev, b) + ' in ' + (ev.area ? ev.area + ', ' : '') + city;
         var dir = ev.start ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(ev.start) + '&destination=' + encodeURIComponent(q) + '">Drive time</a>' : '';
@@ -994,6 +1063,19 @@
         return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q) + '">View on map</a>' + dir + '</span></div>';
       }).join('') + '</div>' + more(ev, typesAll, types.length, 'venue styles') + '<div id="live"></div></div>';
   };
+  /* Newly opened venues we checked by hand, shown when they fit the city, the kind of event and the guest count. */
+  function newVenues(ev) {
+    var dining = E.typeOf(ev.type).style === 'dining' || ['wedding', 'gala', 'quince', 'anniversary'].indexOf(ev.type) >= 0;
+    var list = (D.NEW_VENUES || []).filter(function (v) {
+      return v.city === ev.city && (ev.settingOpen || v.settings.indexOf(ev.setting) >= 0) && v.types.indexOf(ev.type) >= 0 && ev.guests <= (dining ? v.seated : v.standing);
+    });
+    if (!list.length) return '';
+    return '<div class="stack"><h3>New in ' + esc(ev.city.split(',')[0]) + '</h3>' + list.map(function (v) {
+      return '<div class="panel stack new-venue"><div class="row" style="justify-content:space-between"><b>' + esc(v.name) + '</b><span class="badge est">Newly opened</span></div><span class="muted small">' + esc(v.area) + ' \u00b7 ' + esc(v.address) + '</span><p>' + esc(v.about) + '</p><ul class="incl">' + v.details.map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' +
+        '<div class="row"><a class="btn small" target="_blank" rel="noopener" href="' + esc(v.site) + '">Visit their website</a><a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(v.name + ' ' + v.address) + '">View on map</a></div>' +
+        '<p class="muted small">Details from the venue\u2019s website. Event Couture isn\u2019t paid to show it. Confirm availability, pricing and what\u2019s included when you reach out.</p></div>';
+    }).join('') + '</div>';
+  }
   /* Turn a venue type into a search that finds polished places at the plan's level, never budget chains. */
   var VENUE_SEARCH = {
     'Hotel ballroom': 'hotel ballroom event venue', 'Hotel tea room': 'hotel afternoon tea room', 'Private dining room': 'restaurant private dining room',
@@ -1165,7 +1247,7 @@
     return { amazon: 'https://www.amazon.com/s?k=' + encodeURIComponent(q) + tag, etsy: 'https://www.etsy.com/search?q=' + encodeURIComponent(q) };
   }
   TAB_VIEWS.style = function (ev) {
-    var c = ev.concept; var st = D.STYLES.find(function (x) { return x.id === c.id; }) || {}; var color = st.shop || c.styleName.toLowerCase();
+    var c = ev.concept; var st = D.STYLES.find(function (x) { return x.id === c.id; }) || {}; var color = c.shop || st.shop || c.styleName.toLowerCase();
     var tables = Math.ceil((ev.expected || ev.guests) / 8), g = ev.expected || ev.guests;
     var rest = ev.setting === 'restaurant';
     var items = rest ? [

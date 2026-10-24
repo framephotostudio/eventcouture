@@ -188,7 +188,22 @@
       music: 'kids party', dress: 'Cape and a bold primary color', menu: 'kids' },
     { id: 'midnight-celestial', shop: 'navy and gold celestial', name: 'Midnight Celestial', palette: ['#16203A', '#2C3A5E', '#C9A86A', '#C7CBD3', '#F4F1EA'], tags: ['celestial', 'navy', 'silver', 'gold', 'dark', 'evening', 'blue'],
       mood: 'Midnight blue, gold stars and soft twinkling light.', decor: ['Navy linens with gold star confetti', 'Hanging moon and star installation', 'Silver candle clusters', 'Twinkle-light backdrop for photos'],
-      music: 'neo soul candlelight', dress: 'Navy, silver and gold shimmer', menu: 'elegant' }
+      music: 'neo soul candlelight', dress: 'Navy, silver and gold shimmer', menu: 'elegant' },
+    { id: 'citrus-fiesta', shop: 'hot pink and orange', name: 'Citrus Fiesta', palette: ['#E23D7A', '#F07B2E', '#F6B26B', '#FFF6EE', '#2A9D9A'], tags: ['orange', 'fiesta', 'bright', 'colorful', 'summer', 'coral', 'citrus'],
+      mood: 'Hot pink and orange blooms, citrus and sunshine.', decor: ['Bright layered runners in hot pink and orange', 'Peony, dahlia and ranunculus centerpieces', 'Citrus slices, rattan chargers and colored glassware', 'Sunset toast under a flower-covered pergola'],
+      music: 'afrobeats reggaeton summer', dress: 'Bright pinks, corals and oranges', menu: 'garden' },
+    { id: 'amalfi-lemon', shop: 'lemon yellow and blue', name: 'Amalfi Lemon', palette: ['#F4D03F', '#3D6CB9', '#FFFFFF', '#A9C7E3', '#D9C29C'], tags: ['yellow', 'lemon', 'amalfi', 'mediterranean', 'summer'],
+      mood: 'Lemons, blue and white stripes and sunshine by the sea.', decor: ['Blue and white striped linens with yellow napkins', 'Lemons and yellow flowers in blue and white vases', 'Wicker chairs with patterned pillows', 'Lemonade and a potted lemon tree to welcome guests'],
+      music: 'jazz brunch acoustic', dress: 'Crisp whites, lemon yellow and blue', menu: 'garden' },
+    { id: 'blue-willow', shop: 'blue and white chinoiserie', name: 'Blue Willow', palette: ['#5B7FBF', '#A9C7E3', '#FFFFFF', '#F4F1EA', '#C9A86A'], tags: ['chinoiserie', 'tea', 'classic', 'porcelain'],
+      mood: 'Blue and white porcelain, toile linens and satin bows.', decor: ['Blue floral toile tablecloths', 'White roses and blue hydrangeas in porcelain vases', 'Floral teacups and tiered pastries', 'Powder blue bows tied on every chair'],
+      music: 'jazz brunch acoustic', dress: 'Blue and white, soft and polished', menu: 'sweet' },
+    { id: 'butter-bloom', shop: 'butter yellow and peach', name: 'Butter and Bloom', palette: ['#F6E3A6', '#F3C7A8', '#FFF8EC', '#F6C6C0', '#C9A86A'], tags: ['yellow', 'spring', 'soft', 'daisy', 'peach'],
+      mood: 'Butter yellow, peach and blush flowers in soft sunshine.', decor: ['Peach, butter yellow and white flower runners', 'Daisies and garden roses in white pitchers', 'Cane-back chairs and soft linen napkins', 'Pastry and cake table in butter yellow and blush'],
+      music: 'jazz brunch acoustic', dress: 'Soft yellows, peach and florals', menu: 'sweet' },
+    { id: 'tuscan-olive', shop: 'olive green and terracotta', name: 'Tuscan Olive', palette: ['#7E8C5A', '#C47C4E', '#F4EBDD', '#A47551', '#E9C9A6'], tags: ['tuscan', 'olive', 'terracotta', 'warm', 'italian'],
+      mood: 'Olive branches, terracotta and candlelight at sunset.', decor: ['Long rustic table on a stone terrace', 'Olive branches and dahlias in terracotta vases', 'Olive green linen napkins and stoneware', 'Candlelit supper as the sun goes down'],
+      music: 'jazz brunch acoustic', dress: 'Earthy linens, olive and terracotta', menu: 'gardenDinner' }
   ];
 
   var MENUS = {
@@ -273,7 +288,18 @@
     };
   };
 
+  /* Newly opened event venues, checked by hand from the venue's own website. Shown as an idea only: no payment or partnership.
+     Remove a venue if its details change or it closes. */
+  var NEW_VENUES = [
+    { name: 'Deco House River Oaks', city: 'Houston, TX', area: 'River Oaks', address: '4235 Richmond Ave, Suite 200, Houston, TX 77027', seated: 160, standing: 200,
+      settings: ['indoor'], types: ['wedding', 'quince', 'milestone', 'birthday', 'baby-shower', 'bridal-shower', 'anniversary', 'dinner', 'gala', 'corporate', 'engagement', 'graduation', 'sweet16', 'retirement', 'holiday', 'christmas', 'other'],
+      about: 'A private Art Deco event space with a 4,000 sq ft event floor and statement lighting.',
+      details: ['Up to 160 seated or 200 standing', 'Catering through their partner caterers, quoted for your event; prep kitchen on site', '125+ parking spaces, valet on weekends', 'Tours by appointment; prices are quoted on request'],
+      site: 'https://www.decohousehtx.com/', checked: '2026-10-24' }
+  ];
+
   root.EC_DATA = {
+    NEW_VENUES: NEW_VENUES,
     SETTINGS: SETTINGS, SETTING_RULES: SETTING_RULES, GRATUITY: 0.20,
     EVENT_TYPES: EVENT_TYPES, CATEGORIES: CATEGORIES, PROFILES: PROFILES, ADJUST: ADJUST, TIERS: TIERS,
     CITIES: CITIES, STYLES: STYLES, MENUS: MENUS, DIETS: DIETS, CHECKLIST: CHECKLIST, PASSES: PASSES,

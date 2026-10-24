@@ -550,3 +550,29 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .tier .pc, .tier .pc li { white-space: normal; }
 .tier-pick { justify-self: start; font-size: .88rem; font-weight: 500; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--ink); color: var(--ink); }
 .tier[aria-pressed="true"] .tier-pick { background: var(--ink); color: var(--on-plum, #fff); }
+
+/* AI-generated inspiration: every AI picture carries a visible label */
+.ai-tag { position: absolute; left: 8px; bottom: 8px; font-size: .68rem; line-height: 1.2; letter-spacing: .02em; padding: 3px 8px; border-radius: 999px; background: rgba(20, 14, 18, .62); color: #fff; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); pointer-events: none; }
+.thumb.banner .ai-tag { left: 10px; bottom: 10px; }
+.iscroll { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.iscroll .chip { flex: 0 0 auto; }
+@media (min-width: 900px) { .iscroll { flex-wrap: wrap; overflow: visible; } }
+.igrid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 700px) { .igrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .igrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.icard { display: grid; gap: 8px; align-content: start; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; color: inherit; font: inherit; min-width: 0; }
+.icard .thumb { border-radius: var(--r-md); aspect-ratio: 4 / 3; }
+.icard img { transition: transform .4s ease; }
+.icard:hover img, .icard:focus-visible img { transform: scale(1.03); }
+.icard .iname { font-family: var(--display, inherit); font-size: .98rem; line-height: 1.25; }
+.icard.more { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; padding: 12px; text-align: center; text-decoration: none; }
+.icard.more:hover { text-decoration: none; border-color: var(--gold, #C9A86A); }
+.thumb.ibig { border-radius: var(--r-md); aspect-ratio: 3 / 2; }
+.inspo-chosen { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr); gap: 14px; align-items: center; }
+.inspo-chosen .thumb { border-radius: var(--r-sm); }
+@media (max-width: 420px) { .inspo-chosen { grid-template-columns: minmax(0, 1fr); } }
+.inspo-nudge { gap: 12px; align-items: center; }
+.concept .thumb { aspect-ratio: 16 / 9; }
+.new-venue { gap: 10px; }
+@media (prefers-reduced-motion: reduce) { .icard img { transition: none; } }
+.concept, .concept .in, .concept ul { align-content: start; }

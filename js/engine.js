@@ -409,9 +409,11 @@
     coastal: ['beach', 'coastal', 'ocean', 'nautical', 'blue'], tropical: ['tropical', 'palm', 'island', 'luau'], disco: ['disco', 'sparkle', 'sequin', '70s'],
     vintage: ['vintage', 'hollywood', 'gatsby', 'roaring'], pastel: ['pastel', 'whimsy', 'baby pink', 'baby blue', 'candy', 'rainbow'], purple: ['purple', 'lavender', 'plum', 'lilac', 'royal'],
     red: ['red', 'burgundy', 'wine'], ivory: ['ivory', 'cream', 'chandelier', 'ballroom'], classic: ['classic', 'timeless', 'black tie', 'formal'],
-    lavender: ['lavender', 'lilac'], tea: ['tea party', 'high tea', 'afternoon tea'], dark: ['moody', 'dark', 'velvet'], outdoor: ['outdoor', 'backyard', 'park', 'garden'], romantic: ['romantic', 'love', 'romance'], celestial: ['moon', 'stars', 'starry', 'celestial', 'galaxy', 'navy', 'midnight', 'twinkle'], silver: ['silver', 'metallic', 'chrome'], autumn: ['fall ', 'autumn', 'harvest', 'thanksgiving']
+    lavender: ['lavender', 'lilac'], tea: ['tea party', 'high tea', 'afternoon tea'], dark: ['moody', 'dark', 'velvet'], outdoor: ['outdoor', 'backyard', 'park', 'garden'], romantic: ['romantic', 'love', 'romance'], celestial: ['moon', 'stars', 'starry', 'celestial', 'galaxy', 'navy', 'midnight', 'twinkle'], silver: ['silver', 'metallic', 'chrome'], autumn: ['fall ', 'autumn', 'harvest', 'thanksgiving'],
+    orange: ['orange', 'coral', 'citrus', 'tangerine', 'fuchsia', 'hot pink', 'magenta'], fiesta: ['fiesta', 'bougainvillea', 'cinco de mayo'], yellow: ['yellow', 'lemon', 'butter', 'sunshine', 'daisy', 'daisies', 'sunflower'],
+    chinoiserie: ['chinoiserie', 'blue and white', 'porcelain', 'toile', 'blue willow', 'ginger jar'], tuscan: ['tuscan', 'tuscany', 'italian villa', 'olive grove'], amalfi: ['amalfi', 'positano', 'capri', 'mediterranean', 'italian summer'], peach: ['peach', 'apricot']
   };
-  var COLOR_TAGS = ['emerald', 'boho', 'rustic', 'disco', 'vintage', 'pink', 'gold', 'black', 'white', 'green', 'purple', 'red', 'ivory', 'coastal', 'lavender', 'celestial', 'silver', 'pastel', 'tropical'];
+  var COLOR_TAGS = ['emerald', 'orange', 'yellow', 'chinoiserie', 'peach', 'boho', 'rustic', 'disco', 'vintage', 'pink', 'gold', 'black', 'white', 'green', 'purple', 'red', 'ivory', 'coastal', 'lavender', 'celestial', 'silver', 'pastel', 'tropical'];
   function matchStyles(colors, text, liked) {
     text = ((text || '') + ' ' + (liked || []).join(' ')).toLowerCase();
     /* The first color the host names breaks ties: "ivory and gold … florals" is ivory first. */
@@ -464,6 +466,28 @@
   var TYPE_TITLE = { brunch: 'Brunch', birthday: 'Birthday', milestone: 'Birthday', dinner: 'Dinner Party', 'bridal-shower': 'Bridal Shower', 'baby-shower': 'Baby Shower',
     'gender-reveal': 'Gender Reveal', bachelorette: 'Bachelorette', graduation: 'Graduation Party', engagement: 'Engagement Party', quince: 'Quincea\u00f1era', anniversary: 'Anniversary',
     holiday: 'Holiday Party', christmas: 'Christmas Party', retirement: 'Retirement Party', 'kids-birthday': 'Birthday', sweet16: 'Sweet 16', corporate: 'Corporate Event', wedding: 'Wedding', gala: 'Gala', other: 'Celebration' };
+  /* A host who starts from one of our AI-generated inspiration photos gets that photo as a concept, built from what is in it. */
+  function inspoOf(ev) { var id = ev && ev.inspiration && ev.inspiration.inspo; return id && root.EC_INSPO ? root.EC_INSPO.find(function (p) { return p.id === id; }) || null : null; }
+  function inspoText(p) { return p ? 'Inspiration photo "' + p.name + '" (an AI-generated sample): ' + p.mood + ' In the photo: ' + p.decor.join('; ') + '. Colors: ' + p.shop + '.' : ''; }
+  function inspoConcept(ev, p) {
+    var s = D.STYLES.find(function (x) { return x.id === p.style; }) || D.STYLES[0];
+    return { id: s.id, inspo: p.id, img: 'img/inspo/' + p.id + '.jpg', name: p.name, styleName: p.name, palette: p.palette, mood: p.mood, decor: p.decor.slice(), shop: p.shop,
+      dress: 'A standout look in ' + s.dress.charAt(0).toLowerCase() + s.dress.slice(1), menuStyle: p.menu, music: s.music, fit: 'The look in the photo you chose',
+      outline: ['Setting: ' + p.decor[0].toLowerCase(), 'Details: ' + p.decor[1].toLowerCase() + ', plus ' + p.decor[2].charAt(0).toLowerCase() + p.decor[2].slice(1), 'Moment: ' + p.decor[3].toLowerCase(), 'Dress code: ' + dressCode(ev).toLowerCase()] };
+  }
+  /* Colors the host typed herself win over the photo: the photo's look then comes second instead of first. */
+  function hostNamedColors(ev) {
+    var t = (((ev.inspiration && ev.inspiration.text) || '') + ' ' + ((ev.inspiration && ev.inspiration.vibes) || []).join(' ')).toLowerCase();
+    return COLOR_TAGS.some(function (tag) { return (WORDS[tag] || []).some(function (w) { return t.indexOf(w) >= 0; }); }) || /\b(navy|teal|beige|taupe|mauve|brown|grey|gray|turquoise|mint|copper|bronze|rose gold)\b/.test(t);
+  }
+  function withInspo(ev, list, skip) {
+    var p = inspoOf(ev); if (!p || (skip && skip.length)) return list;   /* "three different concepts" means new looks, not the photo again */
+    var pc = inspoConcept(ev, p);
+    var rest = list.filter(function (c) { return !c.inspo && c.id !== pc.id; });
+    var at = hostNamedColors(ev) ? 1 : 0;
+    rest.splice(Math.min(at, rest.length), 0, pc);
+    return rest.slice(0, 3).map(function (c, i) { if (!c.inspo && i === 0 && at === 1) c.fit = 'Closest match to your words'; return c; });
+  }
   function concepts(ev, colors, text, liked, skip) {
     skip = skip || [];
     /* Children's parties never get nightclub or black-tie looks. */
@@ -494,6 +518,6 @@
   root.EC_ENGINE = {
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
-    placesUsed: placesUsed, concepts: concepts, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
+    placesUsed: placesUsed, concepts: concepts, inspoOf: inspoOf, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
   };
 })(typeof window !== 'undefined' ? window : globalThis);
