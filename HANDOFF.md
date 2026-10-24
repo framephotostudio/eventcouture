@@ -1,6 +1,6 @@
 # Event Couture by Always Luxe: developer handoff
 
-**Version 0.13 · October 24, 2026**
+**Version 0.14 · October 24, 2026**
 **Live site:** https://facecouture.app/eventcouture/
 **Code:** https://github.com/framephotostudio/eventcouture (public; every push to `main` deploys automatically)
 **Server:** https://event-couture-api.facecouture.workers.dev (status at `/api/status`)
@@ -95,6 +95,7 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 - **Venue search:** matched to the plan's level and the host's words, with an area filter and a starting point for drive times. The server keeps only places rated 4.3 to 4.5 stars or higher (by level) with enough reviews, at the right price level, open, and never budget chains (mid-range chains only for Luxe for Less).
 - **Vendor search:** shows the actual service (decor rentals, florists, bakeries and so on), never planners. Each category shows a typical local price range. "Ask for their price" is hidden until vendors join.
 - **Dress code:** a general code for guests (Cocktail attire, Smart casual and so on) plus a specific look for the person being celebrated.
+- **Free preview:** before the plan is kept, each section shows a taste (3 budget lines, 2 venue styles, 3 places, 3 vendor categories, 3 menu ideas, 2 shopping picks, 3 songs, 4 checklist steps) with a "Keep my plan" card. Guests, voting and the album open after keeping. Totals, concepts and budget fit are always free. This lock lives in the browser, so it can be bypassed until accounts exist; once there is a backend, the server should only send the locked details after payment.
 - **Pop-ups and messages** close when the page changes. The keep-my-plan button cannot be double-submitted.
 
 ## 7. How to run and test
