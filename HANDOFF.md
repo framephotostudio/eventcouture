@@ -12,7 +12,7 @@ Event Couture turns a host's inspiration (photos, a description, spoken words, o
 1. The host shares inspiration and event details.
 2. They confirm the details on a review screen.
 3. The AI creates three original concepts (look, decor, menu style, music, dress code).
-4. The host picks one and gets the full plan: budget, venues, vendors, food and drink, style and shopping, a 10-song playlist, timeline, guests, voting, invitations and registry.
+4. The host picks one and gets the full plan: budget, venues, vendors, food and drink, style and shopping, a 25-song playlist, timeline, guests, voting, invitations and registry.
 5. Planning is free. At the end the host pays once (the Event Pass) to keep the plan and share it with guests.
 
 ## 2. Ground rules from the owner (do not change without her sign-off)
@@ -73,7 +73,7 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 | `js/config.js` | Server address (filled in by deploy), preview flag, Amazon tag, version |
 | `js/data.js` | Catalogs: event types, vendor categories and cost models, settings (restaurant, private room, venue, outdoors, home), cities, styles, menus, checklist, passes, credits, packages, add-ons, venue types |
 | `js/engine.js` | Planning math: budgets per level, budget plan (maximum-based), pros and cons, Budget Guardian, quantities, checklist, run of show, concept matching, dress codes, pass pricing |
-| `js/songs.js` | Ready-made 10-song playlists for each music mood, plus matching for AI moods |
+| `js/songs.js` | Ready-made 25-song playlists for each music mood, plus matching for AI moods |
 | `js/app.js` | Every screen: home, wizard (inspiration, details, review), concepts, plan tabs, venues and vendors search, guests, voting, invitations, registry, cost splitting, extras, keep-my-plan checkout, pricing, help, legal |
 | `css/app.css` | All styling. The design tokens at the top set the colors |
 | `worker/index.js` | Server: `/api/status`, `/api/concepts`, `/api/places`, `/api/drive`, quality filters, spending cap |
