@@ -181,3 +181,9 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 
 ## 0.27.1: header logo
 - Transparent champagne-gold logo (brand-src/logo-gold-transparent.png, made from the approved logo by cutting it out of its satin background and recoloring; mark without the small line: img/brand/logo-mark-gold.png). "by Always Luxe" is live text under it so it stays readable. Header about 50% shorter (100px to 50px on phones, 111px to 53px on desktop); no box or banner.
+
+## 0.28.0: finishing a plan
+- Overview starts with "Your plan, step by step" (planSteps/stepsCard): look, date, where, vendors booked, keep, invite; one "Next:" button; "Your plan is complete" when all done.
+- New page Overview > Your finished plan (TAB_VIEWS.plan): look, budget with Booked/Quote/Estimate, venue and vendors, menu (menuItems), Get this look (lookList), music, day-of schedule, still to do (checkDone). Save as PDF or print (print styles), Share with a co-host (share sheet or copy). Locked until the plan is kept.
+- Gift list optional for birthdays, kids' birthdays, milestones and retirements (ev.registryOn via "Add a gift list (optional)"). Invite links use CFG.siteUrl in the app. No attire or hair and makeup budget at kids' parties.
+- Test: tests/finished_plan.py

@@ -46,7 +46,7 @@
     if (ev.setting === 'home') list = list.filter(function (c) { return c !== 'venue' && c !== 'privateDining'; }).concat(t.style === 'dining' ? ['catering', 'rentals'] : []);
     if (ev.alcohol === 'none') list = list.filter(function (c) { return c !== 'bartender'; });
     /* No one is being dressed for a dinner party, holiday party or gala: guests bring their own look. */
-    if (['dinner', 'holiday', 'christmas', 'gala', 'corporate', 'other'].indexOf(ev.type) >= 0) list = list.filter(function (c) { return c !== 'attire' && c !== 'hairMakeup'; });
+    if (['dinner', 'holiday', 'christmas', 'gala', 'corporate', 'other', 'kids-birthday'].indexOf(ev.type) >= 0 || (ev.kids && /birthday/.test(ev.type || ''))) list = list.filter(function (c) { return c !== 'attire' && c !== 'hairMakeup'; });   /* a child's party doesn't budget a glam look for the host */
     if (ev.type === 'corporate') list = list.filter(function (c) { return ['balloons', 'favors', 'cake', 'cakeFee'].indexOf(c) < 0 || (ev.include || []).indexOf(c) >= 0; });
     /* Balloon installations don't suit black-tie or romantic occasions unless the host adds them. */
     if (['gala', 'wedding', 'anniversary', 'engagement', 'dinner', 'holiday', 'christmas'].indexOf(ev.type) >= 0) list = list.filter(function (c) { return c !== 'balloons' || (ev.include || []).indexOf('balloons') >= 0; });

@@ -74,6 +74,7 @@ def run(p, name, viewport, scheme):
             page.fill('#pq', 'Which date works best?'); page.fill('#po', 'Dec 19\nDec 20'); page.click('#addp button')
             page.click('[data-vote="0:0"]')
         if t == 'invite':
+            if page.query_selector('#giftOn'): page.click('#giftOn'); page.wait_for_timeout(300)   # gift lists are optional for birthdays
             page.fill('[data-pay="venmo"]', 'maya-host'); page.click('#savePay')
             page.fill('#rn', 'Champagne flutes'); page.fill('#rp', '40'); page.click('#radd button')
         if t == 'overview':
