@@ -659,3 +659,4 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 .howto b { color: var(--ink); font-weight: 600; }
 @media (max-width: 560px) { .howto { grid-template-columns: 1fr; gap: 6px; } .howto li { padding: 8px 12px 8px 40px; } .howto li::before { top: 8px; } }
 .vf-wrap > summary { cursor: pointer; padding: 4px 0; } .vf-wrap[open] > summary { margin-bottom: 8px; }
+.lines .ln .live-res { grid-column: 1 / -1; } .lines .ln .live-res:empty { display: none; }

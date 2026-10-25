@@ -476,7 +476,7 @@
     var typed = ['Blush', 'Pink', 'Ivory', 'Cream', 'Gold', 'Champagne', 'Sage', 'Emerald', 'Black', 'White', 'Navy', 'Silver', 'Lavender', 'Plum', 'Purple', 'Burgundy', 'Red', 'Terracotta', 'Blue', 'Pastel'].filter(function (w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).sort(function (a, b) { return text.toLowerCase().indexOf(a.toLowerCase()) - text.toLowerCase().indexOf(b.toLowerCase()); });
     var STYLE_COLOR = { 'champagne-garden': 'Sage', 'modern-noir': 'Black', 'blush-romance': 'Blush', 'boho-sunset': 'Terracotta', 'coastal-linen': 'Blue', 'tropical-glam': 'Tropical', 'old-hollywood': 'Red', 'pastel-whimsy': 'Pastel', 'ivory-ballroom': 'Ivory', 'minimal-white': 'White', 'disco-glam': 'Silver', 'moody-floral': 'Burgundy', 'rustic-elegance': 'Rustic', 'royal-purple': 'Plum', 'midnight-celestial': 'Midnight' };
     picked = picked.concat(typed.filter(function (w) { return picked.indexOf(w) < 0; }));
-    picked = picked.map(function (w) { return /^champagne$/i.test(w) ? 'Gold' : w; }).filter(function (w, i, a) { return a.indexOf(w) === i; });   /* no drink names in event names */
+    picked = picked.map(function (w) { return /^(champagne|soft gold)$/i.test(w) ? 'Gold' : w; }).filter(function (w, i, a) { return a.indexOf(w) === i; });   /* no drink names in event names */
     var c1 = picked[0] || STYLE_COLOR[style.id] || 'Gold', c2 = picked[1];
     var hr = E.startHour({ time: d.timeTouched && d.time ? d.time : defaultTime(type, d.kids) });
     var partOfDay = (d.kids && /birthday/.test(type)) ? 'A Party' : hr < 12 ? 'A Morning' : hr < 16 ? 'An Afternoon' : 'An Evening';
@@ -489,7 +489,7 @@
     var ip = E.inspoOf(d); if (ip) out.unshift(E.inspoName(ip, type));
     return out.filter(function (n, i) { return out.indexOf(n) === i; });
   }
-  var VIBE_COLORS = [['Blush', '#F2C9CF'], ['Ivory', '#F7F1E3'], ['Gold', '#C9A86A'], ['Champagne', '#E8D9BC'], ['White', '#FFFFFF'], ['Black', '#151515'], ['Sage', '#A9B89A'], ['Burgundy', '#7B2D3B'], ['Lavender', '#C9B3DD'], ['Dusty blue', '#A9C7D3'], ['Terracotta', '#C47C4E'], ['Silver', '#C0C0C8'], ['Pastels', '#F9E1EC'], ['Bright colors', '#F2B544']];
+  var VIBE_COLORS = [['Blush', '#F2C9CF'], ['Ivory', '#F7F1E3'], ['Gold', '#C9A86A'], ['Soft gold', '#E8D9BC'], ['White', '#FFFFFF'], ['Black', '#151515'], ['Sage', '#A9B89A'], ['Burgundy', '#7B2D3B'], ['Lavender', '#C9B3DD'], ['Dusty blue', '#A9C7D3'], ['Terracotta', '#C47C4E'], ['Silver', '#C0C0C8'], ['Pastels', '#F9E1EC'], ['Bright colors', '#F2B544']];
   var VIBES = ['Romantic', 'Glam', 'Garden', 'Modern', 'Classic', 'Boho', 'Rustic', 'Tropical', 'Coastal', 'Playful', 'Minimal', 'Vintage', 'Disco', 'Moody'];
   var MUSTS = [['photographer', 'Great photos'], ['videographer', 'Video'], ['florals', 'Lots of flowers'], ['catering', 'Amazing food'], ['bar', 'Open bar'], ['dj', 'DJ and dancing'], ['liveMusic', 'Live music'], ['venue', 'Stunning venue'], ['decor', 'Wow decor'], ['lighting', 'Lighting'], ['hairMakeup', 'Hair and makeup'], ['photoBooth', 'Photo booth'], ['cake', 'Show-stopping cake']];
   function hexRgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
@@ -1289,7 +1289,7 @@
       '<div class="bk-stats"><div><b class="num">' + money(bookedAmt) + '</b><span class="small muted">confirmed</span></div><div><b class="num">' + quoted.length + '</b><span class="small muted">with a price</span></div><div><b class="num">' + sl.length + '</b><span class="small muted">saved</span></div></div>' +
       (sl.length ? '<div class="list">' + sl.map(function (x) { return x && x.cat; }).filter(function (c, i, a) { return c && D.CATEGORIES[c] && a.indexOf(c) === i; }).map(function (cat) { var l = savedFor(ev, cat), pk = pickOf(ev, cat), st = statusOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
           return '<div class="it"><div class="grow"><b>' + esc(catName(cat, ev)) + '</b><div class="small">' + (st === 'booked' ? '<span class="badge ok">Booked</span> ' + esc(ov.note || '') : '\u2605 ' + esc(pk.name) + ' <span class="muted">front-runner</span>') + '</div><div class="small muted">' + plural(l.length, 'option') + ' saved' + (l.length < MAX_OPTIONS && st !== 'booked' ? ', save up to ' + (MAX_OPTIONS - l.length) + ' more' : '') + '</div></div><span class="acts"><button class="btn small" data-compare="' + cat + '">' + (l.length > 1 ? 'Compare ' + l.length : 'Open') + '</button></span></div>'; }).join('') + '</div>'
-        : '<p class="muted small">Save up to 3 options for each venue or vendor in Venues and Vendors. They show here side by side so you can pick a front-runner, add quotes and mark the one you book.</p>') +
+        : '<p class="muted small">Tap See options on any line below (or use Venues and Vendors) and save up to 3 for each. They show here side by side so you can pick a front-runner, add quotes and mark the one you book.</p>') +
       '</div>';
   }
 
@@ -1309,7 +1309,8 @@
         return '<div class="group-h">' + esc(gname) + '</div>' + groups[gname].map(function (i) {
           return '<div class="ln"><span>' + esc(i.name) + '</span><span class="amt">' + (i.lo === i.hi ? money(i.mid) : money(i.mid) + '<br><span class="small muted">' + money(i.lo) + ' to ' + money(i.hi) + '</span>') + '</span>' +
             '<div class="sub">' + statusBadge(ev, i.id) + '<span class="badge ' + (i.label === 'Planning estimate' ? 'est' : 'ok') + '">' + esc(i.label) + '</span><span class="small muted">' + esc([i.source].concat(i.extras.length ? [i.extras.join(', ')] : []).filter(Boolean).join('; ')) + '</span>' +
-            '<button class="link small" data-price="' + i.id + '">Add quote or booking</button><button class="link small" data-drop="' + i.id + '">Remove</button></div></div>';
+            (AI.live && i.id === venueCat(ev) && ev.setting !== 'home' ? '<a class="link small" href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/places">See ' + (ev.setting === 'restaurant' ? 'restaurants' : 'venues') + '</a>' : AI.live && NO_SEARCH.indexOf(i.id) < 0 ? '<button class="link small" data-vendor="' + esc(i.id) + '" data-q="' + esc(vendorQuery(ev, i, venueLevel(ev, b))) + '" data-level="' + venueLevel(ev, b) + '">See options</button>' : '') +
+            '<button class="link small" data-price="' + i.id + '">Add quote or booking</button><button class="link small" data-drop="' + i.id + '">Remove</button></div>' + (AI.live && NO_SEARCH.indexOf(i.id) < 0 ? '<div class="live-res" data-for="v-' + esc(i.id) + '"></div>' : '') + '</div>';
         }).join('');
       }).join('') + '</div></div>' + more(ev, b.items.length, Math.min(3, b.items.length), 'budget lines, with quantities and sources') +
       '<div class="panel sum"><div><span>Subtotal</span><span class="num">' + money(b.mid) + '</span></div><div><span>Cushion for surprises (10%)</span><span class="num">' + money(b.contingency) + '</span></div><div class="grand"><span>Estimated total</span><span class="num">' + money(b.total) + '</span></div><div class="small muted"><span>Range</span><span class="num">' + money(b.lo * 1.1) + ' to ' + money(b.hi * 1.1) + '</span></div></div>' +
@@ -1317,6 +1318,8 @@
       '<p class="muted small">Estimates are a starting point. Always confirm prices, minimums and availability with each venue and vendor before you book.</p></div>';
   };
   TAB_BIND.budget = function (ev, save, rerender) {
+    bindSave(ev, $('#tab'), function () { refreshBars(ev); });
+    $$('[data-vendor]').forEach(function (btn) { btn.addEventListener('click', function () { openVendorResults(ev, btn); }); });
     $$('#tierseg [data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { var bf = snap(ev); ev.tier = btn.dataset.tier; save(); rerender(); if (bf.tier !== ev.tier) undoToast(ev, bf, 'Switched to ' + tierName(ev.tier), rerender); }); });
     $$('[data-drop]').forEach(function (btn) { btn.addEventListener('click', function () { if (lockSample(ev)) return; var bf = snap(ev); ev.exclude = (ev.exclude || []).concat(btn.dataset.drop); ev.include = (ev.include || []).filter(function (x) { return x !== btn.dataset.drop; }); save(); rerender(); undoToast(ev, bf, 'Removed ' + E.lc(D.CATEGORIES[btn.dataset.drop].name), rerender); }); });
     $$('[data-restore]').forEach(function (btn) { btn.addEventListener('click', function () { ev.exclude = ev.exclude.filter(function (x) { return x !== btn.dataset.restore; }); ev.include = (ev.include || []).concat(btn.dataset.restore); save(); rerender(); }); });
@@ -1488,6 +1491,22 @@
   };
 
   /* Vendors: by category with estimates; ask for a price */
+  var NO_SEARCH = ['venue', 'privateDining', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'restaurantFood', 'restaurantDrinks', 'cakeFee', 'tableDecor', 'contingency'];
+  function vendorQuery(ev, i, lvl) { var vs = ev.alcohol === 'none' && i.id === 'bar' ? 'mocktail bar service' : ev.alcohol === 'none' && i.id === 'bartender' ? 'mocktail bartender service' : VENDOR_SEARCH[i.id]; return (LEVEL_WORD[lvl] + ' ' + (vs || i.name.split(' (')[0])).replace('luxury five-star', 'luxury'); }
+  /* Real, top-rated businesses for one category, shown under the button that asked for them (Vendors and Budget pages). */
+  function openVendorResults(ev, btn) {
+      $$('.live-res').forEach(function (x) { x.innerHTML = ''; });
+      var box = document.querySelector('.live-res[data-for="v-' + btn.dataset.vendor + '"]'); if (!box) return; box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding top-rated businesses\u2026</p>';
+      ev.lastVendor = btn.dataset.vendor;
+      findPlaces(ev, { query: btn.dataset.q, level: btn.dataset.level || 'S', kind: 'vendor', city: (ev.area ? ev.area + ', ' : '') + ev.city })
+        .then(function (list) {
+          if (!list.length) { box.innerHTML = '<p class="muted small">No well-reviewed matches nearby. Try a different area on the Venues tab.</p>'; return; }
+          var bizAll = list.length; list = cut(list, 3, ev);
+          var PL = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
+          box.innerHTML = '<div class="curated">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.rating ? '★ ' + p.rating + ' · ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews' : '') + (PL[p.priceLevel] ? ' · ' + PL[p.priceLevel] : '') + (p.address ? ' · ' + esc(p.address.split(',').slice(0, 2).join(',')) : '') + '</div></div><span class="acts">' + saveBtn(ev, p, btn.dataset.vendor) + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Exact pricing comes from each business when you inquire.</p></div>' + more(ev, bizAll, list.length, 'top-rated businesses');
+          $$('[data-keep]', box).forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { location.reload(); }); }); });
+        }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn’t available right now.') + '</p>'; });
+  }
   /* Vendors: the actual product or service for each category (never planners), with typical local prices. */
   var VENDOR_SEARCH = {
     decor: 'event decor rentals centerpieces backdrops', florals: 'florist', cake: 'custom cake bakery', photographer: 'event photographer',
@@ -1512,7 +1531,7 @@
     var catsAll = cats.length; cats = cut(cats, 3, ev);
     return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + (AI.live ? HOWTO('vendor') : '') + '<p class="muted">Estimated prices in ' + esc(city.split(',')[0] || 'your city') + ' for your guest count and ' + (b.tier.id === 'F' ? 'budget' : esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[lvl]) + ' level') + ', including tax and tips where they apply. ' + (AI.live ? 'Tap See options on any category to see top-rated businesses that provide it.' : '') + '</p>' +
       '<div class="list panel">' + cats.map(function (i) {
-        var vs = ev.alcohol === 'none' && i.id === 'bar' ? 'mocktail bar service' : ev.alcohol === 'none' && i.id === 'bartender' ? 'mocktail bartender service' : VENDOR_SEARCH[i.id]; var q = (LEVEL_WORD[lvl] + ' ' + (vs || i.name.split(' (')[0])).replace('luxury five-star', 'luxury');
+        var q = vendorQuery(ev, i, lvl);
         return '<div class="it"><div class="grow"><b>' + esc(i.name) + '</b> ' + statusBadge(ev, i.id) + '<div class="small">Estimated cost <b class="num">about ' + money(i.lo) + ' to ' + money(i.hi) + '</b></div>' + (VENDOR_NOTE[i.id] ? '<div class="small muted">' + esc(i.id === 'hairMakeup' ? 'On-site styling for ' + honoree(ev) + (ev.type === 'wedding' || /shower|bachelorette|quince/.test(ev.type) ? ' and the party' : '') : VENDOR_NOTE[i.id]) + '</div>' : '') + optBar(ev, i.id) + '</div>' +
           '<span class="acts">' + (AI.live ? '<button class="btn small ghost" data-vendor="' + esc(i.id) + '" data-q="' + esc(q) + '" data-level="' + lvl + '">See options</button>' : '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q + ' in ' + city) + '">View on map</a>') + '</span></div><div class="live-res" data-for="v-' + esc(i.id) + '"></div>';
       }).join('') + '</div>' + more(ev, catsAll, cats.length, 'vendor categories with prices') + '<p class="muted small"><b>All prices are estimates</b> from typical local rates, not quotes. Real prices come from each vendor. Add a real quote anytime under Budget and your totals update. You pay vendors directly; Event Couture never holds your money.</p></div>';
@@ -1524,19 +1543,7 @@
   };
   TAB_BIND.vendors = function (ev, save, rerender) {
     bindSave(ev, $('#tab'), function () { refreshBars(ev); }); bindCompare(ev, rerender); runPendingFind(ev);
-    $$('[data-vendor]').forEach(function (btn) { btn.addEventListener('click', function () {
-      $$('.live-res').forEach(function (x) { x.innerHTML = ''; });
-      var box = document.querySelector('.live-res[data-for="v-' + btn.dataset.vendor + '"]'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding top-rated businesses…</p>';
-      ev.lastVendor = btn.dataset.vendor;
-      findPlaces(ev, { query: btn.dataset.q, level: btn.dataset.level || 'S', kind: 'vendor', city: (ev.area ? ev.area + ', ' : '') + ev.city })
-        .then(function (list) {
-          if (!list.length) { box.innerHTML = '<p class="muted small">No well-reviewed matches nearby. Try a different area on the Venues tab.</p>'; return; }
-          var bizAll = list.length; list = cut(list, 3, ev);
-          var PL = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
-          box.innerHTML = '<div class="curated">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.rating ? '★ ' + p.rating + ' · ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews' : '') + (PL[p.priceLevel] ? ' · ' + PL[p.priceLevel] : '') + (p.address ? ' · ' + esc(p.address.split(',').slice(0, 2).join(',')) : '') + '</div></div><span class="acts">' + saveBtn(ev, p, btn.dataset.vendor) + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Exact pricing comes from each business when you inquire.</p></div>' + more(ev, bizAll, list.length, 'top-rated businesses');
-          $$('[data-keep]', box).forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { location.reload(); }); }); });
-        }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn’t available right now.') + '</p>'; });
-    }); });
+    $$('[data-vendor]').forEach(function (btn) { btn.addEventListener('click', function () { openVendorResults(ev, btn); }); });
     if (AI.live && ev.lastVendor && !PENDING_FIND) { var lv = document.querySelector('[data-vendor="' + ev.lastVendor.replace(/"/g, '') + '"]'); if (lv) lv.click(); }   /* reopen the last options she looked at */
   };
 
