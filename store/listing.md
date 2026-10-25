@@ -21,7 +21,8 @@ Event Couture by Always Luxe turns inspiration into a complete plan:
 - Menu ideas and how much food and drink to get
 - A 25-song playlist made for your event
 - A checklist with due dates and a day-of schedule
-- Guest list and RSVP tracking, seating, voting with co-hosts, a gift list and cost splitting
+- Invitations guests open on any phone: they RSVP, vote and see your gift list, and their answers come straight into your guest list
+- Guest list, seating, cost splitting and thank-you notes
 - Your finished plan in one place: save it as a PDF, email it to yourself or share it, and change any part anytime
 
 Not sure where to start? Browse inspiration by occasion: birthdays, kids' themed birthdays, showers, weddings, quinceañeras, Sweet 16s, graduations, holiday and Christmas parties, corporate events and more. Inspiration photos are AI-generated samples, clearly labeled.
@@ -37,4 +38,4 @@ party planner,event planning,birthday,baby shower,wedding,budget,venue,quinceane
 Plan any celebration from an inspiration photo: concepts, budget, venues, shopping list and more.
 
 ## App Review notes (paste into App Store Connect > App Review Information > Notes)
-No sign-in is needed. To try the app: tap Plan, type "black and gold 30th birthday for 40 guests in Houston", tap Next, choose any city and setting, then Create my concepts and choose one. Tap Keep my plan (free) to open every section. Under Budget & bookings > Venues, tap View venues to see live places from Google; Save up to 3 and tap Compare. Your finished plan (Overview tab) has Save as PDF, Email it to me and Share. Sample plans are on the Home screen. Inspiration photos are AI-generated and labeled as such. Plans are stored on the device. There are no purchases in this version.
+No sign-in is needed. To try the app: tap Plan, type "black and gold 30th birthday for 40 guests in Houston", tap Next, choose any city and setting, then Create my concepts and choose one. Tap Keep my plan (free) to open every section. Under Budget & bookings > Venues, tap View venues to see live places from Google; Save up to 3 and tap Compare. Your finished plan (Overview tab) has Save as PDF, Email it to me and Share. Sample plans are on the Home screen. Inspiration photos are AI-generated and labeled as such. To see sharing: keep a plan, open Guests & invitations > Invitation and tap Send invitation; the link opens the guest page in any browser. Plans are stored on the device; only shared invitations and guests' RSVPs are stored on our server. There are no purchases in this version.
