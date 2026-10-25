@@ -17,7 +17,7 @@ on:
         options: [internal, alpha, beta, production]
 env:
   VERSION: ${{ inputs.version || '1.0.0' }}
-  DEPS: "@capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/ios@7 @capacitor/splash-screen@7 @capacitor/status-bar@7 @capacitor/share@7 @capacitor/haptics@7 @capacitor/app@7 @capacitor/network@7 @capacitor/browser@7"
+  DEPS: "@capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/ios@7 @capacitor/splash-screen@7 @capacitor/status-bar@7 @capacitor/share@7 @capacitor/haptics@7 @capacitor/app@7 @capacitor/network@7 @capacitor/browser@7 @capacitor/filesystem@7"
 jobs:
   android:
     if: github.event_name == 'workflow_dispatch'

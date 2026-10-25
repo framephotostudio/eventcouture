@@ -12,6 +12,12 @@
     return false;
   }
   window.ECNative = { isNative: isNative, tap: tap, open: openLink, platform: isNative && Cap.getPlatform ? Cap.getPlatform() : 'web' };
+  /* Save a file (the finished plan PDF) and open the share sheet: Save to Files, Mail, Messages, AirDrop, Drive... */
+  if (isNative && P.Filesystem && P.Share) window.ECNative.shareFile = function (name, base64, mime, title) {
+    return P.Filesystem.writeFile({ path: name, data: base64, directory: 'CACHE' }).then(function (r) {
+      return P.Share.share({ title: title || name, files: [r.uri], dialogTitle: 'Save or send your plan' });
+    }).catch(function (e) { if (!/cancel/i.test(String(e && e.message || e))) throw e; });
+  };
   if (!isNative) return;
   /* Store, map, music and venue links open in an in-app browser, so hosts come straight back to their plan. */
   document.addEventListener('click', function (ev) {
