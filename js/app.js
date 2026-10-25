@@ -1367,17 +1367,17 @@
     var intro = ev.setting === 'restaurant'
       ? 'Your food and drinks come to about ' + money(foodLine / Math.max(1, ev.guests)) + ' per person with tax and tip. Look for restaurants that take reservations for ' + plural(ev.guests, 'guest') + '.'
       : (venueLine ? 'Your venue budget is about ' + money(venueLine.mid) + '. ' : '') + 'Look for spaces that hold ' + plural(ev.guests, 'guest') + (ev.setting === 'outdoor' ? ' outdoors' : '') + '.';
-    var filters = '<form class="panel venue-filter" id="vfilter"><label class="field"><span>Area or neighborhood (optional)</span><input class="input" id="varea" value="' + esc(ev.area || '') + '" placeholder="e.g. Uptown, The Woodlands, Downtown"></label>' +
+    var filters = '<details class="vf-wrap"' + (ev.area || ev.start ? ' open' : '') + '><summary class="link small">' + (ev.area ? 'Showing places near ' + esc(ev.area) + ' \u00b7 change' : 'Narrow by area or add drive times') + '</summary><form class="panel venue-filter" id="vfilter"><label class="field"><span>Area or neighborhood (optional)</span><input class="input" id="varea" value="' + esc(ev.area || '') + '" placeholder="e.g. Uptown, The Woodlands, Downtown"></label>' +
       '<label class="field"><span>Your starting point, for drive times (optional)</span><input class="input" id="start" value="' + esc(ev.start || '') + '" placeholder="Home, hotel or ceremony address"></label>' +
-      '<div><button class="btn small">Apply</button></div></form>';
-    return (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' + filters +
-      '<p class="small muted">' + (AI.live ? 'Tap View venues to see top-rated places in ' + esc(city) + '. Open any one to see photos, hours and contact details, then reach out to schedule a tour. ' : '') + 'Every list is matched to ' + (b.tier.id === 'F' ? 'your budget' : 'your ' + esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[venueLevel(ev, b)]) + ' level') + ': well-reviewed, polished places only, never budget chains.</p>' +
+      '<div><button class="btn small">Apply</button></div></form></details>';
+    return (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' +
+      (AI.live ? HOWTO('venue') : '') + filters + '<p class="small muted">' + (AI.live ? 'Tap See venues on any kind of place to see top-rated options in ' + esc(city) + '. Open any one for photos, hours and contact details, then reach out to schedule a tour. ' : '') + 'Every list is matched to ' + (b.tier.id === 'F' ? 'your budget' : 'your ' + esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[venueLevel(ev, b)]) + ' level') + ': well-reviewed, polished places only, never budget chains.</p>' +
       optBar(ev, venueCat(ev), true).replace('class="optbar', 'class="optbar wide') + newVenues(ev) + (AI.live ? '' : '<div class="note">' + (CFG.app ? 'Live venue details couldn\u2019t load right now, so each idea opens a map search. Check your connection and try again.' : 'Live venue photos, ratings, hours and drive times appear here when venue search is connected at launch. For now, each idea opens a live map search.') + '</div>') +
       '<div class="list panel">' + types.map(function (v) {
         var q = venueQuery(v, ev, b) + ' in ' + (ev.area ? ev.area + ', ' : '') + city;
         var dir = ev.start ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(ev.start) + '&destination=' + encodeURIComponent(q) + '">Drive time</a>' : '';
         var pc = venueProsCons(v, ev);
-        if (AI.live) return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><button class="btn small" data-live="' + esc(v) + '" data-q="' + esc(venueQuery(v, ev, b)) + '" data-level="' + venueLevel(ev, b) + '">View venues</button></span></div><div class="live-res" data-for="' + esc(v) + '"></div>';
+        if (AI.live) return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><button class="btn small" data-live="' + esc(v) + '" data-q="' + esc(venueQuery(v, ev, b)) + '" data-level="' + venueLevel(ev, b) + '">See venues</button></span></div><div class="live-res" data-for="' + esc(v) + '"></div>';
         return '<div class="it"><div class="grow"><b>' + esc(v) + '</b><div class="small muted">Pros: ' + esc(pc[0]) + '. Cons: ' + esc(pc[1]) + '.</div></div><span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q) + '">View on map</a>' + dir + '</span></div>';
       }).join('') + '</div>' + more(ev, typesAll, types.length, 'venue styles') + '<div id="live"></div></div>';
   };
@@ -1441,13 +1441,21 @@
     };
     return m[v] || ['fits your guest count', 'check what is included'];
   }
+  /* Place searches are remembered on the plan for a week, so results come back instantly and nothing is paid for twice. */
+  function HOWTO(kind) { return '<ol class="howto" aria-label="How to choose"><li><b>See</b> real, top-rated ' + (kind === 'venue' ? 'places' : 'businesses') + ' near you</li><li><b>Save</b> up to 3 you like</li><li><b>Compare</b> them, then mark the one you book</li></ol>'; }
+  function findPlaces(ev, body) {
+    var key = JSON.stringify([body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
+    if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(hit.places);
+    return fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.places || []; }); })
+      .then(function (list) { if (!ev.sample) { c[key] = { at: Date.now(), places: list }; var ks = Object.keys(c).sort(function (a, b) { return c[b].at - c[a].at; }); ks.slice(30).forEach(function (k) { delete c[k]; }); saveEvent(ev); } return list; });
+  }
   TAB_BIND.places = function (ev, save, rerender) {
     bindSave(ev, $('#tab'), function () { refreshBars(ev); }); bindWhere(ev, rerender); bindCompare(ev, rerender); runPendingFind(ev);
     $$('[data-live]').forEach(function (btn) { btn.addEventListener('click', function () {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; }); ev.lastVenue = btn.dataset.live;
       var box = document.querySelector('.live-res[data-for="' + btn.dataset.live.replace(/"/g, '') + '"]') || $('#live'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding venues\u2026</p>';
-      fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: btn.dataset.q || btn.dataset.live, level: btn.dataset.level || 'S', city: (ev.area ? ev.area + ', ' : '') + ev.city }) })
-        .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.places; }); })
+      findPlaces(ev, { query: btn.dataset.q || btn.dataset.live, level: btn.dataset.level || 'S', city: (ev.area ? ev.area + ', ' : '') + ev.city })
         .then(function (list) {
           if (!list.length) { box.innerHTML = '<p class="muted">No well-reviewed matches nearby for this type. Try another venue type, or switch to a different budget version.</p>'; return; }
           var placesAll = list.length; list = cut(list, 3, ev);
@@ -1467,6 +1475,7 @@
           }
         }).catch(function (e) { box.innerHTML = '<p class="muted">' + esc(e.message || 'Venue search isn\u2019t available right now.') + '</p>'; });
     }); });
+    if (AI.live) { var first = (ev.lastVenue && document.querySelector('[data-live="' + ev.lastVenue.replace(/"/g, '') + '"]')) || document.querySelector('[data-live]'); if (first && !document.querySelector('.live-res .curated')) first.click(); }   /* real places show right away */
     var wa = $('#whereAgain'); if (wa) wa.addEventListener('click', function () { var w = $('#where'); if (w) w.click(); else lockSample(ev); });
     if (!$('#vfilter')) return;
     $('#vfilter').addEventListener('submit', function (e) {
@@ -1501,11 +1510,11 @@
     if (!cats.length) return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">No other vendors are needed for this plan.</p></div>';
     var lvl = venueLevel(ev, b);
     var catsAll = cats.length; cats = cut(cats, 3, ev);
-    return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">Estimated prices in ' + esc(city.split(',')[0] || 'your city') + ' for your guest count and ' + (b.tier.id === 'F' ? 'budget' : esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[lvl]) + ' level') + ', including tax and tips where they apply. ' + (AI.live ? 'Tap a category to see top-rated businesses that provide it.' : '') + '</p>' +
+    return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + (AI.live ? HOWTO('vendor') : '') + '<p class="muted">Estimated prices in ' + esc(city.split(',')[0] || 'your city') + ' for your guest count and ' + (b.tier.id === 'F' ? 'budget' : esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[lvl]) + ' level') + ', including tax and tips where they apply. ' + (AI.live ? 'Tap See options on any category to see top-rated businesses that provide it.' : '') + '</p>' +
       '<div class="list panel">' + cats.map(function (i) {
         var vs = ev.alcohol === 'none' && i.id === 'bar' ? 'mocktail bar service' : ev.alcohol === 'none' && i.id === 'bartender' ? 'mocktail bartender service' : VENDOR_SEARCH[i.id]; var q = (LEVEL_WORD[lvl] + ' ' + (vs || i.name.split(' (')[0])).replace('luxury five-star', 'luxury');
         return '<div class="it"><div class="grow"><b>' + esc(i.name) + '</b> ' + statusBadge(ev, i.id) + '<div class="small">Estimated cost <b class="num">about ' + money(i.lo) + ' to ' + money(i.hi) + '</b></div>' + (VENDOR_NOTE[i.id] ? '<div class="small muted">' + esc(i.id === 'hairMakeup' ? 'On-site styling for ' + honoree(ev) + (ev.type === 'wedding' || /shower|bachelorette|quince/.test(ev.type) ? ' and the party' : '') : VENDOR_NOTE[i.id]) + '</div>' : '') + optBar(ev, i.id) + '</div>' +
-          '<span class="acts">' + (AI.live ? '<button class="btn small ghost" data-vendor="' + esc(i.id) + '" data-q="' + esc(q) + '" data-level="' + lvl + '">View top-rated</button>' : '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q + ' in ' + city) + '">View on map</a>') + '</span></div><div class="live-res" data-for="v-' + esc(i.id) + '"></div>';
+          '<span class="acts">' + (AI.live ? '<button class="btn small ghost" data-vendor="' + esc(i.id) + '" data-q="' + esc(q) + '" data-level="' + lvl + '">See options</button>' : '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q + ' in ' + city) + '">View on map</a>') + '</span></div><div class="live-res" data-for="v-' + esc(i.id) + '"></div>';
       }).join('') + '</div>' + more(ev, catsAll, cats.length, 'vendor categories with prices') + '<p class="muted small"><b>All prices are estimates</b> from typical local rates, not quotes. Real prices come from each vendor. Add a real quote anytime under Budget and your totals update. You pay vendors directly; Event Couture never holds your money.</p></div>';
   };
   TAB_BIND.style = function (ev) {
@@ -1518,8 +1527,8 @@
     $$('[data-vendor]').forEach(function (btn) { btn.addEventListener('click', function () {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; });
       var box = document.querySelector('.live-res[data-for="v-' + btn.dataset.vendor + '"]'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding top-rated businesses…</p>';
-      fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: btn.dataset.q, level: btn.dataset.level || 'S', kind: 'vendor', city: (ev.area ? ev.area + ', ' : '') + ev.city }) })
-        .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.places; }); })
+      ev.lastVendor = btn.dataset.vendor;
+      findPlaces(ev, { query: btn.dataset.q, level: btn.dataset.level || 'S', kind: 'vendor', city: (ev.area ? ev.area + ', ' : '') + ev.city })
         .then(function (list) {
           if (!list.length) { box.innerHTML = '<p class="muted small">No well-reviewed matches nearby. Try a different area on the Venues tab.</p>'; return; }
           var bizAll = list.length; list = cut(list, 3, ev);
@@ -1528,6 +1537,7 @@
           $$('[data-keep]', box).forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { location.reload(); }); }); });
         }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn’t available right now.') + '</p>'; });
     }); });
+    if (AI.live && ev.lastVendor && !PENDING_FIND) { var lv = document.querySelector('[data-vendor="' + ev.lastVendor.replace(/"/g, '') + '"]'); if (lv) lv.click(); }   /* reopen the last options she looked at */
   };
 
   /* Food and drink: menu, dietary needs, quantities */
