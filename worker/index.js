@@ -49,7 +49,7 @@ export default {
       }
       if (url.pathname === '/api/places') {
         if (!env.GOOGLE_MAPS_KEY) return json({ error: 'Venue search is not connected yet.' }, 503);
-        if (!(await reserve(env, COST.places))) return json({ error: 'Daily search limit reached. Try again tomorrow.' }, 429);
+        if (!(await freePlaces(env)) && !(await reserve(env, COST.places))) return json({ error: 'Daily search limit reached. Try again tomorrow.' }, 429);
         return json({ places: await places(env, String(body.query || '').slice(0, 120), String(body.city || '').slice(0, 120), ['L', 'S', 'U'].includes(body.level) ? body.level : 'S', body.kind === 'vendor') });
       }
       if (url.pathname === '/api/drive') {
@@ -65,6 +65,16 @@ export default {
 };
 
 /* ---------- spending cap ---------- */
+/* Google gives 1,000 detailed place searches a month free. Those don't count against the daily dollar cap;
+   searches past that (with a little margin) are paid and are counted as before. */
+const FREE_PLACES = 950;
+async function freePlaces(env) {
+  if (!env.EC_KV) return false;
+  const key = 'places:' + new Date().toISOString().slice(0, 7), n = parseInt((await env.EC_KV.get(key)) || '0', 10);
+  if (n >= FREE_PLACES) return false;
+  await env.EC_KV.put(key, String(n + 1), { expirationTtl: 60 * 60 * 24 * 40 });
+  return true;
+}
 function cap(env) { return Number(env.DAILY_CAP_USD || 0.66); }
 function dayKey() { return 'spend:' + new Date().toISOString().slice(0, 10); }
 async function spent(env) { return Number((await env.EC_KV?.get(dayKey())) || 0); }

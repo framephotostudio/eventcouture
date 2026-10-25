@@ -817,12 +817,12 @@
   /* The 12 pages, grouped into 4 sections so the plan is easy to find your way around on a phone. */
   var TAB_GROUPS = [
     ['Overview', [['overview', 'Summary'], ['plan', 'Your finished plan'], ['style', 'Style and music'], ['extras', CFG.app ? 'Plan details' : 'Your pass']]],
-    ['Budget & bookings', [['budget', 'Budget'], ['places', 'Venues'], ['vendors', 'Vendors'], ['food', 'Food and drink']]],
+    ['Budget & bookings', [['budget', 'Book and budget'], ['food', 'Food and drink']]],
     ['Guests & invitations', [['guests', 'Guests'], ['invite', 'Invite and registry'], ['votes', 'Voting'], ['after', 'Photos and thank-yous']]],
     ['Tasks & timeline', [['timeline', 'Checklist and schedule']]]
   ];
   function tierName(id) { if (id === 'F') return 'Your budget plan'; var t = D.TIERS.find(function (x) { return x.id === id; }); return t ? t.name : id; }
-  function groupOf(tab) { for (var i = 0; i < TAB_GROUPS.length; i++) if (TAB_GROUPS[i][1].some(function (t) { return t[0] === tab; })) return i; return 0; }
+  function groupOf(tab) { if (tab === 'places' || tab === 'vendors') return 1; for (var i = 0; i < TAB_GROUPS.length; i++) if (TAB_GROUPS[i][1].some(function (t) { return t[0] === tab; })) return i; return 0; }
   function planView(ev, tab) {
     if (!ev.concept) { location.hash = '#/e/' + ev.id + '/concepts'; return; }
     var base = ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id;
@@ -912,12 +912,12 @@
     var vend = vendorCats(ev, b), booked = vend.filter(function (i) { return statusOf(ev, i.id) === 'booked'; }).length;
     var where = ev.settingOpen ? { done: false, label: 'Decide where to host it', detail: 'Compare a restaurant, a venue, outdoors and home', href: base }
       : ev.setting === 'home' ? { done: true, label: 'Where: at home', detail: 'No venue to book' }
-      : { done: vst === 'booked', label: rest ? 'Reserve the restaurant' : ev.setting === 'privateRoom' ? 'Book the private room' : 'Book your venue', detail: vst === 'booked' ? 'Booked' : saved ? 'Front-runner: ' + pickOf(ev, vc).name + (saved > 1 ? ', ' + plural(saved, 'option') + ' to compare' : '') : 'Browse places that fit your plan, then mark the one you book', href: base + '/places' };
+      : { done: vst === 'booked', label: rest ? 'Reserve the restaurant' : ev.setting === 'privateRoom' ? 'Book the private room' : 'Book your venue', detail: vst === 'booked' ? 'Booked' : saved ? 'Front-runner: ' + pickOf(ev, vc).name + (saved > 1 ? ', ' + plural(saved, 'option') + ' to compare' : '') : 'Browse places that fit your plan, then mark the one you book', href: base + '/budget' };
     return [
       { done: true, label: 'Choose your look', detail: ev.concept.styleName, href: base + '/concepts' },
       { done: !!ev.date, label: 'Set your date', detail: ev.date ? fmtDate(ev.date) + (ev.time ? ', ' + fmtTime(ev.time) : '') : 'Due dates and your day-of schedule follow it', act: 'when' },
       where,
-      { done: !vend.length || booked === vend.length, label: 'Book your vendors', detail: vend.length ? booked + ' of ' + vend.length + ' booked' : 'No other vendors needed', href: base + '/vendors' },
+      { done: !vend.length || booked === vend.length, label: 'Book your vendors', detail: vend.length ? booked + ' of ' + vend.length + ' booked' : 'No other vendors needed', href: base + '/budget' },
       { done: isKept(ev), label: 'Keep your plan', detail: isKept(ev) ? 'Saved and unlocked' : 'Unlocks every detail, invitations and RSVPs', act: 'keep' },
       { done: !!ev.invited || (ev.guestsList || []).some(function (g) { return g.status === 'yes' || g.status === 'declined'; }), label: 'Invite your guests', detail: (ev.guestsList || []).length ? plural(ev.guestsList.length, 'guest') + ' on your list' : 'Send your invitation link', href: base + '/invite' }
     ];
@@ -1016,7 +1016,7 @@
   /* Go find a replacement for one venue or vendor category. */
   var PENDING_FIND = null;
   function findAnother(ev, cat) {
-    PENDING_FIND = cat; var to = '#/e/' + ev.id + '/' + (cat === venueCat(ev) ? 'places' : 'vendors');
+    PENDING_FIND = cat; var to = '#/e/' + ev.id + '/' + (AI.live && (ev.packages || []).some(function (pk) { return pk.items[cat]; }) ? 'budget' : cat === venueCat(ev) ? 'places' : 'vendors');
     if (location.hash === to) setTimeout(route, 0); else location.hash = to;
   }
   function runPendingFind(ev) {
@@ -1221,8 +1221,8 @@
   function isBooked(ev, cat, x) { var ov = (ev.overrides || {})[cat]; return !!(ov && ov.source === 'booking' && (ov.opt ? ov.opt === x.id : ov.note === x.name)); }
   /* Side by side: her up to three options for one category, with the facts that matter and one front-runner. */
   var PRICE_TXT = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
-  function compareSheet(ev, cat, rerender) {
-    var mode = null;   /* null = the comparison; { kind: 'quote' | 'book', id } = a price form for one option */
+  function compareSheet(ev, cat, rerender, opts) {
+    var mode = opts && opts.book ? { kind: 'book', id: opts.book } : null;   /* null = the comparison; { kind: 'quote' | 'book', id } = a price form for one option */
     var priceForm = function (el, x) {
       var book = mode.kind === 'book', booked = isBooked(ev, cat, x), meal = cat === 'restaurantFood', ov = (ev.overrides || {})[cat] || {};
       var val = book ? (booked && ov.amount ? ov.amount : x.quote || '') : (x.quote || '');
@@ -1242,7 +1242,7 @@
         (outside ? '<div class="note">You marked this booked on your Budget page' + (ov.note ? ': ' + esc(ov.note) : '') + '. Tap I booked this on an option below to switch.</div>' : '') +
         (l.length ? '<div class="cmp" style="--n:' + l.length + '">' +
           row('', function (x) { return '<b>' + esc(x.name) + '</b>' + (isBooked(ev, cat, x) ? '<span class="badge ok">Booked</span>' : pk && x.id === pk.id ? '<span class="badge est">\u2605 Front-runner</span>' : ''); }) +
-          row('Rating', function (x) { return x.rating ? '\u2605 ' + x.rating + (x.reviews ? ' <span class="muted small">(' + Number(x.reviews).toLocaleString('en-US') + ')</span>' : '') : '<span class="muted">\u2014</span>'; }) +
+          row('Rating', function (x) { return x.rating ? '\u2605 ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' <span class="muted small">(' + Number(x.reviews).toLocaleString('en-US') + ')</span>' : '') : '<span class="muted">\u2014</span>'; }) +
           row('Price', function (x) { return isBooked(ev, cat, x) && ov.amount ? '<b class="num">' + money(ov.amount) + '</b> <span class="muted small">booked</span>' : x.quote ? '<span class="num">' + money(x.quote) + '</span> <span class="muted small">quote</span>' : PRICE_TXT[x.price] ? PRICE_TXT[x.price] : '<span class="muted">Ask for a quote</span>'; }) +
           row('Where', function (x) { return x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : '<span class="muted">\u2014</span>'; }) +
           row('', function (x) { return (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : '') + (x.phone ? '<a class="btn small ghost" href="tel:' + esc(x.phone.replace(/[^\d+]/g, '')) + '">Call</a>' : ''); }) +
@@ -1289,28 +1289,132 @@
       '<div class="bk-stats"><div><b class="num">' + money(bookedAmt) + '</b><span class="small muted">confirmed</span></div><div><b class="num">' + quoted.length + '</b><span class="small muted">with a price</span></div><div><b class="num">' + sl.length + '</b><span class="small muted">saved</span></div></div>' +
       (sl.length ? '<div class="list">' + sl.map(function (x) { return x && x.cat; }).filter(function (c, i, a) { return c && D.CATEGORIES[c] && a.indexOf(c) === i; }).map(function (cat) { var l = savedFor(ev, cat), pk = pickOf(ev, cat), st = statusOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
           return '<div class="it"><div class="grow"><b>' + esc(catName(cat, ev)) + '</b><div class="small">' + (st === 'booked' ? '<span class="badge ok">Booked</span> ' + esc(ov.note || '') : '\u2605 ' + esc(pk.name) + ' <span class="muted">front-runner</span>') + '</div><div class="small muted">' + plural(l.length, 'option') + ' saved' + (l.length < MAX_OPTIONS && st !== 'booked' ? ', save up to ' + (MAX_OPTIONS - l.length) + ' more' : '') + '</div></div><span class="acts"><button class="btn small" data-compare="' + cat + '">' + (l.length > 1 ? 'Compare ' + l.length : 'Open') + '</button></span></div>'; }).join('') + '</div>'
-        : '<p class="muted small">Tap See options on any line below (or use Venues and Vendors) and save up to 3 for each. They show here side by side so you can pick a front-runner, add quotes and mark the one you book.</p>') +
+        : '<p class="muted small">Save up to 3 options for each venue or vendor. They show here side by side so you can pick a front-runner, add quotes and mark the one you book.</p>') +
       '</div>';
   }
 
   /* Budget: every line labeled; add your own prices */
+  /* ---------- Book everything in one place: a package with a top-rated venue and every vendor, in one tap ---------- */
+  var PKG_SKIP = ['venue', 'privateDining', 'tent', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'restaurantFood', 'restaurantDrinks', 'cakeFee', 'tableDecor'];
+  function pkgCats(ev, b) {
+    var lvl = venueLevel(ev, b), vc = venueCat(ev), out = [];
+    if (ev.setting !== 'home' && !ev.settingOpen && b.items.some(function (i) { return i.id === vc; })) { var vt = venueTypesFor(ev)[0]; if (vt) out.push({ cat: vc, kind: 'venue', type: vt, q: venueQuery(vt, ev, b), lvl: lvl }); }
+    b.items.forEach(function (i) { if (PKG_SKIP.indexOf(i.id) < 0 && NO_SEARCH.indexOf(i.id) < 0) out.push({ cat: i.id, kind: 'vendor', q: vendorQuery(ev, i, lvl), lvl: lvl }); });
+    return out;
+  }
+  function pkgSearch(ev, c) { var city = (ev.area ? ev.area + ', ' : '') + ev.city; return findPlaces(ev, c.kind === 'venue' ? { query: c.q, level: c.lvl, city: city } : { query: c.q, level: c.lvl, kind: 'vendor', city: city }); }
+  function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '' }; }
+  function usedIn(ev, cat, id, except) { return (ev.packages || []).some(function (pk, k) { return k !== except && pk.items[cat] === id; }); }
+  function putInPackage(ev, k, cat, p) {
+    var pk = ev.packages[k], old = pk.items[cat], mine = savedFor(ev, cat);
+    if (!mine.some(function (x) { return x.id === p.id; })) {
+      if (mine.length >= MAX_OPTIONS) { var spare = mine.find(function (x) { return x.id !== old && !usedIn(ev, cat, x.id, k) && !isBooked(ev, cat, x); }) || mine.find(function (x) { return x.id === old && !usedIn(ev, cat, x.id, k) && !isBooked(ev, cat, x); }); if (!spare) return false; removeOption(ev, spare.id, cat); }
+      addOption(ev, asOption(p, cat));
+    }
+    pk.items[cat] = p.id;
+    if (old && old !== p.id && !usedIn(ev, cat, old)) { var ox = savedFor(ev, cat).find(function (x) { return x.id === old; }); if (ox && !isBooked(ev, cat, ox)) removeOption(ev, old, cat); }
+    if ((ev.pkgChosen || 0) === k && !savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, p.id);
+    syncPrice(ev, cat);
+    return true;
+  }
+  /* One search per category (remembered for a week); a second package reuses the same results, so it costs nothing extra. */
+  function buildPackage(ev, onStep) {
+    var b = E.budget(ev, ev.tier), cats = pkgCats(ev, b); ev.packages = ev.packages || [];
+    var k = ev.packages.length; ev.packages.push({ items: {}, at: Date.now() }); if (k === 0) ev.pkgChosen = 0; ev.pkgView = k;
+    var done = 0, miss = [];
+    var one = function (c) {
+      var bk = savedFor(ev, c.cat).find(function (x) { return isBooked(ev, c.cat, x); });
+      if (bk && k === 0) { ev.packages[k].items[c.cat] = bk.id; done++; if (onStep) onStep(done, cats.length); return Promise.resolve(); }   /* what she already booked stays */
+      return pkgSearch(ev, c).then(function (list) {
+        var taken = ev.packages.map(function (pk) { return pk.items[c.cat]; });
+        var p = list.find(function (x) { return taken.indexOf(x.id) < 0; });
+        if (!p || !putInPackage(ev, k, c.cat, p)) miss.push(c.cat);
+      }).catch(function () { miss.push(c.cat); }).then(function () { done++; if (onStep) onStep(done, cats.length); });
+    };
+    var i = 0; var next = function () { if (i >= cats.length) return Promise.resolve(); var batch = cats.slice(i, i + 3); i += 3; return Promise.all(batch.map(one)).then(next); };
+    return next().then(function () { ev.packages[k].miss = miss; saveEvent(ev); return k; });
+  }
+  var PRICE_SIGN = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
+  var ORDINAL = ['first', 'second', 'third'];
+  function packagePanel(ev, b) {
+    var cats = pkgCats(ev, b), pks = ev.packages || [];
+    if (!cats.length) return bookingsPanel(ev, b);
+    var bookedN = cats.filter(function (c) { return statusOf(ev, c.cat) === 'booked'; }).length;
+    if (!pks.length) return '<div class="panel stack pkg" id="pkg"><div class="pkg-top"><h3>Book everything in one place</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div>' +
+      '<p class="muted">In one tap we pick a top-rated ' + (cats[0].kind === 'venue' ? E.lc(catName(cats[0].cat, ev)) + ' and ' + plural(cats.length - 1, 'vendor') : plural(cats.length, 'vendor')) + ' for your plan in ' + esc(ev.city.split(',')[0]) + '. Then create a second package to compare, swap anything you don\u2019t love, and mark what you book.</p>' +
+      (ev.sample ? '' : '<div><button class="btn gold" id="pkgGo">Create my package</button></div>') + '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
+    var k = Math.min(ev.pkgView || 0, pks.length - 1), pk = pks[k], chosen = (ev.pkgChosen || 0) === k;
+    return '<div class="panel stack pkg" id="pkg"><div class="pkg-top"><h3>Your booking package' + (pks.length > 1 ? 's' : '') + '</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div>' +
+      '<div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' +
+      '<div class="pkg-tabs" role="tablist">' + pks.map(function (x, i) { return '<button role="tab" data-pkview="' + i + '" aria-selected="' + (i === k) + '">Package ' + (i + 1) + ((ev.pkgChosen || 0) === i ? ' <span aria-label="chosen">\u2605</span>' : '') + '</button>'; }).join('') +
+        (pks.length < 3 && !ev.sample ? '<button class="pkg-new" id="pkgMore">+ Create a ' + ORDINAL[pks.length] + ' package</button>' : '') + '</div>' +
+      '<p class="small muted" id="pkgMsg" aria-live="polite">' + (chosen ? '<span class="badge ok">Your chosen package</span> These are your front-runners everywhere in your plan.' : 'Compare it with your other package, then choose the one you like best.') + '</p>' +
+      '<div class="pkg-rows">' + cats.map(function (c) {
+        var id = pk.items[c.cat], x = id && savedFor(ev, c.cat).find(function (o) { return o.id === id; }), it = b.items.find(function (i) { return i.id === c.cat; }), bk = x && isBooked(ev, c.cat, x);
+        return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + '<span class="num muted small">' + (it ? 'est. ' + money(it.mid) : '') + '</span></div>' +
+          (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + [x.rating ? '\u2605 ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' \u00b7 ') + '</span></div>' +
+            '<div class="pk-acts">' + (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : '') + (ev.sample ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Swap</button><button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked \u2713' : 'I booked it') + '</button>') + '</div>'
+          : '<p class="small muted">No top-rated match came back yet. ' + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '">See options</button>') + '</p>') +
+          '<div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></div>';
+      }).join('') + '</div>' +
+      (ev.sample ? '' : '<div class="row pkg-foot">' + (chosen ? '' : '<button class="btn gold" data-pkuse="' + k + '">Choose package ' + (k + 1) + '</button>') + '<button class="link small" data-pkdel="' + k + '">Remove this package</button></div>') + '</div>';
+  }
+  function bindPackage(ev, save, rerender) {
+    var build = function (btn) {
+      if (lockSample(ev)) return; btn.disabled = true; var msg = $('#pkgMsg');
+      buildPackage(ev, function (d, n) { if (msg) msg.textContent = 'Finding top-rated picks\u2026 ' + d + ' of ' + n; }).then(function (k) {
+        var m = ev.packages[k].miss || []; rerender();
+        toast('Package ' + (k + 1) + ' is ready' + (m.length ? '. ' + plural(m.length, 'item') + ' had no top-rated match; tap See options there.' : ''));
+        var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' });
+      });
+    };
+    var go = $('#pkgGo'), more = $('#pkgMore');
+    if (go) go.addEventListener('click', function () { build(go); });
+    if (more) more.addEventListener('click', function () { build(more); });
+    $$('[data-pkview]').forEach(function (bt) { bt.addEventListener('click', function () { ev.pkgView = +bt.dataset.pkview; save(); rerender(); }); });
+    $$('[data-pkuse]').forEach(function (bt) { bt.addEventListener('click', function () {
+      if (lockSample(ev)) return; var k = +bt.dataset.pkuse, pk = ev.packages[k]; ev.pkgChosen = k;
+      Object.keys(pk.items).forEach(function (cat) { if (!savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, pk.items[cat]); syncPrice(ev, cat); });
+      save(); rerender(); toast('Package ' + (k + 1) + ' is your choice. Its picks are now your front-runners.');
+    }); });
+    $$('[data-pkdel]').forEach(function (bt) { bt.addEventListener('click', function () {
+      if (lockSample(ev)) return; var k = +bt.dataset.pkdel, pk = ev.packages[k];
+      Object.keys(pk.items).forEach(function (cat) { var id = pk.items[cat], x = savedFor(ev, cat).find(function (o) { return o.id === id; }); if (x && !usedIn(ev, cat, id, k) && !isBooked(ev, cat, x)) removeOption(ev, id, cat); syncPrice(ev, cat); });
+      ev.packages.splice(k, 1); var ch = ev.pkgChosen || 0; ev.pkgChosen = ch === k ? 0 : ch > k ? ch - 1 : ch; ev.pkgView = Math.max(0, Math.min((ev.pkgView || 0), ev.packages.length - 1));
+      if (ev.packages.length && ch === k) { var np = ev.packages[ev.pkgChosen]; Object.keys(np.items).forEach(function (cat) { if (!savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, np.items[cat]); syncPrice(ev, cat); }); }
+      save(); rerender(); toast('Package removed');
+    }); });
+    $$('[data-pkbook]').forEach(function (bt) { bt.addEventListener('click', function () { var cat = bt.dataset.pkbook, pk = ev.packages[Math.min(ev.pkgView || 0, ev.packages.length - 1)]; compareSheet(ev, cat, rerender, { book: pk.items[cat] }); }); });
+    $$('[data-pkswap]').forEach(function (bt) { bt.addEventListener('click', function () {
+      var cat = bt.dataset.pkswap, box = document.querySelector('[data-pkswapbox="' + cat + '"]'), k = Math.min(ev.pkgView || 0, ev.packages.length - 1), pk = ev.packages[k];
+      if (box.innerHTML) { box.innerHTML = ''; return; }
+      var c = pkgCats(ev, E.budget(ev, ev.tier)).find(function (x) { return x.cat === cat; }); if (!c) return;
+      box.innerHTML = '<p class="small muted">Finding other top-rated options\u2026</p>';
+      pkgSearch(ev, c).then(function (list) {
+        var inOther = (ev.packages || []).map(function (x) { return x.items[cat]; }); var others = list.filter(function (p) { return inOther.indexOf(p.id) < 0; }).slice(0, 5);   /* never the same business in two packages */
+        box.innerHTML = '<div class="curated">' + (others.length ? '<p class="eyebrow">Other top-rated choices</p>' + others.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + [p.rating ? '\u2605 ' + (Math.round(p.rating * 10) / 10) + ' (' + Number(p.reviews || 0).toLocaleString('en-US') + ')' : '', PRICE_SIGN[p.priceLevel] || '', p.address ? esc(p.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' \u00b7 ') + '</div></div><span class="acts">' + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<button class="btn small" data-pkpick="' + esc(p.id) + '">Use this</button></span></div>'; }).join('') : '<p class="muted small">No other top-rated matches nearby.</p>') +
+          (c.kind === 'venue' ? '<p class="small"><a class="link" href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/places">More kinds of venues, areas and drive times</a></p>' : '') + '</div>';
+        $$('[data-pkpick]', box).forEach(function (pb) { pb.addEventListener('click', function () { if (lockSample(ev)) return; var p = list.find(function (x) { return x.id === pb.dataset.pkpick; }); if (!putInPackage(ev, k, cat, p)) return toast('Remove one of your saved options for this first.'); save(); rerender(); toast('Swapped in ' + p.name); }); });
+      }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn\u2019t available right now.') + '</p>'; });
+    }); });
+  }
   TAB_VIEWS.budget = function (ev, b) {
     var groups = {}; cut(b.items, 3, ev).forEach(function (i) { (groups[i.group] = groups[i.group] || []).push(i); });
     var excluded = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
-    return '<div class="stack"><div class="row" style="justify-content:space-between"><h3>' + (b.tier.id === 'F' ? 'Your budget plan' : esc(b.tier.name) + ' budget') + '</h3><div class="seg" id="tierseg">' + (ev.budget ? [{ id: 'F', name: 'My budget' }] : []).concat(D.TIERS).map(function (t) { return '<button data-tier="' + t.id + '" aria-pressed="' + (t.id === ev.tier) + '">' + t.name + '</button>'; }).join('') + '</div></div>' +
+    return (AI.live ? packagePanel(ev, b) : '') + '<div class="stack"><div class="row" style="justify-content:space-between"><h3>' + (b.tier.id === 'F' ? 'Your budget plan' : esc(b.tier.name) + ' budget') + '</h3><div class="seg" id="tierseg">' + (ev.budget ? [{ id: 'F', name: 'My budget' }] : []).concat(D.TIERS).map(function (t) { return '<button data-tier="' + t.id + '" aria-pressed="' + (t.id === ev.tier) + '">' + t.name + '</button>'; }).join('') + '</div></div>' +
       (ev.payer === 'own' ? (function () { var rest = ev.setting === 'restaurant' || ev.setting === 'privateRoom';
         /* at a restaurant guests pay their own bill; anywhere else they chip in for food and drinks */
         var own = b.items.filter(function (i) { return rest ? (i.id === 'restaurantFood' || i.id === 'restaurantDrinks' || i.id === 'privateDining') : ['catering', 'bar', 'bartender'].indexOf(i.id) >= 0; }).reduce(function (t, i) { return t + i.mid; }, 0); return own ? '<div class="note">Everyone pays their own ' + (rest ? 'meal and drinks' : 'share of the food and drinks') + ': about <b>' + money(own / Math.max(1, ev.expected || ev.guests)) + ' a person</b>' + (rest ? ', with tax and tip' : ', with tax and service') + '. You cover the rest (cake, decor and the 10% cushion), about <b>' + money(Math.max(0, b.total - own)) + '</b>. The total below is still the full cost of the event.</div>' : ''; })() : '') +
       (ev.payer === 'shared' ? '<div class="note">Splitting the cost: about <b>' + money(b.total / Math.max(1, ev.guests)) + ' a person</b> if everyone shares equally. Track who has paid under Guests & invitations.</div>' : '') +
       '<p class="muted small"><b>All prices are estimates</b>, not quotes. Real prices come from each venue and vendor. Estimates are sized to ' + esc(ev.city) + ' and ' + plural(ev.guests, 'guest') + ', and include tax, service charges and tips where they apply. Add a real quote anytime and the totals update.</p>' +
       (ev.budget ? '<div class="stack" style="gap:6px"><div class="meter' + (b.total > ev.budget ? ' over' : '') + '"><i style="width:' + Math.min(100, b.total / ev.budget * 100) + '%"></i></div><span class="small muted num">' + money(b.total) + ' of your ' + money(ev.budget) + ' budget</span></div>' : '') +
-      bookingsPanel(ev, b) +
+      (AI.live && (ev.packages || []).length ? '' : bookingsPanel(ev, b)) +
       '<div class="panel"><div class="lines">' + Object.keys(groups).map(function (gname) {
         return '<div class="group-h">' + esc(gname) + '</div>' + groups[gname].map(function (i) {
           return '<div class="ln"><span>' + esc(i.name) + '</span><span class="amt">' + (i.lo === i.hi ? money(i.mid) : money(i.mid) + '<br><span class="small muted">' + money(i.lo) + ' to ' + money(i.hi) + '</span>') + '</span>' +
             '<div class="sub">' + statusBadge(ev, i.id) + '<span class="badge ' + (i.label === 'Planning estimate' ? 'est' : 'ok') + '">' + esc(i.label) + '</span><span class="small muted">' + esc([i.source].concat(i.extras.length ? [i.extras.join(', ')] : []).filter(Boolean).join('; ')) + '</span>' +
-            (AI.live && i.id === venueCat(ev) && ev.setting !== 'home' ? '<a class="link small" href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/places">See ' + (ev.setting === 'restaurant' ? 'restaurants' : 'venues') + '</a>' : AI.live && NO_SEARCH.indexOf(i.id) < 0 ? '<button class="link small" data-vendor="' + esc(i.id) + '" data-q="' + esc(vendorQuery(ev, i, venueLevel(ev, b))) + '" data-level="' + venueLevel(ev, b) + '">See options</button>' : '') +
-            '<button class="link small" data-price="' + i.id + '">Add quote or booking</button><button class="link small" data-drop="' + i.id + '">Remove</button></div>' + (AI.live && NO_SEARCH.indexOf(i.id) < 0 ? '<div class="live-res" data-for="v-' + esc(i.id) + '"></div>' : '') + '</div>';
+
+            '<button class="link small" data-price="' + i.id + '">Add quote or booking</button><button class="link small" data-drop="' + i.id + '">Remove</button></div></div>';
         }).join('');
       }).join('') + '</div></div>' + more(ev, b.items.length, Math.min(3, b.items.length), 'budget lines, with quantities and sources') +
       '<div class="panel sum"><div><span>Subtotal</span><span class="num">' + money(b.mid) + '</span></div><div><span>Cushion for surprises (10%)</span><span class="num">' + money(b.contingency) + '</span></div><div class="grand"><span>Estimated total</span><span class="num">' + money(b.total) + '</span></div><div class="small muted"><span>Range</span><span class="num">' + money(b.lo * 1.1) + ' to ' + money(b.hi * 1.1) + '</span></div></div>' +
@@ -1318,8 +1422,8 @@
       '<p class="muted small">Estimates are a starting point. Always confirm prices, minimums and availability with each venue and vendor before you book.</p></div>';
   };
   TAB_BIND.budget = function (ev, save, rerender) {
-    bindSave(ev, $('#tab'), function () { refreshBars(ev); });
-    $$('[data-vendor]').forEach(function (btn) { btn.addEventListener('click', function () { openVendorResults(ev, btn); }); });
+    if (AI.live) bindPackage(ev, save, rerender);
+    if (PENDING_FIND && AI.live) { var pf = PENDING_FIND; PENDING_FIND = null; setTimeout(function () { var sb = document.querySelector('[data-pkswap="' + pf + '"]'); if (sb) { sb.closest('.pk-row').scrollIntoView({ block: 'center' }); sb.click(); } }, 60); }
     $$('#tierseg [data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { var bf = snap(ev); ev.tier = btn.dataset.tier; save(); rerender(); if (bf.tier !== ev.tier) undoToast(ev, bf, 'Switched to ' + tierName(ev.tier), rerender); }); });
     $$('[data-drop]').forEach(function (btn) { btn.addEventListener('click', function () { if (lockSample(ev)) return; var bf = snap(ev); ev.exclude = (ev.exclude || []).concat(btn.dataset.drop); ev.include = (ev.include || []).filter(function (x) { return x !== btn.dataset.drop; }); save(); rerender(); undoToast(ev, bf, 'Removed ' + E.lc(D.CATEGORIES[btn.dataset.drop].name), rerender); }); });
     $$('[data-restore]').forEach(function (btn) { btn.addEventListener('click', function () { ev.exclude = ev.exclude.filter(function (x) { return x !== btn.dataset.restore; }); ev.include = (ev.include || []).concat(btn.dataset.restore); save(); rerender(); }); });
@@ -1338,7 +1442,8 @@
   };
 
   /* Venues: types that fit, live search links, drive times */
-  TAB_VIEWS.places = function (ev, b) {
+  /* The kinds of venue that fit this event, best first. */
+  function venueTypesFor(ev) {
     var t = E.typeOf(ev.type); var types = (D.VENUE_TYPES[ev.setting] || D.VENUE_TYPES[t.style] || D.VENUE_TYPES.party).slice();
     var hr = E.startHour(ev), daytime = hr < 16;
     if (ev.setting === 'outdoor') types = ev.type === 'wedding' || ev.type === 'engagement' ? ['Estate or garden venue', 'Vineyard or barn', 'Event lawn or estate grounds', 'Beach or waterfront venue', 'Rooftop terrace'] : ['Park pavilion or picnic area', 'Garden venue', 'Event lawn or estate grounds', 'Rooftop terrace', 'Beach or waterfront venue'];
@@ -1350,6 +1455,10 @@
     if ((ev.kids && /birthday/.test(ev.type)) || /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|kids'? party/i.test((ev.inspiration && ev.inspiration.text) || '')) { types = types.filter(function (v) { return !/lounge|wine bar|speakeasy|steakhouse/i.test(v); }); if (ev.setting === 'indoor') types.unshift('Kids party venue or play space'); }
     if (ev.alcohol === 'none') types = types.filter(function (v) { return !/wine bar|lounge|speakeasy/i.test(v); });   /* no bars for an alcohol-free event */
     if (ev.setting === 'outdoor' && /\b(park|picnic)\b/i.test((ev.inspiration && ev.inspiration.text) || '')) types = ['Park pavilion or picnic area'].concat(types.filter(function (v) { return v !== 'Park pavilion or picnic area'; }));
+    return types;
+  }
+  TAB_VIEWS.places = function (ev, b) {
+    var t = E.typeOf(ev.type), types = venueTypesFor(ev), hr = E.startHour(ev), daytime = hr < 16;
     if (ev.setting === 'home') {
       return '<div class="stack"><h3>Your venue: home</h3><div class="panel stack"><p>Your event is at home, so there is no venue to book. ' + (function () { var ids = b.items.map(function (i) { return i.id; }), inc = [];
         if (ids.indexOf('rentals') >= 0) inc.push('rentals with enough seating for ' + plural(ev.guests, 'guest')); if (ids.indexOf('cleanup') >= 0) inc.push('a setup and cleanup crew');

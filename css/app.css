@@ -660,3 +660,22 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 @media (max-width: 560px) { .howto { grid-template-columns: 1fr; gap: 6px; } .howto li { padding: 8px 12px 8px 40px; } .howto li::before { top: 8px; } }
 .vf-wrap > summary { cursor: pointer; padding: 4px 0; } .vf-wrap[open] > summary { margin-bottom: 8px; }
 .lines .ln .live-res { grid-column: 1 / -1; } .lines .ln .live-res:empty { display: none; }
+/* Booking package: everything to book, in one place */
+.pkg .pkg-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.pkg-tabs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pkg-tabs [role=tab] { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 8px 16px; font: 500 .9rem var(--body); cursor: pointer; min-height: 40px; }
+.pkg-tabs [role=tab][aria-selected=true] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.pkg-new { border: 1px dashed var(--champagne); background: transparent; color: var(--gold-text); border-radius: 999px; padding: 8px 16px; font: 500 .9rem var(--body); cursor: pointer; min-height: 40px; }
+.pkg-rows { display: grid; gap: 0; }
+.pk-row { padding: 14px 0; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.pk-row:first-child { border-top: 0; }
+.pk-h { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pk-h .num { margin-left: auto; }
+.pk-biz { display: grid; gap: 2px; }
+.pk-biz b { font-size: 1rem; color: var(--ink); }
+.pk-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.pk-swap:empty { display: none; }
+.pkg-foot { justify-content: space-between; align-items: center; gap: 12px; padding-top: 4px; }
+@media (min-width: 900px) { .pk-row { grid-template-columns: 180px minmax(0, 1fr) auto; align-items: center; column-gap: 16px; } .pk-row .pk-swap, .pk-row > p { grid-column: 1 / -1; } .pk-row > p.small { grid-column: 2 / -1; } }
+@media (min-width: 900px) { .pk-h { flex-direction: column; align-items: flex-start; gap: 2px; } .pk-h .num { margin-left: 0; } }
+.pkg { margin-bottom: 8px; }

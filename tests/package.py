@@ -1,0 +1,63 @@
+# One-tap booking package and a second package: python3 tests/package.py <folder>
+from playwright.sync_api import sync_playwright
+import json, sys, hashlib
+U='http://localhost:8765/'; OUT=sys.argv[1] if len(sys.argv)>1 else '/tmp'
+calls=[0]
+def places_for(q):
+    h=hashlib.md5(q.encode()).hexdigest()[:5]; word=q.split()[-1].title()
+    return [{'id':h+str(i),'name':f'{word} Studio {"ABCDE"[i]}','rating':4.9-i*0.1,'reviews':300-i*40,'priceLevel':['PRICE_LEVEL_EXPENSIVE','PRICE_LEVEL_MODERATE'][i%2],'address':f'{i+1} Main St, Houston, TX','mapsUrl':'https://maps.google.com/?q='+h,'website':'https://example.com/'+h} for i in range(5)]
+def api(route):
+    u=route.request.url; h={'access-control-allow-origin':'*'}
+    if u.endswith('/api/places'): calls[0]+=1; b=json.loads(route.request.post_data); route.fulfill(status=200, content_type='application/json', body=json.dumps({'places':places_for(b['query'])}), headers=h)
+    elif u.endswith('/api/status'): route.fulfill(status=200, content_type='application/json', body='{"ai":true,"places":true}', headers=h)
+    else: route.fulfill(status=500, body='{}', headers=h)
+def cfg(route):
+    r=route.fetch(); route.fulfill(response=r, body=r.text().replace("apiUrl: ''","apiUrl: 'http://api.test'"))
+fails=[]
+def check(n, ok, what):
+    print(n, 'OK ' if ok else 'FAIL', what)
+    if not ok: fails.append(n+' '+what)
+with sync_playwright() as p:
+    b=p.chromium.launch()
+    for w,h,n in [(390,844,'phone'),(1280,900,'desktop')]:
+        calls[0]=0
+        ctx=b.new_context(viewport={'width':w,'height':h}); pg=ctx.new_page(); e=[]; pg.on('pageerror',lambda x:e.append(str(x)))
+        pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
+        pg.goto(U+'#/new/1'); pg.wait_for_timeout(300); pg.fill('#text','black and gold 40th birthday party'); pg.click('#next'); pg.wait_for_timeout(250)
+        pg.select_option('#type','birthday'); pg.fill('#guests','80'); pg.fill('#expected','80'); pg.fill('#time','19:00'); pg.select_option('#city','Houston, TX'); pg.click('#setting [data-v=indoor]')
+        pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
+        base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2]); eid=base.split('/')[2]
+        ev=lambda: pg.evaluate("id => JSON.parse(localStorage['ec.events'])[id]", eid)
+        check(n, 'Venues' not in pg.inner_text('.groupbar') and pg.query_selector('a[href$="/budget"]') is not None, 'one booking page in the menu')
+        pg.goto(U+base+'/budget'); pg.wait_for_selector('#pkgGo'); pg.click('#pkgGo'); pg.wait_for_selector('.pk-row', timeout=15000); pg.wait_for_timeout(400)
+        rows=pg.query_selector_all('.pk-row'); filled=pg.query_selector_all('.pk-row .pk-biz')
+        check(n, len(rows)>=8 and len(filled)==len(rows), f'package fills venue and every vendor in one tap: {len(filled)}/{len(rows)}')
+        first_calls=calls[0]
+        check(n, 'Venue' in pg.inner_text('.pk-row >> nth=0'), 'venue first')
+        d=ev(); check(n, all(any(x['cat']==c and x.get('pick') for x in d['shortlist']) for c in d['packages'][0]['items']), 'package 1 picks are the front-runners')
+        pg.screenshot(path=f'{OUT}/pkg1_{n}.png', full_page=True)
+        pg.click('#pkgMore'); pg.wait_for_selector('[data-pkview="1"][aria-selected=true]', timeout=15000); pg.wait_for_timeout(300)
+        d=ev(); p1,p2=d['packages'][0]['items'],d['packages'][1]['items']
+        check(n, all(p1[c]!=p2.get(c) for c in p1), 'package 2 has different picks for every item')
+        check(n, calls[0]==first_calls, f'second package needed no new searches ({calls[0]-first_calls})')
+        check(n, d.get('pkgChosen',0)==0 and 'Choose package 2' in pg.inner_text('#pkg'), 'package 1 stays chosen until she picks')
+        pg.screenshot(path=f'{OUT}/pkg2_{n}.png', full_page=True)
+        # swap one item in package 2
+        pg.click('[data-pkswap] >> nth=1'); pg.wait_for_selector('[data-pkpick]'); old=ev()['packages'][1]['items']; cat=pg.get_attribute('[data-pkswap] >> nth=1','data-pkswap')
+        pg.click('[data-pkpick] >> nth=0'); pg.wait_for_timeout(300); new=ev()['packages'][1]['items']
+        check(n, new[cat]!=old[cat] and new[cat]!=ev()['packages'][0]['items'][cat], 'swap replaces just that item')
+        check(n, all(len([x for x in ev()['shortlist'] if x['cat']==c])<=3 for c in new), 'never more than 3 saved per category')
+        # choose package 2
+        pg.click('[data-pkuse="1"]'); pg.wait_for_timeout(300); d=ev()
+        check(n, d['pkgChosen']==1 and all(any(x['cat']==c and x['id']==d['packages'][1]['items'][c] and x.get('pick') for x in d['shortlist']) for c in d['packages'][1]['items']), 'choosing package 2 makes its picks the front-runners')
+        # book the venue
+        pg.click('[data-pkbook] >> nth=0'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','4500'); pg.click('#psave'); pg.wait_for_timeout(200); pg.click('.sheet [data-close]'); pg.wait_for_timeout(400)
+        check(n, 'Booked' in pg.inner_text('.pk-row >> nth=0') and '1 of' in pg.inner_text('.pkg-top'), 'booking from the package shows booked')
+        pg.goto(U+base+'/plan'); pg.wait_for_timeout(400); t=pg.inner_text('#tab'); check(n, 'Booked:' in t and 'Front-runner:' in t, 'finished plan shows the package')
+        # remove package 1
+        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkview="0"]'); pg.wait_for_timeout(200); pg.click('[data-pkdel="0"]'); pg.wait_for_timeout(300); d=ev()
+        check(n, len(d['packages'])==1 and d['pkgChosen']==0, 'removing the other package keeps the chosen one')
+        check(n, not e, 'no page errors '+str(e)); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
+        ctx.close()
+    b.close()
+print('FAILURES:', fails if fails else 'none')
