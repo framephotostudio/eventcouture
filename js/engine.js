@@ -106,7 +106,7 @@
       /* A price the host entered is shown exactly as entered, already including fees. */
       lo: ov && ov.amount > 0 ? ov.amount : roundTo(lo, 5), hi: ov && ov.amount > 0 ? ov.amount : roundTo(hi, 5), mid: ov && ov.amount > 0 ? ov.amount : roundTo((lo + hi) / 2, 5),
       extras: ov && ov.amount > 0 ? [] : extras.map(function (e) { return e.label; }),
-      label: ov ? ({ vendor: 'Vendor-published price', quote: 'Confirmed quote', booking: 'Confirmed booking' }[ov.source] || 'Your price') : 'Planning estimate',
+      label: ov ? (ov.amount > 0 ? ({ vendor: 'Vendor-published price', quote: 'Confirmed quote', booking: 'Confirmed booking' }[ov.source] || 'Your price') : (ov.source === 'booking' ? 'Booked; estimate until you add the price' : 'Planning estimate')) : 'Planning estimate',
       source: ov ? (ov.note || '') : ((city.name === 'Other US city' ? (ev.city && ev.city !== 'Other US city' ? ev.city + ', typical US prices' : 'Typical US prices') : city.name + ' estimate') + ', ' + Number(guests).toLocaleString('en-US') + (guests === 1 ? ' guest' : ' guests') + mealNote)
     };
   }

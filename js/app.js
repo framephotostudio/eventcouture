@@ -300,7 +300,7 @@
       if (p[0] === 'inspiration') return inspirationPage(p[1] && p[1] !== 'all' ? decodeURIComponent(p[1]) : '', p[2]);
       if (p[0] === 'sample') { var se = sampleEvent(+p[1] || 0); return se ? planView(se, p[2] || 'overview') : notFound(); }
       if (p[0] === 'e' && p[2] === 'concepts') return conceptsView(p[1]);
-      if (p[0] === 'e') { var ev = getEvent(p[1]); if (!ev) return notFound(); return planView(ev, p[2] || 'overview'); }
+      if (p[0] === 'e') { var ev = getEvent(p[1]); if (!ev) return frame('<div class="stack"><h2>This plan isn\u2019t here</h2><p class="muted">It may have been deleted, or it was made on another device.</p><div><a class="btn" href="#/events">Go to My events</a></div></div>'); return planView(ev, p[2] || 'overview'); }
       if (p[0] === 'g') return guestPage(p[1]);
       if (p[0] === 'vendors') return vendorJoin();
       if (p[0] === 'help') return help();
@@ -335,7 +335,7 @@
     return '<div class="chips iscroll" id="ifilter" role="group" aria-label="Filter by occasion"><button type="button" class="chip" data-t="" aria-pressed="' + !type + '">All occasions</button>' +
       inspoTypes().map(function (t) { return '<button type="button" class="chip" data-t="' + t.id + '" aria-pressed="' + (t.id === type) + '">' + esc(t.name) + '</button>'; }).join('') + '</div>' +
       '<div class="igrid" id="igrid">' + inspoCards(type, limit) + '</div>' +
-      '<p class="muted small">Every photo here is AI-generated inspiration, not a real event we organized. Venues, vendors and prices in your plan are real and matched to your city.</p>';
+      '<p class="muted small">Every photo here is AI-generated inspiration, not a real event we organized. Venues and vendors in your plan are real places in your city, and prices are local estimates until you add real quotes.</p>';
   }
   function bindInspo(limit, onType) {
     var cur = ($('#ifilter [aria-pressed="true"]') || {}).dataset; cur = cur ? cur.t : '';
@@ -435,7 +435,7 @@
       }).join('') + '</div></div>' : '') +
       (all.length ? (ds.length ? '<h3>Planned</h3>' : '') + '<div class="samples">' + all.map(function (ev) {
         var pal = ev.concept ? ev.concept.palette : ['#E6DEE0', '#F2DDE1', '#F3EADB'];
-        return '<a class="sample" href="#/e/' + ev.id + (ev.concept ? '' : '/concepts') + '">' + (thumb(eventPhoto(ev)) || '<div class="thumb noimg" aria-hidden="true" style="background:linear-gradient(120deg,' + pal.slice(0, 4).join(',') + ')"></div>') + '<div class="in"><h3>' + esc(ev.name) + '</h3>' + dots(pal) + '<span class="muted small">' + esc(fmtDate(ev.date)) + ' \u00b7 ' + esc(ev.city.split(',')[0]) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</span><span class="small">' + (ev.concept ? esc(ev.concept.styleName) : 'Choose a concept') + ' ' + (isKept(ev) ? '<span class="badge ok">Kept</span>' : '<span class="badge">Free preview</span>') + '</span></div></a>'; }).join('') + '</div>'
+        return '<a class="sample" href="#/e/' + ev.id + (ev.concept ? '' : '/concepts') + '">' + (thumb(eventPhoto(ev)) || '<div class="thumb noimg" aria-hidden="true" style="background:linear-gradient(120deg,' + pal.slice(0, 4).join(',') + ')"></div>') + '<div class="in"><h3>' + esc(ev.name) + '</h3>' + dots(pal) + '<span class="muted small">' + esc(fmtDate(ev.date)) + ' \u00b7 ' + esc(ev.city.split(',')[0]) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</span><span class="small">' + (ev.concept ? esc(ev.concept.styleName) : 'Choose a concept') + ' ' + (isKept(ev) ? '<span class="badge ok">Kept</span>' : '<span class="badge">' + (CFG.app ? 'Not kept yet' : 'Free preview') + '</span>') + '</span></div></a>'; }).join('') + '</div>'
         : (ds.length ? '' : '<div class="panel stack"><h3>No events yet</h3><p class="muted">Start with your inspiration photos or a description. Your plan saves automatically.</p><div><a class="btn gold" href="#/new">Plan my event</a></div></div>')) + '</div>');
     $$('[data-rmd]').forEach(function (b) { b.addEventListener('click', function () { sheet('<h3>Delete this draft?</h3><p class="muted">Its photos and details will be removed.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete draft</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { removeDraft(b.dataset.rmd); close(); myEvents(); }); }); }); });
   }
@@ -531,8 +531,9 @@
     return { id: uid(), name: '', type: '', guests: 20, expected: 20, city: '', budget: 0, setting: null, hours: 3, date: '', time: '18:00', start: '', kids: false,
       inspiration: { photos: [], links: [], text: '', vibes: [] }, priorities: [], guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, overrides: {}, exclude: [], include: [], tier: 'F', created: Date.now() };
   }
+  var JUST_CREATED = {};
   function wizard(step, id) {
-    var done = id && events()[id]; if (done) { location.replace('#/e/' + id + (done.concept ? '' : '/concepts')); return; }   /* Back from the concepts page returns to the plan, not a blank form */
+    var done = id && events()[id]; if (done) { if (JUST_CREATED[id] && done.concept) { history.back(); return; } location.replace('#/e/' + id + (done.concept ? '' : '/concepts')); return; }   /* Back past the finished form steps goes to where she was before planning */   /* Back from the concepts page returns to the plan, not a blank form */
     if (!id || (!drafts()[id] && !(pendingDraft && pendingDraft.id === id))) { pendingDraft = newDraft(); location.replace('#/new/1/' + pendingDraft.id); return; }
     draft = drafts()[id] || pendingDraft;   /* a new draft is saved only once the host adds something or continues */
     var W = '#/new/';
@@ -705,7 +706,7 @@
     ];
     frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>Does this look right?</h2><p class="muted">Your concepts, prices and timeline are built from these details. Fix anything before we start.</p></div>' +
       '<div class="panel confirm">' + rowsHtml.map(function (r) { return '<div class="crow"><span class="muted small">' + r[0] + '</span><span>' + r[1] + '</span></div>'; }).join('') + '</div>' +
-      '<p class="muted small">Planning is free. You only pay if you want to keep your plan and share it with guests.</p>' +
+      '<p class="muted small">' + (CFG.app ? 'Planning and keeping your plan are free in the app.' : 'Planning is free. You only pay if you want to keep your plan and share it with guests.') + '</p>' +
       '<div class="wiz-act"><button class="btn gold" id="go">Create my concepts</button><a class="btn ghost" href="' + W + '2/' + draft.id + '">Edit details</a>' + laterBtn() + '</div></div>');
     $('#later').addEventListener('click', function () { persist(); location.hash = '#/events'; setTimeout(function () { toast('Saved. Pick it up anytime from My events.'); }, 80); });
     if (AI.live) AI.concepts(draft, []);   /* start the AI now; it's usually ready by the time the host taps Create */
@@ -714,7 +715,7 @@
       T('concepts_requested', { event_type: draft.type });
       var ev = draft; ev.paid = null; ev.created = ev.created || new Date().toISOString().slice(0, 10);
       if (!saveEvent(ev)) { btn.disabled = false; btn.textContent = 'Create my concepts'; return; }
-      removeDraft(ev.id); draft = null;
+      removeDraft(ev.id); draft = null; JUST_CREATED[ev.id] = true;
       location.hash = '#/e/' + ev.id + '/concepts';
     });
   }
@@ -826,8 +827,8 @@
     var save = function () { if (!ev.sample) saveEvent(ev); };
     var b = E.budget(ev, ev.tier);
     var hp = eventPhoto(ev);
-    var head = '<div class="plan-head">' + (hp ? thumb(hp, 'banner') : '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>') +
-      '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta">' + (ev.concept.styleName && ev.concept.styleName !== ev.name ? '<span>' + esc(ev.concept.styleName) + '</span>' : '') + '<span>' + (ev.sample ? esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') : '<button class="link small" id="when" aria-label="Date and time: ' + esc(ev.date ? fmtDate(ev.date) : 'not set') + '. Change">' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ', ' + fmtTime(ev.time) : '') : 'Add your date') + '</button>') + '</span><span>' + esc(ev.city) + '</span><span>' + plural(ev.guests, 'guest') + '</span><span>' + (ev.sample ? esc(settingName(ev)) : '<button class="link small" id="where" aria-label="Where it happens: ' + esc(settingName(ev)) + '. Change">' + esc(settingName(ev)) + '</button>') + '</span></div></div>' +
+    var head = '<div class="plan-head">' + (hp ? thumb(hp, 'banner') : '<div class="swatch" aria-hidden="true">' + (ev.concept.palette || []).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>') +
+      '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta">' + (ev.concept.styleName && ev.concept.styleName !== ev.name ? '<span>' + esc(ev.concept.styleName) + '</span>' : '') + '<span>' + (ev.sample ? esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') : '<button class="link small" id="when" aria-label="Date and time: ' + esc(ev.date ? fmtDate(ev.date) : 'not set') + '. Change">' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ', ' + fmtTime(ev.time) : '') : 'Add your date') + '</button>') + '</span><span>' + esc(ev.city) + '</span><span>' + (ev.sample ? plural(ev.guests, 'guest') : '<button class="link small" id="guestsBtn" aria-label="' + plural(ev.guests, 'guest') + '. Change">' + plural(ev.guests, 'guest') + '</button>') + '</span><span>' + (ev.sample ? esc(settingName(ev)) : '<button class="link small" id="where" aria-label="Where it happens: ' + esc(settingName(ev)) + '. Change">' + esc(settingName(ev)) + '</button>') + '</span></div></div>' +
       '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + 'Estimated total \u00b7 ' + (b.tier.id === 'F' ? (b.shortBy ? 'Closest plan, ' + money(b.shortBy) + ' over your budget' : 'Fits your ' + money(ev.budget) + ' budget') : esc(b.tier.name)) + '</div></div></div>' +
       (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new">Start your own</a> to edit it with your details.</div>' : '') + '</div>';
     if (!TAB_VIEWS[tab]) tab = 'overview';
@@ -851,6 +852,17 @@
     var wn = $('#when'); if (wn) wn.addEventListener('click', function () {
       sheet('<h3>When is it?</h3><p class="muted">Your checklist due dates and day-of schedule update to match.</p><label class="field"><span>Date</span><input class="input" type="date" id="wd" min="' + todayISO() + '" value="' + esc(ev.date || '') + '"></label><label class="field"><span>Start time</span><input class="input" type="time" id="wt" value="' + esc(ev.time || '18:00') + '"></label><label class="field"><span>How many hours</span><input class="input" type="number" min="1" max="16" id="wh" value="' + (ev.hours || 3) + '"></label><button class="btn gold block" id="ok">Save</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
         $('#ok', el).addEventListener('click', function () { var bf = snap(ev); bf.date = ev.date; bf.time = ev.time; if ($('#wd', el).value && $('#wd', el).value < todayISO()) return toast('That date has already passed. Choose an upcoming date.'); ev.date = $('#wd', el).value; ev.time = $('#wt', el).value || ev.time; ev.hours = Math.min(16, Math.max(1, +$('#wh', el).value || ev.hours || 3)); delete ev.ros; save(); close(); planView(ev, tab); undoToast(ev, bf, 'Date and time updated', function () { planView(ev, tab); }); });
+      });
+    });
+    var gb = $('#guestsBtn'); if (gb) gb.addEventListener('click', function () {
+      sheet('<h3>How many guests?</h3><p class="muted">Count everyone you\u2019re inviting, including plus-ones. Prices, food amounts and the checklist update to match.</p><label class="field"><span>Guests</span><input class="input num" type="number" min="1" max="20000" inputmode="numeric" id="gn" value="' + ev.guests + '"></label><button class="btn gold block" id="ok">Update</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
+        var go = function () {
+          var n = Math.round(+$('#gn', el).value); if (!(n >= 1)) return toast('Enter how many guests'); if (n > 20000) return toast('Event Couture plans events for up to 20,000 people.');
+          var lim = tooBigFor(ev.setting, n); if (lim) return toast(tooBigText(ev.setting, n, lim));
+          if (ev.paid && ev.paid.max && n > ev.paid.max) { if (CFG.app) ev.paid.max = E.passFor(n).max; else return toast(plural(n, 'guest') + ' is more than your pass covers (' + ev.paid.max + '). Move up a size under Overview, Your pass first.'); }
+          var bf = snap(ev); ev.guests = n; ev.expected = Math.min(ev.expected || n, n); delete ev.ros; save(); close(); planView(ev, tab); undoToast(ev, bf, 'Updated for ' + plural(n, 'guest'), function () { planView(ev, tab); });
+        };
+        $('#ok', el).addEventListener('click', go); $('#gn', el).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
       });
     });
     var wh = $('#where'); if (wh) wh.addEventListener('click', function () {
@@ -927,7 +939,7 @@
   TAB_VIEWS.plan = function (ev, b) {
     if (preview(ev)) return '<div class="stack"><div class="lock-card big"><h3>Your finished plan</h3><p class="muted">Everything you chose, in one place: your look, every cost, the venue and vendors you booked, the menu, what to buy, the playlist and your day-of schedule. Save it as a PDF, print it or share it with a co-host.</p><button class="btn" data-keep>Keep my plan to see it</button></div></div>';
     var c = ev.concept, ros = ev.ros || E.runOfShow(ev);
-    var stTxt = function (cat) { var st = statusOf(ev, cat), ov = (ev.overrides || {})[cat]; return st === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : st === 'quote' ? (ov && ov.note ? 'Front-runner: ' + ov.note + ', quoted ' + money(ov.amount) : 'Quote received') : st === 'short' ? (function () { var pk = pickOf(ev, cat), o = savedFor(ev, cat).filter(function (x) { return x !== pk; }).map(function (x) { return x.name; }); return 'Front-runner: ' + pk.name + (o.length ? ' (also considering ' + o.join(' and ') + ')' : ''); })() : 'Still to book'; };
+    var stTxt = function (cat) { var st = statusOf(ev, cat), ov = (ev.overrides || {})[cat]; return st === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : st === 'quote' ? (ov && ov.opt ? 'Front-runner: ' + ov.note + ', quoted ' + money(ov.amount) : (ov && ov.source === 'vendor' ? 'Published price ' : 'Price added ') + money(ov.amount) + (ov && ov.note ? ' (' + ov.note + ')' : '')) : st === 'short' ? (function () { var pk = pickOf(ev, cat), o = savedFor(ev, cat).filter(function (x) { return x !== pk; }).map(function (x) { return x.name; }); return 'Front-runner: ' + pk.name + (o.length ? ' (also considering ' + o.join(' and ') + ')' : ''); })() : 'Still to book'; };
     var vend = [venueCat(ev)].concat(vendorCats(ev, b).map(function (i) { return i.id; })).filter(function (x, i, a) { return a.indexOf(x) === i && b.items.some(function (it) { return it.id === x; }); });
     var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
     var todo = E.checklist(ev).filter(function (x) { return !checkDone(ev, x.text); }).slice(0, 6);
@@ -938,7 +950,7 @@
       '<div class="panel plan-save"><div><b>Save your plan</b><p class="small muted">Keep a copy as a PDF, email it to yourself or send it to a co-host. ' + (ev.sample ? '' : 'Don\u2019t love something? Tap Change or Replace next to it.') + '</p></div><div class="row plan-actions"><button class="btn gold small" id="pdfPlan">Save as PDF</button><button class="btn ghost small" id="mailPlan">Email it to me</button><button class="btn ghost small" id="sharePlan">Share</button>' + (window.ECNative && window.ECNative.isNative ? '' : '<button class="btn ghost small" id="printPlan">Print</button>') + '</div></div>' +
       '<div class="ps-head"><span class="small muted">' + esc(E.typeOf(ev.type).name) + '</span><h2>' + esc(ev.name) + '</h2><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + esc(fmtTime(ev.time)) : '') : 'Date to be set') + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + esc(settingName(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p>' + (ev.sample ? '' : '<button class="ps-edit link small" data-plan-when>Change date or time</button>') + '</div>' +
       sec('Your look', dots(c.palette, c.styleName + ' colors') + '<p><b>' + esc(c.styleName) + '.</b> ' + esc(moodFor(c, ev)) + '</p><ul class="incl">' + decorFor(c, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>', ['concepts', 'Choose a different look']) +
-      sec('Budget, ' + esc(tierName(b.tier.id)), '<div class="table-wrap"><table class="qty"><thead><tr><th>Item</th><th>Status</th><th>Amount</th></tr></thead><tbody>' + b.items.map(function (i) { var st = statusOf(ev, i.id); return '<tr><td>' + esc(i.name) + '</td><td class="small muted">' + (st === 'booked' ? 'Booked' : st === 'quote' ? 'Quote' : 'Estimate') + '</td><td class="n">' + money(i.mid) + '</td></tr>'; }).join('') + '<tr><td><b>Estimated total</b></td><td class="small muted">' + (ev.budget ? 'Budget ' + money(ev.budget) : '') + '</td><td class="n"><b>' + money(b.total) + '</b></td></tr></tbody></table></div><p class="small muted">Includes tax, service, tips and a 10% cushion. Amounts marked Quote or Booked are the prices you entered.</p>', ['budget', 'Change level or prices']) +
+      sec('Budget, ' + esc(tierName(b.tier.id)), '<div class="table-wrap"><table class="qty"><thead><tr><th>Item</th><th>Status</th><th>Amount</th></tr></thead><tbody>' + b.items.map(function (i) { var st = statusOf(ev, i.id); var oo = (ev.overrides || {})[i.id]; return '<tr><td>' + esc(i.name) + '</td><td class="small muted">' + (st === 'booked' ? (oo && oo.amount > 0 ? 'Booked' : 'Booked, estimate') : st === 'quote' ? 'Quote' : 'Estimate') + '</td><td class="n">' + money(i.mid) + '</td></tr>'; }).join('') + '<tr><td><b>Estimated total</b></td><td class="small muted">' + (ev.budget ? 'Budget ' + money(ev.budget) : '') + '</td><td class="n"><b>' + money(b.total) + '</b></td></tr></tbody></table></div><p class="small muted">Includes tax, service, tips and a 10% cushion. Amounts marked Quote or Booked are the prices you entered.</p>', ['budget', 'Change level or prices']) +
       sec('Venue and vendors', '<div class="list">' + vend.map(function (id) { var it = b.items.find(function (x) { return x.id === id; }), n = savedFor(ev, id).length; return '<div class="it"><span class="grow"><b>' + esc(catName(id)) + '</b><span class="small muted"> ' + esc(stTxt(id)) + '</span></span><span class="num">' + money(it.mid) + '</span>' + (ev.sample ? '' : '<button class="ps-edit link small" data-plan-replace="' + id + '">' + (n > 1 ? 'Compare or replace' : n ? 'Replace' : 'Find one') + '</button>') + '</div>'; }).join('') + '</div>') +
       sec(ev.setting === 'restaurant' ? 'Look for these on the menu' : 'Menu', '<ul class="incl">' + menuItems(ev).map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul>', ['food', 'Change menu']) +
       (pieces.length ? sec('Get this look', '<ul class="incl">' + pieces.map(function (p2) { return '<li>' + esc(p2.name) + (p2.hire ? ' <span class="small muted">(hire)</span>' : '') + '</li>'; }).join('') + '</ul>', ['style', 'Change pieces']) : '') +
@@ -951,14 +963,14 @@
   function planData(ev) {
     var b = E.budget(ev, ev.tier), c = ev.concept, ros = ev.ros || E.runOfShow(ev);
     var st = function (cat) { var s2 = statusOf(ev, cat), ov = (ev.overrides || {})[cat], pk = pickOf(ev, cat), o = savedFor(ev, cat).filter(function (x) { return x !== pk; }).map(function (x) { return x.name; });
-      return s2 === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : s2 === 'quote' ? (ov && ov.note ? 'Front-runner: ' + ov.note + ', quoted ' + money(ov.amount) : 'Quote received') : s2 === 'short' ? 'Front-runner: ' + pk.name + (o.length ? ' (also considering ' + o.join(' and ') + ')' : '') : 'Still to book'; };
+      return s2 === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : s2 === 'quote' ? (ov && ov.opt ? 'Front-runner: ' + ov.note + ', quoted ' + money(ov.amount) : (ov && ov.source === 'vendor' ? 'Published price ' : 'Price added ') + money(ov.amount) + (ov && ov.note ? ' (' + ov.note + ')' : '')) : s2 === 'short' ? 'Front-runner: ' + pk.name + (o.length ? ' (also considering ' + o.join(' and ') + ')' : '') : 'Still to book'; };
     var vend = [venueCat(ev)].concat(vendorCats(ev, b).map(function (i) { return i.id; })).filter(function (x, i, a) { return a.indexOf(x) === i && b.items.some(function (it) { return it.id === x; }); });
     var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
     var todo = E.checklist(ev).filter(function (x) { return !checkDone(ev, x.text); }).slice(0, 8);
     var hex = function (h) { return /^#[0-9a-f]{3}$/i.test(h) ? '#' + h.slice(1).split('').map(function (x) { return x + x; }).join('') : h; };
     var sections = [
       { h: 'Your look', p: c.styleName + '. ' + moodFor(c, ev), bullets: decorFor(c, ev) },
-      { h: 'Budget, ' + tierName(b.tier.id), rows: b.items.map(function (i) { var s2 = statusOf(ev, i.id); return [i.name, s2 === 'booked' ? 'Booked' : s2 === 'quote' ? 'Quote' : 'Estimate', money(i.mid)]; }), total: ['Estimated total' + (ev.budget ? ' (budget ' + money(ev.budget) + ')' : ''), money(b.total)] },
+      { h: 'Budget, ' + tierName(b.tier.id), rows: b.items.map(function (i) { var s2 = statusOf(ev, i.id); var oo = (ev.overrides || {})[i.id]; return [i.name, s2 === 'booked' ? (oo && oo.amount > 0 ? 'Booked' : 'Booked, estimate') : s2 === 'quote' ? 'Quote' : 'Estimate', money(i.mid)]; }), total: ['Estimated total' + (ev.budget ? ' (budget ' + money(ev.budget) + ')' : ''), money(b.total)] },
       { h: 'Venue and vendors', rows: vend.map(function (id) { var it = b.items.find(function (x) { return x.id === id; }); var sv = savedFor(ev, id); var ct = sv.filter(function (x) { return siteOf(x) || x.phone; }).map(function (x) { return x.name + ', ' + String(siteOf(x) || x.phone).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''); }); return [catName(id), st(id) + (ct.length ? '\nContact: ' + ct.join(' \u00b7 ') : ''), money(it.mid)]; }) },
       { h: ev.setting === 'restaurant' ? 'Look for these on the menu' : 'Menu', bullets: menuItems(ev) }
     ];
@@ -1073,9 +1085,10 @@
     $('#ask').addEventListener('submit', function (e) {
       e.preventDefault(); var q = $('#q').value.trim(); if (!q) return;
       var bf = snap(ev); var reply = concierge(ev, q); var chat = $('#chat');
-      chat.insertAdjacentHTML('beforeend', '<div class="bubble me">' + esc(q) + '</div><div class="bubble ai">' + esc(reply.text) + '</div>');
+      var bubbles = '<div class="bubble me">' + esc(q) + '</div><div class="bubble ai">' + esc(reply.text) + '</div>';
+      chat.insertAdjacentHTML('beforeend', bubbles);
       $('#q').value = '';
-      if (reply.changed && !ev.sample) { save(); setTimeout(function () { rerender(); undoToast(ev, bf, 'Plan updated', rerender); }, 1100); }
+      if (reply.changed && !ev.sample) { save(); setTimeout(function () { rerender(); var c2 = $('#chat'); if (c2) c2.insertAdjacentHTML('beforeend', bubbles); undoToast(ev, bf, 'Plan updated', rerender); }, 1100); }   /* the answer stays visible after the plan redraws */
     });
   };
 
@@ -1090,6 +1103,7 @@
       var n = +m[1];
       if (n < 1) return { text: 'A plan needs at least 1 guest. How many people are you inviting?' };
       if (n > 20000) return { text: 'Event Couture plans events for up to 20,000 people. Try a smaller number.' };
+      if (CFG.app && ev.paid && ev.paid.max && n > ev.paid.max) ev.paid.max = E.passFor(n).max;   /* free in the app */
       if (ev.paid && ev.paid.max && n > ev.paid.max) { var up = E.upgradeCost(ev.paid.price, n); return { text: plural(n, 'guest') + ' is more than your pass covers (' + ev.paid.max + '). Moving up costs ' + money(up.due) + '. Open Overview, Your pass to move up; your plan stays as it is.' }; }
       ev.guests = n; ev.expected = Math.min(ev.expected || n, n); changes.push('guest capacity is now ' + n);
     }
@@ -1152,7 +1166,7 @@
   function catName(cat) { if (OPT_NAME[cat]) return OPT_NAME[cat]; var c = D.CATEGORIES[cat]; return c ? c.name.split(' (')[0] : 'Option'; }
   function pickOf(ev, cat) { var l = savedFor(ev, cat); return l.find(function (x) { return x.pick; }) || l[0] || null; }
   function setPick(ev, cat, id) { savedFor(ev, cat).forEach(function (x) { x.pick = x.id === id; }); }
-  function removeOption(ev, id, cat) { var list = ev.shortlist = ev.shortlist || [], k = list.findIndex(function (o) { return o.id === id && o.cat === cat; }); var x = k >= 0 ? list.splice(k, 1)[0] : null; if (x && x.pick) { var n = savedFor(ev, x.cat)[0]; if (n) n.pick = true; } }
+  function removeOption(ev, id, cat) { var list = ev.shortlist = ev.shortlist || [], k = list.findIndex(function (o) { return o.id === id && o.cat === cat; }); var x = k >= 0 ? list.splice(k, 1)[0] : null; var ov0 = (ev.overrides || {})[cat]; if (x && ov0 && !ov0.opt && ov0.note === x.name) ov0.opt = x.id; if (x && x.pick) { var n = savedFor(ev, x.cat)[0]; if (n) n.pick = true; } }
   function addOption(ev, item) { ev.shortlist = ev.shortlist || []; var first = !savedFor(ev, item.cat).length; ev.shortlist.push(Object.assign({}, item, { pick: first })); return first; }
   function bindSave(ev, box, after) {
     box.addEventListener('click', function (e) {
@@ -1167,7 +1181,7 @@
       if (mine.length >= MAX_OPTIONS) {
         /* three is the limit: swap one out, so the choice stays focused */
         return sheet('<h3>You have 3 ' + esc(E.lc(catName(item.cat))) + ' options</h3><p class="muted">Choose one to replace with ' + esc(item.name) + ', or keep your three.</p><div class="list">' + mine.map(function (x) { return '<div class="it"><span class="grow"><b>' + esc(x.name) + '</b>' + (x.pick ? ' <span class="badge est">Front-runner</span>' : '') + '</span><button class="btn small ghost" data-swap-out="' + esc(x.id) + '">Replace</button></div>'; }).join('') + '</div><button class="btn ghost block" data-close>Keep my three</button>', function (el, close) {
-          el.addEventListener('click', function (ev2) { var sw = ev2.target.closest('[data-swap-out]'); if (!sw) return; var out = mine.find(function (x) { return x.id === sw.dataset.swapOut; }); var wasPick = out && out.pick; removeOption(ev, sw.dataset.swapOut, item.cat); ev.shortlist.push(Object.assign({}, item, { pick: !!wasPick || !savedFor(ev, item.cat).length })); syncPrice(ev, item.cat); saveEvent(ev); close(); mark(true); var ob = document.querySelector('[data-short="' + (item.cat + '|' + sw.dataset.swapOut).replace(/"/g, '') + '"]'); if (ob) { ob.textContent = 'Save'; ob.className = 'btn small ghost'; ob.setAttribute('aria-pressed', 'false'); } toast('Replaced. Compare your three under Budget & bookings.'); if (after) after(); });
+          el.addEventListener('click', function (ev2) { var sw = ev2.target.closest('[data-swap-out]'); if (!sw) return; var out = mine.find(function (x) { return x.id === sw.dataset.swapOut; }); var wasPick = out && out.pick; removeOption(ev, sw.dataset.swapOut, item.cat); ev.shortlist.push(Object.assign({}, item, { pick: false })); if (wasPick || savedFor(ev, item.cat).length === 1) setPick(ev, item.cat, item.id); syncPrice(ev, item.cat); saveEvent(ev); close(); mark(true); var ob = document.querySelector('[data-short="' + (item.cat + '|' + sw.dataset.swapOut).replace(/"/g, '') + '"]'); if (ob) { ob.textContent = 'Save'; ob.className = 'btn small ghost'; ob.setAttribute('aria-pressed', 'false'); } toast('Replaced. Compare your three under Budget & bookings.'); if (after) after(); });
         });
       }
       var first = addOption(ev, item); mark(true); saveEvent(ev);
@@ -1178,19 +1192,19 @@
   /* A small bar on Venues and Vendors: how many options she has for this category, and the way into the comparison. */
   function optBar(ev, cat, wide) {
     var l = savedFor(ev, cat), pk = pickOf(ev, cat), st = statusOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
-    var txt = st === 'booked' ? '<span class="badge ok">Booked</span> ' + esc(ov.note || (pk ? pk.name : '')) : l.length ? '\u2605 <b>' + esc(pk.name) + '</b> <span class="muted">is your front-runner \u00b7 ' + l.length + ' of 3 saved</span>' : '<span class="muted">' + (wide ? 'Save up to 3 ' + E.lc(catName(cat)) + ' options from the results below, or add one you found, then compare them side by side.' : 'Save up to 3 options to compare') + '</span>';
+    var txt = st === 'booked' ? '<span class="badge ok">Booked</span> ' + esc(ov.note || '') : l.length ? '\u2605 <b>' + esc(pk.name) + '</b> <span class="muted">is your front-runner \u00b7 ' + l.length + ' of 3 saved</span>' : '<span class="muted">' + (wide ? 'Save up to 3 ' + E.lc(catName(cat)) + ' options from the results below, or add one you found, then compare them side by side.' : 'Save up to 3 options to compare') + '</span>';
     if (!l.length && !wide && st !== 'booked') return '<div class="optbar small" data-optbar="' + cat + '" hidden></div>';
     return '<div class="optbar small" data-optbar="' + cat + '"><span class="grow">' + txt + '</span><button class="link small" data-compare="' + cat + '">' + (l.length > 1 ? 'Compare ' + l.length + ' side by side' : l.length ? 'Open' : 'Add your own') + '</button></div>';
   }
   function bindCompare(ev, rerender) { $('#tab').addEventListener('click', function (e) { var b = e.target.closest('[data-optbar] [data-compare]'); if (b) compareSheet(ev, b.dataset.compare, rerender); }); }
-  function refreshBars(ev) { $$('[data-stbadge]').forEach(function (el) { el.outerHTML = statusBadge(ev, el.dataset.stbadge); }); $$('[data-optbar]').forEach(function (el) { el.outerHTML = optBar(ev, el.dataset.optbar, el.classList.contains('wide')).replace('class="optbar', 'class="optbar' + (el.classList.contains('wide') ? ' wide' : '')); }); }
+  function refreshBars(ev) { $$('[data-short]').forEach(function (bt) { var on = (ev.shortlist || []).some(function (x) { return x && x.cat + '|' + x.id === bt.dataset.short; }); bt.textContent = on ? 'Saved' : 'Save'; bt.className = 'btn small ' + (on ? 'gold' : 'ghost'); bt.setAttribute('aria-pressed', on); }); $$('[data-stbadge]').forEach(function (el) { el.outerHTML = statusBadge(ev, el.dataset.stbadge); }); $$('[data-optbar]').forEach(function (el) { el.outerHTML = optBar(ev, el.dataset.optbar, el.classList.contains('wide')).replace('class="optbar', 'class="optbar' + (el.classList.contains('wide') ? ' wide' : '')); }); }
   /* The budget follows the front-runner's quote until something is booked. */
   /* Prices that belong to a saved option carry its id (opt), so removing the option removes its price or booking too.
      A price typed on the Budget page for no particular option is left alone unless the front-runner has a quote. */
   function syncPrice(ev, cat) {
     var o = ev.overrides = ev.overrides || {}, ov = o[cat], l = savedFor(ev, cat);
     var has = function (id) { return l.some(function (x) { return x.id === id; }); };
-    if (ov && !ov.opt && ov.note) { var m = l.find(function (x) { return x.name === ov.note; }); if (m) ov.opt = m.id; }
+    if (ov && !ov.opt && ov.source === 'booking' && ov.note) { var m = l.find(function (x) { return x.name === ov.note; }); if (m) ov.opt = m.id; }
     if (ov && ov.opt && !has(ov.opt)) { delete o[cat]; ov = null; }
     if (ov && ov.source === 'booking') return;
     var pk = pickOf(ev, cat);
@@ -1207,8 +1221,8 @@
       var book = mode.kind === 'book', booked = isBooked(ev, cat, x), meal = cat === 'restaurantFood', ov = (ev.overrides || {})[cat] || {};
       var val = book ? (booked && ov.amount ? ov.amount : x.quote || '') : (x.quote || '');
       el.innerHTML = '<h3 tabindex="-1">' + (book ? (booked ? 'Booked: ' : 'Mark as booked: ') : 'Quote from ') + esc(x.name) + '</h3>' +
-        '<p class="muted small">' + (book ? (meal ? 'Great choice. Add what you expect to spend if you know it; otherwise your meal estimate stays in the budget.' : 'Add the total you agreed to, including fees, if you know it. Your budget uses it instead of the estimate.') : 'Add the price they quoted, including fees. ' + (pickOf(ev, cat) && pickOf(ev, cat).id === x.id ? 'This is your front-runner, so your budget uses it.' : 'Your budget uses it if you make them your front-runner.')) + '</p>' +
-        '<label class="field"><span>' + (book ? (meal ? 'Expected total (optional)' : 'Total amount (optional)') : 'Quoted total (USD)') + '</span><input class="input num" type="number" min="0" inputmode="decimal" id="pamt" value="' + esc(String(val)) + '"></label>' +
+        '<p class="muted small">' + (book ? (meal ? 'Great choice. Add what you expect to spend if you know it; otherwise your meal estimate stays in the budget.' : 'Add the total you agreed to, including fees. Your budget uses it instead of the estimate.') : 'Add the price they quoted, including fees. ' + (pickOf(ev, cat) && pickOf(ev, cat).id === x.id ? 'This is your front-runner, so your budget uses it.' : 'Your budget uses it if you make them your front-runner.')) + '</p>' +
+        '<label class="field"><span>' + (book ? (meal ? 'Expected total (optional)' : 'Total you agreed to (USD)') : 'Quoted total (USD)') + '</span><input class="input num" type="number" min="0" inputmode="decimal" id="pamt" value="' + esc(String(val)) + '"></label>' +
         '<button class="btn gold block" id="psave">' + (book ? (booked ? 'Save' : 'Mark as booked') : 'Save quote') + '</button>' +
         (book && booked ? '<button class="btn ghost block" id="punbook">Not booked after all</button>' : '') + (!book && x.quote ? '<button class="btn ghost block" id="pclear">Remove this quote</button>' : '') +
         '<button class="btn ghost block" id="pback">Back to comparison</button>';
@@ -1217,7 +1231,9 @@
       if (mode) { var mx = savedFor(ev, cat).find(function (x) { return x.id === mode.id; }); if (mx) { priceForm(el, mx); var h = el.querySelector('h3'); if (h) h.focus(); return; } mode = null; }
       var l = savedFor(ev, cat), pk = pickOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
       var row = function (label, fn) { return '<div class="cmp-row"><span class="cmp-l">' + label + '</span>' + l.map(function (x) { return '<span class="cmp-c' + (pk && x.id === pk.id ? ' on' : '') + '">' + fn(x) + '</span>'; }).join('') + '</div>'; };
+      var outside = ov.source === 'booking' && !l.some(function (x) { return isBooked(ev, cat, x); });
       el.innerHTML = '<h3 tabindex="-1">Compare ' + esc(E.lc(catName(cat))) + ' options</h3><p class="muted small">Your ' + (l.length === 1 ? 'option' : l.length + ' options') + ', side by side. Star your front-runner; contact them, then mark the one you book.</p>' +
+        (outside ? '<div class="note">You marked this booked on your Budget page' + (ov.note ? ': ' + esc(ov.note) : '') + '. Tap I booked this on an option below to switch.</div>' : '') +
         (l.length ? '<div class="cmp" style="--n:' + l.length + '">' +
           row('', function (x) { return '<b>' + esc(x.name) + '</b>' + (isBooked(ev, cat, x) ? '<span class="badge ok">Booked</span>' : pk && x.id === pk.id ? '<span class="badge est">\u2605 Front-runner</span>' : ''); }) +
           row('Rating', function (x) { return x.rating ? '\u2605 ' + x.rating + (x.reviews ? ' <span class="muted small">(' + Number(x.reviews).toLocaleString('en-US') + ')</span>' : '') : '<span class="muted">\u2014</span>'; }) +
@@ -1240,7 +1256,7 @@
         else if (t.id === 'psave' && cur) {
           var a = +$('#pamt', box).value || 0;
           if (mode.kind === 'quote') { if (!(a > 0)) return toast('Enter the quoted amount'); cur.quote = a; syncPrice(ev, cat); toast('Quote saved'); }
-          else { ev.overrides = ev.overrides || {}; ev.overrides[cat] = { amount: a > 0 ? a : 0, source: 'booking', note: cur.name, opt: cur.id }; setPick(ev, cat, cur.id); toast(cur.name + ' is booked' + (a > 0 ? '. Totals updated.' : '')); }
+          else { if (!(a > 0) && cat !== 'restaurantFood') return toast('Enter the amount you agreed to'); ev.overrides = ev.overrides || {}; ev.overrides[cat] = { amount: a > 0 ? a : 0, source: 'booking', note: cur.name, opt: cur.id }; setPick(ev, cat, cur.id); toast(cur.name + ' is booked' + (a > 0 ? '. Totals updated.' : '')); }
           saveEvent(ev); mode = null; again();
         }
         else if (t.id === 'punbook' && cur) { delete ev.overrides[cat]; syncPrice(ev, cat); saveEvent(ev); mode = null; again(); toast('Marked as not booked'); }
@@ -1260,13 +1276,13 @@
     var lines = b.items.filter(function (i) { return D.CATEGORIES[i.id]; });
     var booked = lines.filter(function (i) { return statusOf(ev, i.id) === 'booked'; });
     var quoted = lines.filter(function (i) { return statusOf(ev, i.id) === 'quote'; });
-    var bookedAmt = booked.reduce(function (t, i) { return t + i.mid; }, 0);
+    var bookedAmt = booked.reduce(function (t, i) { var o = (ev.overrides || {})[i.id]; return t + (o && o.amount > 0 ? o.amount : 0); }, 0);
     var sl = (ev.shortlist || []).filter(function (x) { return x && x.name && D.CATEGORIES[x.cat]; });
     return '<div class="panel stack bookings"><div class="row" style="justify-content:space-between"><h3>Bookings</h3><span class="small muted num">' + booked.length + ' of ' + lines.length + ' booked</span></div>' +
       '<div class="meter"><i style="width:' + (lines.length ? Math.round(booked.length / lines.length * 100) : 0) + '%"></i></div>' +
       '<div class="bk-stats"><div><b class="num">' + money(bookedAmt) + '</b><span class="small muted">confirmed</span></div><div><b class="num">' + quoted.length + '</b><span class="small muted">with a price</span></div><div><b class="num">' + sl.length + '</b><span class="small muted">saved</span></div></div>' +
       (sl.length ? '<div class="list">' + sl.map(function (x) { return x && x.cat; }).filter(function (c, i, a) { return c && D.CATEGORIES[c] && a.indexOf(c) === i; }).map(function (cat) { var l = savedFor(ev, cat), pk = pickOf(ev, cat), st = statusOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
-          return '<div class="it"><div class="grow"><b>' + esc(catName(cat)) + '</b><div class="small">' + (st === 'booked' ? '<span class="badge ok">Booked</span> ' + esc(ov.note || pk.name) : '\u2605 ' + esc(pk.name) + ' <span class="muted">front-runner</span>') + '</div><div class="small muted">' + plural(l.length, 'option') + ' saved' + (l.length < MAX_OPTIONS && st !== 'booked' ? ', save up to ' + (MAX_OPTIONS - l.length) + ' more' : '') + '</div></div><span class="acts"><button class="btn small" data-compare="' + cat + '">' + (l.length > 1 ? 'Compare ' + l.length : 'Open') + '</button></span></div>'; }).join('') + '</div>'
+          return '<div class="it"><div class="grow"><b>' + esc(catName(cat)) + '</b><div class="small">' + (st === 'booked' ? '<span class="badge ok">Booked</span> ' + esc(ov.note || '') : '\u2605 ' + esc(pk.name) + ' <span class="muted">front-runner</span>') + '</div><div class="small muted">' + plural(l.length, 'option') + ' saved' + (l.length < MAX_OPTIONS && st !== 'booked' ? ', save up to ' + (MAX_OPTIONS - l.length) + ' more' : '') + '</div></div><span class="acts"><button class="btn small" data-compare="' + cat + '">' + (l.length > 1 ? 'Compare ' + l.length : 'Open') + '</button></span></div>'; }).join('') + '</div>'
         : '<p class="muted small">Save up to 3 options for each venue or vendor in Venues and Vendors. They show here side by side so you can pick a front-runner, add quotes and mark the one you book.</p>') +
       '</div>';
   }
@@ -1302,9 +1318,10 @@
       if (lockSample(ev)) return; var cur = (ev.overrides || {})[id] || {}; if (note && !cur.note) cur = Object.assign({}, cur, { note: note, source: cur.source || 'quote' });
       sheet('<h3>Add a price for ' + esc(E.lc(D.CATEGORIES[id].name)) + '</h3><p class="muted small">Add a quote you received or a confirmed booking. Your budget uses this instead of the estimate.</p><label class="field"><span>Total amount (USD), including fees</span><input class="input num" type="number" min="0" id="amt" value="' + (cur.amount || '') + '"></label>' +
         '<label class="field"><span>What is this price?</span><select class="input" id="src"><option value="quote">Quote I received</option><option value="booking"' + (cur.source === 'booking' ? ' selected' : '') + '>Booked and confirmed</option><option value="vendor"' + (cur.source === 'vendor' ? ' selected' : '') + '>Price published by the vendor</option></select></label>' +
-        '<label class="field"><span>Vendor or note (optional)</span><input class="input" id="nt" value="' + esc(cur.note || '') + '"></label><button class="btn gold block" id="ok">Save price</button>' + (cur.amount ? '<button class="btn ghost block" id="clr">Use the estimate again</button>' : '') + '<button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
-        $('#ok', el).addEventListener('click', function () { var a = +$('#amt', el).value; if (!(a > 0)) return toast('Enter an amount'); var bf = snap(ev); ev.overrides = ev.overrides || {}; ev.overrides[id] = { amount: a, source: $('#src', el).value, note: $('#nt', el).value.trim() }; save(); close(); rerender(); undoToast(ev, bf, 'Price saved. Totals updated.', rerender); });
-        var c = $('#clr', el); if (c) c.addEventListener('click', function () { var bf = snap(ev); delete ev.overrides[id]; save(); close(); rerender(); undoToast(ev, bf, 'Back to the estimate', rerender); });
+        '<label class="field"><span>Vendor or note (optional)</span><input class="input" id="nt" value="' + esc(cur.note || '') + '"></label><button class="btn gold block" id="ok">Save price</button>' + ((ev.overrides || {})[id] ? '<button class="btn ghost block" id="clr">Use the estimate again</button>' : '') + '<button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
+        $('#ok', el).addEventListener('click', function () { var a = +$('#amt', el).value; if (!(a > 0)) return toast('Enter an amount'); var bf = snap(ev); ev.overrides = ev.overrides || {}; var src = $('#src', el).value, nt = $('#nt', el).value.trim(), m = savedFor(ev, id).find(function (x) { return nt && x.name.toLowerCase() === nt.toLowerCase(); });
+          ev.overrides[id] = { amount: a, source: src, note: m ? m.name : nt }; if (m) { ev.overrides[id].opt = m.id; setPick(ev, id, m.id); if (src !== 'booking') m.quote = a; } save(); close(); rerender(); undoToast(ev, bf, 'Price saved. Totals updated.', rerender); });
+        var c = $('#clr', el); if (c) c.addEventListener('click', function () { var bf = snap(ev); var o = ev.overrides[id], m = o && o.opt && savedFor(ev, id).find(function (x) { return x.id === o.opt; }); if (m && o.source !== 'booking') delete m.quote; delete ev.overrides[id]; save(); close(); rerender(); undoToast(ev, bf, 'Back to the estimate', rerender); });
       });
     };
     $$('[data-price]').forEach(function (btn) { btn.addEventListener('click', function () { priceSheet(btn.dataset.price); }); });
@@ -1680,7 +1697,7 @@
     }
     $('#addg').addEventListener('submit', function (e) { e.preventDefault(); if (lockSample(ev)) return; var n = $('#gn').value.trim(); if (!n) return toast('Enter a name'); var st = addGuest(n, Math.max(0, +$('#gp').value || 0)); save(); if (st === 'waitlist') toast('Capacity reached: ' + n + ' was added to the waitlist'); rerender(); });
     $('#bulk').addEventListener('click', function () { if (lockSample(ev)) return; sheet('<h3>Paste guest names</h3><textarea class="input" id="names" placeholder="One name per line"></textarea><button class="btn gold block" id="ok">Add guests</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) { $('#ok', el).addEventListener('click', function () { var w = 0; $('#names', el).value.split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean).forEach(function (n) { if (addGuest(n, 0) === 'waitlist') w++; }); save(); close(); if (w) toast(w + ' went to the waitlist because capacity is full'); rerender(); }); }); });
-    $$('[data-st]').forEach(function (s) { s.addEventListener('change', function () { if (lockSample(ev)) return; var g = ev.guestsList.find(function (x) { return x.id === s.dataset.st; }); var prev = g.status; g.status = s.value; if (E.placesUsed(ev.guestsList) > cap() && (s.value === 'yes' || s.value === 'invited')) { g.status = prev; toast('That would go over your ' + cap() + ' places. Move up a size under Overview, Your pass, or free a place first.'); } if (g.status === 'declined' || g.status === 'waitlist') promoteWaitlist(ev, cap()); save(); rerender(); }); });
+    $$('[data-st]').forEach(function (s) { s.addEventListener('change', function () { if (lockSample(ev)) return; var g = ev.guestsList.find(function (x) { return x.id === s.dataset.st; }); var prev = g.status; g.status = s.value; if (E.placesUsed(ev.guestsList) > cap() && (s.value === 'yes' || s.value === 'invited')) { g.status = prev; toast('That would go over your ' + cap() + ' places. ' + (CFG.app ? 'Tap the guest count at the top of your plan to raise it (free), or free a place first.' : 'Move up a size under Overview, Your pass, or free a place first.')); } if (g.status === 'declined' || g.status === 'waitlist') promoteWaitlist(ev, cap()); save(); rerender(); }); });
     $$('[data-rm]').forEach(function (b) { b.addEventListener('click', function () { if (lockSample(ev)) return; ev.guestsList = ev.guestsList.filter(function (g) { return g.id !== b.dataset.rm; }); promoteWaitlist(ev, cap()); save(); rerender(); }); });
     if ($('#seat')) $('#seat').addEventListener('click', function () { if (lockSample(ev)) return; if (!ev.guestsList.some(function (g) { return g.status === 'yes'; })) return toast('No one has said yes yet. Mark guests as Coming, or wait for RSVPs.'); var t = 1, seats = 0; ev.guestsList.forEach(function (g) { g.table = null; }); ev.guestsList.filter(function (g) { return g.status === 'yes'; }).forEach(function (g) { var need = 1 + (g.plusOnes || 0); if (seats > 0 && seats + need > 8) { t++; seats = 0; } g.table = t; seats += need; }); save(); rerender(); });
     $('#addc').addEventListener('submit', function (e) { e.preventDefault(); if (lockSample(ev)) return; var n = $('#cn').value.trim(); if (!n) return toast('Enter a name'); ev.cohosts = (ev.cohosts || []).concat({ name: n, role: $('#cr').value }); save(); rerender(); });
@@ -1726,7 +1743,7 @@
     var link = inviteLink(ev);
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] };
     var share = splitShare(ev);
-    return '<div class="stack"><h3>' + (hasRegistry(ev) ? 'Invitation and event page' : 'Your invitation') + '</h3><div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be announced') + '</p><p class="muted">' + esc(whereText(ev)) + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p></div></div></div>' +
+    return '<div class="stack"><h3>' + (hasRegistry(ev) ? 'Invitation and event page' : 'Your invitation') + '</h3><div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + (ev.concept.palette || []).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be announced') + '</p><p class="muted">' + esc(whereText(ev)) + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p></div></div></div>' +
       (ev.date || ev.sample ? '' : '<div class="note">Add your date (tap \u201cAdd your date\u201d at the top) before you send the invitation, so guests can save it.</div>') + '<div class="row"><button class="btn gold" id="copy">Copy invite link</button><a class="btn ghost" href="#/g/' + ev.id + '">Preview as a guest</a></div>' +
       (CFG.preview ? '<p class="muted small">For now this link opens on this device only, so you can preview what guests will see. Sending it to guests on their own phones turns on when accounts launch.</p>' : '<p class="muted small">Guests open it in any browser; no app needed.</p>') + '</div>' +
       (!canSplit(ev) && !hasRegistry(ev) ? '' : '<div class="stack"><h3>Your payment links</h3><p class="muted small">' + (canSplit(ev) ? 'Friends pay you directly for their share, and guests can send cash gifts.' : 'For cash gifts and funds from your registry.') + ' Event Couture never holds the money.</p><div class="grid3">' +
@@ -1766,7 +1783,8 @@
     $('#gadd').addEventListener('submit', function (e) { e.preventDefault(); if (lockSample(ev)) return; var f = $('#gf').value.trim(), g = $('#gg').value.trim(); if (!f) return toast('Enter who it’s from'); ev.gifts = (ev.gifts || []).concat({ from: f, gift: g, thanked: false }); save(); rerender(); });
     $$('[data-th]').forEach(function (c) { c.addEventListener('change', function () { ev.gifts[+c.dataset.th].thanked = c.checked; save(); c.closest('.check').classList.toggle('done', c.checked); }); });
     $$('[data-draft]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); var g = ev.gifts[+b.dataset.draft];
-      var note = 'Dear ' + g.from.split(' ')[0] + ',\n\nThank you so much for ' + (g.gift ? 'the ' + (/^[A-Z][a-z]*(\s+[a-z][^A-Z]*)?$/.test(g.gift) ? g.gift.charAt(0).toLowerCase() + g.gift.slice(1) : g.gift) : 'your generous gift') + ' and for celebrating ' + ev.name + ' with us. It meant so much to have you there.\n\nWith love,';
+      var fw = g.from.trim().split(/\s+/), nm = /^(aunt|auntie|uncle|grandma|grandpa|granny|nana|papa|cousin|mr\.?|mrs\.?|ms\.?|miss|dr\.?|pastor|rev\.?)$/i.test(fw[0]) && fw[1] ? fw[0] + ' ' + fw[1] : fw[0];
+      var note = 'Dear ' + nm + ',\n\nThank you so much for ' + (g.gift ? 'the ' + (/^[A-Z][a-z]*(\s+[a-z][^A-Z]*)?$/.test(g.gift) ? g.gift.charAt(0).toLowerCase() + g.gift.slice(1) : g.gift) : 'your generous gift') + ' and for celebrating ' + ev.name + ' with us. It meant so much to have you there.\n\nWith love,';
       sheet('<h3>Thank-you note</h3><textarea class="input" id="note" aria-label="Thank-you note" style="min-height:180px">' + esc(note) + '</textarea><button class="btn gold block" id="cp">Copy note</button><button class="btn ghost block" data-close>Close</button>', function (el) { $('#cp', el).addEventListener('click', function () { copyText($('#note', el).value, 'Note'); }); });
     }); });
   };
@@ -1778,13 +1796,13 @@
     if (!ev.sample && !isKept(ev)) return '<div class="stack"><h3>Your Event Pass</h3><div class="panel stack"><p>Your plan isn\u2019t kept yet. Keep it to save every edit and share it with guests.</p>' + (CFG.app ? '<p class="muted small">Free in the app.</p>' : '<div class="price-big num">$' + E.passFor(ev.guests).price.toFixed(2) + '</div><p class="muted small">' + esc(E.passFor(ev.guests).label) + ', one time, no subscription.</p>') + '<div><button class="btn" id="keepX">Keep my plan</button></div></div></div>' +
       '<div class="stack"><h3>Delete this event</h3><p class="muted small">Removes the plan, guest list and photos from this device.</p><div><button class="btn small ghost" id="del" style="color:var(--bad)">Delete event</button></div></div>';
     return '<div class="stack"><h3>Your Event Pass</h3><div class="panel stack"><div class="row" style="justify-content:space-between"><span>' + (ev.sample ? 'Sample plan' : esc(E.passFor(ev.paid.max || ev.guests).label)) + '</span><span class="badge ok">Active</span></div>' + (ev.sample ? '' : '<p class="small muted">Available until ' + esc(accessUntil(ev, ev.paid && ev.paid.at)) + '.</p>') +
-      (CFG.app ? '<p class="muted small">Inviting more people? Change your guest count anytime; it\u2019s free in the app.</p></div></div>' : '<p class="muted small">Inviting more people? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>') +
+      (CFG.app ? '<p class="muted small">Inviting more people? Tap the guest count at the top of your plan to change it; it\u2019s free in the app.</p></div></div>' : '<p class="muted small">Inviting more people? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>') +
       (!SELL_EXTRAS ? '' : '<div class="stack"><div class="row" style="justify-content:space-between"><h3>AI credits</h3><span class="num">' + w.credits + ' credits</span></div><p class="muted small">For extra AI work beyond what your pass includes. The exact credit cost is shown before every action, and credits never top up automatically.</p><div class="packs">' +
       D.CREDIT_PACKS.map(function (p, i) { return '<button class="tier" data-pack="' + i + '"><span class="amt num">' + p.credits + '</span><span class="muted">credits</span><b class="num">$' + p.price.toFixed(2) + '</b></button>'; }).join('') + '</div></div>' +
       '<div class="stack"><h3>Creative packages</h3><div class="list panel">' + D.PACKAGES.map(function (p, i) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + esc(p.desc) + '</div></div><span class="num">$' + p.price.toFixed(2) + '</span><button class="btn small" data-pkg="' + i + '">Choose</button></div>'; }).join('') + '</div></div>' +
       '<div class="stack"><h3>Optional add-ons</h3><p class="muted small">Never needed to finish your plan.</p><div class="list panel">' + D.ADDONS.map(function (a, i) { return '<div class="it"><div class="grow"><b>' + esc(a.name) + '</b><div class="small muted">' + esc(a.desc) + '</div></div><span class="num">$' + a.price.toFixed(2) + '</span><button class="btn small ghost" data-add="' + i + '">Choose</button></div>'; }).join('') + '</div></div>') +
       (ev.sample ? '' : '<div class="stack"><h3>Delete this event</h3><p class="muted small">Removes the plan, guest list and photos from this device. Purchases can\u2019t be reused after deleting.</p><div><button class="btn small ghost" id="del" style="color:var(--bad)">Delete event</button></div></div>') +
-      '<div class="stack"><h3>Receipts</h3><div class="panel list">' + (mine.length ? mine.map(function (l) { return '<div class="it"><span class="grow">' + esc(l.kind) + '<br><span class="small muted">' + new Date(l.at).toLocaleDateString('en-US') + (l.note ? ', ' + esc(l.note) : '') + '</span></span><span class="num">' + money(l.amount) + '</span></div>'; }).join('') : '<p class="muted">Purchases for this event show here.</p>') + '</div></div>';
+      (CFG.app ? '' : '<div class="stack"><h3>Receipts</h3><div class="panel list">' + (mine.length ? mine.map(function (l) { return '<div class="it"><span class="grow">' + esc(l.kind) + '<br><span class="small muted">' + new Date(l.at).toLocaleDateString('en-US') + (l.note ? ', ' + esc(l.note) : '') + '</span></span><span class="num">' + money(l.amount) + '</span></div>'; }).join('') : '<p class="muted">Purchases for this event show here.</p>') + '</div></div>');
   };
   TAB_BIND.extras = function (ev, save, rerender) {
     $$('[data-pack]').forEach(function (b) { b.addEventListener('click', function () { if (lockSample(ev)) return; var p = D.CREDIT_PACKS[+b.dataset.pack];
@@ -1814,7 +1832,7 @@
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] }; var share = splitShare(ev);
     var payBtns = [pl.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pl.venmo) + '">Venmo</a>' : '', pl.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pl.cashapp) + '">Cash App</a>' : '', pl.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pl.paypal) + '">PayPal</a>' : ''].join('');
     var hostView = !!events()[ev.id] || ev.sample;
-    frame((hostView ? '<div class="note invite-host">You\u2019re previewing what guests see. <a href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/invite">Back to your plan</a></div>' : '') + '<div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + ev.concept.palette.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be announced') + '</p><p class="muted">' + esc(whereText(ev)) + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p>' +
+    frame((hostView ? '<div class="note invite-host">You\u2019re previewing what guests see. <a href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/invite">Back to your plan</a></div>' : '') + '<div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + (ev.concept.palette || []).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be announced') + '</p><p class="muted">' + esc(whereText(ev)) + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p>' +
       (ev.date ? '<div><a class="btn small ghost" target="_blank" rel="noopener" href="' + calLink(ev) + '">Add to calendar</a></div>' : '') + '</div></div>' +
       '<form id="rsvp" class="panel stack" style="text-align:left"><h3>RSVP</h3><label class="field"><span>Your name</span><input class="input" id="rn" required autocomplete="name"></label><div class="seg" id="ans"><button type="button" data-v="yes" aria-pressed="true">I’ll be there</button><button type="button" data-v="declined" aria-pressed="false">Can’t make it</button></div>' +
       '<label class="field"><span>Plus-ones</span><input class="input num" type="number" min="0" max="5" id="rp" value="0"></label><div class="stack"><span class="muted small">Dietary needs</span><div class="chips" id="rd">' + D.DIETS.map(function (d) { return '<button type="button" class="chip" aria-pressed="false">' + esc(d) + '</button>'; }).join('') + '</div></div><button class="btn gold">Send RSVP</button></form>' +
@@ -1829,6 +1847,7 @@
     $('#ans').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; $$('#ans button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
     $('#rd').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
     $('#rsvp').addEventListener('submit', function (e) { e.preventDefault(); var n = $('#rn').value.trim(); if (!n) return toast('Enter your name');
+      if (ev.sample) { $('#rsvp').innerHTML = '<h3>Thank you!</h3><p class="muted">This is a sample plan, so RSVPs aren\u2019t saved. Start your own plan to collect real ones.</p>'; return; }
       var ans = $('#ans [aria-pressed="true"]').dataset.v; var plus = Math.max(0, +$('#rp').value || 0); var diet = $$('#rd [aria-pressed="true"]').map(function (b) { return b.textContent; });
       var cap = placesCap(ev);
       var existing = ev.guestsList.find(function (g) { return g.name.toLowerCase() === n.toLowerCase(); });
@@ -1837,9 +1856,9 @@
       g.status = ans; if (ans === 'yes' && E.placesUsed(ev.guestsList) > cap) g.status = 'waitlist';
       if (ans === 'declined') promoteWaitlist(ev, cap);
       saveEvent(ev);
-      $('#rsvp').innerHTML = '<h3>' + (g.status === 'yes' ? 'Thank you, see you there!' : g.status === 'waitlist' ? 'You’re on the waitlist' : 'Thanks for letting us know') + '</h3><p class="muted">' + (g.status === 'waitlist' ? 'The event is full right now. The host will let you know if a place opens up.' : (CFG.preview ? 'Your RSVP is saved. In this preview it stays on this device; at launch it goes straight to the host.' : 'Your RSVP was sent to the host.')) + '</p>';
+      $('#rsvp').innerHTML = '<h3>' + (g.status === 'yes' ? 'Thank you, see you there!' : g.status === 'waitlist' ? 'You’re on the waitlist' : 'Thanks for letting us know') + '</h3><p class="muted">' + (g.status === 'waitlist' ? 'The event is full right now. The host will let you know if a place opens up.' : (CFG.preview ? 'Your RSVP is saved. ' + (CFG.app ? 'For now it\u2019s saved on this device.' : 'In this preview it stays on this device; at launch it goes straight to the host.') + '' : 'Your RSVP was sent to the host.')) + '</p>';
     });
-    $$('[data-vote]').forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.vote.split(':'); ev.polls[+k[0]].options[+k[1]].votes++; saveEvent(ev); b.closest('.poll').innerHTML = '<p class="muted">Thanks for voting.</p>'; }); });
+    $$('[data-vote]').forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.vote.split(':'); if (!ev.sample) { ev.polls[+k[0]].options[+k[1]].votes++; saveEvent(ev); } b.closest('.poll').innerHTML = '<p class="muted">Thanks for voting.</p>'; }); });
     $$('[data-buy]').forEach(function (b) { b.addEventListener('click', function () { ev.registry.items[+b.dataset.buy].bought = true; saveEvent(ev); b.outerHTML = '<span class="badge ok">Purchased</span>'; }); });
   }
 
@@ -1897,7 +1916,7 @@
     ['Can guests add photos?', 'Yes. Guests open your invite link and tap Add photos under Share your photos. Everyone\u2019s pictures land in your plan under Photos and thank-yous.', 'photos photo pictures album upload add'],
     ['Is there a subscription?', 'No. Planning is free, and you pay once per event only if you want to keep and share your plan. Nothing renews automatically.', 'subscription subscribe monthly recurring renew renewal'],
     ['How much does it cost?', 'You pay once per event, based on how many people you invite: $9.99 up to 25 guests, $19.99 up to 75, $39.99 up to 150, $69.99 up to 350, and more for larger events. Guests never pay to view, RSVP or vote.', 'price cost pay pass much'],
-    ['What if my guest list grows?', 'Move up a size under Overview, Your pass. You pay only the difference, and your plan stays exactly as it is.', 'grow more upgrade capacity bigger places full waitlist'],
+    ['What if my guest list grows?', 'Move up a size under Overview, Your pass. You pay only the difference, and your plan stays exactly as it is.', 'grow grows growing more upgrade capacity bigger places full waitlist'],
   ];
   FAQ = FAQ.concat([
     ['Can I get a refund?', 'Planning is free, so you see your whole plan before you pay. If something you paid for doesn\u2019t work, contact us and we\u2019ll make it right. Purchases made in the iPhone or Android app are refunded through Apple or Google from your purchase history.', 'refund money back cancel charged'],
@@ -1915,7 +1934,8 @@
   if (CFG.app) FAQ = FAQ.map(function (q) {   /* the app is free for now, so its help answers carry no prices */
     if (/^Is there a subscription/.test(q[0])) return [q[0], 'No. Planning and keeping your plan are free in the app. Nothing renews automatically.', q[2]];
     if (/^How much does it cost/.test(q[0])) return [q[0], 'Planning and keeping your plan are free in the app. Guests never pay to view, RSVP or vote.', q[2]];
-    if (/^What if my guest list grows/.test(q[0])) return [q[0], 'Change your guest count anytime from your plan. In the app it\u2019s free, and your plan stays exactly as it is.', q[2]];
+    if (/^What if my guest list grows/.test(q[0])) return [q[0], 'Tap the guest count at the top of your plan to change it. In the app it\u2019s free, and your plan stays exactly as it is.', q[2]];
+    if (/^Can I get a refund/.test(q[0])) return [q[0], 'There are no purchases in the app right now. If anything doesn\u2019t work, contact us and we\u2019ll make it right.', q[2]];
     if (/^How long do I keep my plan/.test(q[0])) return [q[0], 'Until 12 months after you keep it, or 30 days after your event, whichever is later. The exact date is under Overview, Your pass.', q[2]];
     return q;
   });
@@ -1926,7 +1946,7 @@
     $('#ask').addEventListener('submit', function (e) { e.preventDefault(); var q = $('#q').value.trim(); if (!q) return;
       var STOP = ['how', 'the', 'can', 'get', 'you', 'what', 'does', 'and', 'for', 'are', 'with', 'this', 'that', 'there', 'when', 'why', 'who', 'will', 'your', 'about'];
       var words = q.toLowerCase().split(/\W+/).filter(function (w) { return STOP.indexOf(w) < 0; }); var best = FAQ.map(function (f) { return { f: f, s: words.filter(function (w) { return w.length > 2 && f[2].indexOf(w) >= 0; }).length }; }).sort(function (a, b) { return b.s - a.s; })[0];
-      var a = best.s ? best.f[1] : 'I couldn’t find an answer to that. Try asking about pricing, refunds, guests, co-hosts, cost splitting, how long you keep your plan, or deleting your data.';
+      var a = best.s ? best.f[1] : 'I couldn’t find an answer to that. Try asking about ' + (CFG.app ? '' : 'pricing, refunds, ') + ' guests, co-hosts, cost splitting, how long you keep your plan, or deleting your data.';
       $('#chat').insertAdjacentHTML('beforeend', '<div class="bubble me">' + esc(q) + '</div><div class="bubble ai">' + esc(a) + '</div>'); $('#q').value = ''; });
   }
 
