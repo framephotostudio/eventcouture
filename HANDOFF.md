@@ -178,3 +178,6 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
 - Midnight to 4 AM is late night (E.startHour). Restaurant/private-room big events get matching checklist steps. Checklist unticks stick. Pay-your-own shows a per-person share everywhere. Home venue note matches the budget. "Shorten by an hour" shows the real saving.
 - Kids: no candles or nightlife names. No-alcohol: no wine bars, "welcome hour" instead of cocktail hour. Help answers invites, guest photos, subscriptions. Vendor form promises only what it does. Pop-ups keep keyboard focus. Alt text fixed.
 - Tests: tests/launch_review.py (all 31), personas types a city for "Other US city".
+
+## 0.27.1: header logo
+- Transparent champagne-gold logo (brand-src/logo-gold-transparent.png, made from the approved logo by cutting it out of its satin background and recoloring; mark without the small line: img/brand/logo-mark-gold.png). "by Always Luxe" is live text under it so it stays readable. Header about 50% shorter (100px to 50px on phones, 111px to 53px on desktop); no box or banner.

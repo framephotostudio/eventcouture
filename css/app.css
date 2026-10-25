@@ -411,17 +411,9 @@ footer.site .name { font-family: var(--display); font-weight: 600; color: var(--
 .plan-head .meta span { white-space: nowrap; }
 .hero-logo { width: min(250px, 66vw); height: auto; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); margin-bottom: 6px; }
 @media (min-width: 900px) { .hero-logo { width: 280px; } }
-/* header: deep plum band with the logo in a gold frame with cut corners */
+/* header: deep plum band */
 .topbar { position: relative; background: linear-gradient(135deg, #36091F 0%, #4B1235 50%, #5E1B46 100%); border-bottom: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
   padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px 12px; gap: 12px; align-items: stretch; }
-.brand.logo-banner { flex: 1; min-width: 0; display: block; text-decoration: none; --cut: 10px; --h: 84px; }
-.brand.logo-banner .frame-outer { display: block; padding: 1.5px; background: linear-gradient(135deg, #D9C08F, #B69A68 45%, #E6D2A6 70%, #A9884F);
-  clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut)); }
-.brand.logo-banner .frame { display: block; line-height: 0; overflow: hidden;
-  clip-path: polygon(calc(var(--cut) - 1px) 0, calc(100% - var(--cut) + 1px) 0, 100% calc(var(--cut) - 1px), 100% calc(100% - var(--cut) + 1px), calc(100% - var(--cut) + 1px) 100%, calc(var(--cut) - 1px) 100%, 0 calc(100% - var(--cut) + 1px), 0 calc(var(--cut) - 1px)); }
-.brand.logo-banner img { display: block; height: var(--h); width: 100%; max-width: none; object-fit: cover; object-position: 50% 50%; border-radius: 0; box-shadow: none; mask-image: none; -webkit-mask-image: none; }
-@media (min-width: 900px) { .brand.logo-banner { --cut: 12px; --h: 104px; } }
-@media (max-width: 340px) { .brand.logo-banner { --h: 72px; } }
 .topbar nav { flex-direction: row !important; align-items: center; }
 .topbar .icon-btn { width: 40px; height: 40px; }
 @media (max-width: 420px) { .topbar nav { flex-direction: column !important; gap: 4px !important; } .topbar .icon-btn { width: 38px; height: 38px; } }
@@ -437,13 +429,7 @@ footer.site .name { color: #F6EEE2; }
 footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .topbar { padding-top: calc(env(safe-area-inset-top, 0px) + 10px); padding-bottom: 10px; }
 @media (max-width: 899px) { .topbar nav { gap: 8px; } }
-/* banner: shorter, lettering spread to fill (capped so it never looks distorted) */
-.brand.logo-banner { --h: 66px; }
-@media (min-width: 900px) { .brand.logo-banner { --h: 82px; } }
-@media (max-width: 340px) { .brand.logo-banner { --h: 58px; } }
-.brand.logo-banner .frame { display: flex; justify-content: center; background-size: cover; background-position: center; }
-.brand.logo-banner img { height: var(--h); width: min(100%, calc(var(--h) * 1.667 * 1.55)); object-fit: fill; }
-@media (min-width: 700px) { .brand.logo-banner { flex: 0 1 auto; width: calc(var(--h) * 1.667 * 1.55 + 80px); margin: 0 auto; } .topbar nav { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); } }
+
 
 .live-res:empty { display: none; }
 .curated { margin: 4px 0 12px; padding: 14px 16px; background: var(--tint); border-radius: var(--r-md); display: grid; gap: 4px; }
@@ -581,3 +567,18 @@ footer.site img { box-shadow: 0 0 0 1px rgba(214, 190, 140, .6); }
 .thumb.ibig img { height: auto; aspect-ratio: 3 / 2; }
 /* Very long words (from the AI or typed by a host) wrap instead of pushing the page sideways */
 main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept, .panel, .it .grow { overflow-wrap: anywhere; }
+
+/* Header, refined: the transparent champagne-gold logo sits directly on the plum band, centered and compact */
+.topbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top, 0px) + 3px) 12px 3px; min-height: 0; }
+.topbar::before { content: ''; }   /* left column balances the icons so the logo stays centered */
+.brand.logo-mark { grid-column: 2; display: grid; justify-items: center; gap: 1px; line-height: 1; text-decoration: none; padding: 0; }
+.brand.logo-mark img { display: block; height: 30px; width: auto; aspect-ratio: 287 / 150; border: 0; border-radius: 0; box-shadow: none; background: none; filter: drop-shadow(0 1px 1px rgba(20, 4, 12, .35)); }
+.brand.logo-mark .by { font-family: var(--display); font-weight: 600; font-size: 10px; letter-spacing: .06em; line-height: .95;
+  background: linear-gradient(180deg, #F3E3BE 0%, #D9BC84 55%, #EAD5A4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
+.brand.logo-mark:hover { text-decoration: none; }
+.topbar nav { grid-column: 3; justify-self: end; position: static !important; transform: none !important; flex-direction: row !important; gap: 6px !important; margin: 0; }
+.topbar .icon-btn { width: 34px !important; height: 34px !important; }
+.topbar .icon-btn svg { width: 19px; height: 19px; }
+@media (min-width: 700px) { .brand.logo-mark img { height: 32px; } .brand.logo-mark .by { font-size: 10.5px; } .topbar { padding-top: calc(env(safe-area-inset-top, 0px) + 3px); padding-bottom: 3px; } }
+@media (min-width: 1100px) { .brand.logo-mark img { height: 33px; } .brand.logo-mark .by { font-size: 11px; } }
+@media (max-width: 340px) { .brand.logo-mark img { height: 27px; } .brand.logo-mark .by { font-size: 9.5px; } }
