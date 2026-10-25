@@ -3,10 +3,12 @@
 ## Apple: App Privacy ("nutrition label")
 - **Data used to track you:** None. No advertising, no ad IDs, no tracking prompt needed.
 - **Data linked to you:** None. There are no accounts.
-- **Data not linked to you:**
-  - Usage Data > Product Interaction (which screens are opened and buttons tapped, counted by Google Analytics; never names, guest lists, photos or typed text). Purpose: Analytics.
-  - Diagnostics: none collected.
-- Photos and event details stay on the phone. To create concepts, the event details and inspiration photos are sent to our server and Google's AI, used only to answer that request and not stored by us. Answer "Photos or Videos: not collected" only if your Gemini plan doesn't keep requests; otherwise list "Photos > App Functionality, not linked".
+- **Data not linked to you** (recommended answers for version 1.0):
+  - User Content > Photos or Videos. Purpose: App Functionality. Not linked to identity, not used for tracking. (Inspiration photos are sent to our server and Google's AI to create concepts.)
+  - User Content > Other User Content. Purpose: App Functionality. Not linked, not tracking. (The event description, city and guest count are sent to create concepts and find venues.)
+  - Usage Data and Diagnostics: not collected. The app itself runs no analytics (Google Analytics only runs on the website).
+- Plans, guest lists and photos stay on the phone; nothing is stored on our server.
+- If Google's AI ever keeps requests (free Gemini plan), the answers above still apply; just make sure the Privacy Policy says so.
 
 ## Google Play: Data safety
 - Data collected: App activity > App interactions (analytics, not shared, not linked to identity). Photos are processed ephemerally to create concepts.
