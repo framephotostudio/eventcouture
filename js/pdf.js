@@ -6,11 +6,23 @@
   var FONTS = { R: 'Helvetica', B: 'Helvetica-Bold', S: 'Times-Roman', I: 'Times-Italic' };
   var SPECIAL = { 0x20AC: 0x80, 0x201A: 0x82, 0x201E: 0x84, 0x2026: 0x85, 0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x2122: 0x99 };
   /* text to WinAnsi codes; anything the standard fonts can't draw (emoji, stars) is dropped */
-  function codes(s) { var out = []; String(s == null ? '' : s).replace(/★\s?/g, '').replace(/[→]/g, '->').split('').forEach(function (ch) { var c = ch.charCodeAt(0); if (c === 9 || c === 10) c = 32; if (c >= 32 && c < 127) out.push(c); else if (c >= 160 && c <= 255) out.push(c); else if (SPECIAL[c]) out.push(SPECIAL[c]); }); return out; }
+  function one(c) { if (c === 9 || c === 10) return 32; if ((c >= 32 && c < 127) || (c >= 160 && c <= 255)) return c; return SPECIAL[c] || 0; }
+  function codes(s) {
+    var src = String(s == null ? '' : s).replace(/\u2605\s?/g, '').replace(/\u2192/g, '->'), out = [];
+    Array.from(src).forEach(function (ch) {
+      var c = one(ch.codePointAt(0));
+      if (!c && ch.normalize) { var base = ch.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); if (base.length === 1) c = one(base.charCodeAt(0)); }   /* e.g. Vietnamese letters keep their base letter */
+      if (c) out.push(c);
+    });
+    if (!out.some(function (c) { return c !== 32; }) && /[^\s\u2605]/.test(src)) out = Array.from('(name in another alphabet)').map(function (ch) { return ch.charCodeAt(0); });
+    return out;
+  }
   function width(s, f, size) { var w = 0; codes(s).forEach(function (c) { w += WID[FONTS[f]][c - 32] || 500; }); return w * size / 1000; }
   function wrap(s, f, size, max) {
     var words = String(s == null ? '' : s).split(/\s+/).filter(Boolean), lines = [], cur = '';
-    words.forEach(function (wd) { var t = cur ? cur + ' ' + wd : wd; if (width(t, f, size) <= max || !cur) cur = t; else { lines.push(cur); cur = wd; } });
+    var pieces = [];   /* a word wider than the line (a long web address) is broken into pieces that fit */
+    words.forEach(function (wd) { if (width(wd, f, size) <= max) return pieces.push(wd); var part = ''; Array.from(wd).forEach(function (ch) { if (part && width(part + ch, f, size) > max) { pieces.push(part); part = ''; } part += ch; }); if (part) pieces.push(part); });
+    pieces.forEach(function (wd) { var t = cur ? cur + ' ' + wd : wd; if (width(t, f, size) <= max || !cur) cur = t; else { lines.push(cur); cur = wd; } });
     if (cur) lines.push(cur); return lines.length ? lines : [''];
   }
   function str(s) { return '(' + codes(s).map(function (c) { var ch = String.fromCharCode(c); return ch === '(' || ch === ')' || ch === '\\' ? '\\' + ch : ch; }).join('') + ')'; }

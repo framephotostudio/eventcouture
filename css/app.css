@@ -616,9 +616,9 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 .sheet:has(.cmp) { max-width: 860px; }
 .sheet:has(.cmp) { grid-template-columns: minmax(0, 1fr); }
 .cmp { min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
-.cmp-row { display: grid; grid-template-columns: 74px repeat(var(--n), minmax(150px, 1fr)); border-top: 1px solid var(--line); min-width: calc(74px + var(--n) * 150px); }
+.cmp-row { display: grid; grid-template-columns: 66px repeat(var(--n), minmax(138px, 1fr)); border-top: 1px solid var(--line); min-width: calc(66px + var(--n) * 138px); }
 .cmp-row:first-child { border-top: 0; }
-.cmp-l { position: sticky; left: 0; background: var(--surface); padding: 10px 8px 10px 12px; font-size: .78rem; color: var(--muted); z-index: 1; }
+.cmp-l { position: sticky; left: 0; background: var(--surface); padding: 10px 6px 10px 10px; font-size: .78rem; color: var(--muted); z-index: 1; }
 .cmp-c { padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; font-size: .9rem; border-left: 1px solid var(--line); overflow-wrap: anywhere; }
 .cmp-row:first-child .cmp-c { flex-direction: column; font-size: .95rem; }
 .cmp-c.on { background: #FBF8F2; }
@@ -643,5 +643,7 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 .plan-sheet .ps-sec .it { flex-wrap: wrap; }
 .plan-sheet .ps-sec .it .ps-edit { flex-basis: 100%; text-align: left; }
 @media (min-width: 700px) { .plan-save { grid-template-columns: 1fr auto; align-items: center; } .plan-sheet .ps-sec .it .ps-edit { flex-basis: auto; } }
-.cmp-links { display: flex; gap: 16px; justify-content: center; }
+.cmp-links { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; }
+.cmp-links .link, .cmp-acts .btn { white-space: nowrap; overflow-wrap: normal; }
+.cmp-acts .btn { white-space: normal; font-size: .84rem; padding-left: 10px; padding-right: 10px; line-height: 1.25; }
 @media print { .plan-save, .ps-edit { display: none !important; } }

@@ -48,19 +48,27 @@ with sync_playwright() as p:
         pg.wait_for_timeout(500); pg.screenshot(path=f'{OUT}/opt_compare_{n}.png')
         pg.click('[data-pick-opt] >> nth=0'); pg.wait_for_timeout(200)
         check(n, 'Front-runner' in pg.inner_text('.cmp-row:first-child .cmp-c >> nth=1'), 'star moves to Petal and Stem')
-        pg.click('[data-quote-opt] >> nth=1'); pg.wait_for_selector('#amt'); pg.fill('#amt','2400'); pg.click('#ok'); pg.wait_for_timeout(300)
+        pg.click('[data-quote-opt] >> nth=1'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','2400'); pg.click('#psave'); pg.wait_for_timeout(300)
         d=ev(); ov=d['overrides'][cat]; check(n, ov['amount']==2400 and ov['note']=='Petal and Stem Studio', 'front-runner quote drives the budget')
         # quote for a non-front-runner should not drive the budget
         pg.goto(U+base+'/budget'); pg.wait_for_timeout(300)
         pg.click(f'[data-compare={cat}]'); pg.wait_for_selector('.cmp')
-        pg.click('[data-quote-opt] >> nth=2'); pg.wait_for_selector('#amt'); pg.fill('#amt','1800'); pg.click('#ok'); pg.wait_for_timeout(300)
+        pg.click('[data-quote-opt] >> nth=2'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','1800'); pg.click('#psave'); pg.wait_for_timeout(300)
         d=ev(); ov=d['overrides'][cat]; check(n, ov['amount']==2400, 'other quote is stored but budget keeps front-runner')
-        pg.click(f'[data-compare={cat}]'); pg.wait_for_selector('.cmp'); check(n, '$1,800' in pg.inner_text('.cmp'), 'other quote shown side by side')
-        pg.click('[data-book-opt] >> nth=2'); pg.wait_for_selector('#amt'); check(n, pg.input_value('#src')=='booking', 'booking preselected'); pg.fill('#amt','1750'); pg.click('#ok'); pg.wait_for_timeout(300)
+        check(n, '$1,800' in pg.inner_text('.cmp'), 'other quote shown side by side')
+        pg.click('[data-book-opt] >> nth=2'); pg.wait_for_selector('#pamt'); check(n, pg.input_value('#pamt')=='1800', 'booking starts from their quote'); pg.fill('#pamt','1750'); pg.click('#psave'); pg.wait_for_timeout(300)
+        pg.click('.sheet [data-close]'); pg.wait_for_timeout(300)
         d=ev(); ov=d['overrides'][cat]; pk=[x['name'] for x in d['shortlist'] if x.get('pick')]
         check(n, ov['source']=='booking' and pk==['Maison Fleur'], 'booked option becomes the pick: '+str(pk))
         t=pg.inner_text('.bookings'); check(n, 'Booked' in t and 'Maison Fleur' in t, 'bookings panel shows booked: '+t.replace('\n',' | ')[:160])
         pg.query_selector('.bookings').scroll_into_view_if_needed(); pg.screenshot(path=f'{OUT}/opt_budget_{n}.png')
+        # removing a quoted front-runner takes its quote out; booking survives other removals
+        pg.click(f'[data-compare={cat}]'); pg.wait_for_selector('.cmp'); pg.click('[data-rm-opt] >> nth=1'); pg.wait_for_timeout(250)
+        d=ev(); check(n, d['overrides'][cat]['source']=='booking' and d['overrides'][cat]['amount']==1750, 'booking kept when another option is removed')
+        names=[x.inner_text() for x in pg.query_selector_all('.cmp-row:first-child .cmp-c b')]
+        pg.click('[data-rm-opt] >> nth=' + str(names.index('Maison Fleur'))); pg.wait_for_timeout(250)
+        d=ev(); check(n, cat not in d.get('overrides',{}), 'removing the booked option clears the booking: '+str(d.get('overrides',{}).get(cat)))
+        pg.click('.sheet [data-close]'); pg.wait_for_timeout(300)
         # venues: own option and finished plan
         pg.goto(U+base+'/places'); pg.wait_for_timeout(300)
         check(n, pg.query_selector('.optbar.wide') is not None, 'venue options bar')
@@ -72,7 +80,7 @@ with sync_playwright() as p:
         if lb: lb[0].click(); pg.wait_for_selector('.live-res [data-short]'); pg.click('.live-res [data-short] >> nth=0'); pg.wait_for_timeout(200); check(n, '2 of 3' in pg.inner_text('.optbar.wide'), 'venue bar counts live save')
         pg.goto(U+base+'/plan'); pg.wait_for_timeout(400); t=pg.inner_text('#tab')
         check(n, 'Front-runner: The Grand Salon' in t and 'also considering Gilded Florals' in t, 'finished plan lists front-runner and others')
-        check(n, 'Booked: Maison Fleur' in t, 'finished plan shows booked vendor')
+        check(n, 'Booked: Maison Fleur' not in t, 'removed booking is gone from the plan')
         pg.screenshot(path=f'{OUT}/opt_plan_{n}.png', full_page=True)
         # save the plan: PDF, email, share; change and replace links
         with pg.expect_download() as dl: pg.click('#pdfPlan')
@@ -82,10 +90,11 @@ with sync_playwright() as p:
         check(n, bool(mail) and mail.startswith('mailto:?subject=') and 'Front-runner' in __import__('urllib.parse').parse.unquote(mail), 'email opens with the plan in the body')
         hrefs=[x.get_attribute('href').split('/')[-1] for x in pg.query_selector_all('a.ps-edit')]
         check(n, set(['concepts','budget','food','timeline']).issubset(set(hrefs)), 'change links: '+str(hrefs))
+        before=len([x for x in ev()['shortlist'] if x['cat']==cat])
         pg.click(f'[data-plan-replace={cat}]'); pg.wait_for_selector('.cmp'); pg.wait_for_timeout(300)
         pg.click('[data-replace-opt] >> nth=0'); pg.wait_for_timeout(900)
         check(n, pg.url.endswith('/vendors') and pg.query_selector(f'.live-res [data-short]') is not None, 'replace goes to a fresh search: '+pg.url.split('/')[-1])
-        d=ev(); check(n, len([x for x in d['shortlist'] if x['cat']==cat])==2, 'replaced option removed')
+        d=ev(); check(n, len([x for x in d['shortlist'] if x['cat']==cat])==before-1, 'replaced option removed')
         pg.goto(U+base+'/plan'); pg.wait_for_timeout(300); pg.click('a.ps-edit[href$=concepts]'); pg.wait_for_selector('.concept'); check(n, pg.query_selector('.concept.selected') is not None, 'change look shows the three looks with hers selected')
         check(n, not e, 'no page errors '+str(e)); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
         ctx.close()

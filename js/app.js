@@ -254,12 +254,12 @@
   var lastHash = null;
   function frame(inner, opts) {
     opts = opts || {};
-    var ribbon = CFG.preview && !opts.noRibbon ? '<div class="preview-ribbon">Preview version: no real charges, and sharing works on this device only.</div>' : '';
+    var ribbon = CFG.preview && !CFG.app && !opts.noRibbon ? '<div class="preview-ribbon">Preview version: no real charges, and sharing works on this device only.</div>' : '';
     app.innerHTML = ribbon +
       '<header class="topbar"><a class="brand logo-mark" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.markGold) + '" alt="Event Couture" width="563" height="210"><span class="by" aria-hidden="true">by Always Luxe</span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events" title="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help" title="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
-      '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div><div class="small">Also from Always Luxe: <a href="https://facecouture.app/" target="_blank" rel="noopener">Face Couture</a></div></footer>';
+      '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a>' + (CFG.app ? '' : '<a href="#/pricing">Pricing</a>') + '<a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div><div class="small">Also from Always Luxe: <a href="https://facecouture.app/" target="_blank" rel="noopener">Face Couture</a></div></footer>';
     var ld = document.getElementById('loader'); if (ld && !ld.classList.contains('done')) { ld.classList.add('done'); setTimeout(function () { if (ld.parentNode) ld.parentNode.removeChild(ld); }, 450); }
     if (location.hash !== lastHash) window.scrollTo(0, 0);
     var h2 = app.querySelector('main h1, main h2'); document.title = (h2 && location.hash.length > 2 ? h2.textContent.replace(/Rename$/, '').trim() + ' \u00b7 ' : '') + 'Event Couture by Always Luxe';
@@ -304,7 +304,7 @@
       if (p[0] === 'g') return guestPage(p[1]);
       if (p[0] === 'vendors') return vendorJoin();
       if (p[0] === 'help') return help();
-      if (p[0] === 'pricing') return pricing();
+      if (p[0] === 'pricing') { if (CFG.app) { location.replace('#/'); return; } return pricing(); }
       if (p[0] === 'privacy') return legal('privacy');
       if (p[0] === 'terms') return legal('terms');
       notFound();
@@ -777,12 +777,13 @@
   function usd2(n) { return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function keepSheet(ev, why, onDone) {
     var pass = E.passFor(ev.guests);
-    sheet('<h3>' + esc(why || 'Keep your plan') + '</h3><p class="muted">One payment for ' + esc(ev.name) + ', ' + esc(pass.label.toLowerCase()) + '. No subscription. Guests never pay to view, RSVP or vote.</p>' +
-      '<div class="price-big num">$' + pass.price.toFixed(2) + '</div>' +
+    /* In the iPhone and Android apps, keeping a plan is free until in-app purchase is connected, so no prices are shown there. */
+    sheet('<h3>' + esc(why || 'Keep your plan') + '</h3><p class="muted">' + (CFG.app ? 'Keeping ' + esc(ev.name) + ' is free in the app. Guests never pay to view, RSVP or vote.' : 'One payment for ' + esc(ev.name) + ', ' + esc(pass.label.toLowerCase()) + '. No subscription. Guests never pay to view, RSVP or vote.') + '</p>' +
+      (CFG.app ? '' : '<div class="price-big num">$' + pass.price.toFixed(2) + '</div>') +
       '<ul class="incl"><li><span>Your full plan unlocked: every budget line, all venues and vendors, the menu, shopping and playlist</span></li><li><span>Saved with every edit until <b>' + esc(accessUntil(ev)) + '</b></span></li><li><span>Guest list, RSVPs' + (ev.setting === 'restaurant' ? '' : ', seating') + ', voting' + (hasRegistry(ev) ? ' and registry' : '') + (canSplit(ev) ? ' and cost splitting' : '') + '</span></li><li><span>Checklist with due dates and your day-of schedule</span></li></ul>' +
       (CFG.preview ? '<p class="muted small">Right now your plan is saved on this device. Sending your invitation to guests on their own phones turns on when accounts launch.</p>' : '') +
-      '<p class="muted small">Guest list grows past ' + pass.max.toLocaleString('en-US') + '? You pay only the difference.</p>' +
-      (CFG.preview ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
+      (CFG.app ? '' : '<p class="muted small">Guest list grows past ' + pass.max.toLocaleString('en-US') + '? You pay only the difference.</p>') +
+      (CFG.preview && !CFG.app ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
       '<button class="btn gold block" id="keepPay">' + (CFG.preview ? 'Keep my plan' : 'Pay ' + usd2(pass.price) + ' and keep my plan') + '</button><button class="btn ghost block" data-close>Not now</button>', function (el, close) {
       $('#keepPay', el).addEventListener('click', function () {
         ev.paid = { price: pass.price, max: pass.max, at: new Date().toISOString() };
@@ -837,7 +838,7 @@
     }).join('') + '</nav>';
     var lockedTab = preview(ev) && LOCKED_TABS[tab];
     var body = lockedTab ? '<div class="stack"><div class="lock-card big"><h3>' + esc(LOCKED_TABS[tab]) + '</h3><p class="muted">Keep your plan to invite guests, track RSVPs and plan together. Your concept and estimates stay exactly as they are.</p><button class="btn" data-keep>Keep my plan</button></div></div>' : (TAB_VIEWS[tab] || TAB_VIEWS.overview)(ev, b);
-    var keepBar = isKept(ev) ? '' : '<div class="keep-bar"><span><b>' + (b.shortBy ? 'Keep this plan' : 'Love this plan?') + '</b> <span class="muted">Keep it to unlock every detail and plan with guests for ' + usd2(E.passFor(ev.guests).price) + ', one time.</span></span><button class="btn small" id="keepBtn">Keep my plan</button></div>';
+    var keepBar = isKept(ev) ? '' : '<div class="keep-bar"><span><b>' + (b.shortBy ? 'Keep this plan' : 'Love this plan?') + '</b> <span class="muted">' + (CFG.app ? 'Keep it, free, to unlock every detail and plan with guests.' : 'Keep it to unlock every detail and plan with guests for ' + usd2(E.passFor(ev.guests).price) + ', one time.') + '</span></span><button class="btn small" id="keepBtn">Keep my plan</button></div>';
     frame(head + keepBar + groupBar + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
     var kb = $('#keepBtn'); if (kb) kb.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { planView(ev, tab); }); });
     var cur = $('.rail [aria-current]'); if (cur && cur.scrollIntoView && window.innerWidth < 960) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
@@ -932,13 +933,13 @@
     var todo = E.checklist(ev).filter(function (x) { return !checkDone(ev, x.text); }).slice(0, 6);
     var pieces = lookList(ev);
     var go = '#/e/' + ev.id + '/';
-    var sec = function (h, inner, edit) { return '<section class="ps-sec"><div class="ps-h"><h3>' + h + '</h3>' + (edit ? '<a class="ps-edit link small" href="' + go + edit[0] + '">' + edit[1] + '</a>' : '') + '</div>' + inner + '</section>'; };
+    var sec = function (h, inner, edit) { return '<section class="ps-sec"><div class="ps-h"><h3>' + h + '</h3>' + (edit && !ev.sample ? '<a class="ps-edit link small" href="' + go + edit[0] + '">' + edit[1] + '</a>' : '') + '</div>' + inner + '</section>'; };
     return '<div class="stack plan-sheet">' +
-      '<div class="panel plan-save"><div><b>Save your plan</b><p class="small muted">Keep a copy as a PDF, email it to yourself or send it to a co-host. Don\u2019t love something? Tap Change or Replace next to it.</p></div><div class="row plan-actions"><button class="btn gold small" id="pdfPlan">Save as PDF</button><button class="btn ghost small" id="mailPlan">Email it to me</button><button class="btn ghost small" id="sharePlan">Share</button>' + (window.ECNative && window.ECNative.isNative ? '' : '<button class="btn ghost small" id="printPlan">Print</button>') + '</div></div>' +
-      '<div class="ps-head"><span class="small muted">' + esc(E.typeOf(ev.type).name) + '</span><h2>' + esc(ev.name) + '</h2><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + esc(fmtTime(ev.time)) : '') : 'Date to be set') + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + esc(settingName(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p><button class="ps-edit link small" data-plan-when>Change date or time</button></div>' +
+      '<div class="panel plan-save"><div><b>Save your plan</b><p class="small muted">Keep a copy as a PDF, email it to yourself or send it to a co-host. ' + (ev.sample ? '' : 'Don\u2019t love something? Tap Change or Replace next to it.') + '</p></div><div class="row plan-actions"><button class="btn gold small" id="pdfPlan">Save as PDF</button><button class="btn ghost small" id="mailPlan">Email it to me</button><button class="btn ghost small" id="sharePlan">Share</button>' + (window.ECNative && window.ECNative.isNative ? '' : '<button class="btn ghost small" id="printPlan">Print</button>') + '</div></div>' +
+      '<div class="ps-head"><span class="small muted">' + esc(E.typeOf(ev.type).name) + '</span><h2>' + esc(ev.name) + '</h2><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + esc(fmtTime(ev.time)) : '') : 'Date to be set') + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + esc(settingName(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p>' + (ev.sample ? '' : '<button class="ps-edit link small" data-plan-when>Change date or time</button>') + '</div>' +
       sec('Your look', dots(c.palette, c.styleName + ' colors') + '<p><b>' + esc(c.styleName) + '.</b> ' + esc(moodFor(c, ev)) + '</p><ul class="incl">' + decorFor(c, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>', ['concepts', 'Choose a different look']) +
       sec('Budget, ' + esc(tierName(b.tier.id)), '<div class="table-wrap"><table class="qty"><thead><tr><th>Item</th><th>Status</th><th>Amount</th></tr></thead><tbody>' + b.items.map(function (i) { var st = statusOf(ev, i.id); return '<tr><td>' + esc(i.name) + '</td><td class="small muted">' + (st === 'booked' ? 'Booked' : st === 'quote' ? 'Quote' : 'Estimate') + '</td><td class="n">' + money(i.mid) + '</td></tr>'; }).join('') + '<tr><td><b>Estimated total</b></td><td class="small muted">' + (ev.budget ? 'Budget ' + money(ev.budget) : '') + '</td><td class="n"><b>' + money(b.total) + '</b></td></tr></tbody></table></div><p class="small muted">Includes tax, service, tips and a 10% cushion. Amounts marked Quote or Booked are the prices you entered.</p>', ['budget', 'Change level or prices']) +
-      sec('Venue and vendors', '<div class="list">' + vend.map(function (id) { var it = b.items.find(function (x) { return x.id === id; }), n = savedFor(ev, id).length; return '<div class="it"><span class="grow"><b>' + esc(it.name.split(' (')[0]) + '</b><span class="small muted"> ' + esc(stTxt(id)) + '</span></span><span class="num">' + money(it.mid) + '</span><button class="ps-edit link small" data-plan-replace="' + id + '">' + (n > 1 ? 'Compare or replace' : n ? 'Replace' : 'Find one') + '</button></div>'; }).join('') + '</div>') +
+      sec('Venue and vendors', '<div class="list">' + vend.map(function (id) { var it = b.items.find(function (x) { return x.id === id; }), n = savedFor(ev, id).length; return '<div class="it"><span class="grow"><b>' + esc(catName(id)) + '</b><span class="small muted"> ' + esc(stTxt(id)) + '</span></span><span class="num">' + money(it.mid) + '</span>' + (ev.sample ? '' : '<button class="ps-edit link small" data-plan-replace="' + id + '">' + (n > 1 ? 'Compare or replace' : n ? 'Replace' : 'Find one') + '</button>') + '</div>'; }).join('') + '</div>') +
       sec(ev.setting === 'restaurant' ? 'Look for these on the menu' : 'Menu', '<ul class="incl">' + menuItems(ev).map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul>', ['food', 'Change menu']) +
       (pieces.length ? sec('Get this look', '<ul class="incl">' + pieces.map(function (p2) { return '<li>' + esc(p2.name) + (p2.hire ? ' <span class="small muted">(hire)</span>' : '') + '</li>'; }).join('') + '</ul>', ['style', 'Change pieces']) : '') +
       (ev.setting === 'restaurant' ? '' : sec('Music', '<p>' + esc(plName) + ': 25 songs on the Style and music page.</p>', ['style', 'Change music'])) +
@@ -958,7 +959,7 @@
     var sections = [
       { h: 'Your look', p: c.styleName + '. ' + moodFor(c, ev), bullets: decorFor(c, ev) },
       { h: 'Budget, ' + tierName(b.tier.id), rows: b.items.map(function (i) { var s2 = statusOf(ev, i.id); return [i.name, s2 === 'booked' ? 'Booked' : s2 === 'quote' ? 'Quote' : 'Estimate', money(i.mid)]; }), total: ['Estimated total' + (ev.budget ? ' (budget ' + money(ev.budget) + ')' : ''), money(b.total)] },
-      { h: 'Venue and vendors', rows: vend.map(function (id) { var it = b.items.find(function (x) { return x.id === id; }); var sv = savedFor(ev, id); var ct = sv.filter(function (x) { return x.site || x.phone; }).map(function (x) { return x.name + ', ' + String(x.site || x.phone).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''); }); return [it.name.split(' (')[0], st(id) + (ct.length ? '\nContact: ' + ct.join(' \u00b7 ') : ''), money(it.mid)]; }) },
+      { h: 'Venue and vendors', rows: vend.map(function (id) { var it = b.items.find(function (x) { return x.id === id; }); var sv = savedFor(ev, id); var ct = sv.filter(function (x) { return siteOf(x) || x.phone; }).map(function (x) { return x.name + ', ' + String(siteOf(x) || x.phone).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''); }); return [catName(id), st(id) + (ct.length ? '\nContact: ' + ct.join(' \u00b7 ') : ''), money(it.mid)]; }) },
       { h: ev.setting === 'restaurant' ? 'Look for these on the menu' : 'Menu', bullets: menuItems(ev) }
     ];
     var pieces = lookList(ev); if (pieces.length) sections.push({ h: 'Get this look', bullets: pieces.map(function (p2) { return p2.name + (p2.hire ? ' (hire)' : ''); }) });
@@ -983,12 +984,13 @@
     });
     out.push(d.foot); return out.join('\n');
   }
-  function fileName(ev) { return (String(ev.name || 'Event plan').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60) || 'Event-plan') + '-plan.pdf'; }
+  function fileName(ev) { return (String(ev.name || 'Event plan').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60) || 'Event-plan') + '-plan.pdf'; }
   function savePlanPdf(ev) {
     var bytes; try { bytes = window.ECPDF.plan(planData(ev)); } catch (e) { return toast('Could not make the PDF. Try Print instead.'); }
     var name = fileName(ev);
     T('plan_pdf_saved', { event_type: ev.type });
     if (window.ECNative && window.ECNative.shareFile) { var bin = ''; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return window.ECNative.shareFile(name, btoa(bin), 'application/pdf', ev.name).catch(function () { toast('Could not open the share sheet. Try again.'); }); }
+    if (window.ECNative && window.ECNative.isNative) { if (navigator.share) navigator.share({ title: ev.name, text: planText(planData(ev)) }).catch(function () {}); return; }
     var blob = new Blob([bytes], { type: 'application/pdf' }), file = null;
     try { file = new File([blob], name, { type: 'application/pdf' }); } catch (e) {}
     var touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
@@ -1016,9 +1018,10 @@
     $('#pdfPlan').addEventListener('click', function () { savePlanPdf(ev); });
     $('#mailPlan').addEventListener('click', function () {
       var d = planData(ev), body = planText(d, true) + '\n\nTip: tap Save as PDF in Event Couture for the full plan with your schedule and shopping list.';
-      if (body.length > 1800) body = body.slice(0, 1750) + '\n...\n\nSave as PDF in Event Couture for the full plan.';
+      var subj = 'My Event Couture plan: ' + ev.name, enc = function (t) { return encodeURIComponent(t).length; };
+      if (enc(subj) + enc(body) > 1900) { var ch = Array.from(body), tail = '\n...\n\nSave as PDF in Event Couture for the full plan.'; while (ch.length && enc(subj) + enc(ch.join('') + tail) > 1900) ch = ch.slice(0, Math.floor(ch.length * 0.9)); body = ch.join('') + tail; }
       T('plan_emailed', { event_type: ev.type });
-      (window.ECMailTo || function (u) { location.href = u; })('mailto:?subject=' + encodeURIComponent('My Event Couture plan: ' + ev.name) + '&body=' + encodeURIComponent(body));
+      (window.ECMailTo || function (u) { location.href = u; })('mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body));
     });
     var pw = $('[data-plan-when]'); if (pw) pw.addEventListener('click', function () { var w = $('#when'); if (w) w.click(); });
     $$('[data-plan-replace]').forEach(function (bt) { bt.addEventListener('click', function () { var cat = bt.dataset.planReplace; if (savedFor(ev, cat).length) compareSheet(ev, cat, rerender); else findAnother(ev, cat); }); });
@@ -1128,7 +1131,7 @@
   /* Bookings: save businesses to a shortlist, then record a quote or a booking. Status comes from what the host saved. */
   var FOUND = {};
   function venueCat(ev) { var b = E.budget(ev, ev.tier); var ids = b.items.map(function (i) { return i.id; }); return ['venue', 'privateDining', 'restaurantFood'].filter(function (x) { return ids.indexOf(x) >= 0; })[0] || 'venue'; }
-  function savedFor(ev, cat) { return (ev.shortlist || []).filter(function (x) { return x.cat === cat; }); }
+  function savedFor(ev, cat) { return (ev.shortlist || []).filter(function (x) { return x && x.cat === cat && x.name; }); }
   function statusOf(ev, cat) {
     var ov = (ev.overrides || {})[cat];
     if (ov && ov.source === 'booking') return 'booked';
@@ -1136,7 +1139,7 @@
     return savedFor(ev, cat).length ? 'short' : 'todo';
   }
   var STATUS_TXT = { booked: 'Booked', quote: 'Got a price', short: 'Shortlisted', todo: 'To book' };
-  function statusBadge(ev, cat) { var st = statusOf(ev, cat); return '<span class="badge st-' + st + '">' + STATUS_TXT[st] + (st === 'short' ? ' (' + savedFor(ev, cat).length + ')' : '') + '</span>'; }
+  function statusBadge(ev, cat) { var st = statusOf(ev, cat); return '<span class="badge st-' + st + '" data-stbadge="' + cat + '">' + STATUS_TXT[st] + (st === 'short' ? ' (' + savedFor(ev, cat).length + ')' : '') + '</span>'; }
   function saveBtn(ev, p, cat) {
     var key = cat + '|' + p.id;
     FOUND[key] = { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '' };
@@ -1145,10 +1148,11 @@
   }
   /* Up to three options per category; one is the front-runner (the first saved, until she stars another). */
   var MAX_OPTIONS = 3;
-  function catName(cat) { var c = D.CATEGORIES[cat]; return c ? c.name.split(' (')[0] : 'Option'; }
+  var OPT_NAME = { venue: 'Venue', privateDining: 'Private dining room', restaurantFood: 'Restaurant' };
+  function catName(cat) { if (OPT_NAME[cat]) return OPT_NAME[cat]; var c = D.CATEGORIES[cat]; return c ? c.name.split(' (')[0] : 'Option'; }
   function pickOf(ev, cat) { var l = savedFor(ev, cat); return l.find(function (x) { return x.pick; }) || l[0] || null; }
   function setPick(ev, cat, id) { savedFor(ev, cat).forEach(function (x) { x.pick = x.id === id; }); }
-  function removeOption(ev, id, cat) { var same = function (o) { return o.id === id && o.cat === cat; }; var x = (ev.shortlist || []).find(same); ev.shortlist = (ev.shortlist || []).filter(function (o) { return !same(o); }); if (x && x.pick) { var n = savedFor(ev, x.cat)[0]; if (n) n.pick = true; } }
+  function removeOption(ev, id, cat) { var list = ev.shortlist = ev.shortlist || [], k = list.findIndex(function (o) { return o.id === id && o.cat === cat; }); var x = k >= 0 ? list.splice(k, 1)[0] : null; if (x && x.pick) { var n = savedFor(ev, x.cat)[0]; if (n) n.pick = true; } }
   function addOption(ev, item) { ev.shortlist = ev.shortlist || []; var first = !savedFor(ev, item.cat).length; ev.shortlist.push(Object.assign({}, item, { pick: first })); return first; }
   function bindSave(ev, box, after) {
     box.addEventListener('click', function (e) {
@@ -1179,76 +1183,89 @@
     return '<div class="optbar small" data-optbar="' + cat + '"><span class="grow">' + txt + '</span><button class="link small" data-compare="' + cat + '">' + (l.length > 1 ? 'Compare ' + l.length + ' side by side' : l.length ? 'Open' : 'Add your own') + '</button></div>';
   }
   function bindCompare(ev, rerender) { $('#tab').addEventListener('click', function (e) { var b = e.target.closest('[data-optbar] [data-compare]'); if (b) compareSheet(ev, b.dataset.compare, rerender); }); }
-  function refreshBars(ev) { $$('[data-optbar]').forEach(function (el) { el.outerHTML = optBar(ev, el.dataset.optbar, el.classList.contains('wide')).replace('class="optbar', 'class="optbar' + (el.classList.contains('wide') ? ' wide' : '')); }); }
+  function refreshBars(ev) { $$('[data-stbadge]').forEach(function (el) { el.outerHTML = statusBadge(ev, el.dataset.stbadge); }); $$('[data-optbar]').forEach(function (el) { el.outerHTML = optBar(ev, el.dataset.optbar, el.classList.contains('wide')).replace('class="optbar', 'class="optbar' + (el.classList.contains('wide') ? ' wide' : '')); }); }
   /* The budget follows the front-runner's quote until something is booked. */
+  /* Prices that belong to a saved option carry its id (opt), so removing the option removes its price or booking too.
+     A price typed on the Budget page for no particular option is left alone unless the front-runner has a quote. */
   function syncPrice(ev, cat) {
-    var ov = (ev.overrides || {})[cat]; if (ov && ov.source === 'booking') return;
-    var pk = pickOf(ev, cat), names = savedFor(ev, cat).map(function (x) { return x.name; });
-    if (pk && pk.quote) { ev.overrides = ev.overrides || {}; ev.overrides[cat] = { amount: pk.quote, source: 'quote', note: pk.name }; }
-    else if (ov && ov.source === 'quote' && (names.indexOf(ov.note) >= 0 || /\S/.test(ov.note || '') && !pk)) delete ev.overrides[cat];
+    var o = ev.overrides = ev.overrides || {}, ov = o[cat], l = savedFor(ev, cat);
+    var has = function (id) { return l.some(function (x) { return x.id === id; }); };
+    if (ov && !ov.opt && ov.note) { var m = l.find(function (x) { return x.name === ov.note; }); if (m) ov.opt = m.id; }
+    if (ov && ov.opt && !has(ov.opt)) { delete o[cat]; ov = null; }
+    if (ov && ov.source === 'booking') return;
+    var pk = pickOf(ev, cat);
+    if (pk && pk.quote) o[cat] = { amount: pk.quote, source: 'quote', note: pk.name, opt: pk.id };
+    else if (ov && ov.opt) delete o[cat];
   }
+  function siteOf(x) { return x.site || (x.url && !/google\.[a-z.]+\/maps|maps\.google|goo\.gl/i.test(x.url) ? x.url : ''); }
+  function isBooked(ev, cat, x) { var ov = (ev.overrides || {})[cat]; return !!(ov && ov.source === 'booking' && (ov.opt ? ov.opt === x.id : ov.note === x.name)); }
   /* Side by side: her up to three options for one category, with the facts that matter and one front-runner. */
   var PRICE_TXT = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
   function compareSheet(ev, cat, rerender) {
+    var mode = null;   /* null = the comparison; { kind: 'quote' | 'book', id } = a price form for one option */
+    var priceForm = function (el, x) {
+      var book = mode.kind === 'book', booked = isBooked(ev, cat, x), meal = cat === 'restaurantFood', ov = (ev.overrides || {})[cat] || {};
+      var val = book ? (booked && ov.amount ? ov.amount : x.quote || '') : (x.quote || '');
+      el.innerHTML = '<h3 tabindex="-1">' + (book ? (booked ? 'Booked: ' : 'Mark as booked: ') : 'Quote from ') + esc(x.name) + '</h3>' +
+        '<p class="muted small">' + (book ? (meal ? 'Great choice. Add what you expect to spend if you know it; otherwise your meal estimate stays in the budget.' : 'Add the total you agreed to, including fees, if you know it. Your budget uses it instead of the estimate.') : 'Add the price they quoted, including fees. ' + (pickOf(ev, cat) && pickOf(ev, cat).id === x.id ? 'This is your front-runner, so your budget uses it.' : 'Your budget uses it if you make them your front-runner.')) + '</p>' +
+        '<label class="field"><span>' + (book ? (meal ? 'Expected total (optional)' : 'Total amount (optional)') : 'Quoted total (USD)') + '</span><input class="input num" type="number" min="0" inputmode="decimal" id="pamt" value="' + esc(String(val)) + '"></label>' +
+        '<button class="btn gold block" id="psave">' + (book ? (booked ? 'Save' : 'Mark as booked') : 'Save quote') + '</button>' +
+        (book && booked ? '<button class="btn ghost block" id="punbook">Not booked after all</button>' : '') + (!book && x.quote ? '<button class="btn ghost block" id="pclear">Remove this quote</button>' : '') +
+        '<button class="btn ghost block" id="pback">Back to comparison</button>';
+    };
     var draw = function (el) {
+      if (mode) { var mx = savedFor(ev, cat).find(function (x) { return x.id === mode.id; }); if (mx) { priceForm(el, mx); var h = el.querySelector('h3'); if (h) h.focus(); return; } mode = null; }
       var l = savedFor(ev, cat), pk = pickOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
       var row = function (label, fn) { return '<div class="cmp-row"><span class="cmp-l">' + label + '</span>' + l.map(function (x) { return '<span class="cmp-c' + (pk && x.id === pk.id ? ' on' : '') + '">' + fn(x) + '</span>'; }).join('') + '</div>'; };
-      el.innerHTML = '<h3>Compare ' + esc(E.lc(catName(cat))) + ' options</h3><p class="muted small">Your ' + (l.length === 1 ? 'option' : l.length + ' options') + ', side by side. Star your front-runner; contact them, then mark the one you book.</p>' +
+      el.innerHTML = '<h3 tabindex="-1">Compare ' + esc(E.lc(catName(cat))) + ' options</h3><p class="muted small">Your ' + (l.length === 1 ? 'option' : l.length + ' options') + ', side by side. Star your front-runner; contact them, then mark the one you book.</p>' +
         (l.length ? '<div class="cmp" style="--n:' + l.length + '">' +
-          row('', function (x) { return '<b>' + esc(x.name) + '</b>' + (ov.source === 'booking' && ov.note === x.name ? '<span class="badge ok">Booked</span>' : pk && x.id === pk.id ? '<span class="badge est">\u2605 Front-runner</span>' : ''); }) +
+          row('', function (x) { return '<b>' + esc(x.name) + '</b>' + (isBooked(ev, cat, x) ? '<span class="badge ok">Booked</span>' : pk && x.id === pk.id ? '<span class="badge est">\u2605 Front-runner</span>' : ''); }) +
           row('Rating', function (x) { return x.rating ? '\u2605 ' + x.rating + (x.reviews ? ' <span class="muted small">(' + Number(x.reviews).toLocaleString('en-US') + ')</span>' : '') : '<span class="muted">\u2014</span>'; }) +
-          row('Price', function (x) { return ov.note === x.name && ov.amount ? '<b class="num">' + money(ov.amount) + '</b> <span class="muted small">' + (ov.source === 'booking' ? 'booked' : 'quote') + '</span>' : x.quote ? '<span class="num">' + money(x.quote) + '</span> <span class="muted small">quote</span>' : PRICE_TXT[x.price] ? PRICE_TXT[x.price] : '<span class="muted">Ask for a quote</span>'; }) +
+          row('Price', function (x) { return isBooked(ev, cat, x) && ov.amount ? '<b class="num">' + money(ov.amount) + '</b> <span class="muted small">booked</span>' : x.quote ? '<span class="num">' + money(x.quote) + '</span> <span class="muted small">quote</span>' : PRICE_TXT[x.price] ? PRICE_TXT[x.price] : '<span class="muted">Ask for a quote</span>'; }) +
           row('Where', function (x) { return x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : '<span class="muted">\u2014</span>'; }) +
-          row('', function (x) { return (x.site ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.site) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : '') + (x.phone ? '<a class="btn small ghost" href="tel:' + esc(x.phone.replace(/[^\d+]/g, '')) + '">Call</a>' : ''); }) +
-          row('', function (x) { var top = pk && x.id === pk.id; return '<span class="cmp-acts">' + (top ? '' : '<button class="btn small ghost" data-pick-opt="' + esc(x.id) + '">\u2605 Make front-runner</button>') + '<button class="btn small ghost" data-quote-opt="' + esc(x.id) + '">' + (x.quote ? 'Change quote' : 'Add quote') + '</button><button class="btn small' + (top ? '' : ' ghost') + '" data-book-opt="' + esc(x.id) + '">I booked this</button><span class="cmp-links"><button class="link small" data-replace-opt="' + esc(x.id) + '">Replace</button><button class="link small" data-rm-opt="' + esc(x.id) + '">Remove</button></span></span>'; }) +
-          '</div>' + (l.length > 2 ? '<p class="muted small cmp-swipe">Swipe sideways to see all 3.</p>' : '') : '<p class="muted">No options saved yet. Tap Save on any result, or add one you found yourself.</p>') +
+          row('', function (x) { return (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : '') + (x.phone ? '<a class="btn small ghost" href="tel:' + esc(x.phone.replace(/[^\d+]/g, '')) + '">Call</a>' : ''); }) +
+          row('', function (x) { var top = pk && x.id === pk.id; return '<span class="cmp-acts">' + (top ? '' : '<button class="btn small ghost" data-pick-opt="' + esc(x.id) + '">\u2605 Make front-runner</button>') + '<button class="btn small ghost" data-quote-opt="' + esc(x.id) + '">' + (x.quote ? 'Change quote' : 'Add quote') + '</button><button class="btn small' + (top && !isBooked(ev, cat, x) ? '' : ' ghost') + '" data-book-opt="' + esc(x.id) + '">' + (isBooked(ev, cat, x) ? 'Booked \u2713 Edit' : 'I booked this') + '</button><span class="cmp-links"><button class="link small" data-replace-opt="' + esc(x.id) + '">Replace</button><button class="link small" data-rm-opt="' + esc(x.id) + '">Remove</button></span></span>'; }) +
+          '</div>' + (l.length > 2 ? '<p class="muted small cmp-swipe">Swipe sideways to see all ' + l.length + '.</p>' : '') : '<p class="muted">No options saved yet. Tap Save on any result, or add one you found yourself.</p>') +
         (l.length < MAX_OPTIONS ? '<details class="cmp-add"' + (l.length ? '' : ' open') + '><summary class="link small">Add one you found yourself</summary><div class="grid2"><label class="field"><span>Business name</span><input class="input" id="oname"></label><label class="field"><span>Website or phone (optional)</span><input class="input" id="olink"></label></div><button class="btn small" id="oadd">Add option</button></details>' : '') +
         '<button class="btn ghost block" data-close>Done</button>';
     };
     sheet('<div id="cmpBox"></div>', function (el, close) {
       var box = $('#cmpBox', el); draw(box);
+      var again = function (sel) { draw(box); var f = sel && box.querySelector(sel); (f || box.querySelector('h3')).focus(); };
       box.addEventListener('click', function (e) {
         var t = e.target.closest('button'); if (!t || lockSample(ev)) return;
         var find = function (id) { return savedFor(ev, cat).find(function (x) { return x.id === id; }); };
-        if (t.dataset.pickOpt) { setPick(ev, cat, t.dataset.pickOpt); syncPrice(ev, cat); saveEvent(ev); draw(box); toast(find(t.dataset.pickOpt).name + ' is your front-runner'); }
-        else if (t.dataset.replaceOpt) { var gone = find(t.dataset.replaceOpt); removeOption(ev, t.dataset.replaceOpt, cat); syncPrice(ev, cat); saveEvent(ev); close(); toast('Removed ' + gone.name + '. Now pick a new one.'); findAnother(ev, cat); }
-        else if (t.dataset.rmOpt) { removeOption(ev, t.dataset.rmOpt, cat); syncPrice(ev, cat); saveEvent(ev); draw(box); }
-        else if (t.dataset.quoteOpt || t.dataset.bookOpt) {
-          var x = find(t.dataset.quoteOpt || t.dataset.bookOpt), booking = !!t.dataset.bookOpt;
-          var prev = (ev.overrides || {})[cat]; prev = prev ? Object.assign({}, prev) : null;
-          close(); openPrice(ev, cat, x.name, booking ? 'booking' : 'quote', function () {
-            var ov = (ev.overrides || {})[cat];
-            if (ov && ov.source === 'booking') setPick(ev, cat, x.id);
-            else if (ov && ov.note === x.name) { x.quote = ov.amount; if (prev && prev.source === 'booking') ev.overrides[cat] = prev; else syncPrice(ev, cat); }
-            else if (!ov && x.quote && !booking) { delete x.quote; syncPrice(ev, cat); }
-            saveEvent(ev); rerender();
-          });
+        var cur = mode && find(mode.id);
+        if (t.id === 'pback') { mode = null; again(); }
+        else if (t.id === 'psave' && cur) {
+          var a = +$('#pamt', box).value || 0;
+          if (mode.kind === 'quote') { if (!(a > 0)) return toast('Enter the quoted amount'); cur.quote = a; syncPrice(ev, cat); toast('Quote saved'); }
+          else { ev.overrides = ev.overrides || {}; ev.overrides[cat] = { amount: a > 0 ? a : 0, source: 'booking', note: cur.name, opt: cur.id }; setPick(ev, cat, cur.id); toast(cur.name + ' is booked' + (a > 0 ? '. Totals updated.' : '')); }
+          saveEvent(ev); mode = null; again();
         }
-        else if (t.id === 'oadd') { var n = $('#oname', box).value.trim(); if (!n) return toast('Enter the business name'); var lk = $('#olink', box).value.trim(); addOption(ev, { id: 'own-' + uid(), name: n, cat: cat, site: /^https?:|\.\w{2,}/.test(lk) && !/^[\d\s()+-]+$/.test(lk) ? (/^https?:/.test(lk) ? lk : 'https://' + lk) : '', phone: /^[\d\s()+-]{7,}$/.test(lk) ? lk : '' }); saveEvent(ev); draw(box); }
+        else if (t.id === 'punbook' && cur) { delete ev.overrides[cat]; syncPrice(ev, cat); saveEvent(ev); mode = null; again(); toast('Marked as not booked'); }
+        else if (t.id === 'pclear' && cur) { delete cur.quote; syncPrice(ev, cat); saveEvent(ev); mode = null; again(); toast('Quote removed'); }
+        else if (t.dataset.pickOpt) { setPick(ev, cat, t.dataset.pickOpt); syncPrice(ev, cat); saveEvent(ev); again('[data-book-opt="' + t.dataset.pickOpt.replace(/"/g, '') + '"]'); toast(find(t.dataset.pickOpt).name + ' is your front-runner'); }
+        else if (t.dataset.replaceOpt) { var gone = find(t.dataset.replaceOpt), wasB = isBooked(ev, cat, gone); removeOption(ev, t.dataset.replaceOpt, cat); syncPrice(ev, cat); saveEvent(ev); close(); toast('Removed ' + gone.name + (wasB ? ' and its booking' : '') + '. Now pick a new one.'); findAnother(ev, cat); }
+        else if (t.dataset.rmOpt) { var rm = find(t.dataset.rmOpt), wasBk = isBooked(ev, cat, rm); removeOption(ev, t.dataset.rmOpt, cat); syncPrice(ev, cat); saveEvent(ev); again(); toast('Removed ' + rm.name + (wasBk ? '. Its booking was taken out of your budget.' : '')); }
+        else if (t.dataset.quoteOpt || t.dataset.bookOpt) { mode = { kind: t.dataset.bookOpt ? 'book' : 'quote', id: t.dataset.quoteOpt || t.dataset.bookOpt }; draw(box); setTimeout(function () { var i = $('#pamt', box); if (i) i.focus(); }, 30); }
+        else if (t.id === 'oadd') { var n = $('#oname', box).value.trim(); if (!n) return toast('Enter the business name'); var lk = $('#olink', box).value.trim(); var phone = /^[\d\s().+-]{7,}$/.test(lk); addOption(ev, { id: 'own-' + uid(), name: n.slice(0, 120), cat: cat, site: !phone && /^https?:\/\/|\.[a-z]{2,}/i.test(lk) ? (/^https?:\/\//i.test(lk) ? lk.replace(/^https?/i, function (m) { return m.toLowerCase(); }) : 'https://' + lk) : '', phone: phone ? lk : '' }); saveEvent(ev); again(); }
       });
+      box.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.id === 'pamt') { e.preventDefault(); var b = $('#psave', box); if (b) b.click(); } });
     });
-    var onClose = new MutationObserver(function () { if (!document.querySelector('#cmpBox')) { onClose.disconnect(); rerender(); } }); onClose.observe(document.body, { childList: true });
-  }
-  /* Add or change a price for one category (quote, booking or a vendor's published price). */
-  function openPrice(ev, id, note, source, done) {
-    if (lockSample(ev)) return; var cur = (ev.overrides || {})[id] || {}; if (note && cur.note !== note) cur = { note: note, source: source || 'quote' }; else if (source) cur = Object.assign({}, cur, { source: source });
-    sheet('<h3>' + (cur.source === 'booking' ? 'Booked: ' : 'Add a price for ') + esc(note || E.lc(D.CATEGORIES[id].name)) + '</h3><p class="muted small">Add a quote you received or a confirmed booking. Your budget uses this instead of the estimate.</p><label class="field"><span>Total amount (USD), including fees</span><input class="input num" type="number" min="0" id="amt" value="' + (cur.amount || '') + '"></label>' +
-      '<label class="field"><span>What is this price?</span><select class="input" id="src"><option value="quote">Quote I received</option><option value="booking"' + (cur.source === 'booking' ? ' selected' : '') + '>Booked and confirmed</option><option value="vendor"' + (cur.source === 'vendor' ? ' selected' : '') + '>Price published by the vendor</option></select></label>' +
-      '<label class="field"><span>Vendor or note (optional)</span><input class="input" id="nt" value="' + esc(cur.note || '') + '"></label><button class="btn gold block" id="ok">Save price</button>' + ((ev.overrides || {})[id] && (ev.overrides || {})[id].amount ? '<button class="btn ghost block" id="clr">Use the estimate again</button>' : '') + '<button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
-      $('#ok', el).addEventListener('click', function () { var a = +$('#amt', el).value; if (!(a > 0)) return toast('Enter an amount'); ev.overrides = ev.overrides || {}; ev.overrides[id] = { amount: a, source: $('#src', el).value, note: $('#nt', el).value.trim() }; close(); if (done) done(); else saveEvent(ev); toast('Price saved. Totals updated.'); });
-      var c = $('#clr', el); if (c) c.addEventListener('click', function () { delete ev.overrides[id]; close(); if (done) done(); else saveEvent(ev); toast('Back to the estimate'); });
-    });
+    var openedAt = location.hash, soft = /\/(places|vendors)$/.test(openedAt);   /* if she leaves the page (back button), don't redraw the old one */
+    var onClose = new MutationObserver(function () { if (!document.querySelector('#cmpBox')) { onClose.disconnect(); if (location.hash !== openedAt) return; if (soft) refreshBars(ev); else rerender(); } }); onClose.observe(document.body, { childList: true });
   }
   function bookingsPanel(ev, b) {
     var lines = b.items.filter(function (i) { return D.CATEGORIES[i.id]; });
     var booked = lines.filter(function (i) { return statusOf(ev, i.id) === 'booked'; });
     var quoted = lines.filter(function (i) { return statusOf(ev, i.id) === 'quote'; });
     var bookedAmt = booked.reduce(function (t, i) { return t + i.mid; }, 0);
-    var sl = ev.shortlist || [];
+    var sl = (ev.shortlist || []).filter(function (x) { return x && x.name && D.CATEGORIES[x.cat]; });
     return '<div class="panel stack bookings"><div class="row" style="justify-content:space-between"><h3>Bookings</h3><span class="small muted num">' + booked.length + ' of ' + lines.length + ' booked</span></div>' +
       '<div class="meter"><i style="width:' + (lines.length ? Math.round(booked.length / lines.length * 100) : 0) + '%"></i></div>' +
       '<div class="bk-stats"><div><b class="num">' + money(bookedAmt) + '</b><span class="small muted">confirmed</span></div><div><b class="num">' + quoted.length + '</b><span class="small muted">with a price</span></div><div><b class="num">' + sl.length + '</b><span class="small muted">saved</span></div></div>' +
-      (sl.length ? '<div class="list">' + sl.map(function (x) { return x.cat; }).filter(function (c, i, a) { return a.indexOf(c) === i; }).map(function (cat) { var l = savedFor(ev, cat), pk = pickOf(ev, cat), st = statusOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
+      (sl.length ? '<div class="list">' + sl.map(function (x) { return x && x.cat; }).filter(function (c, i, a) { return c && D.CATEGORIES[c] && a.indexOf(c) === i; }).map(function (cat) { var l = savedFor(ev, cat), pk = pickOf(ev, cat), st = statusOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
           return '<div class="it"><div class="grow"><b>' + esc(catName(cat)) + '</b><div class="small">' + (st === 'booked' ? '<span class="badge ok">Booked</span> ' + esc(ov.note || pk.name) : '\u2605 ' + esc(pk.name) + ' <span class="muted">front-runner</span>') + '</div><div class="small muted">' + plural(l.length, 'option') + ' saved' + (l.length < MAX_OPTIONS && st !== 'booked' ? ', save up to ' + (MAX_OPTIONS - l.length) + ' more' : '') + '</div></div><span class="acts"><button class="btn small" data-compare="' + cat + '">' + (l.length > 1 ? 'Compare ' + l.length : 'Open') + '</button></span></div>'; }).join('') + '</div>'
         : '<p class="muted small">Save up to 3 options for each venue or vendor in Venues and Vendors. They show here side by side so you can pick a front-runner, add quotes and mark the one you book.</p>') +
       '</div>';
@@ -1670,7 +1687,7 @@
     $$('[data-rmc]').forEach(function (b) { b.addEventListener('click', function () { ev.cohosts.splice(+b.dataset.rmc, 1); save(); rerender(); }); });
   };
   /* Guest places: what the Event Pass covers once kept (moving up a size adds places), otherwise the planned guest count. */
-  function placesCap(ev) { return ev.paid && ev.paid.max ? Math.max(ev.paid.max, 1) : ev.guests; }
+  function placesCap(ev) { return ev.paid && ev.paid.max ? Math.max(ev.paid.max, CFG.app ? E.passFor(ev.guests).max : 1) : ev.guests; }   /* in the app, places follow the guest count (free) */
   function promoteWaitlist(ev, cap) {
     ev.guestsList.filter(function (g) { return g.status === 'waitlist'; }).forEach(function (g) { if (E.placesUsed(ev.guestsList) + 1 + (g.plusOnes || 0) <= cap) g.status = 'invited'; });
   }
@@ -1758,10 +1775,10 @@
   TAB_VIEWS.extras = function (ev) {
     var w = wallet(); var nextPass = E.passFor((ev.paid && ev.paid.max || ev.guests) + 1);
     var mine = w.ledger.filter(function (l) { return !ev.sample && l.event === ev.name; });
-    if (!ev.sample && !isKept(ev)) return '<div class="stack"><h3>Your Event Pass</h3><div class="panel stack"><p>Your plan isn\u2019t kept yet. Keep it to save every edit and share it with guests.</p><div class="price-big num">$' + E.passFor(ev.guests).price.toFixed(2) + '</div><p class="muted small">' + esc(E.passFor(ev.guests).label) + ', one time, no subscription.</p><div><button class="btn" id="keepX">Keep my plan</button></div></div></div>' +
+    if (!ev.sample && !isKept(ev)) return '<div class="stack"><h3>Your Event Pass</h3><div class="panel stack"><p>Your plan isn\u2019t kept yet. Keep it to save every edit and share it with guests.</p>' + (CFG.app ? '<p class="muted small">Free in the app.</p>' : '<div class="price-big num">$' + E.passFor(ev.guests).price.toFixed(2) + '</div><p class="muted small">' + esc(E.passFor(ev.guests).label) + ', one time, no subscription.</p>') + '<div><button class="btn" id="keepX">Keep my plan</button></div></div></div>' +
       '<div class="stack"><h3>Delete this event</h3><p class="muted small">Removes the plan, guest list and photos from this device.</p><div><button class="btn small ghost" id="del" style="color:var(--bad)">Delete event</button></div></div>';
     return '<div class="stack"><h3>Your Event Pass</h3><div class="panel stack"><div class="row" style="justify-content:space-between"><span>' + (ev.sample ? 'Sample plan' : esc(E.passFor(ev.paid.max || ev.guests).label)) + '</span><span class="badge ok">Active</span></div>' + (ev.sample ? '' : '<p class="small muted">Available until ' + esc(accessUntil(ev, ev.paid && ev.paid.at)) + '.</p>') +
-      '<p class="muted small">Inviting more people? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + (Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0)) % 1 ? '' : '') + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>' +
+      (CFG.app ? '<p class="muted small">Inviting more people? Change your guest count anytime; it\u2019s free in the app.</p></div></div>' : '<p class="muted small">Inviting more people? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>') +
       (!SELL_EXTRAS ? '' : '<div class="stack"><div class="row" style="justify-content:space-between"><h3>AI credits</h3><span class="num">' + w.credits + ' credits</span></div><p class="muted small">For extra AI work beyond what your pass includes. The exact credit cost is shown before every action, and credits never top up automatically.</p><div class="packs">' +
       D.CREDIT_PACKS.map(function (p, i) { return '<button class="tier" data-pack="' + i + '"><span class="amt num">' + p.credits + '</span><span class="muted">credits</span><b class="num">$' + p.price.toFixed(2) + '</b></button>'; }).join('') + '</div></div>' +
       '<div class="stack"><h3>Creative packages</h3><div class="list panel">' + D.PACKAGES.map(function (p, i) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + esc(p.desc) + '</div></div><span class="num">$' + p.price.toFixed(2) + '</span><button class="btn small" data-pkg="' + i + '">Choose</button></div>'; }).join('') + '</div></div>' +
@@ -1777,7 +1794,7 @@
     $$('[data-add]').forEach(function (b) { b.addEventListener('click', function () { if (lockSample(ev)) return; buySheet(D.ADDONS[+b.dataset.add], ev, rerender); }); });
     var del = $('#del'); if (del) del.addEventListener('click', function () { sheet('<h3>Delete ' + esc(ev.name) + '?</h3><p class="muted">This can\u2019t be undone.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete event</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { T('event_deleted', { event_type: ev.type }); var all = events(); delete all[ev.id]; store.set('events', all); close(); toast('Event deleted'); location.hash = '#/events'; }); }); });
     var kx = $('#keepX'); if (kx) { kx.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', rerender); }); return; }
-    $('#upg').addEventListener('click', function () { if (lockSample(ev)) return; var cur = ev.paid.max || ev.guests; var nx = E.passFor(cur + 1); var due = Math.max(0, Math.round((nx.price - ev.paid.price) * 100) / 100);
+    if ($('#upg')) $('#upg').addEventListener('click', function () { if (lockSample(ev)) return; var cur = ev.paid.max || ev.guests; var nx = E.passFor(cur + 1); var due = Math.max(0, Math.round((nx.price - ev.paid.price) * 100) / 100);
       buySheet({ name: 'Move up to ' + nx.label.toLowerCase(), price: due, desc: 'Your plan, guests and purchases stay exactly as they are.' }, ev, function () { ev.paid = { price: nx.price, max: nx.max, at: new Date().toISOString() }; save(); rerender(); }); });
   };
 
@@ -1881,6 +1898,8 @@
     ['Is there a subscription?', 'No. Planning is free, and you pay once per event only if you want to keep and share your plan. Nothing renews automatically.', 'subscription subscribe monthly recurring renew renewal'],
     ['How much does it cost?', 'You pay once per event, based on how many people you invite: $9.99 up to 25 guests, $19.99 up to 75, $39.99 up to 150, $69.99 up to 350, and more for larger events. Guests never pay to view, RSVP or vote.', 'price cost pay pass much'],
     ['What if my guest list grows?', 'Move up a size under Overview, Your pass. You pay only the difference, and your plan stays exactly as it is.', 'grow more upgrade capacity bigger places full waitlist'],
+  ];
+  FAQ = FAQ.concat([
     ['Can I get a refund?', 'Planning is free, so you see your whole plan before you pay. If something you paid for doesn\u2019t work, contact us and we\u2019ll make it right. Purchases made in the iPhone or Android app are refunded through Apple or Google from your purchase history.', 'refund money back cancel charged'],
     ['How do I contact you?', CFG.supportEmail ? 'Email us at ' + CFG.supportEmail + '. We reply within one business day.' : 'Start with the answers on this page. If you still need help, use the contact details on the Event Couture website.', 'contact support email phone talk person help reach'],
     ['Is my data safe?', 'Yes. Your plans, guest lists and photos stay on your device. To create your concepts, your details and inspiration go through our server to Google\u2019s AI and aren\u2019t kept by Event Couture. We never sell your data, and guest details are never shown to vendors. Google Analytics counts visits and which buttons are tapped, never names, photos or what you type. See Privacy for the details.', 'safe secure privacy data private sell share'],
@@ -1892,7 +1911,14 @@
     ['Can I change my concept?', 'Yes. Open Overview, Change concept. You can also see three different concepts once, for free.', 'concept theme change different'],
     ['How do I delete my data?', 'Open the event, go to Overview, Your pass, and choose Delete event. The plan, guest list and photos are removed from your device.', 'delete data privacy remove account'],
     ['How do vendors join?', 'Vendors list their business for free at For vendors, with packages, prices and policies. Listings appear to hosts planning events in their area once vendor accounts launch.', 'vendor business list join']
-  ];
+  ]);
+  if (CFG.app) FAQ = FAQ.map(function (q) {   /* the app is free for now, so its help answers carry no prices */
+    if (/^Is there a subscription/.test(q[0])) return [q[0], 'No. Planning and keeping your plan are free in the app. Nothing renews automatically.', q[2]];
+    if (/^How much does it cost/.test(q[0])) return [q[0], 'Planning and keeping your plan are free in the app. Guests never pay to view, RSVP or vote.', q[2]];
+    if (/^What if my guest list grows/.test(q[0])) return [q[0], 'Change your guest count anytime from your plan. In the app it\u2019s free, and your plan stays exactly as it is.', q[2]];
+    if (/^How long do I keep my plan/.test(q[0])) return [q[0], 'Until 12 months after you keep it, or 30 days after your event, whichever is later. The exact date is under Overview, Your pass.', q[2]];
+    return q;
+  });
   function help() {
     frame('<div class="wizard stack-lg"><div class="stack"><h2>Help</h2><p class="muted">Ask a question or pick one below. Answers come from the help center and your own events.</p></div>' +
       '<div class="panel stack"><div class="chat" id="chat"></div><form id="ask" class="row"><input class="input" aria-label="Your question" id="q" style="flex:1 1 220px" placeholder="Type your question" autocomplete="off"><button class="btn">Ask</button></form></div>' +
