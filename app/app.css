@@ -3,6 +3,7 @@ html.ec-app { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust
 html.ec-app body { padding-top: env(safe-area-inset-top, 0px); padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); overscroll-behavior-y: none; -webkit-user-select: none; user-select: none; }
 html.ec-app input, html.ec-app textarea, html.ec-app [contenteditable] { -webkit-user-select: text; user-select: text; }
 html.ec-app .topbar nav { display: none; }   /* My events and Help live in the tab bar */
+html.ec-app .topbar { padding-top: 4px; }   /* the body already clears the notch */
 html.ec-app footer.site nav a[href="#/help"] { display: none; }
 .tab-ec { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--bg, #FAF8F4); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid var(--line, #E8E1D6); padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)); }
 .tab-ec a { display: grid; justify-items: center; gap: 2px; padding: 4px 0; color: var(--muted, #7A6F78); text-decoration: none; font-size: .68rem; letter-spacing: .01em; min-height: 48px; align-content: center; }
