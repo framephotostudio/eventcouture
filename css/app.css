@@ -601,7 +601,7 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 .plan-sheet .ps-sec:last-of-type { border-bottom: 0; }
 @media print {
   body.printing-plan .topbar, body.printing-plan footer.site, body.printing-plan .preview-ribbon, body.printing-plan .plan-head, body.printing-plan .groupbar,
-  body.printing-plan .rail, body.printing-plan .keep-bar, body.printing-plan .plan-actions, body.printing-plan .tab-ec, body.printing-plan .toast { display: none !important; }
+  body.printing-plan .rail, body.printing-plan .keep-bar, body.printing-plan .plan-actions, body.printing-plan .plan-save, body.printing-plan .ps-edit, body.printing-plan .tab-ec, body.printing-plan .toast { display: none !important; }
   body.printing-plan { background: #fff !important; }
   body.printing-plan main { padding: 0 !important; max-width: none !important; }
   body.printing-plan .plan-sheet { font-size: 11pt; color: #222; }
@@ -632,3 +632,16 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 .cmp-acts .link { justify-self: center; }
 .cmp-swipe { margin: -6px 0 0; }
 @media (min-width: 700px) { .cmp-swipe { display: none; } }
+
+/* Finished plan: save bar and Change / Replace links */
+.plan-save { display: grid; gap: 12px; background: var(--champagne-soft); border-color: transparent; }
+.plan-save p { margin: 2px 0 0; }
+.plan-save .plan-actions { gap: 8px; flex-wrap: wrap; }
+.plan-sheet .ps-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.plan-sheet .ps-edit { white-space: nowrap; }
+.plan-sheet .ps-head .ps-edit { justify-self: start; }
+.plan-sheet .ps-sec .it { flex-wrap: wrap; }
+.plan-sheet .ps-sec .it .ps-edit { flex-basis: 100%; text-align: left; }
+@media (min-width: 700px) { .plan-save { grid-template-columns: 1fr auto; align-items: center; } .plan-sheet .ps-sec .it .ps-edit { flex-basis: auto; } }
+.cmp-links { display: flex; gap: 16px; justify-content: center; }
+@media print { .plan-save, .ps-edit { display: none !important; } }

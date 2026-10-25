@@ -21,7 +21,7 @@ with sync_playwright() as p:
         pg.click('[data-keep]'); pg.click('.sheet #keepPay'); pg.wait_for_timeout(300); pg.goto(U + base + '/plan'); pg.wait_for_timeout(300); fp = pg.inner_text('#tab')
         for want in ['Your look', 'Budget', 'Venue and vendors', 'Day-of schedule', 'Estimated total', 'Still to book']:
             check(want in fp, t + 'finished plan missing ' + want)
-        check(pg.query_selector('#printPlan') is not None and pg.query_selector('#sharePlan') is not None, t + 'save/share buttons missing')
+        check(pg.query_selector('#pdfPlan') is not None and pg.query_selector('#mailPlan') is not None and pg.query_selector('#sharePlan') is not None, t + 'save/share buttons missing')
         check(pg.evaluate('document.documentElement.scrollWidth - innerWidth') <= 1, t + 'finished plan scrolls sideways')
         if SH: pg.screenshot(path=SH + '/finished-%d.png' % w, full_page=True)
         pg.goto(U + base + '/invite'); pg.wait_for_timeout(300); inv = pg.inner_text('#tab')

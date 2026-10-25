@@ -931,26 +931,100 @@
     var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
     var todo = E.checklist(ev).filter(function (x) { return !checkDone(ev, x.text); }).slice(0, 6);
     var pieces = lookList(ev);
-    var sec = function (h, inner) { return '<section class="ps-sec"><h3>' + h + '</h3>' + inner + '</section>'; };
+    var go = '#/e/' + ev.id + '/';
+    var sec = function (h, inner, edit) { return '<section class="ps-sec"><div class="ps-h"><h3>' + h + '</h3>' + (edit ? '<a class="ps-edit link small" href="' + go + edit[0] + '">' + edit[1] + '</a>' : '') + '</div>' + inner + '</section>'; };
     return '<div class="stack plan-sheet">' +
-      '<div class="row plan-actions">' + (window.ECNative && window.ECNative.isNative ? '' : '<button class="btn gold small" id="printPlan">Save as PDF or print</button>') + '<button class="btn ghost small" id="sharePlan">Share with a co-host</button></div>' +
-      '<div class="ps-head"><span class="small muted">' + esc(E.typeOf(ev.type).name) + '</span><h2>' + esc(ev.name) + '</h2><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + esc(fmtTime(ev.time)) : '') : 'Date to be set') + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + esc(settingName(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p></div>' +
-      sec('Your look', dots(c.palette, c.styleName + ' colors') + '<p><b>' + esc(c.styleName) + '.</b> ' + esc(moodFor(c, ev)) + '</p><ul class="incl">' + decorFor(c, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>') +
-      sec('Budget, ' + esc(tierName(b.tier.id)), '<div class="table-wrap"><table class="qty"><thead><tr><th>Item</th><th>Status</th><th>Amount</th></tr></thead><tbody>' + b.items.map(function (i) { var st = statusOf(ev, i.id); return '<tr><td>' + esc(i.name) + '</td><td class="small muted">' + (st === 'booked' ? 'Booked' : st === 'quote' ? 'Quote' : 'Estimate') + '</td><td class="n">' + money(i.mid) + '</td></tr>'; }).join('') + '<tr><td><b>Estimated total</b></td><td class="small muted">' + (ev.budget ? 'Budget ' + money(ev.budget) : '') + '</td><td class="n"><b>' + money(b.total) + '</b></td></tr></tbody></table></div><p class="small muted">Includes tax, service, tips and a 10% cushion. Amounts marked Quote or Booked are the prices you entered.</p>') +
-      sec('Venue and vendors', '<div class="list">' + vend.map(function (id) { var it = b.items.find(function (x) { return x.id === id; }); return '<div class="it"><span class="grow"><b>' + esc(it.name.split(' (')[0]) + '</b><span class="small muted"> ' + esc(stTxt(id)) + '</span></span><span class="num">' + money(it.mid) + '</span></div>'; }).join('') + '</div>') +
-      sec(ev.setting === 'restaurant' ? 'Look for these on the menu' : 'Menu', '<ul class="incl">' + menuItems(ev).map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul>') +
-      (pieces.length ? sec('Get this look', '<ul class="incl">' + pieces.map(function (p2) { return '<li>' + esc(p2.name) + (p2.hire ? ' <span class="small muted">(hire)</span>' : '') + '</li>'; }).join('') + '</ul>') : '') +
-      (ev.setting === 'restaurant' ? '' : sec('Music', '<p>' + esc(plName) + ': 25 songs on the Style and music page.</p>')) +
-      sec('Day-of schedule', '<div class="ros">' + ros.map(function (r) { return '<div><b>' + esc(r.time) + '</b><span>' + esc(r.text) + '</span></div>'; }).join('') + '</div>') +
+      '<div class="panel plan-save"><div><b>Save your plan</b><p class="small muted">Keep a copy as a PDF, email it to yourself or send it to a co-host. Don\u2019t love something? Tap Change or Replace next to it.</p></div><div class="row plan-actions"><button class="btn gold small" id="pdfPlan">Save as PDF</button><button class="btn ghost small" id="mailPlan">Email it to me</button><button class="btn ghost small" id="sharePlan">Share</button>' + (window.ECNative && window.ECNative.isNative ? '' : '<button class="btn ghost small" id="printPlan">Print</button>') + '</div></div>' +
+      '<div class="ps-head"><span class="small muted">' + esc(E.typeOf(ev.type).name) + '</span><h2>' + esc(ev.name) + '</h2><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + esc(fmtTime(ev.time)) : '') : 'Date to be set') + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + esc(settingName(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p><button class="ps-edit link small" data-plan-when>Change date or time</button></div>' +
+      sec('Your look', dots(c.palette, c.styleName + ' colors') + '<p><b>' + esc(c.styleName) + '.</b> ' + esc(moodFor(c, ev)) + '</p><ul class="incl">' + decorFor(c, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>', ['concepts', 'Choose a different look']) +
+      sec('Budget, ' + esc(tierName(b.tier.id)), '<div class="table-wrap"><table class="qty"><thead><tr><th>Item</th><th>Status</th><th>Amount</th></tr></thead><tbody>' + b.items.map(function (i) { var st = statusOf(ev, i.id); return '<tr><td>' + esc(i.name) + '</td><td class="small muted">' + (st === 'booked' ? 'Booked' : st === 'quote' ? 'Quote' : 'Estimate') + '</td><td class="n">' + money(i.mid) + '</td></tr>'; }).join('') + '<tr><td><b>Estimated total</b></td><td class="small muted">' + (ev.budget ? 'Budget ' + money(ev.budget) : '') + '</td><td class="n"><b>' + money(b.total) + '</b></td></tr></tbody></table></div><p class="small muted">Includes tax, service, tips and a 10% cushion. Amounts marked Quote or Booked are the prices you entered.</p>', ['budget', 'Change level or prices']) +
+      sec('Venue and vendors', '<div class="list">' + vend.map(function (id) { var it = b.items.find(function (x) { return x.id === id; }), n = savedFor(ev, id).length; return '<div class="it"><span class="grow"><b>' + esc(it.name.split(' (')[0]) + '</b><span class="small muted"> ' + esc(stTxt(id)) + '</span></span><span class="num">' + money(it.mid) + '</span><button class="ps-edit link small" data-plan-replace="' + id + '">' + (n > 1 ? 'Compare or replace' : n ? 'Replace' : 'Find one') + '</button></div>'; }).join('') + '</div>') +
+      sec(ev.setting === 'restaurant' ? 'Look for these on the menu' : 'Menu', '<ul class="incl">' + menuItems(ev).map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul>', ['food', 'Change menu']) +
+      (pieces.length ? sec('Get this look', '<ul class="incl">' + pieces.map(function (p2) { return '<li>' + esc(p2.name) + (p2.hire ? ' <span class="small muted">(hire)</span>' : '') + '</li>'; }).join('') + '</ul>', ['style', 'Change pieces']) : '') +
+      (ev.setting === 'restaurant' ? '' : sec('Music', '<p>' + esc(plName) + ': 25 songs on the Style and music page.</p>', ['style', 'Change music'])) +
+      sec('Day-of schedule', '<div class="ros">' + ros.map(function (r) { return '<div><b>' + esc(r.time) + '</b><span>' + esc(r.text) + '</span></div>'; }).join('') + '</div>', ['timeline', 'Change schedule']) +
       (todo.length ? sec('Still to do', '<ul class="incl">' + todo.map(function (x) { return '<li>' + esc(x.text) + (x.due ? ' <span class="small muted">by ' + esc(fmtDate(x.due)) + '</span>' : '') + '</li>'; }).join('') + '</ul>') : '') +
       '<p class="small muted">Planned with Event Couture by Always Luxe. Prices are estimates unless marked Quote or Booked.</p></div>';
   };
-  TAB_BIND.plan = function (ev) {
+  /* The finished plan as plain data, for the PDF, email and share. */
+  function planData(ev) {
+    var b = E.budget(ev, ev.tier), c = ev.concept, ros = ev.ros || E.runOfShow(ev);
+    var st = function (cat) { var s2 = statusOf(ev, cat), ov = (ev.overrides || {})[cat], pk = pickOf(ev, cat), o = savedFor(ev, cat).filter(function (x) { return x !== pk; }).map(function (x) { return x.name; });
+      return s2 === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : s2 === 'quote' ? (ov && ov.note ? 'Front-runner: ' + ov.note + ', quoted ' + money(ov.amount) : 'Quote received') : s2 === 'short' ? 'Front-runner: ' + pk.name + (o.length ? ' (also considering ' + o.join(' and ') + ')' : '') : 'Still to book'; };
+    var vend = [venueCat(ev)].concat(vendorCats(ev, b).map(function (i) { return i.id; })).filter(function (x, i, a) { return a.indexOf(x) === i && b.items.some(function (it) { return it.id === x; }); });
+    var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
+    var todo = E.checklist(ev).filter(function (x) { return !checkDone(ev, x.text); }).slice(0, 8);
+    var hex = function (h) { return /^#[0-9a-f]{3}$/i.test(h) ? '#' + h.slice(1).split('').map(function (x) { return x + x; }).join('') : h; };
+    var sections = [
+      { h: 'Your look', p: c.styleName + '. ' + moodFor(c, ev), bullets: decorFor(c, ev) },
+      { h: 'Budget, ' + tierName(b.tier.id), rows: b.items.map(function (i) { var s2 = statusOf(ev, i.id); return [i.name, s2 === 'booked' ? 'Booked' : s2 === 'quote' ? 'Quote' : 'Estimate', money(i.mid)]; }), total: ['Estimated total' + (ev.budget ? ' (budget ' + money(ev.budget) + ')' : ''), money(b.total)] },
+      { h: 'Venue and vendors', rows: vend.map(function (id) { var it = b.items.find(function (x) { return x.id === id; }); var sv = savedFor(ev, id); var ct = sv.filter(function (x) { return x.site || x.phone; }).map(function (x) { return x.name + ', ' + String(x.site || x.phone).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''); }); return [it.name.split(' (')[0], st(id) + (ct.length ? '\nContact: ' + ct.join(' \u00b7 ') : ''), money(it.mid)]; }) },
+      { h: ev.setting === 'restaurant' ? 'Look for these on the menu' : 'Menu', bullets: menuItems(ev) }
+    ];
+    var pieces = lookList(ev); if (pieces.length) sections.push({ h: 'Get this look', bullets: pieces.map(function (p2) { return p2.name + (p2.hire ? ' (hire)' : ''); }) });
+    if (ev.setting !== 'restaurant') sections.push({ h: 'Music', p: plName + ': 25 songs on the Style and music page.' });
+    sections.push({ h: 'Day-of schedule', times: ros.map(function (r) { return [r.time, r.text]; }) });
+    if (todo.length) sections.push({ h: 'Still to do', bullets: todo.map(function (x) { return x.text + (x.due ? ' (by ' + fmtDate(x.due) + ')' : ''); }) });
+    return { kicker: E.typeOf(ev.type).name, title: ev.name, palette: (Array.isArray(c.palette) ? c.palette : []).filter(function (h) { return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(h); }).map(hex),
+      lines: [(ev.date ? fmtDate(ev.date) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be set') + ' \u00b7 ' + whereText(ev) + ' \u00b7 ' + settingName(ev) + ' \u00b7 ' + plural(ev.guests, 'guest'), 'Dress code: ' + E.dressCode(ev, ev.tier)],
+      sections: sections, foot: 'Planned with Event Couture by Always Luxe. Prices are estimates unless marked Quote or Booked. You pay vendors directly.' };
+  }
+  function planText(d, short) {
+    var out = [d.title, d.lines.join('\n'), ''];
+    d.sections.forEach(function (s) {
+      if (short && /schedule|Still to do|Get this look/.test(s.h)) return;
+      out.push(s.h.toUpperCase());
+      if (s.p) out.push(s.p);
+      (s.bullets || []).forEach(function (x) { out.push('- ' + x); });
+      (s.rows || []).forEach(function (r) { out.push('- ' + r[0] + (r[2] ? ': ' + r[2] : '') + (r[1] ? ' (' + String(r[1]).replace(/\n/g, '; ') + ')' : '')); });
+      (s.times || []).forEach(function (r) { out.push(r[0] + '  ' + r[1]); });
+      if (s.total) out.push(s.total[0] + ': ' + s.total[1]);
+      out.push('');
+    });
+    out.push(d.foot); return out.join('\n');
+  }
+  function fileName(ev) { return (String(ev.name || 'Event plan').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60) || 'Event-plan') + '-plan.pdf'; }
+  function savePlanPdf(ev) {
+    var bytes; try { bytes = window.ECPDF.plan(planData(ev)); } catch (e) { return toast('Could not make the PDF. Try Print instead.'); }
+    var name = fileName(ev);
+    T('plan_pdf_saved', { event_type: ev.type });
+    if (window.ECNative && window.ECNative.shareFile) { var bin = ''; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return window.ECNative.shareFile(name, btoa(bin), 'application/pdf', ev.name).catch(function () { toast('Could not open the share sheet. Try again.'); }); }
+    var blob = new Blob([bytes], { type: 'application/pdf' }), file = null;
+    try { file = new File([blob], name, { type: 'application/pdf' }); } catch (e) {}
+    var touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+    if (touch && file && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file], title: ev.name }).catch(function () {});
+    var url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    toast('Saved ' + name + ' to your downloads');
+  }
+  /* Go find a replacement for one venue or vendor category. */
+  var PENDING_FIND = null;
+  function findAnother(ev, cat) {
+    PENDING_FIND = cat; var to = '#/e/' + ev.id + '/' + (cat === venueCat(ev) ? 'places' : 'vendors');
+    if (location.hash === to) setTimeout(route, 0); else location.hash = to;
+  }
+  function runPendingFind(ev) {
+    var cat = PENDING_FIND; PENDING_FIND = null; if (!cat) return;
+    setTimeout(function () {
+      var bar = document.querySelector('[data-optbar="' + cat + '"]'), btn = document.querySelector('[data-vendor="' + cat + '"]');
+      var target = btn ? btn.closest('.it') : bar; if (target) target.scrollIntoView({ block: 'center' });
+      if (btn && AI.live) btn.click(); else if (!btn && AI.live) { var lb = ev.lastVenue && document.querySelector('[data-live="' + ev.lastVenue.replace(/"/g, '') + '"]'); if (lb) lb.click(); }
+      toast(savedFor(ev, cat).length >= MAX_OPTIONS ? 'Remove one of your 3 to make room, or save a new one to replace it.' : 'Save a new ' + E.lc(catName(cat)) + ' option, or add one you found.');
+    }, 60);
+  }
+  TAB_BIND.plan = function (ev, save, rerender) {
+    if (!$('#pdfPlan')) return;
+    $('#pdfPlan').addEventListener('click', function () { savePlanPdf(ev); });
+    $('#mailPlan').addEventListener('click', function () {
+      var d = planData(ev), body = planText(d, true) + '\n\nTip: tap Save as PDF in Event Couture for the full plan with your schedule and shopping list.';
+      if (body.length > 1800) body = body.slice(0, 1750) + '\n...\n\nSave as PDF in Event Couture for the full plan.';
+      T('plan_emailed', { event_type: ev.type });
+      (window.ECMailTo || function (u) { location.href = u; })('mailto:?subject=' + encodeURIComponent('My Event Couture plan: ' + ev.name) + '&body=' + encodeURIComponent(body));
+    });
+    var pw = $('[data-plan-when]'); if (pw) pw.addEventListener('click', function () { var w = $('#when'); if (w) w.click(); });
+    $$('[data-plan-replace]').forEach(function (bt) { bt.addEventListener('click', function () { var cat = bt.dataset.planReplace; if (savedFor(ev, cat).length) compareSheet(ev, cat, rerender); else findAnother(ev, cat); }); });
     var pp = $('#printPlan'); if (pp) pp.addEventListener('click', function () { document.body.classList.add('printing-plan'); window.print(); setTimeout(function () { document.body.classList.remove('printing-plan'); }, 500); });
     var sp = $('#sharePlan'); if (sp) sp.addEventListener('click', function () {
-      var b = E.budget(ev, ev.tier);
-      var txt = ev.name + '\n' + (ev.date ? fmtDate(ev.date) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be set') + ', ' + whereText(ev) + '\n' + plural(ev.guests, 'guest') + ', ' + ev.concept.styleName + '\nEstimated total: ' + money(b.total) + '\n\n' +
-        b.items.map(function (i) { return '- ' + i.name.split(' (')[0] + ': ' + money(i.mid) + (statusOf(ev, i.id) === 'booked' ? ' (booked)' : ''); }).join('\n') + '\n\nPlanned with Event Couture';
+      var txt = planText(planData(ev)); T('plan_shared', { event_type: ev.type });
       if (navigator.share) navigator.share({ title: ev.name, text: txt }).catch(function () {}); else copyText(txt, 'Plan');
     });
   };
@@ -1126,7 +1200,7 @@
           row('Price', function (x) { return ov.note === x.name && ov.amount ? '<b class="num">' + money(ov.amount) + '</b> <span class="muted small">' + (ov.source === 'booking' ? 'booked' : 'quote') + '</span>' : x.quote ? '<span class="num">' + money(x.quote) + '</span> <span class="muted small">quote</span>' : PRICE_TXT[x.price] ? PRICE_TXT[x.price] : '<span class="muted">Ask for a quote</span>'; }) +
           row('Where', function (x) { return x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : '<span class="muted">\u2014</span>'; }) +
           row('', function (x) { return (x.site ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.site) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : '') + (x.phone ? '<a class="btn small ghost" href="tel:' + esc(x.phone.replace(/[^\d+]/g, '')) + '">Call</a>' : ''); }) +
-          row('', function (x) { var top = pk && x.id === pk.id; return '<span class="cmp-acts">' + (top ? '' : '<button class="btn small ghost" data-pick-opt="' + esc(x.id) + '">\u2605 Make front-runner</button>') + '<button class="btn small ghost" data-quote-opt="' + esc(x.id) + '">' + (x.quote ? 'Change quote' : 'Add quote') + '</button><button class="btn small' + (top ? '' : ' ghost') + '" data-book-opt="' + esc(x.id) + '">I booked this</button><button class="link small" data-rm-opt="' + esc(x.id) + '">Remove</button></span>'; }) +
+          row('', function (x) { var top = pk && x.id === pk.id; return '<span class="cmp-acts">' + (top ? '' : '<button class="btn small ghost" data-pick-opt="' + esc(x.id) + '">\u2605 Make front-runner</button>') + '<button class="btn small ghost" data-quote-opt="' + esc(x.id) + '">' + (x.quote ? 'Change quote' : 'Add quote') + '</button><button class="btn small' + (top ? '' : ' ghost') + '" data-book-opt="' + esc(x.id) + '">I booked this</button><span class="cmp-links"><button class="link small" data-replace-opt="' + esc(x.id) + '">Replace</button><button class="link small" data-rm-opt="' + esc(x.id) + '">Remove</button></span></span>'; }) +
           '</div>' + (l.length > 2 ? '<p class="muted small cmp-swipe">Swipe sideways to see all 3.</p>' : '') : '<p class="muted">No options saved yet. Tap Save on any result, or add one you found yourself.</p>') +
         (l.length < MAX_OPTIONS ? '<details class="cmp-add"' + (l.length ? '' : ' open') + '><summary class="link small">Add one you found yourself</summary><div class="grid2"><label class="field"><span>Business name</span><input class="input" id="oname"></label><label class="field"><span>Website or phone (optional)</span><input class="input" id="olink"></label></div><button class="btn small" id="oadd">Add option</button></details>' : '') +
         '<button class="btn ghost block" data-close>Done</button>';
@@ -1137,6 +1211,7 @@
         var t = e.target.closest('button'); if (!t || lockSample(ev)) return;
         var find = function (id) { return savedFor(ev, cat).find(function (x) { return x.id === id; }); };
         if (t.dataset.pickOpt) { setPick(ev, cat, t.dataset.pickOpt); syncPrice(ev, cat); saveEvent(ev); draw(box); toast(find(t.dataset.pickOpt).name + ' is your front-runner'); }
+        else if (t.dataset.replaceOpt) { var gone = find(t.dataset.replaceOpt); removeOption(ev, t.dataset.replaceOpt, cat); syncPrice(ev, cat); saveEvent(ev); close(); toast('Removed ' + gone.name + '. Now pick a new one.'); findAnother(ev, cat); }
         else if (t.dataset.rmOpt) { removeOption(ev, t.dataset.rmOpt, cat); syncPrice(ev, cat); saveEvent(ev); draw(box); }
         else if (t.dataset.quoteOpt || t.dataset.bookOpt) {
           var x = find(t.dataset.quoteOpt || t.dataset.bookOpt), booking = !!t.dataset.bookOpt;
@@ -1327,7 +1402,7 @@
     return m[v] || ['fits your guest count', 'check what is included'];
   }
   TAB_BIND.places = function (ev, save, rerender) {
-    bindSave(ev, $('#tab'), function () { refreshBars(ev); }); bindWhere(ev, rerender); bindCompare(ev, rerender);
+    bindSave(ev, $('#tab'), function () { refreshBars(ev); }); bindWhere(ev, rerender); bindCompare(ev, rerender); runPendingFind(ev);
     $$('[data-live]').forEach(function (btn) { btn.addEventListener('click', function () {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; }); ev.lastVenue = btn.dataset.live;
       var box = document.querySelector('.live-res[data-for="' + btn.dataset.live.replace(/"/g, '') + '"]') || $('#live'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding venues\u2026</p>';
@@ -1399,7 +1474,7 @@
     b.addEventListener('click', function () { var nm = document.querySelector('.pl-name'); copyText((nm ? nm.textContent + '\n\n' : '') + [].slice.call(document.querySelectorAll('.songs li')).map(function (li, i) { var sh = li.querySelector('.sec-h'); return (sh ? (i ? '\n' : '') + sh.textContent + '\n' : '') + (i + 1) + '. ' + li.querySelector('b').textContent + ' \u2014' + li.querySelector('.muted').textContent; }).join('\n')); });
   };
   TAB_BIND.vendors = function (ev, save, rerender) {
-    bindSave(ev, $('#tab'), function () { refreshBars(ev); }); bindCompare(ev, rerender);
+    bindSave(ev, $('#tab'), function () { refreshBars(ev); }); bindCompare(ev, rerender); runPendingFind(ev);
     $$('[data-vendor]').forEach(function (btn) { btn.addEventListener('click', function () {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; });
       var box = document.querySelector('.live-res[data-for="v-' + btn.dataset.vendor + '"]'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding top-rated businesses…</p>';
