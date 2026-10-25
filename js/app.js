@@ -784,7 +784,7 @@
     sheet('<h3>' + esc(why || 'Keep your plan') + '</h3><p class="muted">' + (CFG.app ? 'Keeping ' + esc(ev.name) + ' is free in the app. Guests never pay to view, RSVP or vote.' : 'One payment for ' + esc(ev.name) + ', ' + esc(pass.label.toLowerCase()) + '. No subscription. Guests never pay to view, RSVP or vote.') + '</p>' +
       (CFG.app ? '' : '<div class="price-big num">$' + pass.price.toFixed(2) + '</div>') +
       '<ul class="incl"><li><span>Your full plan unlocked: every budget line, all venues and vendors, the menu, shopping and playlist</span></li><li><span>Saved with every edit until <b>' + esc(accessUntil(ev)) + '</b></span></li><li><span>Guest list, RSVPs' + (ev.setting === 'restaurant' ? '' : ', seating') + ', voting' + (hasRegistry(ev) ? ' and registry' : '') + (canSplit(ev) ? ' and cost splitting' : '') + '</span></li><li><span>Checklist with due dates and your day-of schedule</span></li></ul>' +
-      (CFG.app ? '<p class="muted small">Your plan is saved on this phone. Send your invitation from the Invitation page.</p>' : CFG.preview ? '<p class="muted small">Right now your plan is saved on this device. Sending your invitation to guests on their own phones turns on when accounts launch.</p>' : '') +
+      (SHARING ? '<p class="muted small">Your plan is saved on this ' + (CFG.app ? 'phone' : 'device') + '. Guests RSVP from your invitation link on their own phones.</p>' : CFG.app ? '<p class="muted small">Your plan is saved on this phone. Send your invitation from the Invitation page.</p>' : CFG.preview ? '<p class="muted small">Right now your plan is saved on this device. Sending your invitation to guests on their own phones turns on when accounts launch.</p>' : '') +
       (CFG.app ? '' : '<p class="muted small">Guest list grows past ' + pass.max.toLocaleString('en-US') + '? You pay only the difference.</p>') +
       (CFG.preview && !CFG.app ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
       '<button class="btn gold block" id="keepPay">' + (CFG.preview ? 'Keep my plan' : 'Pay ' + usd2(pass.price) + ' and keep my plan') + '</button><button class="btn ghost block" data-close>Not now</button>', function (el, close) {
@@ -844,6 +844,7 @@
     var keepBar = isKept(ev) ? '' : '<div class="keep-bar"><span><b>' + (b.shortBy ? 'Keep this plan' : 'Love this plan?') + '</b> <span class="muted">' + (CFG.app ? 'Keep it, free, to unlock every detail and plan with guests.' : 'Keep it to unlock every detail and plan with guests for ' + usd2(E.passFor(ev.guests).price) + ', one time.') + '</span></span><button class="btn small" id="keepBtn">Keep my plan</button></div>';
     frame(head + keepBar + groupBar + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
     var kb = $('#keepBtn'); if (kb) kb.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { planView(ev, tab); }); });
+    if (!ev.sample && isKept(ev) && ev.published) { publishInvite(ev).catch(function () {}); syncInbox(ev, function () { if (location.hash.indexOf('#/e/' + ev.id) === 0 && !document.querySelector('.sheet-back')) planView(ev, tab); }); }   /* guests' RSVPs come in; edits reach the shared invitation */
     var cur = $('.rail [aria-current]'); if (cur && cur.scrollIntoView && window.innerWidth < 960) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
     var rn = $('#rename'); if (rn) rn.addEventListener('click', function () {
       sheet('<h3>Rename your event</h3><input class="input" id="nn" maxlength="80" value="' + esc(ev.name) + '"><div class="chips">' + suggestNames(ev, ev.type).map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') + '</div><button class="btn gold block" id="ok">Save name</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
@@ -1718,9 +1719,9 @@
   TAB_VIEWS.votes = function (ev) {
     var polls = ev.polls || [];
     return '<div class="stack"><h3>Let everyone vote</h3><p class="muted">Ask about dates, venues, menus or outfits. Guests and co-hosts vote from the event page.</p>' +
-      (polls.length ? polls.map(function (p, pi) { var tot = p.options.reduce(function (s, o) { return s + o.votes; }, 0);
-        return '<div class="panel stack"><b>' + esc(p.q) + '</b><div class="poll">' + p.options.map(function (o, oi) { var pct = tot ? Math.round(o.votes / tot * 100) : 0;
-          return '<button data-vote="' + pi + ':' + oi + '"' + (p.mine === oi ? ' aria-pressed="true"' : '') + '><i style="width:' + pct + '%"></i><span>' + esc(o.t) + '</span><span class="num muted">' + o.votes + '</span></button>'; }).join('') + '</div><button class="link small" data-rmp="' + pi + '" style="justify-self:start">Delete poll</button></div>'; }).join('') : '<p class="muted">No polls yet.</p>') +
+      (polls.length ? polls.map(function (p, pi) { var tot = p.options.reduce(function (s, o) { return s + o.votes + (o.rv || 0); }, 0);
+        return '<div class="panel stack"><b>' + esc(p.q) + '</b><div class="poll">' + p.options.map(function (o, oi) { var nv = o.votes + (o.rv || 0), pct = tot ? Math.round(nv / tot * 100) : 0;
+          return '<button data-vote="' + pi + ':' + oi + '"' + (p.mine === oi ? ' aria-pressed="true"' : '') + '><i style="width:' + pct + '%"></i><span>' + esc(o.t) + '</span><span class="num muted">' + nv + '</span></button>'; }).join('') + '</div><button class="link small" data-rmp="' + pi + '" style="justify-self:start">Delete poll</button></div>'; }).join('') : '<p class="muted">No polls yet.</p>') +
       '<form id="addp" class="panel stack"><b>New poll</b><input class="input" aria-label="Poll question" id="pq" placeholder="Question, e.g. Which date works best?"><textarea class="input" id="po" placeholder="Options, one per line"></textarea><div><button class="btn">Create poll</button></div></form></div>';
   };
   TAB_BIND.votes = function (ev, save, rerender) {
@@ -1739,10 +1740,10 @@
   var GIFT_LIST_OPTIONAL = ['birthday', 'kids-birthday', 'milestone', 'retirement'];
   function hasRegistry(ev) { return ['wedding', 'bridal-shower', 'baby-shower', 'gender-reveal', 'engagement', 'graduation', 'quince', 'sweet16', 'anniversary'].indexOf(ev.type) >= 0 || !!ev.registryOn || ((ev.registry && ev.registry.items) || []).length > 0 || ((ev.registry && ev.registry.funds) || []).length > 0; }
   /* The invitation as a message guests can read anywhere (the app sends this instead of a link). */
-  function inviteText(ev) {
+  function inviteText(ev, live) {
     var pl = ev.payLinks || {}, out = ['You\u2019re invited to ' + ev.name + '!', ev.date ? fmtDate(ev.date) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be announced', whereText(ev), 'Dress code: ' + E.dressCode(ev, ev.tier)];
     if (ev.inviteNote) out.push('', ev.inviteNote);
-    out.push('', 'Please reply to let me know if you can make it' + (ev.date ? '' : ' once the date is set') + '.');
+    out.push('', live ? 'RSVP, vote and see the details here: ' + inviteLink(ev) : 'Please reply to let me know if you can make it' + (ev.date ? '' : ' once the date is set') + '.');
     if (canSplit(ev)) out.push('', 'Each person\u2019s share: ' + money(splitShare(ev)) + '.');
     var pays = [pl.venmo ? 'Venmo @' + pl.venmo : '', pl.cashapp ? 'Cash App $' + pl.cashapp : '', pl.paypal ? 'paypal.me/' + pl.paypal : ''].filter(Boolean);
     if (pays.length && (canSplit(ev) || hasRegistry(ev))) out.push((canSplit(ev) ? 'Pay me by ' : 'Cash gifts: ') + pays.join(', '));
@@ -1761,7 +1762,7 @@
     var share = splitShare(ev);
     return '<div class="stack"><h3>' + (hasRegistry(ev) ? 'Invitation and event page' : 'Your invitation') + '</h3><div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + (ev.concept.palette || []).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be announced') + '</p><p class="muted">' + esc(whereText(ev)) + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p></div></div></div>' +
       (ev.date || ev.sample ? '' : '<div class="note">Add your date (tap \u201cAdd your date\u201d at the top) before you send the invitation, so guests can save it.</div>') + '<div class="row"><button class="btn gold" id="copy">' + (CFG.app ? 'Send invitation' : 'Copy invite link') + '</button><a class="btn ghost" href="#/g/' + ev.id + '">Preview as a guest</a></div>' +
-      (CFG.app ? '<p class="muted small">Sends your invitation by text, email or any app, with the date, place, dress code' + (hasRegistry(ev) ? ', your gift list' : '') + (canSplit(ev) ? ', each person\u2019s share' : '') + '. Guests reply to you to RSVP; add their answers under Guests.</p>' : CFG.preview ? '<p class="muted small">For now this link opens on this device only, so you can preview what guests will see. Sending it to guests on their own phones turns on when accounts launch.</p>' : '<p class="muted small">Guests open it in any browser; no app needed.</p>') + '</div>' +
+      (SHARING ? '<p class="muted small">' + (CFG.app ? 'Sends your invitation by text, email or any app with a link to your event page. ' : 'Copies the link to your event page. ') + 'Guests open it on any phone, no app needed, to RSVP' + ((ev.polls || []).length ? ', vote' : '') + (hasRegistry(ev) ? ' and see your gift list' : '') + '. Their RSVPs come into your Guests list.' + (ev.published ? ' Changes you make here update the page automatically.' : '') + '</p>' : CFG.app ? '<p class="muted small">Sends your invitation by text, email or any app, with the date, place, dress code' + (hasRegistry(ev) ? ', your gift list' : '') + (canSplit(ev) ? ', each person\u2019s share' : '') + '. Guests reply to you to RSVP; add their answers under Guests.</p>' : CFG.preview ? '<p class="muted small">For now this link opens on this device only, so you can preview what guests will see. Sending it to guests on their own phones turns on when accounts launch.</p>' : '<p class="muted small">Guests open it in any browser; no app needed.</p>') + '</div>' +
       (!canSplit(ev) && !hasRegistry(ev) ? '' : '<div class="stack"><h3>Your payment links</h3><p class="muted small">' + (canSplit(ev) ? 'Friends pay you directly for their share, and guests can send cash gifts.' : 'For cash gifts and funds from your registry.') + ' Event Couture never holds the money.</p><div class="grid3">' +
       [['venmo', 'Venmo username'], ['cashapp', 'Cash App $cashtag'], ['paypal', 'PayPal.me name']].map(function (x) { return '<label class="field"><span>' + x[1] + '</span><input class="input" data-pay="' + x[0] + '" value="' + esc(pl[x[0]] || '') + '"></label>'; }).join('') + '</div><div><button class="btn small" id="savePay">Save payment links</button></div></div>') +
       (!canSplit(ev) ? '' : '<div class="stack"><h3>Cost splitting</h3><div class="panel stack"><div class="grid2"><label class="field"><span>Amount to split (USD)</span><input class="input num" type="number" id="stot" value="' + Math.round(splitTotal(ev)) + '"></label><label class="field"><span>Number of people sharing it</span><input class="input num" type="number" min="1" id="scount" value="' + splitCount(ev) + '"></label></div><p class="small">Each person\u2019s share: <b class="num">' + money(splitShare(ev)) + '</b>. Starts from your plan\u2019s estimated total; change it to what you actually spent.</p><div class="grid2"><label class="field"><span>Add a person</span><form id="sadd" class="row"><input class="input" id="sname" style="flex:1"><button class="btn small">Add</button></form></label></div>' +
@@ -1774,7 +1775,13 @@
       (!hasRegistry(ev) && GIFT_LIST_OPTIONAL.indexOf(ev.type) >= 0 ? '<div class="row"><button class="link small" id="giftOn">Add a gift list (optional)</button><span class="muted small">For gift ideas or a cash fund; guests see it on your event page.</span></div>' : '');
   };
   TAB_BIND.invite = function (ev, save, rerender) {
-    $('#copy').addEventListener('click', function () { var send = function () { if (!ev.sample) { ev.invited = true; save(); } if (!CFG.app) return copyText(inviteLink(ev)); var t = inviteText(ev); if (navigator.share) navigator.share({ title: ev.name, text: t }).catch(function () {}); else copyText(t, 'Invitation'); }; if (!isKept(ev)) return keepSheet(ev, 'Keep your plan to share it', send); send(); });
+    $('#copy').addEventListener('click', function () { var btn = this; var send = function () {
+        if (!ev.sample) { ev.invited = true; save(); }
+        var deliver = function (live) { if (!CFG.app) return copyText(live || !SHARING ? inviteLink(ev) : inviteText(ev), live || !SHARING ? undefined : 'Invitation'); var t = inviteText(ev, live); if (navigator.share) navigator.share({ title: ev.name, text: t }).catch(function () {}); else copyText(t, 'Invitation'); };
+        if (!SHARING || ev.sample) return deliver(false);
+        btn.disabled = true; var lbl = btn.textContent; btn.textContent = 'Getting your link ready\u2026';
+        publishInvite(ev, true).then(function () { deliver(true); }).catch(function () { toast('Couldn\u2019t get your link ready, so we copied the invitation as a message instead. Check your connection and try again for a link.'); deliver(false); }).then(function () { btn.disabled = false; btn.textContent = lbl; });
+      }; if (!isKept(ev)) return keepSheet(ev, 'Keep your plan to share it', send); send(); });
     if ($('#giftOn')) $('#giftOn').addEventListener('click', function () { if (lockSample(ev)) return; ev.registryOn = true; save(); rerender(); });
     if ($('#giftOff')) $('#giftOff').addEventListener('click', function () { if (lockSample(ev)) return; ev.registryOn = false; save(); rerender(); });
     if ($('#savePay')) $('#savePay').addEventListener('click', function () { if (lockSample(ev)) return; ev.payLinks = {}; $$('[data-pay]').forEach(function (i) { ev.payLinks[i.dataset.pay] = i.value.trim().replace(/^[@$]/, ''); }); save(); toast('Payment links saved'); });
@@ -1829,7 +1836,7 @@
     $$('[data-pkg]').forEach(function (b) { b.addEventListener('click', function () { if (lockSample(ev)) return; var p = D.PACKAGES[+b.dataset.pkg];
       buySheet(p, ev, function () { if (p.id === 'concepts3') { ev.seen = (ev.seen || []).concat((ev.concepts || []).map(function (c) { return c.id; })); AI.concepts(ev, ev.seen).then(function (list) { ev.concepts = list; save(); location.hash = '#/e/' + ev.id + '/concepts'; }); } }); }); });
     $$('[data-add]').forEach(function (b) { b.addEventListener('click', function () { if (lockSample(ev)) return; buySheet(D.ADDONS[+b.dataset.add], ev, rerender); }); });
-    var del = $('#del'); if (del) del.addEventListener('click', function () { sheet('<h3>Delete ' + esc(ev.name) + '?</h3><p class="muted">This can\u2019t be undone.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete event</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { T('event_deleted', { event_type: ev.type }); var all = events(); delete all[ev.id]; store.set('events', all); close(); toast('Event deleted'); location.hash = '#/events'; }); }); });
+    var del = $('#del'); if (del) del.addEventListener('click', function () { sheet('<h3>Delete ' + esc(ev.name) + '?</h3><p class="muted">This can\u2019t be undone.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete event</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { T('event_deleted', { event_type: ev.type }); if (SHARING && ev.published) apiInv(ev.id, 'delete', { key: shareKey(ev) }).catch(function () {}); var all = events(); delete all[ev.id]; store.set('events', all); close(); toast('Event deleted'); location.hash = '#/events'; }); }); });
     var kx = $('#keepX'); if (kx) { kx.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', rerender); }); return; }
     if ($('#upg')) $('#upg').addEventListener('click', function () { if (lockSample(ev)) return; var cur = ev.paid.max || ev.guests; var nx = E.passFor(cur + 1); var due = Math.max(0, Math.round((nx.price - ev.paid.price) * 100) / 100);
       buySheet({ name: 'Move up to ' + nx.label.toLowerCase(), price: due, desc: 'Your plan, guests and purchases stay exactly as they are.' }, ev, function () { ev.paid = { price: nx.price, max: nx.max, at: new Date().toISOString() }; save(); rerender(); }); });
@@ -1844,9 +1851,52 @@
   /* ---------- guest page (no app needed) ---------- */
   /* The booked venue's name (from the host's booking) when there is one, then the city. */
   function whereText(ev) { var ov = (ev.overrides || {})[venueCat(ev)]; return ov && ov.source === 'booking' && ov.note ? ov.note + ', ' + ev.city : ev.city; }
+  /* ---------- Shared invitations: guests open the link on their own phones (needs the Event Couture server) ---------- */
+  var SHARING = !!CFG.apiUrl;
+  function apiInv(id, action, body) {
+    return fetch(CFG.apiUrl + '/api/inv/' + id + (action ? '/' + action : ''), body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {})
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error(j.error || 'Request failed'); e.status = r.status; throw e; } return j; }); });
+  }
+  function shareKey(ev) { if (!ev.shareKey) { var a = new Uint8Array(18); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach(function (_, i) { a[i] = Math.random() * 256; }); ev.shareKey = Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); } return ev.shareKey; }
+  /* Only what guests need: never the budget, the guest list or anyone's private notes. */
+  function inviteSnapshot(ev) {
+    var pl = ev.payLinks || {}, reg = hasRegistry(ev) ? ev.registry || {} : {};
+    return { v: 1, name: ev.name, type: ev.type, date: ev.date || '', time: ev.time || '', hours: ev.hours || 3, when: ev.date ? fmtDate(ev.date) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : '', where: whereText(ev), dress: E.dressCode(ev, ev.tier), palette: (ev.concept.palette || []).slice(0, 6),
+      cal: ev.date ? calLink(ev) : '', polls: (ev.polls || []).map(function (p) { return { q: p.q, options: p.options.map(function (o) { return { t: o.t }; }) }; }),
+      registry: { items: (reg.items || []).map(function (it) { return { name: it.name, url: it.url || '', bought: !!it.bought }; }), funds: (reg.funds || []).map(function (f) { return { name: f.name }; }) },
+      pay: canSplit(ev) || hasRegistry(ev) ? { venmo: pl.venmo || '', cashapp: pl.cashapp || '', paypal: pl.paypal || '' } : {}, share: canSplit(ev) ? Math.round(splitShare(ev) * 100) / 100 : 0 };
+  }
+  function publishInvite(ev, force) {
+    if (!SHARING || ev.sample || !isKept(ev)) return Promise.resolve(false);
+    var snap1 = inviteSnapshot(ev), h = JSON.stringify(snap1);
+    if (!force && (!ev.published || ev.pubHash === h)) return Promise.resolve(true);
+    return apiInv(ev.id, 'publish', { key: shareKey(ev), inv: snap1 }).then(function () { ev.published = true; ev.pubHash = h; saveEvent(ev); return true; });
+  }
+  /* RSVPs, votes and gifts guests sent from their phones come back into the plan. */
+  var LAST_SYNC = {};
+  function syncInbox(ev, done) {
+    if (!SHARING || !ev.published || ev.sample || Date.now() - (LAST_SYNC[ev.id] || 0) < 45000) return;
+    LAST_SYNC[ev.id] = Date.now();
+    apiInv(ev.id, 'inbox', { key: shareKey(ev) }).then(function (box) {
+      var fresh = 0, changed = false, cap = placesCap(ev); ev.guestsList = ev.guestsList || [];
+      (box.rsvps || []).forEach(function (r) {
+        if (r.at <= (ev.rsvpSeen || 0)) return;
+        var g = ev.guestsList.find(function (x) { return x.name.toLowerCase() === r.name.toLowerCase(); });
+        if (!g) { g = { id: uid(), name: r.name }; ev.guestsList.push(g); }
+        g.plusOnes = r.plus || 0; g.diet = r.diet || []; g.online = true;
+        g.status = r.status === 'declined' ? 'declined' : 'yes'; if (g.status === 'yes' && E.placesUsed(ev.guestsList) > cap) g.status = 'waitlist';
+        if (g.status === 'declined') promoteWaitlist(ev, cap);
+        ev.rsvpSeen = Math.max(ev.rsvpSeen || 0, r.at); fresh++; changed = true;
+      });
+      (ev.polls || []).forEach(function (p, pi) { p.options.forEach(function (o, oi) { var n = (box.votes || {})[pi + ':' + oi] || 0; if ((o.rv || 0) !== n) { o.rv = n; changed = true; } }); });
+      (box.bought || []).forEach(function (i) { var it = ev.registry && (ev.registry.items || [])[i]; if (it && !it.bought) { it.bought = true; changed = true; } });
+      if (changed) { saveEvent(ev); if (fresh) toast(plural(fresh, 'new RSVP') + ' from your invitation'); if (done) done(); }
+    }).catch(function () {});
+  }
   function guestPage(id) {
     var ev = getEvent(id) || (/^sample-\d+$/.test(id || '') ? sampleEvent(+id.split('-')[1]) : null);
     if (ev && !ev.concept) ev = null;
+    if (!ev && SHARING && /^[a-z0-9]{6,32}$/.test(id || '')) return remoteGuestPage(id);
     if (!ev) return frame('<div class="invite"><h2>This invitation isn’t available here yet</h2><p class="muted">' + (CFG.preview ? 'Event Couture is in preview, so invitations open only on the phone or computer where they were made. Sending invitations to guests turns on soon.' : 'The host may have made it private. Ask them for a new link.') + '</p><div><a class="btn ghost" href="#/">Explore Event Couture</a></div></div>');
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] }; var share = splitShare(ev);
     var payBtns = [pl.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pl.venmo) + '">Venmo</a>' : '', pl.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pl.cashapp) + '">Cash App</a>' : '', pl.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pl.paypal) + '">PayPal</a>' : ''].join('');
@@ -1879,6 +1929,40 @@
     });
     $$('[data-vote]').forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.vote.split(':'); if (!ev.sample) { ev.polls[+k[0]].options[+k[1]].votes++; saveEvent(ev); } b.closest('.poll').innerHTML = '<p class="muted">Thanks for voting.</p>'; }); });
     $$('[data-buy]').forEach(function (b) { b.addEventListener('click', function () { ev.registry.items[+b.dataset.buy].bought = true; saveEvent(ev); b.outerHTML = '<span class="badge ok">Purchased</span>'; }); });
+  }
+
+  /* A guest on her own phone: the invitation comes from the server, and her RSVP and votes go back to the host. */
+  function remoteGuestPage(id) {
+    frame('<div class="invite"><p class="muted">Opening your invitation\u2026</p></div>', { noRibbon: true });
+    apiInv(id).then(function (j) {
+      var v = j.inv || {}, pay = v.pay || {}, reg = v.registry || { items: [], funds: [] };
+      var payBtns = [pay.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pay.venmo) + '">Venmo</a>' : '', pay.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pay.cashapp) + '">Cash App</a>' : '', pay.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pay.paypal) + '">PayPal</a>' : ''].join('');
+      var safeHex = function (c) { return /^#[0-9a-f]{3,8}$/i.test(c) ? c : '#ccc'; };
+      frame('<div class="invite"><div class="card"><div class="swatch" aria-hidden="true">' + (v.palette || []).map(function (c) { return '<i style="background:' + safeHex(c) + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You\u2019re invited to</span><h1>' + esc(v.name) + '</h1><p>' + esc(v.when || 'Date to be announced') + '</p><p class="muted">' + esc(v.where || '') + '</p>' + (v.dress ? '<p class="small muted">Dress code: ' + esc(v.dress) + '</p>' : '') +
+        (/^https:\/\/calendar\.google\.com\//.test(v.cal || '') ? '<div><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(v.cal) + '">Add to calendar</a></div>' : '') + '</div></div>' +
+        '<form id="rsvp" class="panel stack" style="text-align:left"><h3>RSVP</h3><label class="field"><span>Your name</span><input class="input" id="rn" required autocomplete="name" maxlength="80"></label><div class="seg" id="ans"><button type="button" data-v="yes" aria-pressed="true">I\u2019ll be there</button><button type="button" data-v="declined" aria-pressed="false">Can\u2019t make it</button></div>' +
+        '<label class="field"><span>Plus-ones</span><input class="input num" type="number" min="0" max="5" id="rp" value="0"></label><div class="stack"><span class="muted small">Dietary needs</span><div class="chips" id="rd">' + D.DIETS.map(function (d) { return '<button type="button" class="chip" aria-pressed="false">' + esc(d) + '</button>'; }).join('') + '</div></div><button class="btn gold">Send RSVP</button></form>' +
+        ((v.polls || []).length ? '<div class="panel stack" style="text-align:left"><h3>Vote</h3>' + v.polls.map(function (p, pi) { return '<b>' + esc(p.q) + '</b><div class="poll">' + p.options.map(function (o, oi) { return '<button data-vote="' + pi + ':' + oi + '"><span>' + esc(o.t) + '</span></button>'; }).join('') + '</div>'; }).join('') + '</div>' : '') +
+        ((reg.items || []).length || (reg.funds || []).length ? '<div class="panel stack" style="text-align:left"><h3>Gift list</h3><div class="list">' + reg.items.map(function (it, i) { return '<div class="it"><span class="grow">' + esc(it.name) + (it.bought ? ' <span class="badge ok">Purchased</span>' : '') + '</span>' + (/^https?:\/\//i.test(it.url || '') ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(it.url) + '">View</a>' : '') + (it.bought ? '' : '<button class="btn small" data-buy="' + i + '">I bought this</button>') + '</div>'; }).join('') +
+          (reg.funds || []).map(function (f) { return '<div class="it"><span class="grow">' + esc(f.name) + '</span>' + (payBtns || '<span class="muted small">Ask the host how to give</span>') + '</div>'; }).join('') + '</div></div>' : '') +
+        (v.share ? '<div class="panel stack" style="text-align:left"><h3>Your share</h3><p>Each person\u2019s share is <b class="num">' + money(v.share) + '</b>.</p><div class="row">' + (payBtns || '<span class="muted small">The host will share how to pay.</span>') + '</div><p class="muted small">Payments go straight to the host.</p></div>' : '') +
+        '<p class="muted small">Planned with Event Couture by Always Luxe. <a href="#/new">Plan your own event</a></p></div>', { noRibbon: true });
+      $('#ans').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; $$('#ans button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
+      $('#rd').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
+      $('#rsvp').addEventListener('submit', function (e) {
+        e.preventDefault(); var n = $('#rn').value.trim(); if (!n) return toast('Enter your name');
+        var btn = $('#rsvp .btn.gold'); btn.disabled = true; btn.textContent = 'Sending\u2026';
+        var ans = $('#ans [aria-pressed="true"]').dataset.v;
+        apiInv(id, 'rsvp', { name: n, status: ans, plus: Math.max(0, +$('#rp').value || 0), diet: $$('#rd [aria-pressed="true"]').map(function (b) { return b.textContent; }) })
+          .then(function () { $('#rsvp').innerHTML = '<h3>' + (ans === 'yes' ? 'Thank you, see you there!' : 'Thanks for letting us know') + '</h3><p class="muted">Your RSVP was sent to the host. To change it, send it again with the same name.</p>'; })
+          .catch(function (err) { btn.disabled = false; btn.textContent = 'Send RSVP'; toast(err.message || 'Couldn\u2019t send. Check your connection and try again.'); });
+      });
+      $$('[data-vote]').forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.vote.split(':'); var box = b.closest('.poll'); apiInv(id, 'vote', { poll: +k[0], option: +k[1] }).then(function () { box.innerHTML = '<p class="muted">Thanks for voting.</p>'; }).catch(function (err) { toast(err.message || 'Couldn\u2019t send your vote. Try again.'); }); }); });
+      $$('[data-buy]').forEach(function (b) { b.addEventListener('click', function () { apiInv(id, 'bought', { item: +b.dataset.buy }).then(function () { b.outerHTML = '<span class="badge ok">Purchased</span>'; }).catch(function (err) { toast(err.message || 'Couldn\u2019t save that. Try again.'); }); }); });
+    }).catch(function (err) {
+      frame('<div class="invite"><h2>This invitation isn\u2019t available</h2><p class="muted">' + (err && err.status === 404 ? 'The host may have removed it, or the event has passed. Ask them for a new link.' : 'We couldn\u2019t open it right now. Check your connection and try again.') + '</p><div class="row"><button class="btn ghost" id="again">Try again</button><a class="btn ghost" href="#/">Explore Event Couture</a></div></div>', { noRibbon: true });
+      var a = $('#again'); if (a) a.addEventListener('click', function () { remoteGuestPage(id); });
+    });
   }
 
   /* ---------- vendor sign-up (structured, saved as you go) ---------- */
@@ -1950,11 +2034,18 @@
     ['How do I delete my data?', 'Open the event, go to Overview, Your pass, and choose Delete event. The plan, guest list and photos are removed from your device.', 'delete data privacy remove account'],
     ['How do vendors join?', 'Vendors list their business for free at For vendors, with packages, prices and policies. Listings appear to hosts planning events in their area once vendor accounts launch.', 'vendor business list join']
   ]);
+  if (SHARING) FAQ = FAQ.map(function (q) {   /* invitations open on guests' own phones */
+    if (/^Do my guests need the app/.test(q[0])) return [q[0], 'No. Guests open your invitation link in any browser to see the details, RSVP, vote and see your gift list. Their RSVPs come into your Guests list.', q[2]];
+    if (/^How do I invite guests/.test(q[0])) return [q[0], 'Keep your plan, then open Guests & invitations, Invitation. ' + (CFG.app ? 'Tap Send invitation to send it by text, email or any app.' : 'Copy your invite link and send it by text, email or social media.') + ' Guests RSVP and vote from the link on their own phones, with no app needed, and their answers come into your Guests list.', q[2]];
+    if (/^Can guests add photos/.test(q[0])) return [q[0], 'Guests can send you their photos, and you add them to your album under Photos and thank-yous.', q[2]];
+    return q;
+  });
   if (CFG.app) FAQ = FAQ.map(function (q) {   /* the app is free for now, so its help answers carry no prices */
     if (/^Is there a subscription/.test(q[0])) return [q[0], 'No. Planning and keeping your plan are free in the app. Nothing renews automatically.', q[2]];
     if (/^How much does it cost/.test(q[0])) return [q[0], 'Planning and keeping your plan are free in the app. Guests never pay to view, RSVP or vote.', q[2]];
     if (/^What if my guest list grows/.test(q[0])) return [q[0], 'Tap the guest count at the top of your plan to change it. In the app it\u2019s free, and your plan stays exactly as it is.', q[2]];
     if (/^Can I get a refund/.test(q[0])) return [q[0], 'There are no purchases in the app right now. If anything doesn\u2019t work, contact us and we\u2019ll make it right.', q[2]];
+    if (SHARING && /^(Do my guests need the app|How do I invite guests|Can guests add photos)/.test(q[0])) return q;   /* the shared-invitation answers below apply */
     if (/^Do my guests need the app/.test(q[0])) return [q[0], 'No. Tap Send invitation on the Invitation page to send the details by text, email or any app. Guests reply to you to RSVP, and you add their answers under Guests.', q[2]];
     if (/^How do I invite guests/.test(q[0])) return [q[0], 'Open your plan, then Guests & invitations, Invitation. Tap Send invitation to share the date, place and dress code by text, email or any app. Guests reply to you, and you track RSVPs under Guests.', q[2]];
     if (/^Can guests add photos/.test(q[0])) return [q[0], 'Guests can send you their photos, and you add them to your album under Photos and thank-yous.', q[2]];

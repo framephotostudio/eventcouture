@@ -1,0 +1,28 @@
+// Shared invitations on the server: node tests/worker_invite.test.mjs
+import assert from 'assert';
+const src = await import('../worker/index.js');
+const store = new Map();
+const env = { EC_KV: { get: async k => store.has(k) ? store.get(k) : null, put: async (k, v) => { store.set(k, v); }, delete: async k => { store.delete(k); } }, ALLOWED_ORIGINS: 'https://x' };
+const call = async (path, body, method = 'POST') => { const r = await src.default.fetch(new Request('https://w' + path, method === 'GET' ? { headers: { origin: 'https://x' } } : { method, headers: { origin: 'https://x', 'content-type': 'application/json', 'cf-connecting-ip': '1.2.3.4' }, body: JSON.stringify(body) }), env); return { status: r.status, body: await r.json() }; };
+const key = 'k'.repeat(24), inv = { name: 'Gold 30th', date: '2099-05-01', polls: [{ q: 'Cake?', options: [{ t: 'Vanilla' }, { t: 'Chocolate' }] }], registry: { items: [{ name: 'Candles' }], funds: [] } };
+assert.equal((await call('/api/inv/abc123', null, 'GET')).status, 404);
+assert.equal((await call('/api/inv/abc123/rsvp', { name: 'Ana' })).status, 404, 'no rsvp before publish');
+assert.equal((await call('/api/inv/abc123/publish', { key, inv })).status, 200);
+assert.equal((await call('/api/inv/abc123/publish', { key: 'x'.repeat(24), inv: { name: 'Hacked' } })).status, 403, 'another key cannot overwrite');
+assert.equal((await call('/api/inv/abc123', null, 'GET')).body.inv.name, 'Gold 30th');
+assert.ok(!JSON.stringify((await call('/api/inv/abc123', null, 'GET')).body).includes('kh'), 'key hash never sent to guests');
+assert.equal((await call('/api/inv/abc123/rsvp', { name: 'Ana', status: 'yes', plus: 2, diet: ['Vegan'] })).status, 200);
+assert.equal((await call('/api/inv/abc123/rsvp', { name: 'ana', status: 'declined' })).status, 200, 'same name updates');
+assert.equal((await call('/api/inv/abc123/rsvp', { name: '  ' })).status, 400);
+assert.equal((await call('/api/inv/abc123/vote', { poll: 0, option: 1 })).status, 200);
+assert.equal((await call('/api/inv/abc123/vote', { poll: 3, option: 0 })).status, 404);
+assert.equal((await call('/api/inv/abc123/bought', { item: 0 })).status, 200);
+assert.equal((await call('/api/inv/abc123/inbox', { key: 'nope' })).status, 403, 'only the host reads RSVPs');
+const box = (await call('/api/inv/abc123/inbox', { key })).body;
+assert.equal(box.rsvps.length, 1); assert.equal(box.rsvps[0].status, 'declined'); assert.equal(box.votes['0:1'], 1); assert.deepEqual(box.bought, [0]);
+assert.equal((await call('/api/inv/abc123/delete', { key: 'nope' })).status, 403);
+assert.equal((await call('/api/inv/abc123/delete', { key })).status, 200);
+assert.equal((await call('/api/inv/abc123', null, 'GET')).status, 404);
+assert.equal(store.size === 0 || [...store.keys()].every(k => k.startsWith('rl:')), true, 'everything removed');
+assert.equal((await call('/api/inv/BAD!', null, 'GET')).status, 404);
+console.log('worker invite ok');

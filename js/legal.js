@@ -4,7 +4,7 @@
   var NAME = C.legalName || 'Always Luxe';
   var EMAIL = C.supportEmail || '';
   var STATE = C.governingState || '';
-  var UPDATED = 'October 24, 2026';
+  var UPDATED = 'October 25, 2026';
   var mail = EMAIL ? '<a href="mailto:' + EMAIL + '">' + EMAIL + '</a>' : 'the contact address on our Help page';
   var law = STATE ? 'the State of ' + STATE : 'the state in which ' + NAME + ' is established';
 
@@ -19,7 +19,9 @@
       '<h3>2. What we handle and why</h3><div class="panel legal-table">' +
       '<div><b>Your event details</b> (event type, date, time, city, guest count, budget, setting, drinks, who is paying, must-haves, description, chosen colors and vibes)<span>Saved on your device. Sent through our server to our AI provider when you ask for concepts, only to create them.</span></div>' +
       '<div><b>Inspiration photos and links</b> you add<span>Saved on your device. Photos are sent through our server to our AI provider when you ask for concepts, only to read their colors and style for that request.</span></div>' +
-      '<div><b>Guest information</b> you enter (names, RSVP status, plus-ones, dietary needs, seating, gifts) and co-host names<span>Saved on your device only. Never sent to vendors, advertisers or our AI provider.</span></div>' +
+      '<div><b>Guest information</b> you enter (names, RSVP status, plus-ones, dietary needs, seating, gifts) and co-host names<span>Saved on your device. Never sent to vendors, advertisers or our AI provider.</span></div>' +
+      '<div><b>Shared invitations</b> (when you share your invitation link: the event name, date, time, place, dress code, colors, polls, gift list, payment usernames and each person\u2019s share)<span>Stored on our server so the guests you send the link to can open it. Your budget, guest list and notes are never included.</span></div>' +
+      '<div><b>RSVPs and votes from guests</b> (name, yes or no, plus-ones, dietary needs, poll votes, gifts marked bought)<span>Stored on our server only so the host can see them in their plan. Deleted automatically 30 days after the event, or right away when the host deletes the event.</span></div>' +
       '<div><b>Payment links</b> (Venmo, Cash App, PayPal usernames) and cost-splitting amounts<span>Saved on your device, and shown on your event page to the guests you share it with.</span></div>' +
       '<div><b>Venue and vendor searches</b> (city, area, kind of place) and your starting point for drive times<span>Sent through our server to Google Maps Platform to return places and drive times.</span></div>' +
       '<div><b>Vendor listings</b> (business name, email, phone, prices, policies) entered on For vendors<span>Saved on your device in this version. When listings go live, they will be shown to hosts planning events in your area.</span></div>' +
@@ -38,7 +40,7 @@
       '<li><span><b>Authorities</b>, when the law requires it or to protect people from harm.</span></li></ul>' +
       '<p>We do not sell personal information, share it for cross-context behavioral advertising, or use it for profiling. If ' + NAME + '’s business is ever sold or merged, this policy will continue to apply to information transferred with it.</p>' +
 
-      '<h3>4. How long information is kept</h3><p>Information saved on your device stays until you delete it: delete an event under Overview, Your pass, or clear this site’s data in your browser, or delete the app. Abuse-prevention counts on our server expire within about an hour. If accounts are introduced, this policy will be updated before anything is stored with us.</p>' +
+      '<h3>4. How long information is kept</h3><p>Information saved on your device stays until you delete it: delete an event under Overview, Your pass, or clear this site’s data in your browser, or delete the app. Shared invitations, and the RSVPs and votes guests send through them, are deleted from our server 30 days after the event date (or about 13 months after sharing if no date is set), or right away when the host deletes the event. Abuse-prevention counts on our server expire within about an hour.</p>' +
 
       '<h3>5. Your choices and rights</h3><p>You can view, edit or delete everything Event Couture saves at any time, because it is on your device. Depending on where you live (for example California, Colorado, Connecticut, Texas, Virginia and other US states, or the EU and UK), you may have rights to know, access, correct, delete or get a copy of your personal information, to opt out of sale, sharing, targeted advertising and profiling, and to appeal a decision about your request. We don’t sell, share for advertising or profile, so there is nothing to opt out of; we honor Global Privacy Control signals regardless. To make a request or appeal, contact ' + mail + '. We will respond within 45 days, won’t discriminate against you for using your rights, and may need to confirm the request came from you. You may use an authorized agent.</p>' +
 

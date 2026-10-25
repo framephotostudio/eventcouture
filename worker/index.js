@@ -4,9 +4,16 @@
      POST /api/places    -> real venues and vendors near a city (Google Places)
      POST /api/drive     -> drive times from a starting point (Google Routes)
      GET  /api/status    -> which services are connected and today's spend
+     GET  /api/inv/:id            -> a shared invitation (public details only)
+     POST /api/inv/:id/publish    -> host saves or updates the invitation (needs the host key)
+     POST /api/inv/:id/rsvp       -> a guest RSVPs (name, yes/no, plus-ones, dietary needs)
+     POST /api/inv/:id/vote       -> a guest votes in a poll
+     POST /api/inv/:id/bought     -> a guest marks a gift as bought
+     POST /api/inv/:id/inbox      -> host reads RSVPs, votes and gifts (needs the host key)
+     POST /api/inv/:id/delete     -> host removes the invitation and everything guests sent
    Secrets (set with `wrangler secret put`): GEMINI_KEY, GOOGLE_MAPS_KEY
    Vars: ALLOWED_ORIGINS (comma list), DAILY_CAP_USD (default 0.66 = about $20 a month), GEMINI_MODEL
-   KV binding: EC_KV (usage counters).
+   KV binding: EC_KV (usage counters, shared invitations and RSVPs; invitation data expires 30 days after the event).
    Every paid call checks the daily spending cap first and refuses once it is reached. */
 
 const COST = { concepts: 0.004, places: 0.035, drive: 0.01 }; // conservative per-call estimates in USD
@@ -25,6 +32,8 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
     const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'content-type': 'application/json' } });
     try {
+      const inv = url.pathname.match(/^\/api\/inv\/([a-z0-9]{6,32})(?:\/(publish|rsvp|vote|bought|inbox|delete))?$/);
+      if (inv) return await invite(req, env, inv[1], inv[2] || '', json);
       if (url.pathname === '/api/status') {
         return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env) });
       }
@@ -190,4 +199,73 @@ async function drive(env, origin, placeIds) {
   if (!r.ok) throw new Error('routes');
   const rows = await r.json();
   return rows.filter(x => x.condition === 'ROUTE_EXISTS').map(x => ({ placeId: placeIds[x.destinationIndex], minutes: Math.round(parseInt(x.duration) / 60), miles: Math.round(x.distanceMeters / 160.9) / 10 }));
+}
+
+/* ---------- shared invitations ----------
+   The host's device keeps the plan. Only what guests need is stored here: the invitation details the host chose to share,
+   and what guests send back (RSVPs, votes, gifts bought). The host proves ownership with a random key we keep only as a hash. */
+const INV_MAX = 60000, RSVP_MAX = 1000;
+async function sha(t) { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(t))); return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join(''); }
+function ttlFor(inv) {
+  const d = inv && /^\d{4}-\d{2}-\d{2}$/.test(inv.date || '') ? Date.parse(inv.date + 'T12:00:00Z') : 0;
+  const end = d ? d + 30 * 864e5 : Date.now() + 400 * 864e5;
+  return Math.max(7 * 86400, Math.min(400 * 86400, Math.round((end - Date.now()) / 1000)));
+}
+const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
+async function invite(req, env, id, action, json) {
+  if (!env.EC_KV) return json({ error: 'Sharing is not connected yet.' }, 503);
+  const K = { inv: 'inv:' + id, rsvp: 'rsvp:' + id, votes: 'votes:' + id, bought: 'bought:' + id };
+  const rec = JSON.parse((await env.EC_KV.get(K.inv)) || 'null');
+  if (req.method === 'GET' && !action) return rec ? json({ inv: rec.inv }) : json({ error: 'This invitation isn\u2019t available. Ask the host for a new link.' }, 404);
+  if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
+  if (+(req.headers.get('content-length') || 0) > INV_MAX + 2000) return json({ error: 'That invitation is too large.' }, 413);
+  const body = await req.json().catch(() => ({}));
+  const owner = async () => rec && body.key && (await sha(body.key)) === rec.kh;
+  if (action === 'publish') {
+    if (!body.key || String(body.key).length < 20) return json({ error: 'Missing key' }, 400);
+    if (rec && !(await owner())) return json({ error: 'Not allowed' }, 403);
+    const text = JSON.stringify(body.inv || {});
+    if (text.length > INV_MAX) return json({ error: 'That invitation is too large.' }, 413);
+    const inv = JSON.parse(text), ttl = ttlFor(inv);
+    await env.EC_KV.put(K.inv, JSON.stringify({ kh: rec ? rec.kh : await sha(body.key), inv, at: Date.now() }), { expirationTtl: ttl });
+    return json({ ok: true });
+  }
+  if (action === 'inbox') {
+    if (!(await owner())) return json({ error: 'Not allowed' }, 403);
+    const [r, v, b] = await Promise.all([K.rsvp, K.votes, K.bought].map(k => env.EC_KV.get(k)));
+    return json({ rsvps: JSON.parse(r || '[]'), votes: JSON.parse(v || '{}'), bought: JSON.parse(b || '[]') });
+  }
+  if (action === 'delete') {
+    if (!rec) return json({ ok: true });
+    if (!(await owner())) return json({ error: 'Not allowed' }, 403);
+    await Promise.all(Object.values(K).map(k => env.EC_KV.delete(k)));
+    return json({ ok: true });
+  }
+  // guests
+  if (!rec) return json({ error: 'This invitation isn\u2019t available. Ask the host for a new link.' }, 404);
+  if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown'))) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+  const ttl = ttlFor(rec.inv);
+  if (action === 'rsvp') {
+    const name = clip(body.name, 80).trim(); if (!name) return json({ error: 'Enter your name' }, 400);
+    const status = body.status === 'declined' ? 'declined' : 'yes';
+    const list = JSON.parse((await env.EC_KV.get(K.rsvp)) || '[]').filter(x => x.name.toLowerCase() !== name.toLowerCase());
+    if (list.length >= RSVP_MAX) return json({ error: 'This invitation has reached its RSVP limit. Contact the host.' }, 409);
+    list.push({ name, status, plus: Math.max(0, Math.min(5, parseInt(body.plus, 10) || 0)), diet: (Array.isArray(body.diet) ? body.diet : []).slice(0, 8).map(d => clip(d, 40)), note: clip(body.note, 300), at: Date.now() });
+    await env.EC_KV.put(K.rsvp, JSON.stringify(list), { expirationTtl: ttl });
+    return json({ ok: true });
+  }
+  if (action === 'vote') {
+    const pi = parseInt(body.poll, 10), oi = parseInt(body.option, 10);
+    const polls = rec.inv.polls || []; if (!(pi >= 0 && pi < polls.length && oi >= 0 && oi < (polls[pi].options || []).length)) return json({ error: 'Not found' }, 404);
+    const votes = JSON.parse((await env.EC_KV.get(K.votes)) || '{}'); const k = pi + ':' + oi; votes[k] = (votes[k] || 0) + 1;
+    await env.EC_KV.put(K.votes, JSON.stringify(votes), { expirationTtl: ttl });
+    return json({ ok: true });
+  }
+  if (action === 'bought') {
+    const i = parseInt(body.item, 10); if (!(i >= 0 && i < ((rec.inv.registry || {}).items || []).length)) return json({ error: 'Not found' }, 404);
+    const b = JSON.parse((await env.EC_KV.get(K.bought)) || '[]'); if (b.indexOf(i) < 0) b.push(i);
+    await env.EC_KV.put(K.bought, JSON.stringify(b), { expirationTtl: ttl });
+    return json({ ok: true });
+  }
+  return json({ error: 'Not found' }, 404);
 }
