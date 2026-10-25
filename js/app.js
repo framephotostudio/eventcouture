@@ -250,13 +250,13 @@
   function faceCard(ctx) {
     return '<a class="sister" href="https://facecouture.app/" target="_blank" rel="noopener"><img src="' + srcOf('img/brand/facecouture-icon-128.png') + '" alt="" width="53" height="44"><span><b>' + (ctx === 'look' ? 'Get photo-ready for the day' : 'Also from Always Luxe') + '</b><span class="muted small">Face Couture: couture beauty for every photo</span></span><span class="sister-go" aria-hidden="true">\u2192</span></a>';
   }
-  var BRAND = { markGold: 'img/brand/logo-mark-gold.png', mark: 'img/brand/ec-mark-128.png', logo: 'img/brand/logo-full.jpg', compact: 'img/brand/logo-compact.jpg', banner: 'img/brand/logo-banner-wide.jpg', letters: 'img/brand/logo-letters.png' };
+  var BRAND = { markGold: 'img/brand/logo-mark-gold-wide.png', mark: 'img/brand/ec-mark-128.png', logo: 'img/brand/logo-full.jpg', compact: 'img/brand/logo-compact.jpg', banner: 'img/brand/logo-banner-wide.jpg', letters: 'img/brand/logo-letters.png' };
   var lastHash = null;
   function frame(inner, opts) {
     opts = opts || {};
     var ribbon = CFG.preview && !opts.noRibbon ? '<div class="preview-ribbon">Preview version: no real charges, and sharing works on this device only.</div>' : '';
     app.innerHTML = ribbon +
-      '<header class="topbar"><a class="brand logo-mark" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.markGold) + '" alt="Event Couture" width="287" height="150"><span class="by" aria-hidden="true">by Always Luxe</span></a>' +
+      '<header class="topbar"><a class="brand logo-mark" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.markGold) + '" alt="Event Couture" width="563" height="210"><span class="by" aria-hidden="true">by Always Luxe</span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events" title="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help" title="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
       '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a><a href="#/pricing">Pricing</a><a href="#/vendors">For vendors</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div><div class="small">Also from Always Luxe: <a href="https://facecouture.app/" target="_blank" rel="noopener">Face Couture</a></div></footer>';

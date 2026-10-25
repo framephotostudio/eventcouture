@@ -11,7 +11,7 @@ def data_uri(path, width):
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
 embed = {'img/hero.jpg': data_uri('img/hero.jpg', 900)}
 for f in sorted(glob.glob('img/events/*.jpg')): embed[f] = data_uri(f, 900)
-embed['img/brand/logo-mark-gold.png'] = 'data:image/png;base64,' + base64.b64encode(open('img/brand/logo-mark-gold.png','rb').read()).decode()
+embed['img/brand/logo-mark-gold-wide.png'] = 'data:image/png;base64,' + base64.b64encode(open('img/brand/logo-mark-gold-wide.png','rb').read()).decode()
 embed['img/brand/facecouture-icon-128.png'] = 'data:image/png;base64,' + base64.b64encode(open('img/brand/facecouture-icon-128.png','rb').read()).decode()
 embed['img/brand/ec-mark-128.png'] = 'data:image/png;base64,' + base64.b64encode(open('img/brand/ec-mark-128.png','rb').read()).decode()
 js = 'window.EC_EMBED = ' + json.dumps(embed) + ';\n' + js
