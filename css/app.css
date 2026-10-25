@@ -650,3 +650,5 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 /* Bigger tap areas for small text links on phones (music links, footer) */
 .songs a.link, footer.site nav a { display: inline-block; padding: 10px 4px; margin: -10px 0; }
 .songs a.link { position: relative; }
+.album .ph { position: relative; margin: 0; }
+.album .ph-rm { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(30, 18, 26, .62); color: #fff; font-size: 1.1rem; line-height: 1; cursor: pointer; }

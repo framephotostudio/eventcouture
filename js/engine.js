@@ -483,6 +483,8 @@
   }
   var KIDS_NO = ['disco-glam', 'modern-noir', 'moody-floral', 'old-hollywood'];
   var KIDS_BAD = /night ?club|\bclub\b|neon|strobe|bottle service|lounge|cocktail|\bbar\b|bartender|candle|candlelit|\bdark\b|noir|moody|velvet curtains|disco/i;
+  /* Words that mean a children's party: an age under 13, a child, or a classic kids' theme. */
+  var KIDS_TEXT = /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|\b([1-9]|1[0-2])[- ]?(year|yr)s?[- ]old\b|\bturning ([1-9]|1[0-2])\b|for my (son|daughter|kids?|little one|toddler|grandson|granddaughter)\b|kids'? (party|birthday)|\bchildren\b|\b(unicorn|princess|dinosaur|dino|superhero|mermaid|paw patrol|bluey|first birthday|1st birthday)\b/i;
   function isKidsParty(ev) { return !!(ev && ((ev.kids && /birthday/.test(ev.type || '')) || ev.type === 'kids-birthday')); }
   function kidSafePhoto(p) { return p.types.indexOf('kids-birthday') >= 0 || (KIDS_NO.indexOf(p.style) < 0 && !KIDS_BAD.test(p.mood + ' ' + p.decor.join(' '))); }
   function inspoConcept(ev, p) {
@@ -577,7 +579,7 @@
   function concepts(ev, colors, text, liked, skip, count) {
     skip = skip || [];
     /* Children's parties never get nightclub or black-tie looks. */
-    var kidsNo = isKidsParty(ev) || /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|for my (son|daughter|kids?)/i.test(text || '') ? KIDS_NO : [];
+    var kidsNo = isKidsParty(ev) || (/birthday|party|bday/i.test(ev.type || '') && KIDS_TEXT.test(text || '')) ? KIDS_NO : [];
     var kidsParty = kidsNo.length > 0;
     var ranked = matchStyles(colors, text, liked).filter(function (r) { return skip.indexOf(r.style.id) < 0 && kidsNo.indexOf(r.style.id) < 0 && (kidsParty || !r.style.kidsOnly); });
     var kidBoost = function (r) { return r.score + (r.style.kidsOnly ? 1.5 : ['pastel-whimsy', 'tropical-glam'].indexOf(r.style.id) >= 0 ? 1 : 0); };
@@ -654,6 +656,7 @@
   function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
 
   root.EC_ENGINE = {
+    KIDS_TEXT: KIDS_TEXT,
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
     placesUsed: placesUsed, startHour: startHour, concepts: concepts, inspoOf: inspoOf, inspoName: inspoName, wordsDiffer: wordsDiffer, kidSafePhoto: kidSafePhoto, swapDrinks: swapDrinks, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
