@@ -71,6 +71,10 @@
       else if (b = t.closest('[data-pick]')) track('level_chosen', { level: b.dataset.pick });
       else if (b = t.closest('[data-pickwhere]')) track('where_chosen', { setting: b.dataset.pickwhere });
       else if (b = t.closest('[data-live]')) track('venues_view', { kind: b.dataset.live });
+      else if (b = t.closest('[data-short]')) track(b.getAttribute('aria-pressed') === 'true' ? 'option_removed' : 'option_saved', { category: b.dataset.short.split('|')[0] });
+      else if (b = t.closest('[data-compare]')) track('compare_open', { category: b.dataset.compare });
+      else if (b = t.closest('[data-pick-opt]')) track('front_runner_set');
+      else if (b = t.closest('[data-book-opt]')) track('option_booked_open');
       else if (b = t.closest('.new-venue a')) track('new_venue_click', { venue: (b.closest('.new-venue').querySelector('b') || {}).textContent, link: /maps/.test(b.href) ? 'map' : 'website' });
       else if (b = t.closest('a[href*="amazon.com"], a[href*="etsy.com"]')) track('shop_click', { store: /amazon/.test(b.href) ? 'amazon' : 'etsy', list: b.closest('.get-look') ? 'get_this_look' : 'table_basics', item: (b.closest('.it, .prod') && (b.closest('.it, .prod').querySelector('b') || {}).textContent) || '' });
       else if (b = t.closest('a[href*="spotify.com"], a[href*="music.apple.com"]')) track('song_play', { service: /spotify/.test(b.href) ? 'spotify' : 'apple_music' });

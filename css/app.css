@@ -607,3 +607,28 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
   body.printing-plan .plan-sheet { font-size: 11pt; color: #222; }
 }
 .plan-sheet .qty td, .plan-sheet .qty th { overflow-wrap: normal; word-break: normal; } .plan-sheet .qty td.small, .plan-sheet .qty td.n { white-space: nowrap; }
+
+/* Options: up to three per category, a front-runner, and the side-by-side comparison */
+.optbar { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); }
+.optbar.wide { margin-top: 0; padding: 12px 14px; background: var(--champagne-soft); border-color: transparent; }
+.optbar .grow { min-width: 0; }
+.optbar [data-compare] { white-space: nowrap; }
+.sheet:has(.cmp) { max-width: 860px; }
+.sheet:has(.cmp) { grid-template-columns: minmax(0, 1fr); }
+.cmp { min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
+.cmp-row { display: grid; grid-template-columns: 74px repeat(var(--n), minmax(150px, 1fr)); border-top: 1px solid var(--line); min-width: calc(74px + var(--n) * 150px); }
+.cmp-row:first-child { border-top: 0; }
+.cmp-l { position: sticky; left: 0; background: var(--surface); padding: 10px 8px 10px 12px; font-size: .78rem; color: var(--muted); z-index: 1; }
+.cmp-c { padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; font-size: .9rem; border-left: 1px solid var(--line); overflow-wrap: anywhere; }
+.cmp-row:first-child .cmp-c { flex-direction: column; font-size: .95rem; }
+.cmp-c.on { background: #FBF8F2; }
+.optbar[hidden] { display: none; }
+.cmp-c .btn { flex: 0 0 auto; }
+.cmp-add { display: grid; gap: 10px; }
+.cmp-add summary { cursor: pointer; }
+
+.cmp-acts { display: grid; gap: 8px; width: 100%; justify-items: stretch; }
+.cmp-acts .btn { width: 100%; justify-content: center; }
+.cmp-acts .link { justify-self: center; }
+.cmp-swipe { margin: -6px 0 0; }
+@media (min-width: 700px) { .cmp-swipe { display: none; } }

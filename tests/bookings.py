@@ -29,7 +29,7 @@ with sync_playwright() as p:
         lb=pg.query_selector_all('[data-live]'); lb[0].click(); pg.wait_for_selector('[data-short]'); pg.click('[data-short] >> nth=1'); pg.wait_for_timeout(200)
         pg.goto(U+base+'/budget'); pg.wait_for_timeout(300)
         print(n,'bookings:', pg.inner_text('.bookings').replace('\n',' | ')[:260])
-        pg.click('[data-bookit] >> nth=0'); pg.wait_for_selector('#amt'); print(n,'note prefilled:', pg.input_value('#nt')); pg.fill('#amt','1500'); pg.select_option('#src','booking'); pg.click('#ok'); pg.wait_for_timeout(300)
+        pg.click('[data-compare] >> nth=0'); pg.wait_for_selector('.cmp'); pg.click('[data-book-opt] >> nth=0'); pg.wait_for_selector('#amt'); print(n,'note prefilled:', pg.input_value('#nt')); pg.fill('#amt','1500'); pg.select_option('#src','booking'); pg.click('#ok'); pg.wait_for_timeout(300)
         print(n,'after booking:', pg.inner_text('.bookings').replace('\n',' | ')[:120])
         pg.query_selector('.bookings').scroll_into_view_if_needed(); pg.evaluate('window.scrollBy(0,-100)'); pg.wait_for_timeout(100); pg.screenshot(path=(__import__('sys').argv[1] if len(__import__('sys').argv) > 1 else '/tmp') + '/'+f'book_{n}.png')
         pg.goto(U+base+'/vendors'); pg.wait_for_timeout(300); print(n,'vendor badges:', [x.inner_text() for x in pg.query_selector_all('.badge[class*=st-]')][:6])

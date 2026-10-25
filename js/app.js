@@ -896,7 +896,7 @@
     var vend = vendorCats(ev, b), booked = vend.filter(function (i) { return statusOf(ev, i.id) === 'booked'; }).length;
     var where = ev.settingOpen ? { done: false, label: 'Decide where to host it', detail: 'Compare a restaurant, a venue, outdoors and home', href: base }
       : ev.setting === 'home' ? { done: true, label: 'Where: at home', detail: 'No venue to book' }
-      : { done: vst === 'booked', label: rest ? 'Reserve the restaurant' : ev.setting === 'privateRoom' ? 'Book the private room' : 'Book your venue', detail: vst === 'booked' ? 'Booked' : saved ? plural(saved, 'place') + ' saved, none booked yet' : 'Browse places that fit your plan, then mark the one you book', href: base + '/places' };
+      : { done: vst === 'booked', label: rest ? 'Reserve the restaurant' : ev.setting === 'privateRoom' ? 'Book the private room' : 'Book your venue', detail: vst === 'booked' ? 'Booked' : saved ? 'Front-runner: ' + pickOf(ev, vc).name + (saved > 1 ? ', ' + plural(saved, 'option') + ' to compare' : '') : 'Browse places that fit your plan, then mark the one you book', href: base + '/places' };
     return [
       { done: true, label: 'Choose your look', detail: ev.concept.styleName, href: base + '/concepts' },
       { done: !!ev.date, label: 'Set your date', detail: ev.date ? fmtDate(ev.date) + (ev.time ? ', ' + fmtTime(ev.time) : '') : 'Due dates and your day-of schedule follow it', act: 'when' },
@@ -926,7 +926,7 @@
   TAB_VIEWS.plan = function (ev, b) {
     if (preview(ev)) return '<div class="stack"><div class="lock-card big"><h3>Your finished plan</h3><p class="muted">Everything you chose, in one place: your look, every cost, the venue and vendors you booked, the menu, what to buy, the playlist and your day-of schedule. Save it as a PDF, print it or share it with a co-host.</p><button class="btn" data-keep>Keep my plan to see it</button></div></div>';
     var c = ev.concept, ros = ev.ros || E.runOfShow(ev);
-    var stTxt = function (cat) { var st = statusOf(ev, cat), ov = (ev.overrides || {})[cat]; return st === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : st === 'quote' ? 'Quote received' : st === 'short' ? savedFor(ev, cat).map(function (x) { return x.name; }).join(', ') + ' (saved)' : 'Still to book'; };
+    var stTxt = function (cat) { var st = statusOf(ev, cat), ov = (ev.overrides || {})[cat]; return st === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : st === 'quote' ? (ov && ov.note ? 'Front-runner: ' + ov.note + ', quoted ' + money(ov.amount) : 'Quote received') : st === 'short' ? (function () { var pk = pickOf(ev, cat), o = savedFor(ev, cat).filter(function (x) { return x !== pk; }).map(function (x) { return x.name; }); return 'Front-runner: ' + pk.name + (o.length ? ' (also considering ' + o.join(' and ') + ')' : ''); })() : 'Still to book'; };
     var vend = [venueCat(ev)].concat(vendorCats(ev, b).map(function (i) { return i.id; })).filter(function (x, i, a) { return a.indexOf(x) === i && b.items.some(function (it) { return it.id === x; }); });
     var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
     var todo = E.checklist(ev).filter(function (x) { return !checkDone(ev, x.text); }).slice(0, 6);
@@ -1064,19 +1064,104 @@
   var STATUS_TXT = { booked: 'Booked', quote: 'Got a price', short: 'Shortlisted', todo: 'To book' };
   function statusBadge(ev, cat) { var st = statusOf(ev, cat); return '<span class="badge st-' + st + '">' + STATUS_TXT[st] + (st === 'short' ? ' (' + savedFor(ev, cat).length + ')' : '') + '</span>'; }
   function saveBtn(ev, p, cat) {
-    FOUND[p.id] = { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', maps: p.mapsUrl || '', address: p.address || '' };
-    var on = (ev.shortlist || []).some(function (x) { return x.id === p.id; });
-    return '<button class="btn small' + (on ? ' gold' : ' ghost') + '" data-short="' + esc(p.id) + '" aria-pressed="' + on + '">' + (on ? 'Saved' : 'Save') + '</button>';
+    var key = cat + '|' + p.id;
+    FOUND[key] = { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '' };
+    var on = (ev.shortlist || []).some(function (x) { return x.id === p.id && x.cat === cat; });
+    return '<button class="btn small' + (on ? ' gold' : ' ghost') + '" data-short="' + esc(key) + '" aria-pressed="' + on + '">' + (on ? 'Saved' : 'Save') + '</button>';
   }
-  function bindSave(ev, box) {
+  /* Up to three options per category; one is the front-runner (the first saved, until she stars another). */
+  var MAX_OPTIONS = 3;
+  function catName(cat) { var c = D.CATEGORIES[cat]; return c ? c.name.split(' (')[0] : 'Option'; }
+  function pickOf(ev, cat) { var l = savedFor(ev, cat); return l.find(function (x) { return x.pick; }) || l[0] || null; }
+  function setPick(ev, cat, id) { savedFor(ev, cat).forEach(function (x) { x.pick = x.id === id; }); }
+  function removeOption(ev, id, cat) { var same = function (o) { return o.id === id && o.cat === cat; }; var x = (ev.shortlist || []).find(same); ev.shortlist = (ev.shortlist || []).filter(function (o) { return !same(o); }); if (x && x.pick) { var n = savedFor(ev, x.cat)[0]; if (n) n.pick = true; } }
+  function addOption(ev, item) { ev.shortlist = ev.shortlist || []; var first = !savedFor(ev, item.cat).length; ev.shortlist.push(Object.assign({}, item, { pick: first })); return first; }
+  function bindSave(ev, box, after) {
     box.addEventListener('click', function (e) {
       var bt = e.target.closest('[data-short]'); if (!bt) return;
       if (lockSample(ev)) return;
       var id = bt.dataset.short, list = ev.shortlist = ev.shortlist || [];
-      var i = list.findIndex(function (x) { return x.id === id; });
-      if (i >= 0) { list.splice(i, 1); bt.textContent = 'Save'; bt.className = 'btn small ghost'; bt.setAttribute('aria-pressed', 'false'); toast('Removed from your shortlist'); }
-      else if (FOUND[id]) { list.push(FOUND[id]); bt.textContent = 'Saved'; bt.className = 'btn small gold'; bt.setAttribute('aria-pressed', 'true'); toast('Saved to your shortlist. See it under Budget.'); }
-      saveEvent(ev);
+      var i = list.findIndex(function (x) { return x.cat + '|' + x.id === id; });
+      var mark = function (on) { bt.textContent = on ? 'Saved' : 'Save'; bt.className = 'btn small ' + (on ? 'gold' : 'ghost'); bt.setAttribute('aria-pressed', on); };
+      if (i >= 0) { var cat0 = list[i].cat; removeOption(ev, list[i].id, cat0); syncPrice(ev, cat0); mark(false); toast('Removed from your options'); saveEvent(ev); if (after) after(); return; }
+      var item = FOUND[id]; if (!item) return;
+      var mine = savedFor(ev, item.cat);
+      if (mine.length >= MAX_OPTIONS) {
+        /* three is the limit: swap one out, so the choice stays focused */
+        return sheet('<h3>You have 3 ' + esc(E.lc(catName(item.cat))) + ' options</h3><p class="muted">Choose one to replace with ' + esc(item.name) + ', or keep your three.</p><div class="list">' + mine.map(function (x) { return '<div class="it"><span class="grow"><b>' + esc(x.name) + '</b>' + (x.pick ? ' <span class="badge est">Front-runner</span>' : '') + '</span><button class="btn small ghost" data-swap-out="' + esc(x.id) + '">Replace</button></div>'; }).join('') + '</div><button class="btn ghost block" data-close>Keep my three</button>', function (el, close) {
+          el.addEventListener('click', function (ev2) { var sw = ev2.target.closest('[data-swap-out]'); if (!sw) return; var out = mine.find(function (x) { return x.id === sw.dataset.swapOut; }); var wasPick = out && out.pick; removeOption(ev, sw.dataset.swapOut, item.cat); ev.shortlist.push(Object.assign({}, item, { pick: !!wasPick || !savedFor(ev, item.cat).length })); syncPrice(ev, item.cat); saveEvent(ev); close(); mark(true); var ob = document.querySelector('[data-short="' + (item.cat + '|' + sw.dataset.swapOut).replace(/"/g, '') + '"]'); if (ob) { ob.textContent = 'Save'; ob.className = 'btn small ghost'; ob.setAttribute('aria-pressed', 'false'); } toast('Replaced. Compare your three under Budget & bookings.'); if (after) after(); });
+        });
+      }
+      var first = addOption(ev, item); mark(true); saveEvent(ev);
+      toast(first ? item.name + ' is your front-runner. Save up to 2 more to compare.' : 'Saved: ' + (mine.length + 1) + ' of 3 ' + E.lc(catName(item.cat)) + ' options');
+      if (after) after();
+    });
+  }
+  /* A small bar on Venues and Vendors: how many options she has for this category, and the way into the comparison. */
+  function optBar(ev, cat, wide) {
+    var l = savedFor(ev, cat), pk = pickOf(ev, cat), st = statusOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
+    var txt = st === 'booked' ? '<span class="badge ok">Booked</span> ' + esc(ov.note || (pk ? pk.name : '')) : l.length ? '\u2605 <b>' + esc(pk.name) + '</b> <span class="muted">is your front-runner \u00b7 ' + l.length + ' of 3 saved</span>' : '<span class="muted">' + (wide ? 'Save up to 3 ' + E.lc(catName(cat)) + ' options from the results below, or add one you found, then compare them side by side.' : 'Save up to 3 options to compare') + '</span>';
+    if (!l.length && !wide && st !== 'booked') return '<div class="optbar small" data-optbar="' + cat + '" hidden></div>';
+    return '<div class="optbar small" data-optbar="' + cat + '"><span class="grow">' + txt + '</span><button class="link small" data-compare="' + cat + '">' + (l.length > 1 ? 'Compare ' + l.length + ' side by side' : l.length ? 'Open' : 'Add your own') + '</button></div>';
+  }
+  function bindCompare(ev, rerender) { $('#tab').addEventListener('click', function (e) { var b = e.target.closest('[data-optbar] [data-compare]'); if (b) compareSheet(ev, b.dataset.compare, rerender); }); }
+  function refreshBars(ev) { $$('[data-optbar]').forEach(function (el) { el.outerHTML = optBar(ev, el.dataset.optbar, el.classList.contains('wide')).replace('class="optbar', 'class="optbar' + (el.classList.contains('wide') ? ' wide' : '')); }); }
+  /* The budget follows the front-runner's quote until something is booked. */
+  function syncPrice(ev, cat) {
+    var ov = (ev.overrides || {})[cat]; if (ov && ov.source === 'booking') return;
+    var pk = pickOf(ev, cat), names = savedFor(ev, cat).map(function (x) { return x.name; });
+    if (pk && pk.quote) { ev.overrides = ev.overrides || {}; ev.overrides[cat] = { amount: pk.quote, source: 'quote', note: pk.name }; }
+    else if (ov && ov.source === 'quote' && (names.indexOf(ov.note) >= 0 || /\S/.test(ov.note || '') && !pk)) delete ev.overrides[cat];
+  }
+  /* Side by side: her up to three options for one category, with the facts that matter and one front-runner. */
+  var PRICE_TXT = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
+  function compareSheet(ev, cat, rerender) {
+    var draw = function (el) {
+      var l = savedFor(ev, cat), pk = pickOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
+      var row = function (label, fn) { return '<div class="cmp-row"><span class="cmp-l">' + label + '</span>' + l.map(function (x) { return '<span class="cmp-c' + (pk && x.id === pk.id ? ' on' : '') + '">' + fn(x) + '</span>'; }).join('') + '</div>'; };
+      el.innerHTML = '<h3>Compare ' + esc(E.lc(catName(cat))) + ' options</h3><p class="muted small">Your ' + (l.length === 1 ? 'option' : l.length + ' options') + ', side by side. Star your front-runner; contact them, then mark the one you book.</p>' +
+        (l.length ? '<div class="cmp" style="--n:' + l.length + '">' +
+          row('', function (x) { return '<b>' + esc(x.name) + '</b>' + (ov.source === 'booking' && ov.note === x.name ? '<span class="badge ok">Booked</span>' : pk && x.id === pk.id ? '<span class="badge est">\u2605 Front-runner</span>' : ''); }) +
+          row('Rating', function (x) { return x.rating ? '\u2605 ' + x.rating + (x.reviews ? ' <span class="muted small">(' + Number(x.reviews).toLocaleString('en-US') + ')</span>' : '') : '<span class="muted">\u2014</span>'; }) +
+          row('Price', function (x) { return ov.note === x.name && ov.amount ? '<b class="num">' + money(ov.amount) + '</b> <span class="muted small">' + (ov.source === 'booking' ? 'booked' : 'quote') + '</span>' : x.quote ? '<span class="num">' + money(x.quote) + '</span> <span class="muted small">quote</span>' : PRICE_TXT[x.price] ? PRICE_TXT[x.price] : '<span class="muted">Ask for a quote</span>'; }) +
+          row('Where', function (x) { return x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : '<span class="muted">\u2014</span>'; }) +
+          row('', function (x) { return (x.site ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.site) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : '') + (x.phone ? '<a class="btn small ghost" href="tel:' + esc(x.phone.replace(/[^\d+]/g, '')) + '">Call</a>' : ''); }) +
+          row('', function (x) { var top = pk && x.id === pk.id; return '<span class="cmp-acts">' + (top ? '' : '<button class="btn small ghost" data-pick-opt="' + esc(x.id) + '">\u2605 Make front-runner</button>') + '<button class="btn small ghost" data-quote-opt="' + esc(x.id) + '">' + (x.quote ? 'Change quote' : 'Add quote') + '</button><button class="btn small' + (top ? '' : ' ghost') + '" data-book-opt="' + esc(x.id) + '">I booked this</button><button class="link small" data-rm-opt="' + esc(x.id) + '">Remove</button></span>'; }) +
+          '</div>' + (l.length > 2 ? '<p class="muted small cmp-swipe">Swipe sideways to see all 3.</p>' : '') : '<p class="muted">No options saved yet. Tap Save on any result, or add one you found yourself.</p>') +
+        (l.length < MAX_OPTIONS ? '<details class="cmp-add"' + (l.length ? '' : ' open') + '><summary class="link small">Add one you found yourself</summary><div class="grid2"><label class="field"><span>Business name</span><input class="input" id="oname"></label><label class="field"><span>Website or phone (optional)</span><input class="input" id="olink"></label></div><button class="btn small" id="oadd">Add option</button></details>' : '') +
+        '<button class="btn ghost block" data-close>Done</button>';
+    };
+    sheet('<div id="cmpBox"></div>', function (el, close) {
+      var box = $('#cmpBox', el); draw(box);
+      box.addEventListener('click', function (e) {
+        var t = e.target.closest('button'); if (!t || lockSample(ev)) return;
+        var find = function (id) { return savedFor(ev, cat).find(function (x) { return x.id === id; }); };
+        if (t.dataset.pickOpt) { setPick(ev, cat, t.dataset.pickOpt); syncPrice(ev, cat); saveEvent(ev); draw(box); toast(find(t.dataset.pickOpt).name + ' is your front-runner'); }
+        else if (t.dataset.rmOpt) { removeOption(ev, t.dataset.rmOpt, cat); syncPrice(ev, cat); saveEvent(ev); draw(box); }
+        else if (t.dataset.quoteOpt || t.dataset.bookOpt) {
+          var x = find(t.dataset.quoteOpt || t.dataset.bookOpt), booking = !!t.dataset.bookOpt;
+          var prev = (ev.overrides || {})[cat]; prev = prev ? Object.assign({}, prev) : null;
+          close(); openPrice(ev, cat, x.name, booking ? 'booking' : 'quote', function () {
+            var ov = (ev.overrides || {})[cat];
+            if (ov && ov.source === 'booking') setPick(ev, cat, x.id);
+            else if (ov && ov.note === x.name) { x.quote = ov.amount; if (prev && prev.source === 'booking') ev.overrides[cat] = prev; else syncPrice(ev, cat); }
+            else if (!ov && x.quote && !booking) { delete x.quote; syncPrice(ev, cat); }
+            saveEvent(ev); rerender();
+          });
+        }
+        else if (t.id === 'oadd') { var n = $('#oname', box).value.trim(); if (!n) return toast('Enter the business name'); var lk = $('#olink', box).value.trim(); addOption(ev, { id: 'own-' + uid(), name: n, cat: cat, site: /^https?:|\.\w{2,}/.test(lk) && !/^[\d\s()+-]+$/.test(lk) ? (/^https?:/.test(lk) ? lk : 'https://' + lk) : '', phone: /^[\d\s()+-]{7,}$/.test(lk) ? lk : '' }); saveEvent(ev); draw(box); }
+      });
+    });
+    var onClose = new MutationObserver(function () { if (!document.querySelector('#cmpBox')) { onClose.disconnect(); rerender(); } }); onClose.observe(document.body, { childList: true });
+  }
+  /* Add or change a price for one category (quote, booking or a vendor's published price). */
+  function openPrice(ev, id, note, source, done) {
+    if (lockSample(ev)) return; var cur = (ev.overrides || {})[id] || {}; if (note && cur.note !== note) cur = { note: note, source: source || 'quote' }; else if (source) cur = Object.assign({}, cur, { source: source });
+    sheet('<h3>' + (cur.source === 'booking' ? 'Booked: ' : 'Add a price for ') + esc(note || E.lc(D.CATEGORIES[id].name)) + '</h3><p class="muted small">Add a quote you received or a confirmed booking. Your budget uses this instead of the estimate.</p><label class="field"><span>Total amount (USD), including fees</span><input class="input num" type="number" min="0" id="amt" value="' + (cur.amount || '') + '"></label>' +
+      '<label class="field"><span>What is this price?</span><select class="input" id="src"><option value="quote">Quote I received</option><option value="booking"' + (cur.source === 'booking' ? ' selected' : '') + '>Booked and confirmed</option><option value="vendor"' + (cur.source === 'vendor' ? ' selected' : '') + '>Price published by the vendor</option></select></label>' +
+      '<label class="field"><span>Vendor or note (optional)</span><input class="input" id="nt" value="' + esc(cur.note || '') + '"></label><button class="btn gold block" id="ok">Save price</button>' + ((ev.overrides || {})[id] && (ev.overrides || {})[id].amount ? '<button class="btn ghost block" id="clr">Use the estimate again</button>' : '') + '<button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
+      $('#ok', el).addEventListener('click', function () { var a = +$('#amt', el).value; if (!(a > 0)) return toast('Enter an amount'); ev.overrides = ev.overrides || {}; ev.overrides[id] = { amount: a, source: $('#src', el).value, note: $('#nt', el).value.trim() }; close(); if (done) done(); else saveEvent(ev); toast('Price saved. Totals updated.'); });
+      var c = $('#clr', el); if (c) c.addEventListener('click', function () { delete ev.overrides[id]; close(); if (done) done(); else saveEvent(ev); toast('Back to the estimate'); });
     });
   }
   function bookingsPanel(ev, b) {
@@ -1088,8 +1173,9 @@
     return '<div class="panel stack bookings"><div class="row" style="justify-content:space-between"><h3>Bookings</h3><span class="small muted num">' + booked.length + ' of ' + lines.length + ' booked</span></div>' +
       '<div class="meter"><i style="width:' + (lines.length ? Math.round(booked.length / lines.length * 100) : 0) + '%"></i></div>' +
       '<div class="bk-stats"><div><b class="num">' + money(bookedAmt) + '</b><span class="small muted">confirmed</span></div><div><b class="num">' + quoted.length + '</b><span class="small muted">with a price</span></div><div><b class="num">' + sl.length + '</b><span class="small muted">saved</span></div></div>' +
-      (sl.length ? '<div class="list">' + sl.map(function (x, k) { var cat = D.CATEGORIES[x.cat]; return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b><div class="small muted">' + esc(cat ? cat.name : '') + (x.rating ? ' · ★ ' + x.rating : '') + '</div>' + (((ev.overrides || {})[x.cat] || {}).note === x.name ? '<div style="margin-top:4px">' + statusBadge(ev, x.cat) + '</div>' : '') + '</div><span class="acts">' + (x.url ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.url) + '">Contact</a>' : '') + '<button class="btn small" data-bookit="' + k + '">Add price</button><button class="link small" data-unsave="' + k + '">Remove</button></span></div>'; }).join('') + '</div>'
-        : '<p class="muted small">Tap Save on any venue or vendor in Venues or Vendors to build your shortlist here. When you get a quote or book, add the price and your totals update.</p>') +
+      (sl.length ? '<div class="list">' + sl.map(function (x) { return x.cat; }).filter(function (c, i, a) { return a.indexOf(c) === i; }).map(function (cat) { var l = savedFor(ev, cat), pk = pickOf(ev, cat), st = statusOf(ev, cat), ov = (ev.overrides || {})[cat] || {};
+          return '<div class="it"><div class="grow"><b>' + esc(catName(cat)) + '</b><div class="small">' + (st === 'booked' ? '<span class="badge ok">Booked</span> ' + esc(ov.note || pk.name) : '\u2605 ' + esc(pk.name) + ' <span class="muted">front-runner</span>') + '</div><div class="small muted">' + plural(l.length, 'option') + ' saved' + (l.length < MAX_OPTIONS && st !== 'booked' ? ', save up to ' + (MAX_OPTIONS - l.length) + ' more' : '') + '</div></div><span class="acts"><button class="btn small" data-compare="' + cat + '">' + (l.length > 1 ? 'Compare ' + l.length : 'Open') + '</button></span></div>'; }).join('') + '</div>'
+        : '<p class="muted small">Save up to 3 options for each venue or vendor in Venues and Vendors. They show here side by side so you can pick a front-runner, add quotes and mark the one you book.</p>') +
       '</div>';
   }
 
@@ -1130,8 +1216,7 @@
       });
     };
     $$('[data-price]').forEach(function (btn) { btn.addEventListener('click', function () { priceSheet(btn.dataset.price); }); });
-    $$('[data-bookit]').forEach(function (btn) { btn.addEventListener('click', function () { var x = ev.shortlist[+btn.dataset.bookit]; if (x) priceSheet(x.cat, x.name); }); });
-    $$('[data-unsave]').forEach(function (btn) { btn.addEventListener('click', function () { if (lockSample(ev)) return; var bf = snap(ev); ev.shortlist.splice(+btn.dataset.unsave, 1); save(); rerender(); undoToast(ev, bf, 'Removed from your shortlist', rerender); }); });
+    $$('[data-compare]').forEach(function (btn) { btn.addEventListener('click', function () { compareSheet(ev, btn.dataset.compare, rerender); }); });
   };
 
   /* Venues: types that fit, live search links, drive times */
@@ -1172,7 +1257,7 @@
       '<div><button class="btn small">Apply</button></div></form>';
     return (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' + filters +
       '<p class="small muted">' + (AI.live ? 'Tap View venues to see top-rated places in ' + esc(city) + '. Open any one to see photos, hours and contact details, then reach out to schedule a tour. ' : '') + 'Every list is matched to ' + (b.tier.id === 'F' ? 'your budget' : 'your ' + esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[venueLevel(ev, b)]) + ' level') + ': well-reviewed, polished places only, never budget chains.</p>' +
-      newVenues(ev) + (AI.live ? '' : '<div class="note">Live venue photos, ratings, hours and drive times appear here when venue search is connected at launch. For now, each idea opens a live map search.</div>') +
+      optBar(ev, venueCat(ev), true).replace('class="optbar', 'class="optbar wide') + newVenues(ev) + (AI.live ? '' : '<div class="note">Live venue photos, ratings, hours and drive times appear here when venue search is connected at launch. For now, each idea opens a live map search.</div>') +
       '<div class="list panel">' + types.map(function (v) {
         var q = venueQuery(v, ev, b) + ' in ' + (ev.area ? ev.area + ', ' : '') + city;
         var dir = ev.start ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(ev.start) + '&destination=' + encodeURIComponent(q) + '">Drive time</a>' : '';
@@ -1242,7 +1327,7 @@
     return m[v] || ['fits your guest count', 'check what is included'];
   }
   TAB_BIND.places = function (ev, save, rerender) {
-    bindSave(ev, $('#tab')); bindWhere(ev, rerender);
+    bindSave(ev, $('#tab'), function () { refreshBars(ev); }); bindWhere(ev, rerender); bindCompare(ev, rerender);
     $$('[data-live]').forEach(function (btn) { btn.addEventListener('click', function () {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; }); ev.lastVenue = btn.dataset.live;
       var box = document.querySelector('.live-res[data-for="' + btn.dataset.live.replace(/"/g, '') + '"]') || $('#live'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding venues\u2026</p>';
@@ -1304,7 +1389,7 @@
     return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">Estimated prices in ' + esc(city.split(',')[0] || 'your city') + ' for your guest count and ' + (b.tier.id === 'F' ? 'budget' : esc({ L: 'Luxe for Less', S: 'Signature', U: 'Ultra Luxe' }[lvl]) + ' level') + ', including tax and tips where they apply. ' + (AI.live ? 'Tap a category to see top-rated businesses that provide it.' : '') + '</p>' +
       '<div class="list panel">' + cats.map(function (i) {
         var q = (LEVEL_WORD[lvl] + ' ' + (VENDOR_SEARCH[i.id] || i.name.split(' (')[0])).replace('luxury five-star', 'luxury');
-        return '<div class="it"><div class="grow"><b>' + esc(i.name) + '</b> ' + statusBadge(ev, i.id) + '<div class="small">Estimated cost <b class="num">about ' + money(i.lo) + ' to ' + money(i.hi) + '</b></div>' + (VENDOR_NOTE[i.id] ? '<div class="small muted">' + esc(i.id === 'hairMakeup' ? 'On-site styling for ' + honoree(ev) + (ev.type === 'wedding' || /shower|bachelorette|quince/.test(ev.type) ? ' and the party' : '') : VENDOR_NOTE[i.id]) + '</div>' : '') + '</div>' +
+        return '<div class="it"><div class="grow"><b>' + esc(i.name) + '</b> ' + statusBadge(ev, i.id) + '<div class="small">Estimated cost <b class="num">about ' + money(i.lo) + ' to ' + money(i.hi) + '</b></div>' + (VENDOR_NOTE[i.id] ? '<div class="small muted">' + esc(i.id === 'hairMakeup' ? 'On-site styling for ' + honoree(ev) + (ev.type === 'wedding' || /shower|bachelorette|quince/.test(ev.type) ? ' and the party' : '') : VENDOR_NOTE[i.id]) + '</div>' : '') + optBar(ev, i.id) + '</div>' +
           '<span class="acts">' + (AI.live ? '<button class="btn small ghost" data-vendor="' + esc(i.id) + '" data-q="' + esc(q) + '" data-level="' + lvl + '">View top-rated</button>' : '<a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q + ' in ' + city) + '">View on map</a>') + '</span></div><div class="live-res" data-for="v-' + esc(i.id) + '"></div>';
       }).join('') + '</div>' + more(ev, catsAll, cats.length, 'vendor categories with prices') + '<p class="muted small"><b>All prices are estimates</b> from typical local rates, not quotes. Real prices come from each vendor. Add a real quote anytime under Budget and your totals update. You pay vendors directly; Event Couture never holds your money.</p></div>';
   };
@@ -1313,8 +1398,8 @@
     var b = $('#copySongs'); if (!b) return;
     b.addEventListener('click', function () { var nm = document.querySelector('.pl-name'); copyText((nm ? nm.textContent + '\n\n' : '') + [].slice.call(document.querySelectorAll('.songs li')).map(function (li, i) { var sh = li.querySelector('.sec-h'); return (sh ? (i ? '\n' : '') + sh.textContent + '\n' : '') + (i + 1) + '. ' + li.querySelector('b').textContent + ' \u2014' + li.querySelector('.muted').textContent; }).join('\n')); });
   };
-  TAB_BIND.vendors = function (ev) {
-    bindSave(ev, $('#tab'));
+  TAB_BIND.vendors = function (ev, save, rerender) {
+    bindSave(ev, $('#tab'), function () { refreshBars(ev); }); bindCompare(ev, rerender);
     $$('[data-vendor]').forEach(function (btn) { btn.addEventListener('click', function () {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; });
       var box = document.querySelector('.live-res[data-for="v-' + btn.dataset.vendor + '"]'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding top-rated businesses…</p>';
