@@ -1549,7 +1549,7 @@
   function guestPage(id) {
     var ev = getEvent(id) || (/^sample-\d+$/.test(id || '') ? sampleEvent(+id.split('-')[1]) : null);
     if (ev && !ev.concept) ev = null;
-    if (!ev) return frame('<div class="invite"><h2>This invitation isn’t available</h2><p class="muted">The host may have made it private. Ask them for a new link.</p></div>');
+    if (!ev) return frame('<div class="invite"><h2>This invitation isn’t available here yet</h2><p class="muted">' + (CFG.preview ? 'Event Couture is in preview, so invitations open only on the phone or computer where they were made. Sending invitations to guests turns on soon.' : 'The host may have made it private. Ask them for a new link.') + '</p><div><a class="btn ghost" href="#/">Explore Event Couture</a></div></div>');
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] }; var share = splitShare(ev);
     var payBtns = [pl.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pl.venmo) + '">Venmo</a>' : '', pl.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pl.cashapp) + '">Cash App</a>' : '', pl.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pl.paypal) + '">PayPal</a>' : ''].join('');
     var hostView = !!events()[ev.id] || ev.sample;
