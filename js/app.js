@@ -534,6 +534,22 @@
       inspiration: { photos: [], links: [], text: '', vibes: [] }, priorities: [], guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, overrides: {}, exclude: [], include: [], tier: 'F', created: Date.now() };
   }
   var JUST_CREATED = {};
+  /* Where in the city the venue should be: a short list of neighborhoods people ask for, or any area she types. */
+  function areaOptions(city, cur) {
+    var list = D.AREAS[city] || [], other = cur && list.indexOf(cur) < 0;
+    return '<option value="">' + (city && city !== 'Other US city' ? 'Anywhere in ' + esc(city.split(',')[0]) : 'Anywhere in the city') + '</option>' + list.map(function (a) { return '<option' + (a === cur ? ' selected' : '') + '>' + esc(a) + '</option>'; }).join('') + '<option value="__other"' + (other ? ' selected' : '') + '>Another area\u2026</option>';
+  }
+  function areaField(city, cur, ids) {
+    var other = cur && (D.AREAS[city] || []).indexOf(cur) < 0;
+    return '<label class="field"><span>Area for your venue (optional)</span><select class="input" id="' + ids[0] + '">' + areaOptions(city, cur) + '</select></label>' +
+      '<label class="field" id="' + ids[1] + 'Wrap"' + (other ? '' : ' hidden') + '><span>Type the area or neighborhood</span><input class="input" id="' + ids[1] + '" value="' + esc(other ? cur : '') + '" placeholder="e.g. Rice Village"></label>';
+  }
+  function readArea(sel, txt) { var v = sel ? sel.value : ''; return v === '__other' ? (txt ? txt.value.trim() : '') : v; }
+  function bindArea(sel, txt, cityOf) {
+    if (!sel) return;
+    sel.addEventListener('change', function () { var w = document.getElementById(txt.id + 'Wrap'); if (w) w.hidden = sel.value !== '__other'; if (sel.value === '__other') txt.focus(); });
+    if (cityOf) cityOf.addEventListener('change', function () { sel.innerHTML = areaOptions(cityOf.value, ''); var w = document.getElementById(txt.id + 'Wrap'); if (w) w.hidden = true; });
+  }
   function wizard(step, id) {
     var done = id && events()[id]; if (done) { if (JUST_CREATED[id] && done.concept) { history.back(); return; } location.replace('#/e/' + id + (done.concept ? '' : '/concepts')); return; }   /* Back past the finished form steps goes to where she was before planning */   /* Back from the concepts page returns to the plan, not a blank form */
     if (!id || (!drafts()[id] && !(pendingDraft && pendingDraft.id === id))) { pendingDraft = newDraft(); location.replace('#/new/1/' + pendingDraft.id); return; }
@@ -624,6 +640,7 @@
           if (!draft.city) { var said = ((draft.inspiration && draft.inspiration.text) || '').toLowerCase(); var hit = D.CITIES.find(function (c) { return c.name !== 'Other US city' && said.indexOf(c.name.split(',')[0].toLowerCase()) >= 0; }); if (hit) draft.city = hit.name; }
           var known = !draft.city || D.CITIES.some(function (c) { return c.name === draft.city; }); return (draft.city ? '' : '<option value="" selected disabled>Choose your city</option>') + D.CITIES.map(function (c) { return '<option' + (c.name === draft.city || (!known && c.name === 'Other US city') ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join(''); })() + '</select></label>' +
         '<label class="field" id="cityOtherWrap"' + (!draft.city || D.CITIES.some(function (c) { return c.name === draft.city && c.name !== 'Other US city'; }) ? ' hidden' : '') + '><span>Your city and state</span><input class="input" id="cityOther" placeholder="e.g. Boise, ID" value="' + esc(!draft.city || D.CITIES.some(function (c) { return c.name === draft.city; }) ? '' : draft.city) + '"></label>' +
+        areaField(draft.city, draft.area || '', ['area', 'areaOther']) +
         '<label class="field"><span>How many people are you inviting? (include plus-ones and yourself)</span><input class="input num" type="number" min="1" max="100000" id="guests" value="' + draft.guests + '"></label>' +
         '<label class="field"><span>Maximum budget for the event (USD, optional)</span><input class="input num" type="number" min="0" step="50" id="budget" value="' + (draft.budget || '') + '" placeholder="Leave blank to see typical prices"></label>' +
         '</div><div class="stack"><h3 id="whereLbl">Where is it? <span class="muted small" style="font-family:var(--body)">(required)</span></h3><span class="muted small">Not sure yet? Pick it and we\u2019ll compare every option for you.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + (draft.setting === st.id && !draft.settingOpen) + '">' + esc(st.name) + '</button>'; }).join('') + '<button type="button" class="chip" data-v="unsure" aria-pressed="' + !!draft.settingOpen + '">Not sure yet</button>' + '</div>' +
@@ -666,6 +683,7 @@
       function saveNow() { if (!$('#guests') || !(+$('#guests').value >= 1)) return; var typedName = $('#name').value.trim(); collect2(); if (!typedName) draft.name = ''; persist(); }
       window.addEventListener('pagehide', saveNow, { once: true }); window.addEventListener('beforeunload', saveNow, { once: true });
       $('#city').addEventListener('change', function () { $('#cityOtherWrap').hidden = this.value !== 'Other US city'; if (this.value === 'Other US city') $('#cityOther').focus(); });
+      bindArea($('#area'), $('#areaOther'), $('#city'));
       $('#alcohol').addEventListener('click', function () { draft.alcoholTouched = true; });
       ['alcohol', 'payer'].forEach(function (g) { $('#' + g).addEventListener('click', function (e) { var bt = e.target.closest('button'); if (!bt) return; $$('#' + g + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === bt); }); }); });
       $('#musts').addEventListener('click', function (e) { var b = e.target.closest('[data-must]'); if (b) draft.mustsTouched = true; if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
@@ -677,6 +695,7 @@
         var sb = $('#setting [aria-pressed="true"]'); draft.settingOpen = !!(sb && sb.dataset.v === 'unsure'); draft.setting = sb ? (draft.settingOpen ? 'indoor' : sb.dataset.v) : null; draft.kids = $('#kids').checked || draft.type === 'kids-birthday'; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
         var ab = $('#alcohol [aria-pressed="true"]'); draft.alcohol = ab ? ab.dataset.v : defaultAlcohol(draft.type, draft.inspiration && draft.inspiration.text);
         var pb = $('#payer [aria-pressed="true"]'); draft.payer = pb ? pb.dataset.v : 'host';
+        if ($('#area')) draft.area = readArea($('#area'), $('#areaOther'));
       }
       $('#later').addEventListener('click', function () { collect2(); if (!$('#name').value.trim()) draft.name = ''; persist(); var nm = draft.name || 'your event'; location.hash = '#/events'; setTimeout(function () { toast('Saved ' + nm + '. Pick it up anytime from My events.'); }, 80); });
       $('#next').addEventListener('click', function () {
@@ -1362,16 +1381,17 @@
   var ORDINAL = ['first', 'second', 'third'];
   var HOWTO_PKG = '<ol class="howto"><li><b>Create</b> your package: a top-rated pick for everything, in one tap</li><li><b>Change</b> anything, or make a second package to compare</li><li><b>Book</b>: contact them and tap I booked it</li></ol>';
   var AUTO_PKG = false;
+  function AREA_LINE(ev) { return '<p class="small pkg-area">Venue area: <b>' + esc(ev.area || 'Anywhere in ' + ev.city.split(',')[0]) + '</b>' + (ev.sample ? '' : ' <button class="link small" id="pkgArea">Change area</button>') + '</p>'; }
   function packagePanel(ev, b) {
     var cats = pkgCats(ev, b), pks = ev.packages || [];
     if (!cats.length) return bookingsPanel(ev, b);
     var bookedN = cats.filter(function (c) { return statusOf(ev, c.cat) === 'booked'; }).length;
     if (!pks.length) return '<div class="panel stack pkg" id="pkg"><div class="pkg-top"><h3>Book everything in one place</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div>' +
-      '<p class="muted">In one tap we pick a top-rated ' + (cats[0].kind === 'venue' ? E.lc(catName(cats[0].cat, ev)) + ' and ' + plural(cats.length - 1, 'vendor') : plural(cats.length, 'vendor')) + ' for your plan in ' + esc(ev.city.split(',')[0]) + '. Then create a second package to compare, swap anything you don\u2019t love, and mark what you book.</p>' +
+      AREA_LINE(ev) + '<p class="muted">In one tap we pick a top-rated ' + (cats[0].kind === 'venue' ? E.lc(catName(cats[0].cat, ev)) + ' and ' + plural(cats.length - 1, 'vendor') : plural(cats.length, 'vendor')) + ' for your plan in ' + esc(ev.city.split(',')[0]) + '. Then create a second package to compare, swap anything you don\u2019t love, and mark what you book.</p>' +
       HOWTO_PKG + (ev.sample ? '' : '<button class="btn gold block pkg-go" id="pkgGo">Create my package</button>') + '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
     var k = Math.min(ev.pkgView || 0, pks.length - 1), pk = pks[k], chosen = (ev.pkgChosen || 0) === k;
     return '<div class="panel stack pkg" id="pkg"><div class="pkg-top"><h3>Your booking package' + (pks.length > 1 ? 's' : '') + '</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div>' +
-      '<div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' +
+      '<div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' + AREA_LINE(ev) +
       '<div class="pkg-tabs" role="tablist">' + pks.map(function (x, i) { return '<button role="tab" data-pkview="' + i + '" aria-selected="' + (i === k) + '">Package ' + (i + 1) + ((ev.pkgChosen || 0) === i ? ' <span aria-label="chosen">\u2605</span>' : '') + '</button>'; }).join('') +
         (pks.length < 3 && !ev.sample ? '<button class="pkg-new" id="pkgMore">+ Create a ' + ORDINAL[pks.length] + ' package</button>' : '') + '</div>' +
       '<p class="small muted" id="pkgMsg" aria-live="polite">' + (chosen ? '<span class="badge ok">Your chosen package</span> These are your front-runners everywhere in your plan.' : 'Compare it with your other package, then choose the one you like best.') + '</p>' +
@@ -1394,6 +1414,23 @@
         var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' });
       });
     };
+    var pa = $('#pkgArea'); if (pa) pa.addEventListener('click', function () {
+      sheet('<h3>Where should your venue be?</h3><p class="muted small">Pick a neighborhood in ' + esc(ev.city.split(',')[0]) + ' or type your own. ' + ((ev.packages || []).length ? 'We\u2019ll find a top-rated venue there for your package.' : 'Your package will look there first.') + '</p>' + areaField(ev.city, ev.area || '', ['parea', 'pareaOther']) + '<button class="btn gold block" id="ok">Save area</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
+        bindArea($('#parea', el), $('#pareaOther', el));
+        $('#ok', el).addEventListener('click', function () {
+          var a = readArea($('#parea', el), $('#pareaOther', el)); if (lockSample(ev)) return; ev.area = a; save(); close();
+          var pks = ev.packages || [], b0 = E.budget(ev, ev.tier), vc = pkgCats(ev, b0).find(function (c) { return c.kind === 'venue'; });
+          if (!pks.length || !vc) { rerender(); return toast(a ? 'Venues will be near ' + a : 'Venues anywhere in ' + ev.city.split(',')[0]); }
+          var k = Math.min(ev.pkgView || 0, pks.length - 1), bk = savedFor(ev, vc.cat).some(function (x) { return isBooked(ev, vc.cat, x); });
+          if (bk) { rerender(); return toast('Area saved. Your venue is already booked, so it stays.'); }
+          toast('Finding a top-rated venue' + (a ? ' near ' + a : '') + '\u2026');
+          pkgSearch(ev, vc).then(function (list) {
+            var inOther = pks.map(function (x) { return x.items[vc.cat]; }).filter(function (id, i) { return i !== k; }), p = list.find(function (x) { return inOther.indexOf(x.id) < 0; });
+            if (p && putInPackage(ev, k, vc.cat, p)) { save(); rerender(); toast('Your venue is now ' + p.name); } else { rerender(); toast('No top-rated venue came back there. Try a nearby area.'); }
+          }).catch(function (e) { rerender(); toast(e.message || 'Search isn\u2019t available right now.'); });
+        });
+      });
+    });
     var go = $('#pkgGo'), more = $('#pkgMore');
     if (go) go.addEventListener('click', function () { build(go); });
     if (go && AUTO_PKG) { AUTO_PKG = false; go.scrollIntoView({ block: 'start' }); build(go); }   /* she tapped Create my package on the Summary page */
@@ -1512,7 +1549,7 @@
     var intro = ev.setting === 'restaurant'
       ? 'Your food and drinks come to about ' + money(foodLine / Math.max(1, ev.guests)) + ' per person with tax and tip. Look for restaurants that take reservations for ' + plural(ev.guests, 'guest') + '.'
       : (venueLine ? 'Your venue budget is about ' + money(venueLine.mid) + '. ' : '') + 'Look for spaces that hold ' + plural(ev.guests, 'guest') + (ev.setting === 'outdoor' ? ' outdoors' : '') + '.';
-    var filters = '<details class="vf-wrap"' + (ev.area || ev.start ? ' open' : '') + '><summary class="link small">' + (ev.area ? 'Showing places near ' + esc(ev.area) + ' \u00b7 change' : 'Narrow by area or add drive times') + '</summary><form class="panel venue-filter" id="vfilter"><label class="field"><span>Area or neighborhood (optional)</span><input class="input" id="varea" value="' + esc(ev.area || '') + '" placeholder="e.g. Uptown, The Woodlands, Downtown"></label>' +
+    var filters = '<details class="vf-wrap"' + (ev.area || ev.start ? ' open' : '') + '><summary class="link small">' + (ev.area ? 'Showing places near ' + esc(ev.area) + ' \u00b7 change' : 'Narrow by area or add drive times') + '</summary><form class="panel venue-filter" id="vfilter"><label class="field"><span>Area or neighborhood (optional)</span><input class="input" id="varea" list="vareaList" value="' + esc(ev.area || '') + '" placeholder="e.g. Uptown, The Woodlands, Downtown"><datalist id="vareaList">' + (D.AREAS[ev.city] || []).map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') + '</datalist></label>' +
       '<label class="field"><span>Your starting point, for drive times (optional)</span><input class="input" id="start" value="' + esc(ev.start || '') + '" placeholder="Home, hotel or ceremony address"></label>' +
       '<div><button class="btn small">Apply</button></div></form></details>';
     return (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.setting === 'restaurant' ? 'Restaurants that fit this plan' : 'Venues that fit this plan') + '</h3><p class="muted">' + intro + '</p>' +

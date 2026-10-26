@@ -3,13 +3,13 @@ from playwright.sync_api import sync_playwright
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 import json, sys, hashlib
 U='http://localhost:8765/'; OUT=sys.argv[1] if len(sys.argv)>1 else '/tmp'
-calls=[0]
-def places_for(q):
-    h=hashlib.md5(q.encode()).hexdigest()[:5]; word=q.split()[-1].title()
+calls=[0]; cities=[]
+def places_for(q, city=''):
+    h=hashlib.md5((q+city).encode()).hexdigest()[:5]; word=q.split()[-1].title()
     return [{'id':h+str(i),'name':f'{word} Studio {"ABCDE"[i]}','rating':4.9-i*0.1,'reviews':300-i*40,'priceLevel':['PRICE_LEVEL_EXPENSIVE','PRICE_LEVEL_MODERATE'][i%2],'address':f'{i+1} Main St, Houston, TX','mapsUrl':'https://maps.google.com/?q='+h,'website':'https://example.com/'+h} for i in range(5)]
 def api(route):
     u=route.request.url; h={'access-control-allow-origin':'*'}
-    if u.endswith('/api/places'): calls[0]+=1; b=json.loads(route.request.post_data); route.fulfill(status=200, content_type='application/json', body=json.dumps({'places':places_for(b['query'])}), headers=h)
+    if u.endswith('/api/places'): calls[0]+=1; b=json.loads(route.request.post_data); cities.append(b.get('city','')); route.fulfill(status=200, content_type='application/json', body=json.dumps({'places':places_for(b['query'], b.get('city',''))}), headers=h)
     elif u.endswith('/api/status'): route.fulfill(status=200, content_type='application/json', body='{"ai":true,"places":true}', headers=h)
     else: route.fulfill(status=500, body='{}', headers=h)
 def cfg(route):
@@ -21,11 +21,11 @@ def check(n, ok, what):
 with sync_playwright() as p:
     b=p.chromium.launch()
     for w,h,n in [(390,844,'phone'),(1280,900,'desktop')]:
-        calls[0]=0
+        calls[0]=0; cities.clear()
         ctx=b.new_context(viewport={'width':w,'height':h}); pg=ctx.new_page(); e=[]; pg.on('pageerror',lambda x:e.append(str(x)))
         pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
         pg.goto(U+'#/new/1'); pg.wait_for_timeout(300); pg.fill('#text','black and gold 40th birthday party'); pg.click('#next'); pg.wait_for_timeout(250)
-        pg.select_option('#type','birthday'); pg.fill('#guests','80'); pg.fill('#expected','80'); pg.fill('#time','19:00'); pg.select_option('#city','Houston, TX'); pg.click('#setting [data-v=indoor]')
+        pg.select_option('#type','birthday'); pg.fill('#guests','80'); pg.fill('#expected','80'); pg.fill('#time','19:00'); pg.select_option('#city','Houston, TX'); pg.select_option('#area','River Oaks'); pg.click('#setting [data-v=indoor]')
         pg.click('#next'); pg.wait_for_selector('.concept', timeout=20000); pg.wait_for_timeout(300)
         check(n, len(pg.query_selector_all('.concept .thumb img'))==len(pg.query_selector_all('.concept')), 'every look has a labeled photo')
         pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
@@ -37,6 +37,7 @@ with sync_playwright() as p:
         rows=pg.query_selector_all('.pk-row'); filled=pg.query_selector_all('.pk-row .pk-biz')
         check(n, len(rows)>=8 and len(filled)==len(rows), f'package fills venue and every vendor in one tap: {len(filled)}/{len(rows)}')
         first_calls=calls[0]
+        check(n, 'River Oaks' in pg.inner_text('.pkg-area') and cities and all(c.startswith('River Oaks, Houston') for c in cities), 'area chosen in the form is used for the package searches')
         check(n, 'Venue' in pg.inner_text('.pk-row >> nth=0'), 'venue first')
         d=ev(); check(n, all(any(x['cat']==c and x.get('pick') for x in d['shortlist']) for c in d['packages'][0]['items']), 'package 1 picks are the front-runners')
         pg.screenshot(path=f'{OUT}/pkg1_{n}.png', full_page=True)
@@ -59,6 +60,11 @@ with sync_playwright() as p:
         pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkswap] >> nth=2'); pg.wait_for_selector('.pk-swap .cmp-add'); oc=pg.get_attribute('[data-pkswap] >> nth=2','data-pkswap')
         pg.click('.pk-swap .cmp-add summary'); pg.fill('[data-ownname]','Bella Cakes by Ana'); pg.fill('[data-ownlink]','bellacakes.com'); pg.click('[data-ownadd]'); pg.wait_for_timeout(300)
         check(n, 'Bella Cakes by Ana' in pg.inner_text('#pkg'), 'her own business goes into the package')
+        # change the venue area from the package
+        pg.click('#pkgArea'); pg.wait_for_selector('#parea'); pg.select_option('#parea','__other'); pg.fill('#pareaOther','Rice Village'); old_v=ev()['packages'][ev()['pkgView']]['items']
+        pg.click('.sheet #ok'); pg.wait_for_timeout(800)
+        d=ev(); new_v=d['packages'][d['pkgView']]['items']; vcat=[c for c in new_v if c in ('venue','privateDining')][0]
+        check(n, d['area']=='Rice Village' and new_v[vcat]!=old_v[vcat] and cities[-1].startswith('Rice Village, Houston'), 'changing the area finds a venue there')
         # choose package 2
         pg.click('[data-pkuse="1"]'); pg.wait_for_timeout(300); d=ev()
         check(n, d['pkgChosen']==1 and all(any(x['cat']==c and x['id']==d['packages'][1]['items'][c] and x.get('pick') for x in d['shortlist']) for c in d['packages'][1]['items']), 'choosing package 2 makes its picks the front-runners')
