@@ -291,7 +291,7 @@
   /* ---------- routes ---------- */
   var draft = null, pendingDraft = null;
   function route() {
-    var h = (location.hash || '#/').slice(1); var p = h.split('/').filter(Boolean);
+    var h = (location.hash || '#/').slice(1); var p = h.split('/').filter(Boolean); E.useCountry(null);   /* prices in a plan follow its country; everything else is US dollars */
     if (p[0] !== 'inspiration') inspoFor_ = null;   /* only the "choose a different photo" page swaps a photo on an existing draft */
     try {
       if (!p.length) return home();
@@ -556,7 +556,7 @@
   /* Where in the city the venue should be: a short list of neighborhoods people ask for, or any area she types. */
   function areaOptions(city, cur) {
     var list = D.AREAS[city] || [], other = cur && list.indexOf(cur) < 0;
-    return '<option value="">' + (city && city !== 'Other US city' ? 'Anywhere in ' + esc(city.split(',')[0]) : 'Anywhere in the city') + '</option>' + list.map(function (a) { return '<option' + (a === cur ? ' selected' : '') + '>' + esc(a) + '</option>'; }).join('') + '<option value="__other"' + (other ? ' selected' : '') + '>Another area\u2026</option>';
+    return '<option value="">' + (city && !/^Other /.test(city) ? 'Anywhere in ' + esc(city.split(',')[0]) : 'Anywhere in the city') + '</option>' + list.map(function (a) { return '<option' + (a === cur ? ' selected' : '') + '>' + esc(a) + '</option>'; }).join('') + '<option value="__other"' + (other ? ' selected' : '') + '>Another area\u2026</option>';
   }
   function areaField(city, cur, ids) {
     var other = cur && (D.AREAS[city] || []).indexOf(cur) < 0;
@@ -564,6 +564,16 @@
       '<label class="field" id="' + ids[1] + 'Wrap"' + (other ? '' : ' hidden') + '><span>Type the area or neighborhood</span><input class="input" id="' + ids[1] + '" value="' + esc(other ? cur : '') + '" placeholder="e.g. Rice Village"></label>';
   }
   function readArea(sel, txt) { var v = sel ? sel.value : ''; return v === '__other' ? (txt ? txt.value.trim() : '') : v; }
+  /* Cities for one country; a city she typed herself selects that country's "Other" choice. */
+  function otherCity(typed, choice) {
+    if (!typed) return choice;
+    if (choice === 'Other city in Canada' && E.countryOf(typed).id !== 'CA') return typed + ', Canada';
+    return typed;
+  }
+  function cityOptions(country, city) {
+    var list = D.CITIES.filter(function (c) { return c.country === country; }), known = !city || list.some(function (c) { return c.name === city; });
+    return (city ? '' : '<option value="" selected disabled>Choose your city</option>') + list.map(function (c) { return '<option' + (c.name === city || (!known && /^Other /.test(c.name) && E.countryOf(city).id === country) ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('');
+  }
   function bindArea(sel, txt, cityOf) {
     if (!sel) return;
     sel.addEventListener('change', function () { var w = document.getElementById(txt.id + 'Wrap'); if (w) w.hidden = sel.value !== '__other'; if (sel.value === '__other') txt.focus(); });
@@ -573,6 +583,7 @@
     var done = id && events()[id]; if (done) { if (JUST_CREATED[id] && done.concept) { history.back(); return; } location.replace('#/e/' + id + (done.concept ? '' : '/concepts')); return; }   /* Back past the finished form steps goes to where she was before planning */   /* Back from the concepts page returns to the plan, not a blank form */
     if (!id || (!drafts()[id] && !(pendingDraft && pendingDraft.id === id))) { pendingDraft = newDraft(); location.replace('#/new/1/' + pendingDraft.id); return; }
     draft = drafts()[id] || pendingDraft;   /* a new draft is saved only once the host adds something or continues */
+    E.useCountry(draft.city || (draft.country === 'CA' ? 'Other city in Canada' : null));
     var W = '#/new/';
     function persist() { draft.step = Math.max(draft.step || 1, step); return saveDraft(draft); }
     function laterBtn() { return '<button type="button" class="link" id="later">Save and finish later</button>'; }
@@ -655,13 +666,17 @@
       frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>A few basics</h2><p class="muted">That\u2019s all we need to build your looks, prices and plan. You can change anything later.</p></div>' +
         '<div class="grid2">' +
         '<label class="field"><span>Event type</span><select class="input" id="type">' + (draft.type ? '' : '<option value="" selected disabled>Choose your event type</option>') + D.EVENT_TYPES.map(function (t) { return '<option value="' + t.id + '"' + (t.id === draft.type && !draft.culture ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '<optgroup label="Cultural weddings">' + Object.keys(D.CULTURES).map(function (k) { return '<option value="wedding" data-culture="' + k + '"' + (draft.type === 'wedding' && draft.culture === k ? ' selected' : '') + '>' + esc(D.CULTURES[k].name) + '</option>'; }).join('') + '</optgroup></select></label>' + '<div class="stack" id="musicBox"' + (draft.culture && D.CULTURES[draft.culture] ? '' : ' hidden') + '>' + musicChips(draft) + '</div>' +
-        '<label class="field"><span>City</span><select class="input" id="city">' + (function () {
-          if (!draft.city) { var said = ((draft.inspiration && draft.inspiration.text) || '').toLowerCase(); var hit = D.CITIES.find(function (c) { return c.name !== 'Other US city' && said.indexOf(c.name.split(',')[0].toLowerCase()) >= 0; }); if (hit) draft.city = hit.name; }
-          var known = !draft.city || D.CITIES.some(function (c) { return c.name === draft.city; }); return (draft.city ? '' : '<option value="" selected disabled>Choose your city</option>') + D.CITIES.map(function (c) { return '<option' + (c.name === draft.city || (!known && c.name === 'Other US city') ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join(''); })() + '</select></label>' +
-        '<label class="field" id="cityOtherWrap"' + (!draft.city || D.CITIES.some(function (c) { return c.name === draft.city && c.name !== 'Other US city'; }) ? ' hidden' : '') + '><span>Your city and state</span><input class="input" id="cityOther" placeholder="e.g. Boise, ID" value="' + esc(!draft.city || D.CITIES.some(function (c) { return c.name === draft.city; }) ? '' : draft.city) + '"></label>' +
+        (function () {
+          if (!draft.city) { var said = ((draft.inspiration && draft.inspiration.text) || '').toLowerCase(); var hit = D.CITIES.find(function (c) { return !/^Other /.test(c.name) && said.indexOf(c.name.split(',')[0].toLowerCase()) >= 0; }); if (hit) draft.city = hit.name; else if (!draft.country && /\bcanad/.test(said)) draft.country = 'CA'; }
+          var co = draft.city ? E.countryOf(draft.city) : (D.COUNTRIES.find(function (c) { return c.id === draft.country; }) || D.COUNTRIES[0]);
+          var known = !draft.city || D.CITIES.some(function (c) { return c.name === draft.city; });
+          return '<label class="field"><span>Country</span><select class="input" id="country">' + D.COUNTRIES.map(function (c) { return '<option value="' + c.id + '"' + (c.id === co.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></label>' +
+            '<label class="field"><span>City</span><select class="input" id="city">' + cityOptions(co.id, draft.city) + '</select></label>' +
+            '<label class="field" id="cityOtherWrap"' + (known || !draft.city ? ' hidden' : '') + '><span id="cityOtherLbl">Your city and ' + co.region + '</span><input class="input" id="cityOther" placeholder="' + esc(co.example) + '" value="' + esc(known ? '' : draft.city) + '"></label>';
+        })() +
         areaField(draft.city, draft.area || '', ['area', 'areaOther']) +
         '<label class="field"><span>How many people are you inviting? (include plus-ones and yourself)</span><input class="input num" type="number" min="1" max="100000" id="guests" value="' + draft.guests + '"></label>' +
-        '<label class="field"><span>Maximum budget for the event (USD, optional)</span><input class="input num" type="number" min="0" step="50" id="budget" value="' + (draft.budget || '') + '" placeholder="Leave blank to see typical prices"></label>' +
+        '<label class="field"><span id="budgetLbl">Maximum budget for the event (' + E.currency() + ', optional)</span><input class="input num" type="number" min="0" step="50" id="budget" value="' + (draft.budget || '') + '" placeholder="Leave blank to see typical prices"></label>' +
         '</div><div class="stack"><h3 id="whereLbl">Where is it? <span class="muted small" style="font-family:var(--body)">(required)</span></h3><span class="muted small">Not sure yet? Pick it and we\u2019ll compare every option for you.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + (draft.setting === st.id && !draft.settingOpen) + '">' + esc(st.name) + '</button>'; }).join('') + '<button type="button" class="chip" data-v="unsure" aria-pressed="' + !!draft.settingOpen + '">Not sure yet</button>' + '</div>' +
         '<label class="row small"><input type="checkbox" id="kids"' + (draft.kids ? ' checked' : '') + '> Children will attend</label></div>' +
         '<details class="more"' + (draft.date || draft.timeTouched || draft.alcoholTouched || draft.mustsTouched || draft.payer && draft.payer !== 'host' ? ' open' : '') + '><summary class="link">More details: date, time, drinks, must-haves (optional)</summary><div class="stack" style="margin-top:12px">' +
@@ -704,7 +719,8 @@
       var autoT; ['input', 'change', 'click'].forEach(function (evt) { $('#main').addEventListener(evt, function () { clearTimeout(autoT); autoT = setTimeout(saveNow, 150); }); });
       function saveNow() { if (!$('#guests') || !(+$('#guests').value >= 1)) return; var typedName = $('#name').value.trim(); collect2(); if (!typedName) draft.name = ''; persist(); }
       window.addEventListener('pagehide', saveNow, { once: true }); window.addEventListener('beforeunload', saveNow, { once: true });
-      $('#city').addEventListener('change', function () { $('#cityOtherWrap').hidden = this.value !== 'Other US city'; if (this.value === 'Other US city') $('#cityOther').focus(); });
+      $('#city').addEventListener('change', function () { var oth = /^Other /.test(this.value); $('#cityOtherWrap').hidden = !oth; if (oth) $('#cityOther').focus(); });
+      $('#country').addEventListener('change', function () { var co = D.COUNTRIES.find(function (c) { return c.id === $('#country').value; }); draft.country = co.id; E.useCountry(co.id === 'CA' ? 'Other city in Canada' : null); var bl = $('#budgetLbl'); if (bl) bl.textContent = 'Maximum budget for the event (' + co.currency + ', optional)'; $('#city').innerHTML = cityOptions(co.id, ''); $('#cityOtherWrap').hidden = true; $('#cityOther').value = ''; $('#cityOther').placeholder = co.example; $('#cityOtherLbl').textContent = 'Your city and ' + co.region; $('#city').dispatchEvent(new Event('change')); });
       bindArea($('#area'), $('#areaOther'), $('#city'));
       $('#expected').addEventListener('input', function () { draft.expectedTouched = true; });
       $('#guests').addEventListener('input', function () { if (!draft.expectedTouched && +this.value >= 1) $('#expected').value = Math.round(+this.value); });
@@ -714,7 +730,7 @@
       $('#setting').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; draft.settingChosen = true; $$('#setting button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); if ((b.dataset.v === 'restaurant' || b.dataset.v === 'privateRoom') && +$('#hours').value > 3 && !draft.hoursTouched) $('#hours').value = b.dataset.v === 'restaurant' ? 2 : 3; });
       function collect2() {
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
-        draft.type = $('#type').value || ''; draft.culture = draft.type === 'wedding' ? selCulture() : ''; if (!draft.culture) delete draft.music; draft.nameAuto = !$('#name').value.trim() || draft.nameAuto && $('#name').value.trim() === draft.name; draft.name = $('#name').value.trim() || (suggestNames(draft, draft.type)[0]) || E.typeOf(draft.type).name; draft.city = !$('#city').value ? '' : $('#city').value === 'Other US city' ? ($('#cityOther').value.trim() || 'Other US city') : $('#city').value; draft.date = $('#date').value; draft.time = $('#time').value || defaultTime(draft.type);
+        draft.type = $('#type').value || ''; draft.culture = draft.type === 'wedding' ? selCulture() : ''; if (!draft.culture) delete draft.music; draft.nameAuto = !$('#name').value.trim() || draft.nameAuto && $('#name').value.trim() === draft.name; draft.name = $('#name').value.trim() || (suggestNames(draft, draft.type)[0]) || E.typeOf(draft.type).name; draft.city = !$('#city').value ? '' : /^Other /.test($('#city').value) ? otherCity($('#cityOther').value.trim(), $('#city').value) : $('#city').value; draft.country = E.countryOf(draft.city).id; draft.date = $('#date').value; draft.time = $('#time').value || defaultTime(draft.type);
         draft.hours = Math.max(1, +$('#hours').value || 3); draft.guests = g; draft.expected = ex || g; draft.budget = Math.max(0, +$('#budget').value || 0); draft.start = $('#start').value.trim();
         var sb = $('#setting [aria-pressed="true"]'); draft.settingOpen = !!(sb && sb.dataset.v === 'unsure'); draft.setting = sb ? (draft.settingOpen ? 'indoor' : sb.dataset.v) : null; draft.kids = $('#kids').checked || draft.type === 'kids-birthday'; draft.priorities = $$('#musts [aria-pressed="true"]').map(function (b) { return b.dataset.must; }); draft.tier = draft.budget ? 'F' : 'S';
         var ab = $('#alcohol [aria-pressed="true"]'); draft.alcohol = ab ? ab.dataset.v : defaultAlcohol(draft.type, draft.inspiration && draft.inspiration.text);
@@ -736,10 +752,10 @@
         if (ex > g && !draft.expectedTouched) { ex = g; $('#expected').value = g; }   /* the folded 'expected' follows the guest count unless she set it */
         if (ex > g) { var md2 = $('details.more'); if (md2) md2.open = true; $('#expected').focus(); return toast('Expected to attend can’t be more than the number of people you’re inviting'); }
         if ($('#date').value && $('#date').value < todayISO()) { var md = $('details.more'); if (md) md.open = true; $('#date').focus(); return toast('That date has already passed. Choose an upcoming date, or leave it blank for now.'); }
-        if ($('#city').value === 'Other US city' && !$('#cityOther').value.trim()) { $('#cityOther').focus(); return toast('Type your city and state'); }
+        if (/^Other /.test($('#city').value) && !$('#cityOther').value.trim()) { $('#cityOther').focus(); return toast('Type your city and ' + (($('#country') || {}).value === 'CA' ? 'province' : 'state')); }
         if (!$('#setting [aria-pressed="true"]')) { $('#whereLbl').scrollIntoView({ block: 'center' }); return toast('Choose where it is: a restaurant, a venue, outdoors or at home'); }
         collect2(); persist();
-        T('details_done', { event_type: draft.type, setting: draft.settingOpen ? 'not_sure' : draft.setting, city: D.CITIES.some(function (c) { return c.name === draft.city; }) ? draft.city : 'Other US city', guests_band: band(draft.guests, [10, 25, 50, 100, 200, 500]), budget_band: draft.budget ? band(draft.budget, [1000, 3000, 5000, 10000, 25000, 50000, 100000]) : 'none', drinks: draft.alcohol, payer: draft.payer, kids: draft.kids ? 'yes' : 'no', start: E.inspoOf(draft) ? 'inspiration_photo' : draft.inspiration.photos.length ? 'own_photos' : draft.inspiration.text ? 'words' : 'colors_and_vibes', own_photos: draft.inspiration.photos.length });
+        T('details_done', { event_type: draft.type, setting: draft.settingOpen ? 'not_sure' : draft.setting, city: D.CITIES.some(function (c) { return c.name === draft.city; }) ? draft.city : E.countryOf(draft.city).other, country: E.countryOf(draft.city).id, guests_band: band(draft.guests, [10, 25, 50, 100, 200, 500]), budget_band: draft.budget ? band(draft.budget, [1000, 3000, 5000, 10000, 25000, 50000, 100000]) : 'none', drinks: draft.alcohol, payer: draft.payer, kids: draft.kids ? 'yes' : 'no', start: E.inspoOf(draft) ? 'inspiration_photo' : draft.inspiration.photos.length ? 'own_photos' : draft.inspiration.text ? 'words' : 'colors_and_vibes', own_photos: draft.inspiration.photos.length });
         T('concepts_requested', { event_type: draft.type });   /* no extra review page: straight to the looks */
         var nev = draft; nev.paid = null; nev.created = nev.created || new Date().toISOString().slice(0, 10);
         if (!saveEvent(nev)) return;
@@ -779,7 +795,7 @@
 
   /* ---------- concepts ---------- */
   function conceptsView(id) {
-    var ev = getEvent(id); if (!ev) return notFound();
+    var ev = getEvent(id); if (!ev) return notFound(); E.useCountry(ev.city);
     frame('<div class="stack-lg"><div class="stack"><h2>Three looks for ' + (ev.nameAuto ? 'your ' + esc(E.typeName(ev).toLowerCase().replace(/christmas/, 'Christmas')) : esc(ev.name)) + '</h2><p class="muted">Each look has its own colors, atmosphere and decor. Pick one to see what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">' + (function () { var ins = ev.inspiration || {}, src = []; if (ins.inspo) src.push('the inspiration photo you chose'); if ((ins.photos || []).length) src.push('your photos'); if (ins.text) src.push('your description'); if ((ins.vibes || []).length) src.push('the colors and vibes you picked'); return src.length ? 'Built from ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' and ' + src[src.length - 1] : src[0]) + '.' : 'Built from your event details.'; })() + '</p></div><div id="cs" class="concepts"><div class="loading-concepts" role="status"><span class="spin" aria-hidden="true"></span><span id="lmsg">Reading your inspiration…</span></div></div>' +
       '<p class="small muted" id="srcNote" hidden></p>' + (ev.usedMoreConcepts && !SELL_EXTRAS ? '' : '<div class="row"><button class="btn ghost" id="more">Show three different concepts</button><span class="muted small">You can see three new looks once, free.</span></div>') + '</div>');
     var msgs = ['Reading your inspiration…', 'Choosing colors and decor…', 'Matching the look to your event…', 'Almost ready…'], mi = 0;
@@ -881,6 +897,7 @@
   function tierName(id) { if (id === 'F') return 'Your budget plan'; var t = D.TIERS.find(function (x) { return x.id === id; }); return t ? t.name : id; }
   function groupOf(tab) { if (tab === 'places' || tab === 'vendors') return 1; for (var i = 0; i < TAB_GROUPS.length; i++) if (TAB_GROUPS[i][1].some(function (t) { return t[0] === tab; })) return i; return 0; }
   function planView(ev, tab) {
+    E.useCountry(ev.city);
     if (!ev.concept) { location.hash = '#/e/' + ev.id + '/concepts'; return; }
     var base = ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id;
     var save = function () { if (!ev.sample) saveEvent(ev); };
@@ -1297,7 +1314,7 @@
       var val = book ? (booked && ov.amount ? ov.amount : x.quote || '') : (x.quote || '');
       el.innerHTML = '<h3 tabindex="-1">' + (book ? (booked ? 'Booked: ' : 'Mark as booked: ') : 'Quote from ') + esc(x.name) + '</h3>' +
         '<p class="muted small">' + (book ? (meal ? 'Great choice. Add what you expect to spend if you know it; otherwise your meal estimate stays in the budget.' : 'Add the total you agreed to, including fees. Your budget uses it instead of the estimate.') : 'Add the price they quoted, including fees. ' + (pickOf(ev, cat) && pickOf(ev, cat).id === x.id ? 'This is your front-runner, so your budget uses it.' : 'Your budget uses it if you make them your front-runner.')) + '</p>' +
-        '<label class="field"><span>' + (book ? (meal ? 'Expected total (optional)' : 'Total you agreed to (USD)') : 'Quoted total (USD)') + '</span><input class="input num" type="number" min="0" inputmode="decimal" id="pamt" value="' + esc(String(val)) + '"></label>' +
+        '<label class="field"><span>' + (book ? (meal ? 'Expected total (optional)' : 'Total you agreed to (' + E.currency() + ')') : 'Quoted total (' + E.currency() + ')') + '</span><input class="input num" type="number" min="0" inputmode="decimal" id="pamt" value="' + esc(String(val)) + '"></label>' +
         '<button class="btn gold block" id="psave">' + (book ? (booked ? 'Save' : 'Mark as booked') : 'Save quote') + '</button>' +
         (book && booked ? '<button class="btn ghost block" id="punbook">Not booked after all</button>' : '') + (!book && x.quote ? '<button class="btn ghost block" id="pclear">Remove this quote</button>' : '') +
         '<button class="btn ghost block" id="pback">Back to comparison</button>';
@@ -1536,7 +1553,7 @@
     $$('[data-restore]').forEach(function (btn) { btn.addEventListener('click', function () { ev.exclude = ev.exclude.filter(function (x) { return x !== btn.dataset.restore; }); ev.include = (ev.include || []).concat(btn.dataset.restore); save(); rerender(); }); });
     var priceSheet = function (id, note) {
       if (lockSample(ev)) return; var cur = (ev.overrides || {})[id] || {}; if (note && !cur.note) cur = Object.assign({}, cur, { note: note, source: cur.source || 'quote' });
-      sheet('<h3>Add a price for ' + esc(E.lc(D.CATEGORIES[id].name)) + '</h3><p class="muted small">Add a quote you received or a confirmed booking. Your budget uses this instead of the estimate.</p><label class="field"><span>Total amount (USD), including fees</span><input class="input num" type="number" min="0" id="amt" value="' + (cur.amount || '') + '"></label>' +
+      sheet('<h3>Add a price for ' + esc(E.lc(D.CATEGORIES[id].name)) + '</h3><p class="muted small">Add a quote you received or a confirmed booking. Your budget uses this instead of the estimate.</p><label class="field"><span>Total amount (' + E.currency() + '), including fees</span><input class="input num" type="number" min="0" id="amt" value="' + (cur.amount || '') + '"></label>' +
         '<label class="field"><span>What is this price?</span><select class="input" id="src"><option value="quote">Quote I received</option><option value="booking"' + (cur.source === 'booking' ? ' selected' : '') + '>Booked and confirmed</option><option value="vendor"' + (cur.source === 'vendor' ? ' selected' : '') + '>Price published by the vendor</option></select></label>' +
         '<label class="field"><span>Vendor or note (optional)</span><input class="input" id="nt" value="' + esc(cur.note || '') + '"></label><button class="btn gold block" id="ok">Save price</button>' + ((ev.overrides || {})[id] ? '<button class="btn ghost block" id="clr">Use the estimate again</button>' : '') + '<button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
         $('#ok', el).addEventListener('click', function () { var a = +$('#amt', el).value; if (!(a > 0)) return toast('Enter an amount'); var bf = snap(ev); ev.overrides = ev.overrides || {}; var src = $('#src', el).value, nt = $('#nt', el).value.trim(), m = savedFor(ev, id).find(function (x) { return nt && x.name.toLowerCase() === nt.toLowerCase(); });
@@ -1581,7 +1598,7 @@
     types.sort(function (x, y) { return score(y) - score(x); });
     var typesAll = types.length; types = cut(types, 2, ev);
     var venueLine = b.items.find(function (i) { return i.id === 'venue' || i.id === 'privateDining'; });
-    var city = ev.city.replace('Other US city', '');
+    var city = ev.city.replace(/^Other (US city|city in Canada)$/, '');
     var foodLine = b.items.filter(function (i) { return i.id === 'restaurantFood' || i.id === 'restaurantDrinks'; }).reduce(function (s2, i) { return s2 + i.mid; }, 0);
     var intro = ev.setting === 'restaurant'
       ? 'Your food and drinks come to about ' + money(foodLine / Math.max(1, ev.guests)) + ' per person with tax and tip. Look for restaurants that take reservations for ' + plural(ev.guests, 'guest') + '.'
@@ -1665,7 +1682,8 @@
   function findPlaces(ev, body) {
     var key = JSON.stringify(['v2', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
     if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(hit.places);
-    return fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    var sendBody = Object.assign({}, body); if (E.countryOf(ev.city).id === 'CA' && !/canada/i.test(sendBody.city || '')) sendBody.city = (sendBody.city || '') + ', Canada';   /* London, ON is not London, England */
+    return fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sendBody) })
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.places || []; }); })
       .then(function (list) { if (!ev.sample) { c[key] = { at: Date.now(), places: list }; var ks = Object.keys(c).sort(function (a, b) { return c[b].at - c[a].at; }); ks.slice(30).forEach(function (k) { delete c[k]; }); saveEvent(ev); } return list; });
   }
@@ -1687,7 +1705,7 @@
               .then(function (r) { return r.json(); }).then(function (j) {
                 var times = j.times || [];
                 if (!times.length) { box.querySelector('.curated').insertAdjacentHTML('beforeend', '<p class="small" style="color:var(--warn)">We couldn\u2019t find your starting point. Try a full street address.</p>'); return; }
-                times.forEach(function (t) { var el = box.querySelector('[data-dt="' + t.placeId + '"]'); if (el) { el.textContent = t.minutes + ' min drive \u00b7 ' + t.miles + ' mi'; el.closest('.it').dataset.min = t.minutes; } });
+                times.forEach(function (t) { var el = box.querySelector('[data-dt="' + t.placeId + '"]'); if (el) { el.textContent = t.minutes + ' min drive \u00b7 ' + (E.countryOf(ev.city).km ? Math.round(t.miles * 16.09) / 10 + ' km' : t.miles + ' mi'); el.closest('.it').dataset.min = t.minutes; } });
                 var wrap = box.querySelector('.curated'); var rows = [].slice.call(wrap.querySelectorAll('.it')).sort(function (a, c) { return (+a.dataset.min || 999) - (+c.dataset.min || 999); });
                 var note = wrap.querySelector('p.muted.small'); rows.forEach(function (r) { wrap.insertBefore(r, note); });
               }).catch(function () {});
@@ -1800,7 +1818,7 @@
     var b = E.budget(ev, ev.tier || 'S'), line = b.items.find(function (i) { return i.id === cat; });
     sheet('<h3>Get quotes: ' + esc(catName(cat, ev)) + '</h3><p class="muted small">Event Couture vendors in ' + esc(ev.city.split(',')[0]) + ' who offer this see your request and reply with a price. Your name and contact details are never shared; you choose who to reach out to.</p>' +
       '<div class="note small">' + reqLine({ type: E.typeName(ev), date: ev.date, guests: ev.guests, city: ev.city }) + (themeWords(ev) ? ' \u00b7 ' + esc(themeWords(ev)) : '') + '</div>' +
-      '<label class="field"><span>Your budget for this (USD, optional)</span><input class="input num" type="number" min="0" id="qBudget" value="' + (line && !CFG.app ? Math.round(line.mid) : '') + '"></label>' +
+      '<label class="field"><span>Your budget for this (' + E.currency() + ', optional)</span><input class="input num" type="number" min="0" id="qBudget" value="' + (line && !CFG.app ? Math.round(line.mid) : '') + '"></label>' +
       '<label class="field"><span>Anything they should know? (optional)</span><textarea class="input" id="qNotes" placeholder="For example: we want Arabic and English songs"></textarea></label>' +
       '<button class="btn block" id="qSend">Send my request</button><button class="btn ghost block" data-close>Cancel</button>');
     $('#qSend').addEventListener('click', function () {
@@ -1850,7 +1868,7 @@
     photoBooth: 'Booth, attendant and prints', catering: 'Food, staff and service', bartender: 'Licensed bartenders per hour', videographer: 'Coverage and edited film'
   };
   TAB_VIEWS.vendors = function (ev, b) {
-    var city = ev.city.replace('Other US city', '');
+    var city = ev.city.replace(/^Other (US city|city in Canada)$/, '');
     var cats = b.items.filter(function (i) { return ['venue', 'privateDining', 'tent', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'restaurantFood', 'restaurantDrinks', 'cakeFee', 'tableDecor'].indexOf(i.id) < 0; });
     var restNote = ev.setting === 'restaurant' ? '<div class="note">Your restaurant handles the food and drinks. Pick the restaurant on the Venues page; table decor is on the Style and music page.</div>' : '';
     if (!cats.length) return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">No other vendors are needed for this plan.</p></div>';
@@ -1912,6 +1930,7 @@
   /* Style and music: shopping board, playlist, outfits */
   function shopLink(q) {
     var tag = CFG.amazonTag ? '&tag=' + encodeURIComponent(CFG.amazonTag) : '';
+    if (E.currency() === 'CAD') return { amazon: 'https://www.amazon.ca/s?k=' + encodeURIComponent(q), etsy: 'https://www.etsy.com/ca/search?q=' + encodeURIComponent(q) };
     return { amazon: 'https://www.amazon.com/s?k=' + encodeURIComponent(q) + tag, etsy: 'https://www.etsy.com/search?q=' + encodeURIComponent(q) };
   }
   /* Get this look: every piece named in the host's words, marked in her photos, or seen in the chosen photo or look, with where to buy it or who to hire. */
@@ -1975,7 +1994,7 @@
     if (ev.kids && /birthday/.test(ev.type)) items = items.map(function (it) { return it.name === 'Votive candles (set of 12)' ? { q: color + ' party hats', name: 'Party hats (pack of 12)', each: [8, 18], qty: Math.max(1, Math.ceil(g / 12)) } : it; });
     if (ev.kids && /birthday/.test(ev.type)) items = items.map(function (it) { return it.name === 'Taper candles (set of 12)' ? { q: color + ' party plates and cups', name: 'Party plates and cups (pack of 24)', each: [10, 22], qty: Math.ceil(g / 24) } : it; });
     var decorLine = E.budget(ev, ev.tier).items.find(function (i) { return i.id === 'tableDecor'; });
-    var usd = function (n) { return '$' + (n % 1 ? n.toFixed(2) : n); };
+    var usd = function (n) { return (E.currency() === 'CAD' ? 'CA$' : '$') + (n % 1 ? n.toFixed(2) : n); };
     var shopLo = items.reduce(function (t, it) { return t + it.each[0] * it.qty; }, 0), shopHi = items.reduce(function (t, it) { return t + it.each[1] * it.qty; }, 0);
     var pl = D.PLAYLIST_SEARCH(c.music);
     var itemsAll = items.length; items = cut(items, 2, ev);
@@ -2110,7 +2129,7 @@
       (SHARING ? '<p class="muted small">' + (CFG.app ? 'Sends your invitation by text, email or any app with a link to your event page. ' : 'Copies the link to your event page. ') + 'Guests open it on any phone, no app needed, to RSVP' + ((ev.polls || []).length ? ', vote' : '') + (hasRegistry(ev) ? ' and see your gift list' : '') + '. Their RSVPs come into your Guests list.' + (ev.published ? ' Changes you make here update the page automatically.' : '') + '</p>' : CFG.app ? '<p class="muted small">Sends your invitation by text, email or any app, with the date, place, dress code' + (hasRegistry(ev) ? ', your gift list' : '') + (canSplit(ev) ? ', each person\u2019s share' : '') + '. Guests reply to you to RSVP; add their answers under Guests.</p>' : CFG.preview ? '<p class="muted small">For now this link opens on this device only, so you can preview what guests will see. Sending it to guests on their own phones turns on when accounts launch.</p>' : '<p class="muted small">Guests open it in any browser; no app needed.</p>') + '</div>' +
       (!canSplit(ev) && !hasRegistry(ev) ? '' : '<div class="stack"><h3>Your payment links</h3><p class="muted small">' + (canSplit(ev) ? 'Friends pay you directly for their share, and guests can send cash gifts.' : 'For cash gifts and funds from your registry.') + ' Event Couture never holds the money.</p><div class="grid3">' +
       [['venmo', 'Venmo username'], ['cashapp', 'Cash App $cashtag'], ['paypal', 'PayPal.me name']].map(function (x) { return '<label class="field"><span>' + x[1] + '</span><input class="input" data-pay="' + x[0] + '" value="' + esc(pl[x[0]] || '') + '"></label>'; }).join('') + '</div><div><button class="btn small" id="savePay">Save payment links</button></div></div>') +
-      (!canSplit(ev) ? '' : '<div class="stack"><h3>Cost splitting</h3><div class="panel stack"><div class="grid2"><label class="field"><span>Amount to split (USD)</span><input class="input num" type="number" id="stot" value="' + Math.round(splitTotal(ev)) + '"></label><label class="field"><span>Number of people sharing it</span><input class="input num" type="number" min="1" id="scount" value="' + splitCount(ev) + '"></label></div><p class="small">Each person\u2019s share: <b class="num">' + money(splitShare(ev)) + '</b>. Starts from your plan\u2019s estimated total; change it to what you actually spent.</p><div class="grid2"><label class="field"><span>Add a person</span><form id="sadd" class="row"><input class="input" id="sname" style="flex:1"><button class="btn small">Add</button></form></label></div>' +
+      (!canSplit(ev) ? '' : '<div class="stack"><h3>Cost splitting</h3><div class="panel stack"><div class="grid2"><label class="field"><span>Amount to split (' + E.currency() + ')</span><input class="input num" type="number" id="stot" value="' + Math.round(splitTotal(ev)) + '"></label><label class="field"><span>Number of people sharing it</span><input class="input num" type="number" min="1" id="scount" value="' + splitCount(ev) + '"></label></div><p class="small">Each person\u2019s share: <b class="num">' + money(splitShare(ev)) + '</b>. Starts from your plan\u2019s estimated total; change it to what you actually spent.</p><div class="grid2"><label class="field"><span>Add a person</span><form id="sadd" class="row"><input class="input" id="sname" style="flex:1"><button class="btn small">Add</button></form></label></div>' +
       (split.people.length ? '<div class="list">' + split.people.map(function (p, i) { return '<label class="check' + (p.paid ? ' done' : '') + '"><input type="checkbox" data-paid="' + i + '"' + (p.paid ? ' checked' : '') + '><span class="grow"><span class="t">' + esc(p.name) + '</span></span><span class="num">' + money(share) + '</span></label>'; }).join('') + '</div><p class="small muted">' + split.people.filter(function (p) { return p.paid; }).length + ' of ' + split.people.length + ' paid</p>' : '<p class="muted small">Add the people sharing the cost; each sees their share and your payment links on the event page.</p>') + '</div></div>') +
       (!hasRegistry(ev) ? '' : '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Registry</h3>' + (ev.registryOn && !((ev.registry && ev.registry.items) || []).length && !((ev.registry && ev.registry.funds) || []).length && ['wedding', 'bridal-shower', 'baby-shower', 'gender-reveal', 'engagement', 'graduation', 'quince', 'sweet16', 'anniversary'].indexOf(ev.type) < 0 ? '<button class="link small" id="giftOff">Turn off gift list</button>' : '') + '</div><div class="panel list">' + ((ev.registry.items || []).length ? ev.registry.items.map(function (it, i) { return '<div class="it"><div class="grow"><b>' + esc(it.name) + '</b>' + (it.price ? ' <span class="muted num">' + money(it.price) + '</span>' : '') + (it.bought ? ' <span class="badge ok">Purchased</span>' : '') + '</div>' + (it.url ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(it.url) + '">View</a>' : '') + '<button class="link small" data-rmr="' + i + '">Remove</button></div>'; }).join('') : '<p class="muted">Add gifts from any store, or a cash fund like ' + (function (f) { return (/^[aeiou]/.test(f) ? 'an ' : 'a ') + esc(f); })((FUND_IDEA[ev.type] || 'celebration fund').toLowerCase()) + '.</p>') + '</div>' +
       '<form id="radd" class="grid3"><input class="input" aria-label="Gift name" id="rn" placeholder="Gift name"><input class="input" aria-label="Store link" id="ru" placeholder="Store link (optional)"><input class="input num" aria-label="Gift price" id="rp" type="number" min="0" placeholder="Price (optional)"><button class="btn">Add gift</button></form>' +
@@ -2206,7 +2225,7 @@
   /* Only what guests need: never the budget, the guest list or anyone's private notes. */
   function inviteSnapshot(ev) {
     var pl = ev.payLinks || {}, reg = hasRegistry(ev) ? ev.registry || {} : {};
-    return { v: 1, name: ev.name, type: ev.type, date: ev.date || '', time: ev.time || '', hours: ev.hours || 3, when: ev.date ? fmtDate(ev.date) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : '', where: whereText(ev), dress: E.dressCode(ev, ev.tier), palette: (ev.concept.palette || []).slice(0, 6),
+    return { v: 1, cur: E.countryOf(ev.city).currency, name: ev.name, type: ev.type, date: ev.date || '', time: ev.time || '', hours: ev.hours || 3, when: ev.date ? fmtDate(ev.date) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : '', where: whereText(ev), dress: E.dressCode(ev, ev.tier), palette: (ev.concept.palette || []).slice(0, 6),
       cal: ev.date ? calLink(ev) : '', polls: (ev.polls || []).map(function (p) { return { q: p.q, options: p.options.map(function (o) { return { t: o.t }; }) }; }),
       registry: { items: (reg.items || []).map(function (it) { return { name: it.name, url: it.url || '', bought: !!it.bought }; }), funds: (reg.funds || []).map(function (f) { return { name: f.name }; }) },
       pay: canSplit(ev) || hasRegistry(ev) ? { venmo: pl.venmo || '', cashapp: pl.cashapp || '', paypal: pl.paypal || '' } : {}, share: canSplit(ev) ? Math.round(splitShare(ev) * 100) / 100 : 0 };
@@ -2241,6 +2260,7 @@
   function guestPage(id) {
     var ev = getEvent(id) || (/^sample-\d+$/.test(id || '') ? sampleEvent(+id.split('-')[1]) : null);
     if (ev && !ev.concept) ev = null;
+    if (ev) E.useCountry(ev.city);
     if (!ev && SHARING && /^[a-z0-9]{6,32}$/.test(id || '')) return remoteGuestPage(id);
     if (!ev) return frame('<div class="invite"><h2>This invitation isn’t available here yet</h2><p class="muted">' + (CFG.preview ? 'Event Couture is in preview, so invitations open only on the phone or computer where they were made. Sending invitations to guests turns on soon.' : 'The host may have made it private. Ask them for a new link.') + '</p><div><a class="btn ghost" href="#/">Explore Event Couture</a></div></div>');
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] }; var share = splitShare(ev);
@@ -2281,6 +2301,7 @@
     frame('<div class="invite"><p class="muted">Opening your invitation\u2026</p></div>', { noRibbon: true });
     apiInv(id).then(function (j) {
       var v = j.inv || {}, pay = v.pay || {}, reg = v.registry || { items: [], funds: [] };
+      if (v.cur === 'CAD') E.useCountry('Other city in Canada');
       var payBtns = [pay.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pay.venmo) + '">Venmo</a>' : '', pay.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pay.cashapp) + '">Cash App</a>' : '', pay.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pay.paypal) + '">PayPal</a>' : ''].join('');
       var safeHex = function (c) { return /^#[0-9a-f]{3,8}$/i.test(c) ? c : '#ccc'; };
       frame('<div class="invite"><div class="card"><div class="swatch" aria-hidden="true">' + (v.palette || []).map(function (c) { return '<i style="background:' + safeHex(c) + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You\u2019re invited to</span><h1>' + esc(v.name) + '</h1><p>' + esc(v.when || 'Date to be announced') + '</p><p class="muted">' + esc(v.where || '') + '</p>' + (v.dress ? '<p class="small muted">Dress code: ' + esc(v.dress) + '</p>' : '') +
@@ -2313,9 +2334,9 @@
   /* ---------- vendor sign-up (structured, saved as you go) ---------- */
   var VFIELDS = [
     ['Business basics', [['name', 'Business name', 'text', 1], ['email', 'Business email', 'text', 1], ['phone', 'Business phone', 'text'], ['cats', 'Categories', 'cats', 1], ['bio', 'Short description', 'area', 1], ['years', 'Years in business', 'number'], ['ig', 'Instagram handle (like @yourbusiness)', 'text'], ['site', 'Website', 'text']]],
-    ['Service area', [['cities', 'Cities you serve', 'citylist', 1], ['radius', 'Travel radius (miles)', 'number', 1], ['travelFee', 'Travel fee (USD, 0 if none)', 'number']]],
-    ['Packages and prices', [['pkgName', 'Main package name', 'text', 1], ['pkgIncl', 'What it includes', 'area', 1], ['priceType', 'How it’s priced', 'select:Fixed price|Starting at|Per person|Per hour', 1], ['price', 'Price (USD)', 'number', 1], ['minSpend', 'Minimum spend (USD)', 'number'], ['peak', 'Weekend or peak-season increase (%)', 'number'], ['overtime', 'Overtime rate per hour (USD)', 'number']]],
-    ['Fees and payment terms', [['deposit', 'Deposit (% of total)', 'number', 1], ['schedule', 'When the balance is due', 'select:At booking|30 days before|14 days before|7 days before|On the day'], ['service', 'Service charge (%)', 'number'], ['tax', 'Do you charge sales tax?', 'select:Yes|No'], ['setupFee', 'Setup, delivery or cleanup fees (USD)', 'number']]],
+    ['Service area', [['cities', 'Cities you serve', 'citylist', 1], ['radius', 'Travel radius (miles, or km in Canada)', 'number', 1], ['travelFee', 'Travel fee (your currency, 0 if none)', 'number']]],
+    ['Packages and prices', [['pkgName', 'Main package name', 'text', 1], ['pkgIncl', 'What it includes', 'area', 1], ['priceType', 'How it’s priced', 'select:Fixed price|Starting at|Per person|Per hour', 1], ['price', 'Price (your currency)', 'number', 1], ['minSpend', 'Minimum spend (your currency)', 'number'], ['peak', 'Weekend or peak-season increase (%)', 'number'], ['overtime', 'Overtime rate per hour (your currency)', 'number']]],
+    ['Fees and payment terms', [['deposit', 'Deposit (% of total)', 'number', 1], ['schedule', 'When the balance is due', 'select:At booking|30 days before|14 days before|7 days before|On the day'], ['service', 'Service charge (%)', 'number'], ['tax', 'Do you charge sales tax?', 'select:Yes|No'], ['setupFee', 'Setup, delivery or cleanup fees (your currency)', 'number']]],
     ['Capacity and logistics', [['minGuests', 'Smallest event you take (guests)', 'number', 1], ['maxGuests', 'Largest event you take (guests)', 'number', 1], ['setupTime', 'Setup time needed (hours)', 'number'], ['indoor', 'Where you work', 'select:Indoors and outdoors|Indoors only|Outdoors only']]],
     ['Booking and availability', [['lead', 'Book at least this many weeks ahead', 'number', 1], ['reply', 'Typical reply time', 'select:Within a few hours|Within a day|Within 2 to 3 days'], ['blocked', 'Dates you’re already booked (one per line)', 'area']]],
     ['Limitations and rules', [['notIncl', 'What’s not included', 'area', 1], ['rules', 'Rules (outside catering, alcohol, noise curfew, confetti or candles)', 'area']]],
@@ -2356,8 +2377,8 @@
       if (!list.length) { $('#reqs').innerHTML = '<div class="panel stack"><b>No requests yet</b><p class="muted small">New requests appear here as clients plan. Share your bio link so your followers plan with you.</p></div>'; return; }
       $('#reqs').innerHTML = list.map(function (r) {
         return '<div class="panel stack" data-req="' + esc(r.id) + '"><div class="row" style="justify-content:space-between"><b>' + esc(r.need || catLabel(r.cat)) + '</b>' + (r.replied ? '<span class="badge">You replied</span>' : '') + '</div><div class="small muted">' + reqLine(r) + '</div>' +
-          (r.budget ? '<div class="small">Budget for this: <b>' + money(r.budget) + '</b></div>' : '') + (r.theme ? '<div class="small">Theme: ' + esc(r.theme) + '</div>' : '') + (r.notes ? '<div class="small">' + esc(r.notes) + '</div>' : '') +
-          '<label class="field"><span>Your reply</span><textarea class="input" data-msg placeholder="Available? What\u2019s included? Anything they should know?"></textarea></label><label class="field"><span>Your price (USD, optional)</span><input class="input num" type="number" min="0" data-price></label><button class="btn small" data-send>' + (r.replied ? 'Update my reply' : 'Send my reply') + '</button><span class="muted small">' + (r.replies ? plural(r.replies, 'vendor') + ' replied so far' : 'Be the first to reply') + '</span></div>';
+          (r.budget ? '<div class="small">Budget for this: <b>' + E.moneyIn(r.budget, r.city) + '</b></div>' : '') + (r.theme ? '<div class="small">Theme: ' + esc(r.theme) + '</div>' : '') + (r.notes ? '<div class="small">' + esc(r.notes) + '</div>' : '') +
+          '<label class="field"><span>Your reply</span><textarea class="input" data-msg placeholder="Available? What\u2019s included? Anything they should know?"></textarea></label><label class="field"><span>Your price (' + E.countryOf(r.city).currency + ', optional)</span><input class="input num" type="number" min="0" data-price></label><button class="btn small" data-send>' + (r.replied ? 'Update my reply' : 'Send my reply') + '</button><span class="muted small">' + (r.replies ? plural(r.replies, 'vendor') + ' replied so far' : 'Be the first to reply') + '</span></div>';
       }).join('');
       $$('[data-send]').forEach(function (b) { b.addEventListener('click', function () {
         var box = b.closest('[data-req]'), msg = $('[data-msg]', box).value.trim(); if (!msg) { toast('Write a short reply'); $('[data-msg]', box).focus(); return; }
@@ -2372,7 +2393,7 @@
       var x = j.vendor;
       $('#vp').innerHTML = '<div class="stack-lg"><div class="stack"><span class="small muted">' + (x.founding ? 'Founding Event Couture vendor' : 'Event Couture vendor') + '</span><h2>' + esc(x.name) + '</h2><div class="small muted">' + esc(x.cats.map(catLabel).join(', ')) + ' \u00b7 ' + esc(x.cities.join(', ')) + '</div></div>' +
         (x.bio ? '<p>' + esc(x.bio) + '</p>' : '') +
-        (x.pkgName || x.price ? '<div class="panel stack"><b>' + esc(x.pkgName || 'Packages') + '</b>' + (x.price ? '<span>' + esc(x.priceType || 'From') + ' ' + money(x.price) + '</span>' : '') + (x.pkgIncl ? '<span class="small muted">' + esc(x.pkgIncl) + '</span>' : '') + '</div>' : '') +
+        (x.pkgName || x.price ? '<div class="panel stack"><b>' + esc(x.pkgName || 'Packages') + '</b>' + (x.price ? '<span>' + esc(x.priceType || 'From') + ' ' + E.moneyIn(x.price, x.cities[0]) + '</span>' : '') + (x.pkgIncl ? '<span class="small muted">' + esc(x.pkgIncl) + '</span>' : '') + '</div>' : '') +
         (x.langs ? '<div class="small">Languages: ' + esc(x.langs) + '</div>' : '') +
         '<div class="row">' + (x.ig ? '<a class="btn small" target="_blank" rel="noopener" href="https://instagram.com/' + esc(x.ig) + '">Instagram</a>' : '') + (x.site ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.site) + '">Website</a>' : '') + (x.phone ? '<a class="btn small ghost" href="tel:' + esc(x.phone.replace(/[^0-9+]/g, '')) + '">Call</a>' : '') + '</div>' +
         '<div class="panel stack"><b>Planning an event?</b><span class="muted small">Event Couture plans the whole thing from one photo or a few words: looks, budget, venues and vendors.</span><a class="btn gold" href="#/new/1">Plan my event free</a></div>' +
@@ -2430,6 +2451,7 @@
     ['What if my guest list grows?', 'Move up a size under Overview, Your pass. You pay only the difference, and your plan stays exactly as it is.', 'grow grows growing more upgrade capacity bigger places full waitlist'],
   ];
   FAQ = FAQ.concat([
+    ['Does it work in Canada?', 'Yes. Choose Canada, then your city. Prices are estimated in Canadian dollars with your province\u2019s GST, HST, PST or QST, drive distances are in kilometres, and venue and vendor searches stay in Canada.', 'canada canadian cad toronto vancouver montreal calgary ottawa province hst gst'],
     ['How do I get quotes from vendors?', 'Open your plan, then Budget & bookings, Vendors, and tap See options on what you need. Tap Get quotes from vendors: Event Couture vendors in your city see your date, guest count, theme and budget, never your name or contact, and reply with prices right there. Found someone on Instagram? Add their handle and message them your request in one tap.', 'quote quotes vendor request price instagram singer dj'],
     ['Can I get a refund?', 'Planning is free, so you see your whole plan before you pay. If something you paid for doesn\u2019t work, contact us and we\u2019ll make it right. Purchases made in the iPhone or Android app are refunded through Apple or Google from your purchase history.', 'refund money back cancel charged'],
     ['How do I contact you?', CFG.supportEmail ? 'Email us at ' + CFG.supportEmail + '. We reply within one business day.' : 'Start with the answers on this page. If you still need help, use the contact details on the Event Couture website.', 'contact support email phone talk person help reach'],

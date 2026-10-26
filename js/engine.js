@@ -7,7 +7,19 @@
   function round2(n) { return Math.round(n * 100) / 100; }
   function roundTo(n, step) { return Math.round(n / step) * step; }
   function typeOf(id) { return D.EVENT_TYPES.find(function (t) { return t.id === id; }) || D.EVENT_TYPES[D.EVENT_TYPES.length - 1]; }
-  function cityOf(name) { return D.CITIES.find(function (c) { return c.name === name; }) || D.CITIES[D.CITIES.length - 1]; }
+  /* A typed city ("Kelowna, BC") is matched to its country, and in Canada to its province's sales tax. */
+  var CA_RE = /,\s*(AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)\b|\bcanada\b/i;
+  function cityOf(name) {
+    var hit = D.CITIES.find(function (c) { return c.name === name; }); if (hit) return hit;
+    var m = CA_RE.exec(String(name || ''));
+    if (m) { var base = D.CITIES.find(function (c) { return c.name === 'Other city in Canada'; }); var pv = m[1] && D.PROVINCES[m[1].toUpperCase()]; return pv ? Object.assign({}, base, { tax: pv.tax, taxName: pv.label }) : base; }
+    return D.CITIES.find(function (c) { return c.name === 'Other US city'; });
+  }
+  function countryOf(city) { return D.COUNTRIES.find(function (c) { return c.id === cityOf(city).country; }) || D.COUNTRIES[0]; }
+  var CUR = 'USD';
+  function useCountry(cityOrNull) { CUR = cityOrNull ? countryOf(cityOrNull).currency : 'USD'; return CUR; }
+  function currency() { return CUR; }
+  function isOtherCity(c) { return !c || /^Other /.test(c.name); }
 
   /* ---------- Event Pass pricing ---------- */
   function passFor(guests) {
@@ -102,7 +114,7 @@
     if (c.meal && isDaytime(ev)) { lo *= 0.8; hi *= 0.8; mealNote = ', lunch or brunch prices'; }
     var extras = [];
     if (c.service) extras.push({ label: 'Service charge (20%)', rate: D.SERVICE });
-    if (c.taxable) extras.push({ label: 'Sales tax (' + city.tax + '%)', rate: city.tax / 100 });
+    if (c.taxable && city.tax) extras.push({ label: (city.taxName || 'Sales tax') + ' (' + city.tax + '%)', rate: city.tax / 100 });
     if (c.tip) extras.push({ label: 'Tip (10%)', rate: D.TIP });
     if (c.gratuity) extras.push({ label: 'Tip or automatic group gratuity (20%)', rate: D.GRATUITY });
     var rate = extras.reduce(function (s, e) { return s + e.rate; }, 0);
@@ -115,7 +127,7 @@
       lo: ov && ov.amount > 0 ? ov.amount : roundTo(lo, 5), hi: ov && ov.amount > 0 ? ov.amount : roundTo(hi, 5), mid: ov && ov.amount > 0 ? ov.amount : roundTo((lo + hi) / 2, 5),
       extras: ov && ov.amount > 0 ? [] : extras.map(function (e) { return e.label; }),
       label: ov ? (ov.amount > 0 ? ({ vendor: 'Vendor-published price', quote: 'Confirmed quote', booking: 'Confirmed booking' }[ov.source] || 'Your price') : (ov.source === 'booking' ? 'Booked; estimate until you add the price' : 'Planning estimate')) : 'Planning estimate',
-      source: ov ? (ov.note || '') : ((city.name === 'Other US city' ? (ev.city && ev.city !== 'Other US city' ? ev.city + ', typical US prices' : 'Typical US prices') : city.name + ' estimate') + ', ' + Number(guests).toLocaleString('en-US') + (guests === 1 ? ' guest' : ' guests') + mealNote)
+      source: ov ? (ov.note || '') : ((isOtherCity(city) ? (ev.city && !/^Other /.test(ev.city) ? ev.city + ', typical ' + (city.country === 'CA' ? 'Canadian' : 'US') + ' prices' : 'Typical ' + (city.country === 'CA' ? 'Canadian' : 'US') + ' prices') : city.name + ' estimate') + ', ' + Number(guests).toLocaleString('en-US') + (guests === 1 ? ' guest' : ' guests') + mealNote)
     };
   }
 
@@ -230,7 +242,7 @@
       var roomy = b.spare && b.spare > ev.budget * 0.1;
       pros.push(b.shortBy ? 'As close to your budget as this guest count allows' : roomy ? 'Comes in about ' + money(b.spare) + ' under your maximum, cushion included' : 'Lands at your budget, cushion included');
       if (pri.length) pros.push('Protects your must-haves: ' + pri.join(', '));
-      pros.push(D.CITIES.some(function (c) { return c.name === ev.city && c.name !== 'Other US city'; }) ? 'Every category sized to ' + ev.city : 'Every category priced at typical US rates');
+      pros.push(D.CITIES.some(function (c) { return c.name === ev.city && !/^Other /.test(c.name); }) ? 'Every category sized to ' + ev.city : 'Every category priced at typical US rates');
       if (b.dropped && b.dropped.length) cons.push('Leaves out ' + listJoin(b.dropped.map(function (id) { return lc(D.CATEGORIES[id].name); })));
       if (b.shortBy) cons.push('Still about ' + money(b.shortBy) + ' over; ' + (ev.setting === 'home' ? 'fewer guests or skipping a hired service would close the gap' : 'fewer guests or a simpler setting would close the gap'));
       if (!cons.length) cons.push(roomy ? 'None: you have room to add a must-have or keep the savings' : 'Less room to add extras later');
@@ -691,7 +703,8 @@
     return out;
   }
 
-  function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+  function money(n) { return (CUR === 'CAD' ? 'CA$' : '$') + Math.round(n).toLocaleString('en-US'); }
+  function moneyIn(n, city) { return (countryOf(city).currency === 'CAD' ? 'CA$' : '$') + Math.round(n).toLocaleString('en-US'); }
 
   root.EC_ENGINE = {
     forOccasion: forOccasion,
@@ -699,6 +712,6 @@
     KIDS_TEXT: KIDS_TEXT,
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
-    placesUsed: placesUsed, startHour: startHour, concepts: concepts, inspoOf: inspoOf, inspoName: inspoName, wordsDiffer: wordsDiffer, kidSafePhoto: kidSafePhoto, swapDrinks: swapDrinks, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, culture: culture, musicOf: musicOf, typeName: typeName, MUSIC_CATS: MUSIC_CATS, cityOf: cityOf
+    placesUsed: placesUsed, startHour: startHour, concepts: concepts, inspoOf: inspoOf, inspoName: inspoName, wordsDiffer: wordsDiffer, kidSafePhoto: kidSafePhoto, swapDrinks: swapDrinks, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, countryOf: countryOf, useCountry: useCountry, currency: currency, moneyIn: moneyIn, culture: culture, musicOf: musicOf, typeName: typeName, MUSIC_CATS: MUSIC_CATS, cityOf: cityOf
   };
 })(typeof window !== 'undefined' ? window : globalThis);
