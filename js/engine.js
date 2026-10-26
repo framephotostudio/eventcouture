@@ -522,11 +522,29 @@
   function str(x, max) { return x == null || typeof x === 'object' ? '' : String(x).slice(0, max || 200).trim(); }
   function list(x, max) { return (Array.isArray(x) ? x : typeof x === 'string' && x ? [x] : []).map(function (v) { return str(v, 160); }).filter(Boolean).slice(0, max || 6); }
   /* Everything from the AI server is untrusted: keep only well-formed text and colors, never links or pictures, and follow the host's drinks and kids rules. */
+  /* A look named for the wrong occasion ("Imperial Crimson Gala" for a wedding) gets this event's own word. */
+  var OCCASION_WORDS = /\b(gala|wedding|birthday|bridal shower|baby shower|shower|quincea(?:ñ|n)era|quince|sweet (?:16|sixteen)|bachelorette|graduation|grad party|anniversary|retirement|brunch|engagement|reunion|fundraiser|prom)\b/gi;
+  function fitOccasion(name, ev) {
+    if (!name || !ev || !ev.type) return name;
+    var own = TYPE_TITLE[ev.type] || '', ownL = own.toLowerCase();
+    var out = name.replace(OCCASION_WORDS, function (w) { var l = w.toLowerCase(); if (!own || ownL.indexOf(l) >= 0 || l.indexOf(ownL) >= 0 || (ev.type === 'gala' && /gala|fundraiser/.test(l)) || (/birthday|milestone|sweet16|kids-birthday/.test(ev.type) && l === 'birthday')) return w; return own; });
+    if (/^(wedding|engagement|gala|anniversary|quince)$/.test(ev.type) && own) out = out.replace(/\bparty\b/gi, own);   /* formal occasions are never called a party */
+    return out.replace(new RegExp('(' + (own || 'x').replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')(\\s+\\1)+', 'i'), '$1');
+  }
+  /* For a look without its own photo: the closest labeled AI inspiration photo for this occasion (colors and style), never one already shown. */
+  function similarPhoto(c, ev, avoid) {
+    var list = (root.EC_INSPO || []).filter(function (p) { return (avoid || []).indexOf(p.id) < 0 && (!isKidsParty(ev) || kidSafePhoto(p)) && (isKidsParty(ev) || p.types.indexOf('kids-birthday') < 0 || p.types.length > 1); });
+    var rgb = function (h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(function (x) { return x + x; }).join(''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; };
+    var dist = function (a, b) { var A = (a || []).slice(0, 4).map(rgb), B = (b || []).slice(0, 4).map(rgb); if (!A.length || !B.length) return 999; return A.reduce(function (t, x) { return t + Math.min.apply(null, B.map(function (y) { return Math.sqrt((x[0] - y[0]) * (x[0] - y[0]) + (x[1] - y[1]) * (x[1] - y[1]) + (x[2] - y[2]) * (x[2] - y[2])); })); }, 0) / A.length; };
+    var best = null, bs = 1e9;
+    list.forEach(function (p) { var sc = dist(c.palette, p.palette) - (p.types.indexOf(ev.type) >= 0 ? 60 : 0) - (p.style && c.id && (c.id === p.style || c.id === 'ai-' + p.style) ? 40 : 0); if (sc < bs) { bs = sc; best = p; } });
+    return best;
+  }
   function cleanConcept(c, i, ev) {
     if (!c || typeof c !== 'object') return null;
     var lib = D.STYLES[(i || 0) % D.STYLES.length];
     var none = ev && ev.alcohol === 'none', kid = isKidsParty(ev);
-    var name = swapDrinks(str(c.name, 60) || str(c.styleName, 60), false, true), styleName = swapDrinks(str(c.styleName, 60) || name, false, true);
+    var name = fitOccasion(swapDrinks(str(c.name, 60) || str(c.styleName, 60), false, true), ev), styleName = fitOccasion(swapDrinks(str(c.styleName, 60) || name, false, true), ev);
     if (!name) return null;
     var pal = (Array.isArray(c.palette) ? c.palette : []).filter(function (h) { return typeof h === 'string' && HEX.test(h); }).slice(0, 5);
     var keepText = function (t) { return !(none && ALC_ANY.test(t)) && !(kid && KIDS_BAD.test(t)); };
@@ -656,6 +674,7 @@
   function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
 
   root.EC_ENGINE = {
+    similarPhoto: similarPhoto, fitOccasion: fitOccasion,
     KIDS_TEXT: KIDS_TEXT,
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,

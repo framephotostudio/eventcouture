@@ -50,7 +50,7 @@ with sync_playwright() as p:
         # booking on the Budget page by option name, then removing that option clears it
         pg.click('.sheet [data-close]'); pg.wait_for_timeout(300)
         pg.click('[data-price=venue]'); pg.wait_for_selector('#amt'); pg.fill('#amt','6000'); pg.select_option('#src','booking'); pg.fill('#nt','Sky Loft'); pg.click('#ok'); pg.wait_for_timeout(300)
-        pg.click('[data-compare=venue]'); pg.wait_for_selector('.cmp'); check(n, 'Booked' in pg.inner_text('.cmp-row:first-child'), 'compare shows the budget-page booking')
+        pg.click('[data-compare=venue]'); pg.wait_for_selector('.cmp'); check(n, 'Booked' in pg.inner_text('.cmp-row:first-child'), 'compare shows the budget-page booking: '+pg.inner_text('.cmp-row:first-child').replace(chr(10),' | ')+' OV='+str(ev().get('overrides',{}).get('venue')))
         names=[x.inner_text() for x in pg.query_selector_all('.cmp-row:first-child .cmp-c b')]
         pg.click('[data-rm-opt] >> nth='+str(names.index('Sky Loft'))); pg.wait_for_timeout(200)
         check(n, 'venue' not in ev().get('overrides',{}), 'removing the booked option clears the booking')

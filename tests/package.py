@@ -25,11 +25,14 @@ with sync_playwright() as p:
         pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
         pg.goto(U+'#/new/1'); pg.wait_for_timeout(300); pg.fill('#text','black and gold 40th birthday party'); pg.click('#next'); pg.wait_for_timeout(250)
         pg.select_option('#type','birthday'); pg.fill('#guests','80'); pg.fill('#expected','80'); pg.fill('#time','19:00'); pg.select_option('#city','Houston, TX'); pg.click('#setting [data-v=indoor]')
-        pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
+        pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept', timeout=20000); pg.wait_for_timeout(300)
+        check(n, len(pg.query_selector_all('.concept .thumb img'))==len(pg.query_selector_all('.concept')), 'every look has a labeled photo')
+        pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
         base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2]); eid=base.split('/')[2]
         ev=lambda: pg.evaluate("id => JSON.parse(localStorage['ec.events'])[id]", eid)
         check(n, 'Venues' not in pg.inner_text('.groupbar') and pg.query_selector('a[href$="/budget"]') is not None, 'one booking page in the menu')
-        pg.goto(U+base+'/budget'); pg.wait_for_selector('#pkgGo'); pg.click('#pkgGo'); pg.wait_for_selector('.pk-row', timeout=15000); pg.wait_for_timeout(400)
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pk-row', timeout=15000); pg.wait_for_timeout(400)
+        check(n, pg.url.endswith('/budget'), 'Create my package on the Summary starts it right away')
         rows=pg.query_selector_all('.pk-row'); filled=pg.query_selector_all('.pk-row .pk-biz')
         check(n, len(rows)>=8 and len(filled)==len(rows), f'package fills venue and every vendor in one tap: {len(filled)}/{len(rows)}')
         first_calls=calls[0]
@@ -47,6 +50,14 @@ with sync_playwright() as p:
         pg.click('[data-pkpick] >> nth=0'); pg.wait_for_timeout(300); new=ev()['packages'][1]['items']
         check(n, new[cat]!=old[cat] and new[cat]!=ev()['packages'][0]['items'][cat], 'swap replaces just that item')
         check(n, all(len([x for x in ev()['shortlist'] if x['cat']==c])<=3 for c in new), 'never more than 3 saved per category')
+        # put a business from the full list into the package
+        pg.goto(U+base+'/vendors'); pg.wait_for_timeout(300); pg.click('[data-vendor] >> nth=0'); pg.wait_for_selector('[data-topkg]'); vc=pg.get_attribute('[data-vendor] >> nth=0','data-vendor')
+        key=pg.get_attribute('[data-topkg] >> nth=0','data-topkg'); pg.click('[data-topkg] >> nth=0'); pg.wait_for_timeout(300)
+        check(n, ev()['packages'][1]['items'][vc]==key.split('|')[1], 'Put in package adds a business from the full list')
+        # add one she found herself
+        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkswap] >> nth=2'); pg.wait_for_selector('.pk-swap .cmp-add'); oc=pg.get_attribute('[data-pkswap] >> nth=2','data-pkswap')
+        pg.click('.pk-swap .cmp-add summary'); pg.fill('[data-ownname]','Bella Cakes by Ana'); pg.fill('[data-ownlink]','bellacakes.com'); pg.click('[data-ownadd]'); pg.wait_for_timeout(300)
+        check(n, 'Bella Cakes by Ana' in pg.inner_text('#pkg'), 'her own business goes into the package')
         # choose package 2
         pg.click('[data-pkuse="1"]'); pg.wait_for_timeout(300); d=ev()
         check(n, d['pkgChosen']==1 and all(any(x['cat']==c and x['id']==d['packages'][1]['items'][c] and x.get('pick') for x in d['shortlist']) for c in d['packages'][1]['items']), 'choosing package 2 makes its picks the front-runners')

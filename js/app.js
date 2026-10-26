@@ -731,9 +731,11 @@
     var tick = setInterval(function () { var m = $('#lmsg'); if (!m) return clearInterval(tick); mi = Math.min(msgs.length - 1, mi + 1); m.textContent = msgs[mi]; }, 2500);
     function render(list) {
       clearInterval(tick);
+      var shown = list.map(function (c) { return c.inspo; }).filter(Boolean).concat(E.inspoOf(ev) ? [E.inspoOf(ev).id] : []);
       $('#cs').innerHTML = list.map(function (c, i) {
         var sel = ev.concept && ev.concept.id === c.id;
-        return '<article class="concept' + (sel ? ' selected' : '') + '">' + (c.inspo && E.inspoOf({ inspiration: { inspo: c.inspo } }) ? thumb({ src: INSPO_IMG + 'sm/' + c.inspo + '.jpg', alt: 'The inspiration photo you chose', ai: true }) : '') + '<div class="in"><span class="concept-num">Concept ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(moodFor(c, ev)) + '</p><ul>' + outlineFor(c, ev).map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
+        var own = c.inspo && E.inspoOf({ inspiration: { inspo: c.inspo } }), like = own ? null : E.similarPhoto(c, ev, shown); if (like) shown.push(like.id);   /* every look shows a labeled inspiration photo */
+        return '<article class="concept' + (sel ? ' selected' : '') + '">' + (own ? thumb({ src: INSPO_IMG + 'sm/' + c.inspo + '.jpg', alt: 'The inspiration photo you chose', ai: true }) : like ? '<div class="thumb"><img src="' + esc(srcOf(INSPO_IMG + 'sm/' + like.id + '.jpg')) + '" alt="AI-generated inspiration with a similar look" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()"><span class="ai-tag">AI-generated inspiration \u00b7 similar look</span></div>' : '') + '<div class="in"><span class="concept-num">Concept ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(moodFor(c, ev)) + '</p><ul>' + outlineFor(c, ev).map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this concept</button></div></article>';
       }).join('');
     }
     function load(skip) {
@@ -1054,7 +1056,10 @@
     if (ev.budget && !picked) all = [E.budgetFit(ev)];   /* with a budget, one clear answer; the three levels stay available below */
     if (picked) all = all.filter(function (t) { return t.tier.id === ev.tier; });
     var g = E.guardian(ev, b);
-    return stepsCard(ev, b) + (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.budget ? 'Your plan' : 'Your budget versions') + '</h3><p class="muted">' + (picked ? 'You\u2019re using the ' + esc(tierName(ev.tier)) + ' version: about ' + money(all[0].total) + (all[0].total > ev.budget ? ', ' + money(all[0].total - ev.budget) + ' over your ' + money(ev.budget) + ' maximum.' : ', within your ' + money(ev.budget) + ' maximum.') + ' <button class="link small" data-tier="F">Back to my budget plan</button> <button class="link small" id="cmpLevels">Compare spending levels</button>' : ev.budget ? (all[0] && all[0].shortBy && all[0].shortBy <= ev.budget * 0.1 ? 'Your plan comes to ' + money(all[0].total) + ', about ' + money(all[0].shortBy) + ' over your ' + money(ev.budget) + ' maximum. One of the swaps below brings it under.' : all[0] && all[0].shortBy ? (/^[aeiou]/i.test(E.typeOf(ev.type).name) ? 'An ' : 'A ') + esc(E.typeOf(ev.type).name.toLowerCase()) + ' for ' + plural(ev.guests, 'guest') + ' usually costs more than ' + money(ev.budget) + ' in ' + esc(ev.city.split(',')[0]) + '. This is the closest plan, kept as lean as the look allows. The budget guardian below shows ways to close the gap, like fewer guests or a different setting.' : 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there.') + ' <button class="link small" id="cmpLevels">Compare spending levels</button>' : '') + (ev.budget ? '' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
+    var pkgCta = AI.live && !ev.sample && !ev.settingOpen && pkgCats(ev, b).length ? ((ev.packages || []).length
+      ? '<div class="panel pkg-cta"><div><b>Your booking package is ready</b><p class="small muted">Change anything, compare packages and mark what you book.</p></div><a class="btn" href="#/e/' + ev.id + '/budget">Open my package</a></div>'
+      : '<div class="panel pkg-cta"><div><b>Next: book everything in one place</b><p class="small muted">One tap picks a top-rated ' + (pkgCats(ev, b)[0].kind === 'venue' ? 'venue and every vendor' : 'vendor for everything') + ' in ' + esc(ev.city.split(',')[0]) + '. Change anything you like.</p></div><button class="btn gold" id="pkgStart">Create my package</button></div>') : '';
+    return pkgCta + stepsCard(ev, b) + (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.budget ? 'Your plan' : 'Your budget versions') + '</h3><p class="muted">' + (picked ? 'You\u2019re using the ' + esc(tierName(ev.tier)) + ' version: about ' + money(all[0].total) + (all[0].total > ev.budget ? ', ' + money(all[0].total - ev.budget) + ' over your ' + money(ev.budget) + ' maximum.' : ', within your ' + money(ev.budget) + ' maximum.') + ' <button class="link small" data-tier="F">Back to my budget plan</button> <button class="link small" id="cmpLevels">Compare spending levels</button>' : ev.budget ? (all[0] && all[0].shortBy && all[0].shortBy <= ev.budget * 0.1 ? 'Your plan comes to ' + money(all[0].total) + ', about ' + money(all[0].shortBy) + ' over your ' + money(ev.budget) + ' maximum. One of the swaps below brings it under.' : all[0] && all[0].shortBy ? (/^[aeiou]/i.test(E.typeOf(ev.type).name) ? 'An ' : 'A ') + esc(E.typeOf(ev.type).name.toLowerCase()) + ' for ' + plural(ev.guests, 'guest') + ' usually costs more than ' + money(ev.budget) + ' in ' + esc(ev.city.split(',')[0]) + '. This is the closest plan, kept as lean as the look allows. The budget guardian below shows ways to close the gap, like fewer guests or a different setting.' : 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there.') + ' <button class="link small" id="cmpLevels">Compare spending levels</button>' : '') + (ev.budget ? '' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
       all.map(function (t) { var pc = E.prosCons(ev, t);
         return '<button class="tier" data-tier="' + t.tier.id + '" aria-pressed="' + (t.tier.id === ev.tier) + '"><span class="muted small">' + esc(t.tier.name) + '</span><span class="amt num">' + money(t.total) + '</span><span class="small muted">estimated</span><span class="small muted">' + (ev.setting === 'restaurant' ? 'About ' + money(t.perGuest) + ' a person all in: the menu bill, cake and table decor, with a 10% cushion' : 'Includes a 10% cushion for surprises') + '</span>' +
           '<div class="pc"><b>Pros</b><ul>' + pc.pros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><b>Cons</b><ul>' + pc.cons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' + (all.length > 1 ? '<span class="tier-pick">' + (t.tier.id === ev.tier ? '\u2713 Your plan uses this version' : 'Use this version') + '</span>' : '') + '</button>'; }).join('') + '</div></div>' +
@@ -1065,6 +1070,7 @@
       '<div class="panel stack"><h3>Your concept</h3>' + dots(ev.concept.palette, ev.concept.styleName + ' colors') + '<p>' + esc(moodFor(ev.concept, ev)) + '</p><ul class="incl">' + decorFor(ev.concept, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' + dressBlock(ev, 'muted small') + (ev.sample ? '' : '<div><a class="btn ghost small" href="#/e/' + ev.id + '/concepts">Change concept</a></div>') + '</div>';
   };
   TAB_BIND.overview = function (ev, save, rerender) {
+    var ps = $('#pkgStart'); if (ps) ps.addEventListener('click', function () { if (lockSample(ev)) return; AUTO_PKG = true; location.hash = '#/e/' + ev.id + '/budget'; });
     bindWhere(ev, rerender); bindSteps(ev, rerender);
     var cl = $('#cmpLevels'); if (cl) cl.addEventListener('click', function () {
       var levels = E.allBudgets(ev);
@@ -1164,8 +1170,11 @@
     var key = cat + '|' + p.id;
     FOUND[key] = { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '' };
     var on = (ev.shortlist || []).some(function (x) { return x.id === p.id && x.cat === cat; });
-    return '<button class="btn small' + (on ? ' gold' : ' ghost') + '" data-short="' + esc(key) + '" aria-pressed="' + on + '">' + (on ? 'Saved' : 'Save') + '</button>';
+    var pks = ev.packages || [], k = Math.min(ev.pkgView || 0, pks.length - 1), inPk = pks.length && pks[k].items[cat] === p.id;
+    return '<button class="btn small' + (on ? ' gold' : ' ghost') + '" data-short="' + esc(key) + '" aria-pressed="' + on + '">' + (on ? 'Saved' : 'Save') + '</button>' +
+      (pks.length && !ev.sample ? (inPk ? '<span class="badge ok">In package ' + (k + 1) + '</span>' : '<button class="btn small" data-topkg="' + esc(key) + '">Put in package ' + (k + 1) + '</button>') : '');
   }
+  function placeFromFound(f) { return { id: f.id, name: f.name, rating: f.rating, reviews: f.reviews, website: f.site, mapsUrl: f.maps, address: f.address, priceLevel: f.price }; }
   /* Up to three options per category; one is the front-runner (the first saved, until she stars another). */
   var MAX_OPTIONS = 3;
   var OPT_NAME = { venue: 'Venue', privateDining: 'Private dining room', restaurantFood: 'Restaurant' };
@@ -1176,6 +1185,10 @@
   function addOption(ev, item) { ev.shortlist = ev.shortlist || []; var first = !savedFor(ev, item.cat).length; ev.shortlist.push(Object.assign({}, item, { pick: first })); return first; }
   function bindSave(ev, box, after) {
     box.addEventListener('click', function (e) {
+      var tp = e.target.closest('[data-topkg]');
+      if (tp) { if (lockSample(ev)) return; var f = FOUND[tp.dataset.topkg], k = Math.min(ev.pkgView || 0, (ev.packages || []).length - 1); if (!f || k < 0) return;
+        if (!putInPackage(ev, k, f.cat, placeFromFound(f))) return toast('Remove one of your 3 saved ' + E.lc(catName(f.cat, ev)) + ' options first.');
+        saveEvent(ev); tp.outerHTML = '<span class="badge ok">In package ' + (k + 1) + '</span>'; toast(f.name + ' is in package ' + (k + 1) + '. See it under Book and budget.'); if (after) after(); return; }
       var bt = e.target.closest('[data-short]'); if (!bt) return;
       if (lockSample(ev)) return;
       var id = bt.dataset.short, list = ev.shortlist = ev.shortlist || [];
@@ -1336,13 +1349,15 @@
   }
   var PRICE_SIGN = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
   var ORDINAL = ['first', 'second', 'third'];
+  var HOWTO_PKG = '<ol class="howto"><li><b>Create</b> your package: a top-rated pick for everything, in one tap</li><li><b>Change</b> anything, or make a second package to compare</li><li><b>Book</b>: contact them and tap I booked it</li></ol>';
+  var AUTO_PKG = false;
   function packagePanel(ev, b) {
     var cats = pkgCats(ev, b), pks = ev.packages || [];
     if (!cats.length) return bookingsPanel(ev, b);
     var bookedN = cats.filter(function (c) { return statusOf(ev, c.cat) === 'booked'; }).length;
     if (!pks.length) return '<div class="panel stack pkg" id="pkg"><div class="pkg-top"><h3>Book everything in one place</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div>' +
       '<p class="muted">In one tap we pick a top-rated ' + (cats[0].kind === 'venue' ? E.lc(catName(cats[0].cat, ev)) + ' and ' + plural(cats.length - 1, 'vendor') : plural(cats.length, 'vendor')) + ' for your plan in ' + esc(ev.city.split(',')[0]) + '. Then create a second package to compare, swap anything you don\u2019t love, and mark what you book.</p>' +
-      (ev.sample ? '' : '<div><button class="btn gold" id="pkgGo">Create my package</button></div>') + '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
+      HOWTO_PKG + (ev.sample ? '' : '<button class="btn gold block pkg-go" id="pkgGo">Create my package</button>') + '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
     var k = Math.min(ev.pkgView || 0, pks.length - 1), pk = pks[k], chosen = (ev.pkgChosen || 0) === k;
     return '<div class="panel stack pkg" id="pkg"><div class="pkg-top"><h3>Your booking package' + (pks.length > 1 ? 's' : '') + '</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div>' +
       '<div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' +
@@ -1353,7 +1368,7 @@
         var id = pk.items[c.cat], x = id && savedFor(ev, c.cat).find(function (o) { return o.id === id; }), it = b.items.find(function (i) { return i.id === c.cat; }), bk = x && isBooked(ev, c.cat, x);
         return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + '<span class="num muted small">' + (it ? 'est. ' + money(it.mid) : '') + '</span></div>' +
           (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + [x.rating ? '\u2605 ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' \u00b7 ') + '</span></div>' +
-            '<div class="pk-acts">' + (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : '') + (ev.sample ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Swap</button><button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked \u2713' : 'I booked it') + '</button>') + '</div>'
+            '<div class="pk-acts">' + (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : '') + (ev.sample ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Change</button><button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked \u2713' : 'I booked it') + '</button>') + '</div>'
           : '<p class="small muted">No top-rated match came back yet. ' + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '">See options</button>') + '</p>') +
           '<div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></div>';
       }).join('') + '</div>' +
@@ -1370,6 +1385,7 @@
     };
     var go = $('#pkgGo'), more = $('#pkgMore');
     if (go) go.addEventListener('click', function () { build(go); });
+    if (go && AUTO_PKG) { AUTO_PKG = false; go.scrollIntoView({ block: 'start' }); build(go); }   /* she tapped Create my package on the Summary page */
     if (more) more.addEventListener('click', function () { build(more); });
     $$('[data-pkview]').forEach(function (bt) { bt.addEventListener('click', function () { ev.pkgView = +bt.dataset.pkview; save(); rerender(); }); });
     $$('[data-pkuse]').forEach(function (bt) { bt.addEventListener('click', function () {
@@ -1393,7 +1409,13 @@
       pkgSearch(ev, c).then(function (list) {
         var inOther = (ev.packages || []).map(function (x) { return x.items[cat]; }); var others = list.filter(function (p) { return inOther.indexOf(p.id) < 0; }).slice(0, 5);   /* never the same business in two packages */
         box.innerHTML = '<div class="curated">' + (others.length ? '<p class="eyebrow">Other top-rated choices</p>' + others.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + [p.rating ? '\u2605 ' + (Math.round(p.rating * 10) / 10) + ' (' + Number(p.reviews || 0).toLocaleString('en-US') + ')' : '', PRICE_SIGN[p.priceLevel] || '', p.address ? esc(p.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' \u00b7 ') + '</div></div><span class="acts">' + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<button class="btn small" data-pkpick="' + esc(p.id) + '">Use this</button></span></div>'; }).join('') : '<p class="muted small">No other top-rated matches nearby.</p>') +
-          (c.kind === 'venue' ? '<p class="small"><a class="link" href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/places">More kinds of venues, areas and drive times</a></p>' : '') + '</div>';
+          '<p class="small"><a class="link" href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/' + (c.kind === 'venue' ? 'places">See every kind of venue, by area and drive time' : 'vendors">See more businesses for every category') + '</a></p>' +
+          '<details class="cmp-add"><summary class="link small">Add one you found yourself</summary><div class="grid2"><label class="field"><span>Business name</span><input class="input" data-ownname></label><label class="field"><span>Website or phone (optional)</span><input class="input" data-ownlink></label></div><button class="btn small" data-ownadd>Put it in package ' + (k + 1) + '</button></details></div>';
+        var oa = box.querySelector('[data-ownadd]'); if (oa) oa.addEventListener('click', function () { if (lockSample(ev)) return; var nm = box.querySelector('[data-ownname]').value.trim(); if (!nm) return toast('Enter the business name'); var lk = box.querySelector('[data-ownlink]').value.trim(), phone = /^[\d\s().+-]{7,}$/.test(lk);
+          var own = { id: 'own-' + uid(), name: nm.slice(0, 120), website: !phone && /^https?:\/\/|\.[a-z]{2,}/i.test(lk) ? (/^https?:\/\//i.test(lk) ? lk : 'https://' + lk) : '' };
+          if (!putInPackage(ev, k, cat, own)) return toast('Remove one of your 3 saved options for this first.');
+          if (phone) { var so = savedFor(ev, cat).find(function (x) { return x.id === own.id; }); if (so) so.phone = lk; }
+          save(); rerender(); toast(nm + ' is in package ' + (k + 1)); });
         $$('[data-pkpick]', box).forEach(function (pb) { pb.addEventListener('click', function () { if (lockSample(ev)) return; var p = list.find(function (x) { return x.id === pb.dataset.pkpick; }); if (!putInPackage(ev, k, cat, p)) return toast('Remove one of your saved options for this first.'); save(); rerender(); toast('Swapped in ' + p.name); }); });
       }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn\u2019t available right now.') + '</p>'; });
     }); });

@@ -679,3 +679,11 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 @media (min-width: 900px) { .pk-row { grid-template-columns: 180px minmax(0, 1fr) auto; align-items: center; column-gap: 16px; } .pk-row .pk-swap, .pk-row > p { grid-column: 1 / -1; } .pk-row > p.small { grid-column: 2 / -1; } }
 @media (min-width: 900px) { .pk-h { flex-direction: column; align-items: flex-start; gap: 2px; } .pk-h .num { margin-left: 0; } }
 .pkg { margin-bottom: 8px; }
+.pkg-cta { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: linear-gradient(120deg, var(--ink), #6B2350); color: #fff; border: 0; }
+.pkg-cta b { font-family: var(--display); font-size: 1.15rem; font-weight: 500; color: #fff; }
+.pkg-cta p.muted { color: rgba(255, 255, 255, .82) !important; margin: 4px 0 0; }
+.pkg-cta .btn.gold { background: var(--champagne); border-color: var(--champagne); color: #fff; white-space: nowrap; }
+.pkg-cta .btn:not(.gold) { background: #fff; color: var(--ink); border-color: #fff; white-space: nowrap; }
+@media (max-width: 560px) { .pkg-cta { flex-direction: column; align-items: stretch; } .pkg-cta .btn { width: 100%; justify-content: center; } }
+.pkg .pkg-go { min-height: 52px; font-size: 1rem; }
+body:has(.sheet-back) .toast { bottom: auto !important; top: calc(16px + env(safe-area-inset-top, 0px)); }   /* never cover a pop-up's buttons */
