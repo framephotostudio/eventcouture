@@ -1454,24 +1454,53 @@
     var cats = pkgCats(ev, b), pks = ev.packages || [];
     if (!cats.length) return bookingsPanel(ev, b);
     var bookedN = cats.filter(function (c) { return statusOf(ev, c.cat) === 'booked'; }).length;
-    if (!pks.length) return '<div class="panel stack pkg" id="pkg"><div class="pkg-top"><h3>Book everything in one place</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div>' +
+    if (!pks.length) return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(1) + '<div class="pkg-top"><h3>Book everything in one place</h3></div>' +
       AREA_LINE(ev) + '<p class="muted">In one tap we pick a top-rated ' + (cats[0].kind === 'venue' ? E.lc(catName(cats[0].cat, ev)) + ' and ' + plural(cats.length - 1, 'vendor') : plural(cats.length, 'vendor')) + ' for your plan in ' + esc(ev.city.split(',')[0]) + '. Then create a second package to compare, swap anything you don\u2019t love, and mark what you book.</p>' +
       HOWTO_PKG + (ev.sample ? '' : '<button class="btn gold block pkg-go" id="pkgGo">Create my package</button>') + '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
-    var k = Math.min(ev.pkgView || 0, pks.length - 1), pk = pks[k], chosen = (ev.pkgChosen || 0) === k;
-    return '<div class="panel stack pkg" id="pkg"><div class="pkg-top"><h3>Your booking package' + (pks.length > 1 ? 's' : '') + '</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div>' +
-      '<div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' + AREA_LINE(ev) +
-      '<div class="pkg-tabs" role="tablist">' + pks.map(function (x, i) { return '<button role="tab" data-pkview="' + i + '" aria-selected="' + (i === k) + '">Package ' + (i + 1) + ((ev.pkgChosen || 0) === i ? ' <span aria-label="chosen">\u2605</span>' : '') + '</button>'; }).join('') +
-        (pks.length < 3 && !ev.sample ? '<button class="pkg-new" id="pkgMore">+ Create a ' + ORDINAL[pks.length] + ' package</button>' : '') + '</div>' +
-      '<p class="small muted" id="pkgMsg" aria-live="polite">' + (chosen ? '<span class="badge ok">Your chosen package</span> These are your front-runners everywhere in your plan.' : 'Compare it with your other package, then choose the one you like best.') + '</p>' +
-      '<div class="pkg-rows">' + cats.map(function (c) {
-        var id = pk.items[c.cat], x = id && savedFor(ev, c.cat).find(function (o) { return o.id === id; }), it = b.items.find(function (i) { return i.id === c.cat; }), bk = x && isBooked(ev, c.cat, x);
-        return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + '<span class="num muted small">' + (it ? 'est. ' + money(it.mid) : '') + '</span></div>' +
-          (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + [x.rating ? '\u2605 ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' \u00b7 ') + '</span></div>' +
-            '<div class="pk-acts">' + (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : '') + (ev.sample ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Change</button><button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked \u2713' : 'I booked it') + '</button>') + '</div>'
-          : '<p class="small muted">No top-rated match came back yet. ' + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '">See options</button>') + '</p>') +
-          '<div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></div>';
-      }).join('') + '</div>' +
-      (ev.sample ? '' : '<div class="row pkg-foot">' + (chosen ? '' : '<button class="btn gold" data-pkuse="' + k + '">Choose package ' + (k + 1) + '</button>') + '<button class="link small" data-pkdel="' + k + '">Remove this package</button></div>') + '</div>';
+    var k = Math.min(ev.pkgView || 0, pks.length - 1), pk = pks[k];
+    var bizOf = function (pkx, cat) { var id = pkx.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };
+    var line = function (x) { return [x.rating ? '★ ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' · '); };
+    var est = function (cat) { var it = b.items.find(function (i) { return i.id === cat; }); return it ? 'est. ' + money(it.mid) : ''; };
+    var links = function (x) { return (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : ''); };
+    var row = function (c, pkx, mode) {
+      var x = bizOf(pkx, c.cat), bk = x && isBooked(ev, c.cat, x);
+      return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + '<span class="num muted small">' + est(c.cat) + '</span></div>' +
+        (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + '</span></div>' +
+          '<div class="pk-acts">' + links(x) + (ev.sample ? '' : (bk ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Change</button>') + (mode === 'book' ? '<button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked ✓' : 'I booked it') + '</button>' : '')) + '</div>'
+        : '<p class="small muted">No top-rated match came back yet. ' + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '">See options</button>') + '</p>') +
+        '<div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></div>';
+    };
+    /* Step 2: look it over, change anything, choose it. */
+    if (!ev.pkgConfirmed || ev.sample) {
+      return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(2) + '<div class="pkg-top"><h3>' + (pks.length > 1 ? 'Choose your package' : 'Your package is ready') + '</h3></div>' + AREA_LINE(ev) +
+        '<p class="pkg-guide">' + (pks.length > 1 ? 'Compare your packages with the tabs, ' : 'Look it over: ') + 'a top-rated pick for each part of your plan. Don’t love one? Tap <b>Change</b>. Happy with it? Choose it below and we’ll walk you through booking each one.</p>' +
+        (pks.length > 1 ? '<div class="pkg-tabs" role="tablist">' + pks.map(function (x, i) { return '<button role="tab" data-pkview="' + i + '" aria-selected="' + (i === k) + '">Package ' + (i + 1) + '</button>'; }).join('') + '</div>' : '') +
+        '<div class="pkg-rows">' + cats.map(function (c) { return row(c, pk, 'choose'); }).join('') + '</div>' +
+        (ev.sample ? '' : '<button class="btn gold block" data-pkuse="' + k + '">Choose package ' + (k + 1) + ' and start booking</button><div class="row pkg-foot">' + (pks.length < 3 ? '<button class="link small" id="pkgMore">Make a ' + ORDINAL[pks.length] + ' package to compare</button>' : '') + (pks.length > 1 ? '<button class="link small quiet" data-pkdel="' + k + '">Remove package ' + (k + 1) + '</button>' : '') + '</div><p class="small muted" id="pkgMsg" aria-live="polite"></p>') + '</div>';
+    }
+    var cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], skipped = ev.pkgSkipped || [];
+    var open = cats.filter(function (c) { return statusOf(ev, c.cat) !== 'booked'; });
+    var all = '<details class="pkg-all"><summary>See your whole package (' + bookedN + ' of ' + cats.length + ' booked)</summary><div class="pkg-rows">' + cats.map(function (c) { return row(c, cp, 'book'); }).join('') + '</div></details>';
+    var back = '<button class="link small quiet" data-pkback>Go back and change packages</button>';
+    /* Step 4: everything booked. */
+    if (!open.length) return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(4) + '<div class="pkg-top"><h3>Everything is booked</h3></div><div class="meter"><i style="width:100%"></i></div><p class="pkg-guide">All ' + cats.length + ' parts of your plan are booked. Next, invite your guests.</p><a class="btn gold block" href="#/e/' + esc(ev.id) + '/invite">Invite my guests</a>' + all + '</div>';
+    /* Step 3: one vendor at a time. */
+    var next = open.find(function (c) { return skipped.indexOf(c.cat) < 0; }) || open[0], x = bizOf(cp, next.cat), pos = cats.indexOf(next) + 1;
+    return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(3) + '<div class="pkg-top"><h3>Book your vendors</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div><div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' +
+      '<p class="pkg-guide">We’ll go one at a time. When one is booked, we show you the next.</p>' +
+      '<div class="pkg-next" data-pkrow="' + next.cat + '"><p class="eyebrow">Next up · ' + pos + ' of ' + cats.length + '</p><h3>' + esc(catName(next.cat, ev)) + '</h3>' +
+        (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + (est(next.cat) ? ' · ' + est(next.cat) : '') + '</span></div>' +
+          '<ol class="howto"><li><b>Contact them</b> to check your date and ask for a quote.<div class="row" style="margin-top:6px">' + links(x) + '</div></li>' +
+          '<li><b>Send your details.</b> We wrote the message for you.<div class="row" style="margin-top:6px"><button class="btn small ghost" data-pkcopy="' + next.cat + '">Copy my message</button></div></li>' +
+          '<li><b>Booked?</b> Tap below and add the price you agreed on.</li></ol>' +
+          '<button class="btn gold block" data-pkbook="' + next.cat + '">I booked ' + esc(x.name) + '</button>' +
+          '<div class="row pkg-foot"><button class="link small" data-pkswap="' + next.cat + '">Choose someone else</button><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button></div>'
+        : '<p class="muted">We don’t have a top-rated pick for this yet.</p><button class="btn gold block" data-pkswap="' + next.cat + '">See options</button><div class="row pkg-foot"><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button></div>') +
+        '<div class="pk-swap" data-pkswapbox="' + next.cat + '"></div></div>' +
+      all + back + '</div>';
+  }
+  function PKG_STEPS(on) {
+    return '<ol class="pkg-steps" aria-label="Step ' + on + ' of 4">' + ['Create', 'Choose', 'Book', 'Done'].map(function (t, i) { var n = i + 1; return '<li class="' + (n < on ? 'done' : n === on ? 'on' : '') + '"' + (n === on ? ' aria-current="step"' : '') + '><span>' + (n < on ? '✓' : n) + '</span>' + t + '</li>'; }).join('') + '</ol>';
   }
   function bindPackage(ev, save, rerender) {
     var build = function (btn) {
@@ -1505,9 +1534,9 @@
     if (more) more.addEventListener('click', function () { build(more); });
     $$('[data-pkview]').forEach(function (bt) { bt.addEventListener('click', function () { ev.pkgView = +bt.dataset.pkview; save(); rerender(); }); });
     $$('[data-pkuse]').forEach(function (bt) { bt.addEventListener('click', function () {
-      if (lockSample(ev)) return; var k = +bt.dataset.pkuse, pk = ev.packages[k]; ev.pkgChosen = k;
+      if (lockSample(ev)) return; var k = +bt.dataset.pkuse, pk = ev.packages[k]; ev.pkgChosen = k; ev.pkgView = k; ev.pkgConfirmed = true; ev.pkgSkipped = [];
       Object.keys(pk.items).forEach(function (cat) { if (!savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, pk.items[cat]); syncPrice(ev, cat); });
-      save(); rerender(); toast('Package ' + (k + 1) + ' is your choice. Its picks are now your front-runners.');
+      save(); rerender(); toast('Package ' + (k + 1) + ' it is. Now let\u2019s book it, one at a time.'); var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' });
     }); });
     $$('[data-pkdel]').forEach(function (bt) { bt.addEventListener('click', function () {
       if (lockSample(ev)) return; var k = +bt.dataset.pkdel, pk = ev.packages[k];
@@ -1516,7 +1545,10 @@
       if (ev.packages.length && ch === k) { var np = ev.packages[ev.pkgChosen]; Object.keys(np.items).forEach(function (cat) { if (!savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, np.items[cat]); syncPrice(ev, cat); }); }
       save(); rerender(); toast('Package removed');
     }); });
-    $$('[data-pkbook]').forEach(function (bt) { bt.addEventListener('click', function () { var cat = bt.dataset.pkbook, pk = ev.packages[Math.min(ev.pkgView || 0, ev.packages.length - 1)]; compareSheet(ev, cat, rerender, { book: pk.items[cat] }); }); });
+    $$('[data-pkskip]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; ev.pkgSkipped = (ev.pkgSkipped || []).filter(function (c) { return c !== bt.dataset.pkskip; }).concat([bt.dataset.pkskip]); save(); rerender(); }); });
+    $$('[data-pkcopy]').forEach(function (bt) { bt.addEventListener('click', function () { copyText(vendorAsk(ev, bt.dataset.pkcopy), 'Your message'); }); });
+    $$('[data-pkback]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; ev.pkgConfirmed = false; ev.pkgView = ev.pkgChosen || 0; save(); rerender(); }); });
+    $$('[data-pkbook]').forEach(function (bt) { bt.addEventListener('click', function () { var cat = bt.dataset.pkbook, pk = ev.packages[Math.min((ev.pkgConfirmed ? ev.pkgChosen : ev.pkgView) || 0, ev.packages.length - 1)]; compareSheet(ev, cat, rerender, { book: pk.items[cat] }); }); });
     $$('[data-pkswap]').forEach(function (bt) { bt.addEventListener('click', function () {
       var cat = bt.dataset.pkswap, box = document.querySelector('[data-pkswapbox="' + cat + '"]'), k = Math.min(ev.pkgView || 0, ev.packages.length - 1), pk = ev.packages[k];
       if (box.innerHTML) { box.innerHTML = ''; return; }
@@ -2119,9 +2151,95 @@
   var GIFT_LIST_OPTIONAL = ['birthday', 'kids-birthday', 'milestone', 'retirement'];
   function hasRegistry(ev) { return ['wedding', 'bridal-shower', 'baby-shower', 'gender-reveal', 'engagement', 'graduation', 'quince', 'sweet16', 'anniversary'].indexOf(ev.type) >= 0 || !!ev.registryOn || ((ev.registry && ev.registry.items) || []).length > 0 || ((ev.registry && ev.registry.funds) || []).length > 0; }
   /* The invitation as a message guests can read anywhere (the app sends this instead of a link). */
+  /* ---------- The invitation: formal wording written for this exact event ---------- */
+  var ONES = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  var TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  var ORD = { one: 'first', two: 'second', three: 'third', five: 'fifth', eight: 'eighth', nine: 'ninth', twelve: 'twelfth', twenty: 'twentieth', thirty: 'thirtieth' };
+  function words(n) { if (n < 20) return ONES[n]; var t = TENS[Math.floor(n / 10)], o = n % 10; return o ? t + '-' + ONES[o] : t; }
+  function ordWord(n) { var w = words(n), parts = w.split('-'), last = parts.pop(); return parts.concat([ORD[last] || (/y$/.test(last) ? last.slice(0, -1) + 'ieth' : last + 'th')]).join('-'); }
+  function yearWords(y) { return 'two thousand ' + words(y - 2000); }
+  var FORMAL_TYPES = ['wedding', 'gala', 'quince', 'anniversary', 'engagement'];
+  function formalWhen(ev) {
+    if (!ev.date) return ['Date to be announced'];
+    var d = new Date(ev.date + 'T12:00:00'), wd = d.toLocaleDateString('en-US', { weekday: 'long' }), mo = d.toLocaleDateString('en-US', { month: 'long' });
+    var h = ev.time ? +ev.time.split(':')[0] : null, m = ev.time ? +ev.time.split(':')[1] : 0;
+    if (FORMAL_TYPES.indexOf(ev.type) < 0) return [fmtDate(ev.date).replace(/^(\w+), /, '$1, '), ev.time ? 'at ' + fmtTime(ev.time) : ''].filter(Boolean);
+    var hw = h === null ? '' : words((h + 11) % 12 + 1), part = h === null ? '' : h < 12 ? ' in the morning' : h < 17 ? ' in the afternoon' : ' in the evening';
+    var tw = h === null ? '' : m === 0 ? 'at ' + hw + ' o’clock' + part : m === 30 ? 'at half past ' + hw + part : 'at ' + fmtTime(ev.time).replace(/ (AM|PM)$/, '') + part;
+    return [wd + ', the ' + ordWord(d.getDate()) + ' of ' + mo, yearWords(d.getFullYear()), tw].filter(Boolean);
+  }
+  function rsvpBy(ev) {
+    var inv = ev.inv || {}; if (inv.rsvp) return inv.rsvp; if (!ev.date) return '';
+    var days = /wedding|quince|gala/.test(ev.type) ? 30 : ev.type === 'kids-birthday' ? 7 : 14, d = new Date(ev.date + 'T12:00:00'); d.setDate(d.getDate() - days);
+    return d < new Date() ? '' : d.toISOString().slice(0, 10);
+  }
+  function inviteFields(ev) {
+    var t = ev.type;
+    if (['wedding', 'engagement', 'anniversary'].indexOf(t) >= 0) return { names: 'The couple’s names', ph: 'Sara Haddad & Omar Khalil', age: t === 'anniversary' ? 'Years together' : '', host: t === 'wedding' ? 'Opening line (optional)' : 'Hosted by (optional)' };
+    if (['corporate', 'gala'].indexOf(t) >= 0) return { names: 'Hosted by (company or organization)', ph: 'Always Luxe', age: '', host: '' };
+    if (['dinner', 'brunch', 'holiday', 'christmas', 'other'].indexOf(t) >= 0) return { names: 'Hosted by', ph: 'Demah and Sam', age: '', host: '' };
+    return { names: 'Guest of honor’s name', ph: t === 'baby-shower' ? 'Layla Haddad' : 'Sofia', age: ['birthday', 'milestone', 'kids-birthday'].indexOf(t) >= 0 ? 'Turning (age)' : t === 'graduation' ? 'Class of (year)' : '', host: 'Hosted by (optional)' };
+  }
+  function inviteLines(ev) {
+    var inv = ev.inv || {}, names = String(inv.names || '').trim(), host = String(inv.host || '').trim(), age = parseInt(inv.age, 10) || 0, t = ev.type, cu = E.culture(ev);
+    if (inv.custom && String(inv.custom).trim()) return String(inv.custom).split('\n').map(function (x) { return { k: 'body', t: x.trim() }; }).filter(function (x) { return x.t; }).concat(tailLines(ev));
+    var L = [], pre = function (x) { L.push({ k: 'pre', t: x }); }, big = function (x) { L.push({ k: 'name', t: x }); }, body = function (x) { L.push({ k: 'body', t: x }); };
+    var first = names.split(/\s*(?:&| and )\s*/i)[0].split(' ')[0];
+    var b = E.budget(ev, ev.tier || 'S'), has = function (id) { return b.items.some(function (i) { return i.id === id; }); };
+    var follow = has('catering') || has('privateDining') || has('restaurantFood') ? ((has('dj') || has('liveMusic')) ? 'Dinner and dancing to follow' : 'Dinner to follow') : (has('dj') || has('liveMusic')) ? 'Music and dancing' : '';
+    var theme = themeWords(ev);
+    if (t === 'wedding') {
+      if (names) { pre(host || (cu && cu.name === 'Arabic wedding' ? 'With the blessing of God and their families' : cu && cu.name === 'Indian wedding' ? 'With the blessings of their families' : 'Together with their families')); big(names); body('request the honour of your presence'); body('at the celebration of their marriage'); }
+      else { pre('The honour of your presence is requested'); body('at the wedding celebration of'); big(ev.name); }
+    } else if (t === 'engagement') { pre(host ? host + ' invite you' : 'Please join us'); body('in celebrating the engagement of'); big(names || ev.name); }
+    else if (t === 'anniversary') { pre(host ? host + ' invite you' : 'Please join us'); body('in celebrating ' + (age ? words(age) + ' years of marriage' : 'the anniversary') + ' of'); big(names || ev.name); }
+    else if (t === 'quince') { pre(host || 'With the blessing of God and her parents'); big(names || ev.name); body('requests the pleasure of your company'); body('as she celebrates her quinceañera'); }
+    else if (t === 'sweet16') { pre('Please join us'); body('as we celebrate'); big(names ? names + '’s Sweet Sixteen' : ev.name); }
+    else if (t === 'gala') { pre((names || 'The hosts') + ' request the pleasure of your company at'); big(ev.name); }
+    else if (t === 'corporate') { pre((names || 'You are cordially invited') + (names ? ' cordially invites you to' : ' to')); big(ev.name); }
+    else if (t === 'kids-birthday' || (ev.kids && t === 'birthday')) { pre('You’re invited!'); big(names ? names + (age ? ' is turning ' + age : '’s birthday') : ev.name); body('Join us for ' + (theme && !/ and /.test(theme) ? (/^[aeio]|^u(?![nk]i|s)/.test(theme) ? 'an ' : 'a ') + theme + ' ' : 'a ') + 'birthday party'); }
+    else if (t === 'birthday' || t === 'milestone') { pre('Please join us'); body('in celebrating'); big(names ? names + '’s ' + (age ? ordWord(age).replace(/^\w/, function (m) { return m.toUpperCase(); }) + ' ' : '') + 'Birthday' : ev.name); }
+    else if (t === 'baby-shower') { pre('Please join us for a baby shower'); body('honoring'); big(names || 'the parents-to-be'); }
+    else if (t === 'bridal-shower') { pre('Please join us for a bridal shower'); body('honoring'); big(names ? names + ', bride-to-be' : 'the bride-to-be'); }
+    else if (t === 'gender-reveal') { pre('Boy or girl?'); body('Please join us as ' + (names || 'the parents-to-be') + ' reveal'); big('the big surprise'); }
+    else if (t === 'bachelorette') { pre('One last celebration before the ring'); body('Join us in celebrating'); big(names ? names + ', bride-to-be' : ev.name); }
+    else if (t === 'graduation') { pre('Please join us'); body('in celebrating the graduation of'); big(names || ev.name); if (age) body('Class of ' + age); }
+    else if (t === 'retirement') { pre('Please join us'); body('in honoring'); big(names || ev.name); body('on a wonderful retirement'); }
+    else { pre(names ? names + ' invite you to' : 'You are cordially invited to'); big(ev.name); }
+    if (host && ['wedding', 'quince', 'engagement', 'anniversary'].indexOf(t) < 0 && fieldsHaveHost(t)) body('Hosted by ' + host);
+    formalWhen(ev).forEach(function (x) { L.push({ k: 'when', t: x }); });
+    var w = whereText(ev); if (w) L.push({ k: 'where', t: w });
+    if (follow && t !== 'kids-birthday' && !(ev.kids && t === 'birthday')) L.push({ k: 'note', t: follow });
+    return L.concat(tailLines(ev));
+  }
+  function fieldsHaveHost(t) { return !!inviteFields({ type: t }).host; }
+  function tailLines(ev) {
+    var out = [], dc = E.dressCode(ev, ev.tier), r = rsvpBy(ev), casual = ev.type === 'kids-birthday';
+    if (dc && !casual) out.push({ k: 'dress', t: /^\w+$/.test(dc) && !/^Black/.test(dc) ? dc + ' attire' : dc });
+    if (ev.inviteNote) out.push({ k: 'body', t: ev.inviteNote });
+    if (r) { var d = new Date(r + 'T12:00:00'); out.push({ k: 'rsvp', t: (casual ? 'Please RSVP by ' : 'Kindly reply by ') + d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) }); }
+    return out;
+  }
+  function monogram(ev) { var n = String((ev.inv || {}).names || '').trim(); if (!n || ['corporate', 'gala', 'dinner', 'brunch', 'holiday', 'christmas', 'other'].indexOf(ev.type) >= 0) return ''; var parts = n.split(/\s*(?:&| and )\s*/i).filter(Boolean); return parts.slice(0, 2).map(function (x) { return x.trim().charAt(0).toUpperCase(); }).join(parts.length > 1 ? ' & ' : ''); }
+  function safeHex(c) { return /^#[0-9a-f]{3,8}$/i.test(c) ? c : '#ccc'; }
+  function inviteCard(lines, palette, mono, extra) {
+    var pal = (palette || []).map(safeHex).filter(Boolean), accent = pal[2] || pal[1] || '#C9A86A';
+    return '<div class="card invite-card" style="--inv-accent:' + accent + '"><div class="swatch" aria-hidden="true">' + pal.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><div class="inv-frame">' +
+      (mono ? '<div class="inv-mono" aria-hidden="true">' + esc(mono) + '</div>' : '<div class="inv-orn" aria-hidden="true">❦</div>') +
+      lines.map(function (l) { return '<p class="inv-' + l.k + '">' + esc(l.t) + '</p>'; }).join('') + (extra || '') + '</div></div></div>';
+  }
+  function inviteEditor(ev) {
+    if (ev.sample) return '';
+    var f = inviteFields(ev), inv = ev.inv || {};
+    return '<details class="panel stack inv-edit"' + (inv.names ? '' : ' open') + '><summary><b>Personalize your invitation</b> <span class="muted small">' + (inv.names ? 'names, wording and reply date' : 'add names for a personal invitation') + '</span></summary>' +
+      '<div class="grid2"><label class="field"><span>' + esc(f.names) + '</span><input class="input" id="invNames" maxlength="80" placeholder="' + esc(f.ph) + '" value="' + esc(inv.names || '') + '"></label>' +
+      (f.age ? '<label class="field"><span>' + esc(f.age) + '</span><input class="input num" type="number" min="1" max="2100" id="invAge" value="' + esc(inv.age || '') + '"></label>' : '') +
+      (f.host ? '<label class="field"><span>' + esc(f.host) + '</span><input class="input" id="invHost" maxlength="80" placeholder="' + esc(ev.type === 'wedding' ? 'Together with their families' : ev.type === 'quince' ? 'With the blessing of God and her parents' : 'Her family') + '" value="' + esc(inv.host || '') + '"></label>' : '') +
+      '<label class="field"><span>Reply by</span><input class="input" type="date" id="invRsvp" value="' + esc(rsvpBy(ev)) + '"></label></div>' +
+      '<details class="inv-own"><summary class="small">Write your own wording</summary><label class="field"><span class="small muted">One line per row. The dress code and reply date are added for you.</span><textarea class="input" id="invCustom" rows="8">' + esc(inv.custom || inviteLines(Object.assign({}, ev, { inv: Object.assign({}, inv, { custom: '' }) })).filter(function (l) { return ['dress', 'rsvp'].indexOf(l.k) < 0; }).map(function (l) { return l.t; }).join('\n')) + '</textarea></label><div class="row"><button class="btn small" id="invUse">Use my wording</button>' + (inv.custom ? '<button class="link small" id="invReset">Go back to our wording</button>' : '') + '</div></details></details>';
+  }
   function inviteText(ev, live) {
-    var pl = ev.payLinks || {}, out = ['You\u2019re invited to ' + ev.name + '!', ev.date ? fmtDate(ev.date) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be announced', whereText(ev), 'Dress code: ' + E.dressCode(ev, ev.tier)];
-    if (ev.inviteNote) out.push('', ev.inviteNote);
+    var pl = ev.payLinks || {}, out = inviteLines(ev).map(function (l) { return l.k === 'dress' ? 'Dress code: ' + l.t : l.t; });
     out.push('', live ? 'RSVP, vote and see the details here: ' + inviteLink(ev) : 'Please reply to let me know if you can make it' + (ev.date ? '' : ' once the date is set') + '.');
     if (canSplit(ev)) out.push('', 'Each person\u2019s share: ' + money(splitShare(ev)) + '.');
     var pays = [pl.venmo ? 'Venmo @' + pl.venmo : '', pl.cashapp ? 'Cash App $' + pl.cashapp : '', pl.paypal ? 'paypal.me/' + pl.paypal : ''].filter(Boolean);
@@ -2139,7 +2257,7 @@
     var link = inviteLink(ev);
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] };
     var share = splitShare(ev);
-    return '<div class="stack"><h3>' + (hasRegistry(ev) ? 'Invitation and event page' : 'Your invitation') + '</h3><div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + (ev.concept.palette || []).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be announced') + '</p><p class="muted">' + esc(whereText(ev)) + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p></div></div></div>' +
+    return '<div class="stack"><h3>' + (hasRegistry(ev) ? 'Invitation and event page' : 'Your invitation') + '</h3>' + inviteEditor(ev) + '<div class="invite" id="invCard">' + inviteCard(inviteLines(ev), ev.concept.palette, monogram(ev)) + '</div>' +
       (ev.date || ev.sample ? '' : '<div class="note">Add your date (tap \u201cAdd your date\u201d at the top) before you send the invitation, so guests can save it.</div>') + '<div class="row"><button class="btn gold" id="copy">' + (CFG.app ? 'Send invitation' : 'Copy invite link') + '</button><a class="btn ghost" href="#/g/' + ev.id + '">Preview as a guest</a></div>' +
       (SHARING ? '<p class="muted small">' + (CFG.app ? 'Sends your invitation by text, email or any app with a link to your event page. ' : 'Copies the link to your event page. ') + 'Guests open it on any phone, no app needed, to RSVP' + ((ev.polls || []).length ? ', vote' : '') + (hasRegistry(ev) ? ' and see your gift list' : '') + '. Their RSVPs come into your Guests list.' + (ev.published ? ' Changes you make here update the page automatically.' : '') + '</p>' : CFG.app ? '<p class="muted small">Sends your invitation by text, email or any app, with the date, place, dress code' + (hasRegistry(ev) ? ', your gift list' : '') + (canSplit(ev) ? ', each person\u2019s share' : '') + '. Guests reply to you to RSVP; add their answers under Guests.</p>' : CFG.preview ? '<p class="muted small">For now this link opens on this device only, so you can preview what guests will see. Sending it to guests on their own phones turns on when accounts launch.</p>' : '<p class="muted small">Guests open it in any browser; no app needed.</p>') + '</div>' +
       (!canSplit(ev) && !hasRegistry(ev) ? '' : '<div class="stack"><h3>Your payment links</h3><p class="muted small">' + (canSplit(ev) ? 'Friends pay you directly for their share, and guests can send cash gifts.' : 'For cash gifts and funds from your registry.') + ' Event Couture never holds the money.</p><div class="grid3">' +
@@ -2154,6 +2272,10 @@
       (!hasRegistry(ev) && GIFT_LIST_OPTIONAL.indexOf(ev.type) >= 0 ? '<div class="row"><button class="link small" id="giftOn">Add a gift list (optional)</button><span class="muted small">For gift ideas or a cash fund; guests see it on your event page.</span></div>' : '');
   };
   TAB_BIND.invite = function (ev, save, rerender) {
+    var pubT = null, redraw = function () { var c = $('#invCard'); if (c) c.innerHTML = inviteCard(inviteLines(ev), ev.concept.palette, monogram(ev)); save(); if (ev.published) { clearTimeout(pubT); pubT = setTimeout(function () { publishInvite(ev).catch(function () {}); }, 1500); } };
+    [['invNames', 'names'], ['invAge', 'age'], ['invHost', 'host'], ['invRsvp', 'rsvp']].forEach(function (x) { var el = $('#' + x[0]); if (el) el.addEventListener('input', function () { if (lockSample(ev)) return; ev.inv = ev.inv || {}; ev.inv[x[1]] = el.value.trim(); redraw(); }); });
+    var iu = $('#invUse'); if (iu) iu.addEventListener('click', function () { ev.inv = ev.inv || {}; ev.inv.custom = $('#invCustom').value.trim(); redraw(); toast('Your wording is on the invitation'); });
+    var ir = $('#invReset'); if (ir) ir.addEventListener('click', function () { ev.inv = ev.inv || {}; ev.inv.custom = ''; save(); rerender(); toast('Back to our wording'); });
     $('#copy').addEventListener('click', function () { var btn = this; var send = function () {
         if (!ev.sample) { ev.invited = true; save(); }
         var deliver = function (live) { if (!CFG.app) return copyText(live || !SHARING ? inviteLink(ev) : inviteText(ev), live || !SHARING ? undefined : 'Invitation'); var t = inviteText(ev, live); if (navigator.share) navigator.share({ title: ev.name, text: t }).catch(function () {}); else copyText(t, 'Invitation'); };
@@ -2240,7 +2362,7 @@
   /* Only what guests need: never the budget, the guest list or anyone's private notes. */
   function inviteSnapshot(ev) {
     var pl = ev.payLinks || {}, reg = hasRegistry(ev) ? ev.registry || {} : {};
-    return { v: 1, cur: E.countryOf(ev.city).currency, name: ev.name, type: ev.type, date: ev.date || '', time: ev.time || '', hours: ev.hours || 3, when: ev.date ? fmtDate(ev.date) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : '', where: whereText(ev), dress: E.dressCode(ev, ev.tier), palette: (ev.concept.palette || []).slice(0, 6),
+    return { v: 1, cur: E.countryOf(ev.city).currency, lines: inviteLines(ev), mono: monogram(ev), name: ev.name, type: ev.type, date: ev.date || '', time: ev.time || '', hours: ev.hours || 3, when: ev.date ? fmtDate(ev.date) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : '', where: whereText(ev), dress: E.dressCode(ev, ev.tier), palette: (ev.concept.palette || []).slice(0, 6),
       cal: ev.date ? calLink(ev) : '', polls: (ev.polls || []).map(function (p) { return { q: p.q, options: p.options.map(function (o) { return { t: o.t }; }) }; }),
       registry: { items: (reg.items || []).map(function (it) { return { name: it.name, url: it.url || '', bought: !!it.bought }; }), funds: (reg.funds || []).map(function (f) { return { name: f.name }; }) },
       pay: canSplit(ev) || hasRegistry(ev) ? { venmo: pl.venmo || '', cashapp: pl.cashapp || '', paypal: pl.paypal || '' } : {}, share: canSplit(ev) ? Math.round(splitShare(ev) * 100) / 100 : 0 };
@@ -2281,8 +2403,7 @@
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] }; var share = splitShare(ev);
     var payBtns = [pl.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pl.venmo) + '">Venmo</a>' : '', pl.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pl.cashapp) + '">Cash App</a>' : '', pl.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pl.paypal) + '">PayPal</a>' : ''].join('');
     var hostView = !!events()[ev.id] || ev.sample;
-    frame((hostView ? '<div class="note invite-host">You\u2019re previewing what guests see. <a href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/invite">Back to your plan</a></div>' : '') + '<div class="invite"><div class="card">' + '<div class="swatch" aria-hidden="true">' + (ev.concept.palette || []).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You’re invited to</span><h1>' + esc(ev.name) + '</h1><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + fmtTime(ev.time) : '') : 'Date to be announced') + '</p><p class="muted">' + esc(whereText(ev)) + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p>' +
-      (ev.date ? '<div><a class="btn small ghost" target="_blank" rel="noopener" href="' + calLink(ev) + '">Add to calendar</a></div>' : '') + '</div></div>' +
+    frame((hostView ? '<div class="note invite-host">You\u2019re previewing what guests see. <a href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/invite">Back to your plan</a></div>' : '') + '<div class="invite">' + inviteCard(inviteLines(ev), ev.concept.palette, monogram(ev), ev.date ? '<div><a class="btn small ghost" target="_blank" rel="noopener" href="' + calLink(ev) + '">Add to calendar</a></div>' : '') +
       '<form id="rsvp" class="panel stack" style="text-align:left"><h3>RSVP</h3><label class="field"><span>Your name</span><input class="input" id="rn" required autocomplete="name"></label><div class="seg" id="ans"><button type="button" data-v="yes" aria-pressed="true">I’ll be there</button><button type="button" data-v="declined" aria-pressed="false">Can’t make it</button></div>' +
       '<label class="field"><span>Plus-ones</span><input class="input num" type="number" min="0" max="5" id="rp" value="0"></label><div class="stack"><span class="muted small">Dietary needs</span><div class="chips" id="rd">' + D.DIETS.map(function (d) { return '<button type="button" class="chip" aria-pressed="false">' + esc(d) + '</button>'; }).join('') + '</div></div><button class="btn gold">Send RSVP</button></form>' +
       ((ev.polls || []).length ? '<div class="panel stack" style="text-align:left"><h3>Vote</h3>' + ev.polls.map(function (p, pi) { return '<b>' + esc(p.q) + '</b><div class="poll">' + p.options.map(function (o, oi) { return '<button data-vote="' + pi + ':' + oi + '"><span>' + esc(o.t) + '</span></button>'; }).join('') + '</div>'; }).join('') + '</div>' : '') +
@@ -2318,9 +2439,8 @@
       var v = j.inv || {}, pay = v.pay || {}, reg = v.registry || { items: [], funds: [] };
       if (v.cur === 'CAD') E.useCountry('Other city in Canada');
       var payBtns = [pay.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pay.venmo) + '">Venmo</a>' : '', pay.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pay.cashapp) + '">Cash App</a>' : '', pay.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pay.paypal) + '">PayPal</a>' : ''].join('');
-      var safeHex = function (c) { return /^#[0-9a-f]{3,8}$/i.test(c) ? c : '#ccc'; };
-      frame('<div class="invite"><div class="card"><div class="swatch" aria-hidden="true">' + (v.palette || []).map(function (c) { return '<i style="background:' + safeHex(c) + '"></i>'; }).join('') + '</div><div class="in"><span class="muted">You\u2019re invited to</span><h1>' + esc(v.name) + '</h1><p>' + esc(v.when || 'Date to be announced') + '</p><p class="muted">' + esc(v.where || '') + '</p>' + (v.dress ? '<p class="small muted">Dress code: ' + esc(v.dress) + '</p>' : '') +
-        (/^https:\/\/calendar\.google\.com\//.test(v.cal || '') ? '<div><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(v.cal) + '">Add to calendar</a></div>' : '') + '</div></div>' +
+      var vLines = Array.isArray(v.lines) && v.lines.length ? v.lines.slice(0, 40).map(function (l) { return { k: /^(pre|name|body|when|where|note|dress|rsvp)$/.test(l.k) ? l.k : 'body', t: String(l.t || '').slice(0, 200) }; }) : [{ k: 'pre', t: 'You\u2019re invited to' }, { k: 'name', t: v.name }, { k: 'when', t: v.when || 'Date to be announced' }, { k: 'where', t: v.where || '' }].concat(v.dress ? [{ k: 'dress', t: v.dress }] : []);
+      frame('<div class="invite">' + inviteCard(vLines, v.palette, String(v.mono || '').slice(0, 7), (/^https:\/\/calendar\.google\.com\//.test(v.cal || '') ? '<div><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(v.cal) + '">Add to calendar</a></div>' : '')) +
         '<form id="rsvp" class="panel stack" style="text-align:left"><h3>RSVP</h3><label class="field"><span>Your name</span><input class="input" id="rn" required autocomplete="name" maxlength="80"></label><div class="seg" id="ans"><button type="button" data-v="yes" aria-pressed="true">I\u2019ll be there</button><button type="button" data-v="declined" aria-pressed="false">Can\u2019t make it</button></div>' +
         '<label class="field"><span>Plus-ones</span><input class="input num" type="number" min="0" max="5" id="rp" value="0"></label><div class="stack"><span class="muted small">Dietary needs</span><div class="chips" id="rd">' + D.DIETS.map(function (d) { return '<button type="button" class="chip" aria-pressed="false">' + esc(d) + '</button>'; }).join('') + '</div></div><button class="btn gold">Send RSVP</button></form>' +
         ((v.polls || []).length ? '<div class="panel stack" style="text-align:left"><h3>Vote</h3>' + v.polls.map(function (p, pi) { return '<b>' + esc(p.q) + '</b><div class="poll">' + p.options.map(function (o, oi) { return '<button data-vote="' + pi + ':' + oi + '"><span>' + esc(o.t) + '</span></button>'; }).join('') + '</div>'; }).join('') + '</div>' : '') +

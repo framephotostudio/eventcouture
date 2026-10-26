@@ -691,3 +691,41 @@ body:has(.sheet-back) .toast { bottom: auto !important; top: calc(16px + env(saf
 .wizard details.more { border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; background: var(--surface); }
 .wizard details.more > summary { cursor: pointer; font-weight: 500; }
 .pkg-area { margin: 0; color: var(--muted); } .pkg-area b { color: var(--ink); font-weight: 600; }
+
+/* Guided booking package: Create, Choose, Book, Done */
+.pkg-steps { list-style: none; display: flex; gap: 6px; margin: 0 0 4px; padding: 0; }
+.pkg-steps li { flex: 1; display: flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--muted); padding-top: 8px; border-top: 3px solid var(--line); }
+.pkg-steps li span { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: .7rem; border: 1px solid var(--line); background: var(--surface); flex: none; }
+.pkg-steps li.done { color: var(--ink); border-top-color: var(--champagne); }
+.pkg-steps li.done span { background: var(--champagne); border-color: var(--champagne); color: var(--ink); }
+.pkg-steps li.on { color: var(--ink); font-weight: 600; border-top-color: var(--ink); }
+.pkg-steps li.on span { background: var(--ink); border-color: var(--ink); color: #fff; }
+.pkg-guide { margin: 0; color: var(--text); }
+.pkg-next { border: 1px solid var(--champagne); border-radius: var(--r-md); padding: 16px; display: grid; gap: 12px; background: var(--surface); }
+.pkg-next h3 { margin: 0; }
+.pkg-next .eyebrow { margin: 0; }
+.pkg-next .howto { grid-template-columns: 1fr; }
+.pkg-all summary { cursor: pointer; font-weight: 500; color: var(--ink); padding: 8px 0; min-height: 40px; display: flex; align-items: center; }
+.pkg-all .pkg-rows { margin-top: 8px; }
+@media (max-width: 560px) { .pkg-steps li { flex-direction: column; align-items: flex-start; gap: 4px; font-size: .72rem; } }
+.pkg [data-pkuse] { position: sticky; bottom: 12px; z-index: 5; box-shadow: 0 6px 20px rgba(60, 20, 45, .25); }
+body:has(.pkg [data-pkuse]):not(:has(.sheet-back)) .toast { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+
+/* Formal invitation card */
+.invite-card .in { padding: 18px; }
+.inv-frame { position: relative; border: 1px solid var(--inv-accent, var(--champagne)); outline: 1px solid var(--inv-accent, var(--champagne)); outline-offset: -7px; padding: 40px 22px 34px; display: grid; gap: 6px; justify-items: center; background: linear-gradient(180deg, var(--surface), var(--surface) 70%, color-mix(in srgb, var(--inv-accent, #C9A86A) 6%, var(--surface))); }
+.inv-frame p { margin: 0; max-width: 34ch; text-wrap: balance; }
+.inv-mono { font-family: var(--display); font-size: 1.05rem; letter-spacing: .12em; width: 64px; height: 64px; border-radius: 50%; border: 1px solid var(--inv-accent, var(--champagne)); display: grid; place-items: center; color: var(--ink); margin-bottom: 12px; }
+.inv-orn { font-size: 1.4rem; color: var(--inv-accent, var(--champagne)); margin-bottom: 8px; }
+.inv-pre { font-family: var(--display); font-style: italic; color: var(--muted); font-size: 1.05rem; }
+.inv-name { font-family: var(--display); font-size: clamp(2rem, 7.5vw, 2.9rem); line-height: 1.1; color: var(--ink); margin: 10px 0 !important; }
+.inv-body { font-size: 1rem; color: var(--text); }
+.inv-when { text-transform: uppercase; letter-spacing: .16em; font-size: .8rem; color: var(--ink); }
+.inv-when:first-of-type, .inv-name + .inv-when, .inv-body + .inv-when { margin-top: 16px !important; }
+.inv-where { font-family: var(--display); font-size: 1.15rem; color: var(--ink); margin-top: 10px !important; }
+.inv-note { font-style: italic; color: var(--muted); margin-top: 8px !important; }
+.inv-dress { text-transform: uppercase; letter-spacing: .14em; font-size: .74rem; color: var(--muted); margin-top: 14px !important; }
+.inv-rsvp { font-size: .85rem; color: var(--muted); margin-top: 4px !important; }
+.inv-frame > div:last-child:not(.inv-mono):not(.inv-orn) { margin-top: 16px; }
+.inv-edit summary { cursor: pointer; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; min-height: 36px; }
+.inv-own summary { cursor: pointer; color: var(--gold-text); min-height: 36px; display: flex; align-items: center; }

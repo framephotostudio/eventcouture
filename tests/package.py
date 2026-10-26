@@ -22,7 +22,7 @@ with sync_playwright() as p:
     b=p.chromium.launch()
     for w,h,n in [(390,844,'phone'),(1280,900,'desktop')]:
         calls[0]=0; cities.clear()
-        ctx=b.new_context(viewport={'width':w,'height':h}); pg=ctx.new_page(); e=[]; pg.on('pageerror',lambda x:e.append(str(x)))
+        ctx=b.new_context(viewport={'width':w,'height':h}); ctx.grant_permissions(['clipboard-read','clipboard-write'], origin=U.rstrip('/')); pg=ctx.new_page(); e=[]; pg.on('pageerror',lambda x:e.append(str(x)))
         pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
         pg.goto(U+'#/new/1'); pg.wait_for_timeout(300); pg.fill('#text','black and gold 40th birthday party'); pg.click('#next'); pg.wait_for_timeout(250)
         pg.select_option('#type','birthday'); pg.fill('#guests','80'); pg.fill('#expected','80'); pg.fill('#time','19:00'); pg.select_option('#city','Houston, TX'); pg.select_option('#area','River Oaks'); pg.click('#setting [data-v=indoor]')
@@ -45,7 +45,8 @@ with sync_playwright() as p:
         d=ev(); p1,p2=d['packages'][0]['items'],d['packages'][1]['items']
         check(n, all(p1[c]!=p2.get(c) for c in p1), 'package 2 has different picks for every item')
         check(n, calls[0]==first_calls, f'second package needed no new searches ({calls[0]-first_calls})')
-        check(n, d.get('pkgChosen',0)==0 and 'Choose package 2' in pg.inner_text('#pkg'), 'package 1 stays chosen until she picks')
+        check(n, not d.get('pkgConfirmed') and 'Choose package 2 and start booking' in pg.inner_text('#pkg') and 'I booked it' not in pg.inner_text('#pkg'), 'step 2: choose first, no booking buttons yet')
+        check(n, pg.get_attribute('.pkg-steps li.on','aria-current')=='step' and 'Choose' in pg.inner_text('.pkg-steps li.on'), 'step tracker shows Choose')
         pg.screenshot(path=f'{OUT}/pkg2_{n}.png', full_page=True)
         # swap one item in package 2
         pg.click('[data-pkswap] >> nth=1'); pg.wait_for_selector('[data-pkpick]'); old=ev()['packages'][1]['items']; cat=pg.get_attribute('[data-pkswap] >> nth=1','data-pkswap')
@@ -68,13 +69,27 @@ with sync_playwright() as p:
         # choose package 2
         pg.click('[data-pkuse="1"]'); pg.wait_for_timeout(300); d=ev()
         check(n, d['pkgChosen']==1 and all(any(x['cat']==c and x['id']==d['packages'][1]['items'][c] and x.get('pick') for x in d['shortlist']) for c in d['packages'][1]['items']), 'choosing package 2 makes its picks the front-runners')
-        # book the venue
-        pg.click('[data-pkbook] >> nth=0'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','4500'); pg.click('#psave'); pg.wait_for_timeout(200); pg.click('.sheet [data-close]'); pg.wait_for_timeout(400)
-        check(n, 'Booked' in pg.inner_text('.pk-row >> nth=0') and '1 of' in pg.inner_text('.pkg-top'), 'booking from the package shows booked')
+        check(n, d.get('pkgConfirmed') and 'Book' in pg.inner_text('.pkg-steps li.on') and 'next up' in pg.inner_text('.pkg-next').lower() and '1 of' in pg.inner_text('.pkg-next .eyebrow').lower(), 'step 3 starts with the first vendor')
+        pg.evaluate("document.querySelector('#pkg').scrollIntoView({block:'start'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/pkg3_{n}.png', full_page=False)
+        pg.click('.pkg-next [data-pkcopy]'); pg.wait_for_timeout(200); check(n, 'copied' in pg.inner_text('body').lower(), 'copy my message works')
+        # book the venue from the Next up card
+        first=pg.get_attribute('.pkg-next','data-pkrow')
+        pg.click('.pkg-next [data-pkbook]'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','4500'); pg.click('#psave'); pg.wait_for_timeout(200); pg.click('.sheet [data-close]'); pg.wait_for_timeout(400)
+        check(n, '1 of' in pg.inner_text('.pkg-top') and pg.get_attribute('.pkg-next','data-pkrow')!=first and '2 of' in pg.inner_text('.pkg-next .eyebrow').lower(), 'after booking, the next vendor comes up')
+        sk=pg.get_attribute('.pkg-next','data-pkrow'); pg.click('.pkg-next [data-pkskip]'); pg.wait_for_timeout(300)
+        check(n, pg.get_attribute('.pkg-next','data-pkrow')!=sk, 'skip for now moves on')
+        pg.click('.pkg-all summary'); pg.wait_for_timeout(200); check(n, 'Booked' in pg.inner_text('.pkg-all .pk-row >> nth=0'), 'whole package list shows what is booked')
         pg.goto(U+base+'/plan'); pg.wait_for_timeout(400); t=pg.inner_text('#tab'); check(n, 'Booked:' in t and 'Front-runner:' in t, 'finished plan shows the package')
         # remove package 1
-        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkview="0"]'); pg.wait_for_timeout(200); pg.click('[data-pkdel="0"]'); pg.wait_for_timeout(300); d=ev()
+        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkback]'); pg.wait_for_timeout(300); pg.click('[data-pkview="0"]'); pg.wait_for_timeout(200); pg.click('[data-pkdel="0"]'); pg.wait_for_timeout(300); d=ev()
         check(n, len(d['packages'])==1 and d['pkgChosen']==0, 'removing the other package keeps the chosen one')
+        # finish: book everything left and land on Done
+        pg.click('[data-pkuse="0"]'); pg.wait_for_timeout(300)
+        for _ in range(40):
+            if not pg.query_selector('.pkg-next [data-pkbook]'): break
+            pg.click('.pkg-next [data-pkbook]'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','500'); pg.click('#psave'); pg.wait_for_timeout(150); pg.click('.sheet [data-close]'); pg.wait_for_timeout(250)
+        t=pg.inner_text('#pkg'); check(n, 'Everything is booked' in t and 'Invite my guests' in t and 'Done' in pg.inner_text('.pkg-steps li.on'), 'step 4: everything booked, next is inviting guests')
+        pg.evaluate("document.querySelector('#pkg').scrollIntoView({block:'start'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/pkg4_{n}.png', full_page=False)
         check(n, not e, 'no page errors '+str(e)); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
         ctx.close()
     b.close()

@@ -9,5 +9,5 @@ window.EC_CONFIG = {
   supportEmail: 'hello@facecouture.app',
   legalName: 'Always Luxe',   /* the business name on Privacy and Terms */
   governingState: '',        /* e.g. 'Texas': the state whose laws govern the Terms */
-  version: '0.46.0'
+  version: '0.47.0'
 };
