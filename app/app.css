@@ -16,3 +16,4 @@ html.ec-app footer.site nav a[href="#/help"] { display: none; }
 html.ec-app .toast { bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; }
 html.ec-app .sheet-back { z-index: 60; }
 html.ec-app .sheet { padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
+html.ec-app body:has(.sheet-back) .toast { bottom: auto !important; top: calc(16px + env(safe-area-inset-top, 0px)); }   /* never cover a pop-up's buttons */
