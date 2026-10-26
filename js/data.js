@@ -125,8 +125,8 @@
       music: [['zaffe', 'Zaffe group'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dj', 'DJ'], ['dabke', 'Dabke troupe']], musicDefault: ['zaffe', 'liveMusic', 'dj'],
       add: ['kosha'],
       labels: { liveMusic: 'Live band (Arabic music)', singer: 'Arabic wedding singer', officiant: 'Officiant (sheikh or priest)', catering: 'Middle Eastern catering', cake: 'Wedding cake and Arabic sweets', dj: 'DJ (Arabic and international music)' },
-      search: { liveMusic: 'arabic wedding band', singer: 'arabic wedding singer', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern lebanese catering', cake: 'arabic sweets bakery', officiant: 'sheikh imam or priest wedding officiant' },
-      hint: 'arabic,arab,lebanese,middle eastern,zaffe,zaffa,mediterranean',
+      search: { liveMusic: 'arabic wedding band', singer: 'arabic wedding singer', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern mediterranean catering', cake: 'arabic sweets bakery', officiant: 'sheikh imam or priest wedding officiant' },
+      hint: 'arabic,arab,lebanese,middle eastern,mediterranean,zaffe,zaffa,kosha',
       moments: [[-30, 'Guests arrive and are seated'], [0, 'Zaffe: drums and dancers lead the couple in'], [20, 'The couple takes their seats at the kosha'], [40, 'First dance'], [60, 'Dinner'], [120, 'Dabke and dancing'], [180, 'Cake cutting and sweets'], ['end', 'Send-off']]
     },
     indian: {
