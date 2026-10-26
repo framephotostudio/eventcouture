@@ -34,6 +34,9 @@ export default {
     try {
       const inv = url.pathname.match(/^\/api\/inv\/([a-z0-9]{6,32})(?:\/(publish|rsvp|vote|bought|inbox|delete))?$/);
       if (inv) return await invite(req, env, inv[1], inv[2] || '', json);
+      if (req.method === 'GET' && url.pathname === '/api/vendors') return await vendorSearch(env, url, json);
+      const vp = url.pathname.match(/^\/api\/vendor\/([a-z0-9]{8,16})$/);
+      if (req.method === 'GET' && vp) return await vendorProfile(env, vp[1], json);
       if (url.pathname === '/api/status') {
         return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env) });
       }
@@ -42,6 +45,8 @@ export default {
       if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown'))) return json({ error: 'You\u2019ve made a lot of requests. Please wait a few minutes and try again. Nothing was charged.' }, 429);
       if (+(req.headers.get('content-length') || 0) > 12e6) return json({ error: 'Those photos are too large. Try fewer or smaller photos.' }, 413);
       const body = await req.json().catch(() => ({}));
+      const mk = url.pathname.match(/^\/api\/(vendor\/save|vendor\/report|req\/new|req\/list|req\/reply|req\/inbox|req\/delete)$/);
+      if (mk) { if (!env.EC_KV) return json({ error: 'Vendor listings are not connected yet.' }, 503); return await market(env, mk[1], body, req.headers.get('cf-connecting-ip') || 'unknown', json); }
       if (url.pathname === '/api/concepts') {
         if (!env.GEMINI_KEY) return json({ error: 'AI is not connected yet.' }, 503);
         if (!(await reserve(env, COST.concepts))) return json({ error: 'Daily AI limit reached. Try again tomorrow.' }, 429);
@@ -300,6 +305,126 @@ async function invite(req, env, id, action, json) {
     const b = JSON.parse((await env.EC_KV.get(K.bought)) || '[]'); if (b.indexOf(i) < 0) b.push(i);
     await env.EC_KV.put(K.bought, JSON.stringify(b), { expirationTtl: ttl });
     return json({ ok: true });
+  }
+  return json({ error: 'Not found' }, 404);
+}
+
+/* ---------- vendors and quote requests ----------
+   Vendors list for free. Hosts send anonymous quote requests (no name or contact); signed-up vendors in that
+   city and category see them and reply with their own contact. Listings go live automatically when complete;
+   three reports from different people hide one. Keys are stored only as SHA-256 hashes. */
+const VENDOR_MAX = 8000, FOUNDING = 25, REPORTS_HIDE = 3;
+const cityKey = c => clip(c, 60).toLowerCase().replace(/[^a-z0-9, ]/g, '').trim();
+const catOk = c => /^[a-zA-Z]{2,20}$/.test(String(c));
+const rid = () => [...crypto.getRandomValues(new Uint8Array(8))].map(b => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('') + Date.now().toString(36).slice(-4);
+const kvGet = async (env, k, d) => JSON.parse((await env.EC_KV.get(k)) || 'null') || d;
+function cleanListing(l) {
+  l = l || {};
+  const url = u => /^https?:\/\/[^\s"<>]{3,200}$/.test(String(u || '').trim()) ? String(u).trim().slice(0, 200) : '';
+  const ig = String(l.ig || '').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/[/?#].*$/, '');
+  const list = (a, n, m) => (Array.isArray(a) ? a : []).map(x => clip(x, m).trim()).filter(Boolean).slice(0, n);
+  return {
+    name: clip(l.name, 80).trim(), bio: clip(l.bio, 400), cats: list(l.cats, 12, 20).filter(catOk), cities: list(l.cities, 10, 60),
+    site: url(l.site), ig: /^[A-Za-z0-9._]{1,30}$/.test(ig) ? ig : '', phone: clip(l.phone, 30).replace(/[^0-9+()\- .]/g, ''),
+    pkgName: clip(l.pkgName, 80), pkgIncl: clip(l.pkgIncl, 400), priceType: clip(l.priceType, 20), price: Math.max(0, Math.min(1e6, +l.price || 0)),
+    events: list(l.events, 30, 40), langs: clip(l.langs, 80), years: Math.max(0, Math.min(99, parseInt(l.years, 10) || 0)), insured: clip(l.insured, 30),
+    cancel: clip(l.cancel, 400), deposit: Math.max(0, Math.min(100, +l.deposit || 0)), minGuests: parseInt(l.minGuests, 10) || 0, maxGuests: parseInt(l.maxGuests, 10) || 0
+  };
+}
+const isLive = (l, agree) => !!(l.name && l.cats.length && l.cities.length && (l.site || l.ig) && agree);
+/* Featured (paid placement) is off until payments are connected: nothing sets rec.featuredUntil yet. */
+const isFeatured = rec => !!(rec.featuredUntil && rec.featuredUntil > Date.now());
+const publicCard = (id, rec) => Object.assign({ id, founding: !!rec.founding, featured: isFeatured(rec) }, rec.l);
+async function vendorSearch(env, url, json) {
+  if (!env.EC_KV) return json({ vendors: [] });
+  const city = cityKey(url.searchParams.get('city') || ''), cat = String(url.searchParams.get('cat') || '');
+  if (!city) return json({ vendors: [] });
+  const ids = await kvGet(env, 'vidx:' + city, []);
+  const recs = await Promise.all(ids.slice(0, 60).map(id => kvGet(env, 'vend:' + id, null).then(r => r && [id, r])));
+  const out = recs.filter(x => x && x[1].live && !x[1].hidden && (!cat || x[1].l.cats.includes(cat)) && x[1].l.cities.some(c => cityKey(c) === city))
+    .sort((a, b) => (isFeatured(b[1]) ? 1 : 0) - (isFeatured(a[1]) ? 1 : 0) || (b[1].founding ? 1 : 0) - (a[1].founding ? 1 : 0) || a[1].at - b[1].at).slice(0, 12).map(x => publicCard(x[0], x[1]));
+  return json({ vendors: out });
+}
+async function vendorProfile(env, id, json) {
+  const rec = env.EC_KV && await kvGet(env, 'vend:' + id, null);
+  if (!rec || !rec.live || rec.hidden) return json({ error: 'This vendor isn’t listed right now.' }, 404);
+  return json({ vendor: publicCard(id, rec) });
+}
+async function market(env, action, body, ip, json) {
+  const key = String(body.key || '');
+  if (action === 'vendor/save') {
+    if (key.length < 20) return json({ error: 'Missing key' }, 400);
+    if (JSON.stringify(body.listing || {}).length > VENDOR_MAX) return json({ error: 'That listing is too long.' }, 413);
+    let id = /^[a-z0-9]{8,16}$/.test(String(body.id || '')) ? String(body.id) : '';
+    let rec = id ? await kvGet(env, 'vend:' + id, null) : null;
+    if (rec && rec.kh !== await sha(key)) return json({ error: 'Not allowed' }, 403);
+    if (!rec) { id = rid().slice(0, 12); rec = { kh: await sha(key), at: Date.now(), reports: [] }; }
+    const l = cleanListing(body.listing), email = clip(body.listing && body.listing.email, 120).trim();
+    const old = rec.l ? rec.l.cities.map(cityKey) : [];
+    rec.l = l; rec.email = email; rec.live = isLive(l, !!(body.listing && body.listing.agree)); rec.up = Date.now();
+    const now = l.cities.map(cityKey).filter(Boolean);
+    for (const c of new Set(old.concat(now))) {
+      const ix = await kvGet(env, 'vidx:' + c, []); const has = ix.includes(id);
+      if (rec.live && rec.founding === undefined && now.includes(c) && ix.filter(x => x !== id).length < FOUNDING) rec.founding = true;
+      if (now.includes(c) && !has) { ix.push(id); await env.EC_KV.put('vidx:' + c, JSON.stringify(ix.slice(-500))); }
+      if (!now.includes(c) && has) await env.EC_KV.put('vidx:' + c, JSON.stringify(ix.filter(x => x !== id)));
+    }
+    if (rec.founding === undefined && rec.live) rec.founding = false;
+    await env.EC_KV.put('vend:' + id, JSON.stringify(rec));
+    return json({ ok: true, id, live: rec.live, founding: !!rec.founding, missing: rec.live ? [] : ['name', 'cats', 'cities'].filter(k => !l[k].length).concat(l.site || l.ig ? [] : ['ig']).concat(body.listing && body.listing.agree ? [] : ['agree']) });
+  }
+  if (action === 'vendor/report') {
+    const id = String(body.id || ''); const rec = /^[a-z0-9]{8,16}$/.test(id) && await kvGet(env, 'vend:' + id, null);
+    if (!rec) return json({ error: 'Not found' }, 404);
+    const who = (await sha('r' + ip)).slice(0, 16); rec.reports = rec.reports || [];
+    if (!rec.reports.includes(who)) rec.reports.push(who);
+    if (rec.reports.length >= REPORTS_HIDE) rec.hidden = true;
+    await env.EC_KV.put('vend:' + id, JSON.stringify(rec));
+    return json({ ok: true });
+  }
+  const vendorAuth = async () => { const id = String(body.vid || ''); const rec = /^[a-z0-9]{8,16}$/.test(id) && await kvGet(env, 'vend:' + id, null); return rec && rec.kh === await sha(key) && !rec.hidden ? [id, rec] : null; };
+  if (action === 'req/new') {
+    if (key.length < 20) return json({ error: 'Missing key' }, 400);
+    const r = body.req || {}, city = cityKey(r.city), cat = String(r.cat || '');
+    if (!city || !catOk(cat)) return json({ error: 'Choose a city and what you need.' }, 400);
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(String(r.date || '')) ? String(r.date) : '';
+    const until = date ? Math.max(Date.now() + 864e5, new Date(date + 'T12:00:00Z').getTime() + 14 * 864e5) : Date.now() + 90 * 864e5;
+    const id = rid();
+    const pub = { city: clip(r.city, 60), cat, need: clip(r.need, 60), type: clip(r.type, 40), date, guests: Math.max(1, Math.min(100000, parseInt(r.guests, 10) || 0)) || null, budget: Math.max(0, Math.min(1e6, +r.budget || 0)) || null, theme: clip(r.theme, 80), notes: clip(r.notes, 300), at: Date.now() };
+    const ttl = Math.max(86400, Math.ceil((until - Date.now()) / 1000));
+    await env.EC_KV.put('req:' + id, JSON.stringify({ kh: await sha(key), r: pub, until }), { expirationTtl: ttl });
+    const ix = (await kvGet(env, 'ridx:' + city, [])).filter(x => x.until > Date.now()); ix.push({ id, cat, until });
+    await env.EC_KV.put('ridx:' + city, JSON.stringify(ix.slice(-300)));
+    return json({ ok: true, id });
+  }
+  if (action === 'req/list') {
+    const v = await vendorAuth(); if (!v) return json({ error: 'Not allowed' }, 403);
+    const [vid, rec] = v; const out = [];
+    for (const c of new Set(rec.l.cities.map(cityKey))) {
+      const ix = (await kvGet(env, 'ridx:' + c, [])).filter(x => x.until > Date.now() && rec.l.cats.includes(x.cat)).slice(-40);
+      for (const x of ix) { const q = await kvGet(env, 'req:' + x.id, null); if (!q) continue; const reps = await kvGet(env, 'rep:' + x.id, []); out.push(Object.assign({ id: x.id, replied: reps.some(p => p.vid === vid), replies: reps.length }, q.r)); }
+    }
+    return json({ requests: out.sort((a, b) => b.at - a.at) });
+  }
+  if (action === 'req/reply') {
+    const v = await vendorAuth(); if (!v) return json({ error: 'Not allowed' }, 403);
+    const [vid, rec] = v; const id = String(body.id || ''); const q = /^[a-z0-9]{8,20}$/.test(id) && await kvGet(env, 'req:' + id, null);
+    if (!q) return json({ error: 'This request has closed.' }, 404);
+    if (!rec.live || !rec.l.cats.includes(q.r.cat) || !rec.l.cities.some(c => cityKey(c) === cityKey(q.r.city))) return json({ error: 'This request isn’t in your category or city.' }, 403);
+    const msg = clip(body.msg, 600).trim(); if (!msg) return json({ error: 'Write a short reply.' }, 400);
+    const reps = (await kvGet(env, 'rep:' + id, [])).filter(p => p.vid !== vid); if (reps.length >= 20) return json({ error: 'This request already has the most replies it can take.' }, 409);
+    reps.push({ vid, msg, price: Math.max(0, Math.min(1e6, +body.price || 0)) || null, card: publicCard(vid, rec), email: rec.email, at: Date.now() });
+    await env.EC_KV.put('rep:' + id, JSON.stringify(reps), { expirationTtl: Math.max(86400, Math.ceil((q.until - Date.now()) / 1000)) });
+    return json({ ok: true });
+  }
+  if (action === 'req/inbox' || action === 'req/delete') {
+    const ids = (Array.isArray(body.ids) ? body.ids : []).slice(0, 40).map(String).filter(x => /^[a-z0-9]{8,20}$/.test(x)); const out = {}, kh = await sha(key);
+    for (const id of ids) {
+      const q = await kvGet(env, 'req:' + id, null); if (!q || q.kh !== kh) continue;
+      if (action === 'req/delete') { await env.EC_KV.delete('req:' + id); await env.EC_KV.delete('rep:' + id); continue; }
+      out[id] = await kvGet(env, 'rep:' + id, []);
+    }
+    return json(action === 'req/delete' ? { ok: true } : { replies: out });
   }
   return json({ error: 'Not found' }, 404);
 }

@@ -302,7 +302,9 @@
       if (p[0] === 'e' && p[2] === 'concepts') return conceptsView(p[1]);
       if (p[0] === 'e') { var ev = getEvent(p[1]); if (!ev) return frame('<div class="stack"><h2>This plan isn\u2019t here</h2><p class="muted">It may have been deleted, or it was made on another device.</p><div><a class="btn" href="#/events">Go to My events</a></div></div>'); return planView(ev, p[2] || 'overview'); }
       if (p[0] === 'g') return guestPage(p[1]);
+      if (p[0] === 'vendors' && p[1] === 'requests') { if (CFG.app) { location.replace('#/'); return; } return vendorRequests(); }
       if (p[0] === 'vendors') { if (CFG.app) { location.replace('#/'); return; } return vendorJoin(); }
+      if (p[0] === 'v' && p[1]) return vendorProfile(p[1]);
       if (p[0] === 'help') return help();
       if (p[0] === 'pricing') { if (CFG.app) { location.replace('#/'); return; } return pricing(); }
       if (p[0] === 'privacy') return legal('privacy');
@@ -899,6 +901,7 @@
     var keepBar = isKept(ev) ? '' : '<div class="keep-bar"><span><b>' + (b.shortBy ? 'Keep this plan' : 'Love this plan?') + '</b> <span class="muted">' + (CFG.app ? 'Keep it, free, to unlock every detail and plan with guests.' : 'Keep it to unlock every detail and plan with guests for ' + usd2(E.passFor(ev.guests).price) + ', one time.') + '</span></span><button class="btn small" id="keepBtn">Keep my plan</button></div>';
     frame(head + keepBar + groupBar + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
     var kb = $('#keepBtn'); if (kb) kb.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { planView(ev, tab); }); });
+    if (!ev.sample) syncQuotes(ev);
     if (!ev.sample && isKept(ev) && ev.published) { publishInvite(ev).catch(function () {}); syncInbox(ev, function () { if (location.hash.indexOf('#/e/' + ev.id) === 0 && !document.querySelector('.sheet-back')) planView(ev, tab); }); }   /* guests' RSVPs come in; edits reach the shared invitation */
     var cur = $('.rail [aria-current]'); if (cur && cur.scrollIntoView && window.innerWidth < 960) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
     var rn = $('#rename'); if (rn) rn.addEventListener('click', function () {
@@ -1742,7 +1745,83 @@
     return cols.slice(0, 2).join(' and ');
   }
   /* Real, top-rated businesses for one category, shown under the button that asked for them (Vendors and Budget pages). */
+  /* Around Google's results: Event Couture vendors first, then Get quotes and Instagram vendors. */
   function openVendorResults(ev, btn) {
+    googleVendorResults(ev, btn);
+    $$('.live-extra').forEach(function (x) { x.remove(); });
+    var cat = btn.dataset.vendor, box = document.querySelector('.live-res[data-for="v-' + cat + '"]'); if (!box) return;
+    box.insertAdjacentHTML('beforebegin', '<div class="live-extra ecv" data-ecv="' + esc(cat) + '"></div>');
+    box.insertAdjacentHTML('afterend', '<div class="live-extra mk" data-mk="' + esc(cat) + '">' + marketBlock(ev, cat) + '</div>');
+    bindMarket(ev, cat);
+    if (SHARING) apiMarket('vendors?city=' + encodeURIComponent(ev.city) + '&cat=' + encodeURIComponent(cat)).then(function (j) {
+      var el = document.querySelector('[data-ecv="' + cat + '"]'), list = (j.vendors || []).slice(0, 4); if (!el || !list.length) return;
+      el.innerHTML = '<div class="curated"><p class="eyebrow">Event Couture vendors</p>' + list.map(function (x) {
+        var p = { id: 'ec:' + x.id, name: x.name, website: x.ig ? 'https://instagram.com/' + x.ig : x.site, mapsUrl: siteBase() + '#/v/' + x.id };
+        return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b> <span class="badge est">' + (x.featured ? 'Recommended' : x.founding ? 'Founding vendor' : 'Event Couture vendor') + '</span><div class="small muted">' + (x.price ? esc(x.priceType || 'From') + ' ' + money(x.price) + ' \u00b7 ' : '') + esc(x.bio ? x.bio.slice(0, 90) : x.cats.map(catLabel).join(', ')) + '</div></div><span class="acts">' + saveBtn(ev, p, cat) + (x.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://instagram.com/' + esc(x.ig) + '">Instagram</a>' : '') + '<a class="btn small ghost" href="#/v/' + esc(x.id) + '">View page</a></span></div>';
+      }).join('') + '</div>';
+    }).catch(function () {});
+  }
+  function vendorAsk(ev, cat) {
+    var need = E.lc(catName(cat, ev)).replace(/ \(.*\)$/, ''); if (['dj', 'mc', 'singer', 'zaffe', 'dabke', 'dhol', 'photographer', 'videographer', 'officiant', 'coordinator', 'bartender', 'photoBooth', 'mehndi', 'kosha', 'mandap'].indexOf(cat) >= 0) need = (/^[aeiou]/i.test(need) ? 'an ' : 'a ') + need;
+    var b = E.budget(ev, ev.tier || 'S'), line = b.items.find(function (i) { return i.id === cat; });
+    var theme = themeWords(ev);
+    var tn = ev.type === 'other' ? 'celebration' : E.typeName(ev);
+    return 'Hi! I\u2019m planning ' + (/^[aeiou]/i.test(tn) ? 'an ' : 'a ') + tn.toLowerCase().replace(/arabic|indian|persian/, function (m) { return m.charAt(0).toUpperCase() + m.slice(1); }) + ' in ' + ev.city.split(',')[0] + (ev.date ? ' on ' + fmtDate(ev.date) : '') + ' for about ' + plural(ev.guests, 'guest') + ', and I\u2019d love a quote for ' + need + '.' + (theme ? ' The theme is ' + theme + '.' : '') + (line && !CFG.app ? ' My budget for this is about ' + money(line.mid) + '.' : '') + ' Are you available?\n\nPlanned with Event Couture by Always Luxe. Vendors: get listed free at ' + siteBase() + '#/vendors';
+  }
+  function marketBlock(ev, cat) {
+    var q = (ev.quotes || {})[cat], reps = ((ev.quoteReplies || {})[cat]) || [];
+    var quotes = !SHARING || ev.sample ? '' : q ? '<div class="stack"><b>Quotes from vendors' + (reps.length ? ' (' + reps.length + ')' : '') + '</b>' + (reps.length ? reps.map(function (r) {
+        var p = { id: 'ec:' + r.vid, name: r.card.name, website: r.card.ig ? 'https://instagram.com/' + r.card.ig : r.card.site, mapsUrl: siteBase() + '#/v/' + r.vid };
+        return '<div class="it"><div class="grow"><b>' + esc(r.card.name) + '</b>' + (r.price ? ' <span class="num">' + money(r.price) + '</span>' : '') + '<div class="small">' + esc(r.msg) + '</div><div class="small muted">' + [r.card.phone, r.email].filter(Boolean).map(esc).join(' \u00b7 ') + '</div></div><span class="acts">' + saveBtn(ev, p, cat) + (r.card.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://ig.me/m/' + esc(r.card.ig) + '">Message</a>' : r.email ? '<a class="btn small ghost" href="mailto:' + esc(r.email) + '">Email</a>' : '') + '</span></div>'; }).join('') : '<span class="muted small">Your request is out. Event Couture vendors in ' + esc(ev.city.split(',')[0]) + ' reply here, usually within a day or two.</span>') + '</div>'
+      : '<div class="stack"><button class="btn small" data-getq="' + esc(cat) + '">Get quotes from vendors</button><span class="muted small">Free. Vendors see your date, city, guest count, theme and budget for this, never your name or contact details.</span></div>';
+    var ig = (ev.shortlist || []).filter(function (x) { return x.cat === cat && /^ig:/.test(x.id); });
+    return '<div class="panel stack" style="margin-top:10px">' + quotes +
+      '<div class="stack"><b>Found someone on Instagram?</b><span class="muted small">Add them to your options, then message them your request in one tap.</span><div class="row"><input class="input" data-ighandle placeholder="@their.instagram" aria-label="Instagram handle" style="flex:1;min-width:150px" autocapitalize="off" autocorrect="off"><button class="btn small ghost" data-igadd>Add</button></div>' +
+      ig.map(function (x) { var h = x.id.slice(3); return '<div class="row small"><b>@' + esc(h) + '</b><button class="btn small" data-igmsg="' + esc(h) + '">Message @' + esc(h) + '</button></div>'; }).join('') + '</div></div>';
+  }
+  function bindMarket(ev, cat) {
+    var el = document.querySelector('[data-mk="' + cat + '"]'); if (!el) return;
+    var redraw = function () { el.innerHTML = marketBlock(ev, cat); };
+    el.addEventListener('click', function (e) {
+      if (e.target.closest('[data-getq]')) { if (lockSample(ev)) return; return askQuotes(ev, cat, redraw); }
+      if (e.target.closest('[data-igadd]')) {
+        if (lockSample(ev)) return;
+        var h = String($('[data-ighandle]', el).value || '').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/[/?#].*$/, '');
+        if (!/^[A-Za-z0-9._]{1,30}$/.test(h)) { toast('Enter their Instagram handle, like @layali.voice'); $('[data-ighandle]', el).focus(); return; }
+        if (savedFor(ev, cat).length >= MAX_OPTIONS) return toast('Remove one of your 3 saved ' + E.lc(catName(cat, ev)) + ' options first.');
+        if (!(ev.shortlist || []).some(function (x) { return x.id === 'ig:' + h && x.cat === cat; })) addOption(ev, { id: 'ig:' + h, cat: cat, name: '@' + h, site: 'https://instagram.com/' + h });
+        saveEvent(ev); redraw(); refreshBars(ev); toast('@' + h + ' is saved in your ' + E.lc(catName(cat, ev)) + ' options'); return;
+      }
+      var m = e.target.closest('[data-igmsg]');
+      if (m) { var txt = vendorAsk(ev, cat); copyText(txt, 'Your message'); setTimeout(function () { window.open('https://ig.me/m/' + encodeURIComponent(m.dataset.igmsg), '_blank', 'noopener'); }, 400); }
+    });
+  }
+  function askQuotes(ev, cat, done) {
+    var b = E.budget(ev, ev.tier || 'S'), line = b.items.find(function (i) { return i.id === cat; });
+    sheet('<h3>Get quotes: ' + esc(catName(cat, ev)) + '</h3><p class="muted small">Event Couture vendors in ' + esc(ev.city.split(',')[0]) + ' who offer this see your request and reply with a price. Your name and contact details are never shared; you choose who to reach out to.</p>' +
+      '<div class="note small">' + reqLine({ type: E.typeName(ev), date: ev.date, guests: ev.guests, city: ev.city }) + (themeWords(ev) ? ' \u00b7 ' + esc(themeWords(ev)) : '') + '</div>' +
+      '<label class="field"><span>Your budget for this (USD, optional)</span><input class="input num" type="number" min="0" id="qBudget" value="' + (line && !CFG.app ? Math.round(line.mid) : '') + '"></label>' +
+      '<label class="field"><span>Anything they should know? (optional)</span><textarea class="input" id="qNotes" placeholder="For example: we want Arabic and English songs"></textarea></label>' +
+      '<button class="btn block" id="qSend">Send my request</button><button class="btn ghost block" data-close>Cancel</button>');
+    $('#qSend').addEventListener('click', function () {
+      var bt = this; bt.disabled = true;
+      if (!ev.quoteKey) ev.quoteKey = randKey();
+      apiMarket('req/new', { key: ev.quoteKey, req: { city: ev.city, cat: cat, need: catName(cat, ev), type: E.typeName(ev), date: ev.date || '', guests: ev.guests, budget: +$('#qBudget').value || 0, theme: themeWords(ev), notes: $('#qNotes').value.trim() } })
+        .then(function (j) { ev.quotes = ev.quotes || {}; ev.quotes[cat] = { id: j.id, at: Date.now() }; saveEvent(ev); $$('.sheet-back').forEach(function (x) { x.remove(); }); toast('Request sent. Quotes show up here.'); T('quote_requested', { category: cat }); done(); })
+        .catch(function (e) { bt.disabled = false; toast(e.message || 'Couldn\u2019t send right now. Try again.'); });
+    });
+  }
+  /* Vendor replies to her quote requests, fetched when the plan opens. */
+  function syncQuotes(ev) {
+    if (!SHARING || !ev.quoteKey || !ev.quotes) return;
+    var cats = Object.keys(ev.quotes), ids = cats.map(function (c) { return ev.quotes[c].id; });
+    apiMarket('req/inbox', { key: ev.quoteKey, ids: ids }).then(function (j) {
+      var before = 0, after = 0; ev.quoteReplies = ev.quoteReplies || {};
+      cats.forEach(function (c) { before += (ev.quoteReplies[c] || []).length; var r = (j.replies || {})[ev.quotes[c].id]; if (r) { ev.quoteReplies[c] = r; after += r.length; } else after += (ev.quoteReplies[c] || []).length; });
+      saveEvent(ev); if (after > before) toast(plural(after - before, 'new quote') + ' from vendors. See them under Vendors.');
+    }).catch(function () {});
+  }
+  function googleVendorResults(ev, btn) {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; });
       var box = document.querySelector('.live-res[data-for="v-' + btn.dataset.vendor + '"]'); if (!box) return; box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding top-rated businesses\u2026</p>';
       ev.lastVendor = btn.dataset.vendor;
@@ -2233,7 +2312,7 @@
 
   /* ---------- vendor sign-up (structured, saved as you go) ---------- */
   var VFIELDS = [
-    ['Business basics', [['name', 'Business name', 'text', 1], ['email', 'Business email', 'text', 1], ['phone', 'Business phone', 'text'], ['cats', 'Categories', 'cats', 1], ['bio', 'Short description', 'area', 1], ['years', 'Years in business', 'number'], ['site', 'Website or Instagram link', 'text']]],
+    ['Business basics', [['name', 'Business name', 'text', 1], ['email', 'Business email', 'text', 1], ['phone', 'Business phone', 'text'], ['cats', 'Categories', 'cats', 1], ['bio', 'Short description', 'area', 1], ['years', 'Years in business', 'number'], ['ig', 'Instagram handle (like @yourbusiness)', 'text'], ['site', 'Website', 'text']]],
     ['Service area', [['cities', 'Cities you serve', 'citylist', 1], ['radius', 'Travel radius (miles)', 'number', 1], ['travelFee', 'Travel fee (USD, 0 if none)', 'number']]],
     ['Packages and prices', [['pkgName', 'Main package name', 'text', 1], ['pkgIncl', 'What it includes', 'area', 1], ['priceType', 'How it’s priced', 'select:Fixed price|Starting at|Per person|Per hour', 1], ['price', 'Price (USD)', 'number', 1], ['minSpend', 'Minimum spend (USD)', 'number'], ['peak', 'Weekend or peak-season increase (%)', 'number'], ['overtime', 'Overtime rate per hour (USD)', 'number']]],
     ['Fees and payment terms', [['deposit', 'Deposit (% of total)', 'number', 1], ['schedule', 'When the balance is due', 'select:At booking|30 days before|14 days before|7 days before|On the day'], ['service', 'Service charge (%)', 'number'], ['tax', 'Do you charge sales tax?', 'select:Yes|No'], ['setupFee', 'Setup, delivery or cleanup fees (USD)', 'number']]],
@@ -2245,6 +2324,62 @@
     ['Trust', [['reviews', 'Link to your reviews elsewhere', 'text'], ['insured', 'Are you insured?', 'select:Yes|No|Not required for my service']]],
     ['Agreement', [['agree', 'I confirm my listed prices are accurate and I’ll keep them up to date', 'check', 1]]]
   ];
+  /* Live vendor listings and quote requests (needs the Event Couture server). */
+  function apiMarket(path, body) {
+    return fetch(CFG.apiUrl + '/api/' + path, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {})
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error(j.error || 'Request failed'); e.status = r.status; throw e; } return j; }); });
+  }
+  function randKey() { var a = new Uint8Array(18); crypto.getRandomValues(a); return Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
+  function vendorKey(v) { if (!v.key) { v.key = randKey(); store.set('vendor', v); } return v.key; }
+  var CAT_BY_NAME = {}; Object.keys(D.CATEGORIES).forEach(function (k) { CAT_BY_NAME[D.CATEGORIES[k].name.split(' (')[0]] = k; });
+  function catLabel(id) { var c = D.CATEGORIES[id]; return c ? c.name.split(' (')[0] : id; }
+  function listingOut(v) { return Object.assign({}, v, { cats: [].concat(v.cats || []).map(function (n) { return CAT_BY_NAME[n] || n; }).filter(function (k) { return D.CATEGORIES[k]; }), key: undefined, serverId: undefined }); }
+  function siteBase() { return CFG.siteUrl || location.href.split('#')[0]; }
+  function vendorLiveSheet(v) {
+    var link = siteBase() + '#/v/' + v.serverId, join = siteBase() + '#/vendors';
+    var bio = 'Book me on Event Couture \u2192 ' + link;
+    var invite = 'I\u2019m listed on Event Couture by Always Luxe, where clients planning weddings and events send quote requests for free. Vendors join free here: ' + join;
+    sheet('<h3>You\u2019re live' + (v.founding ? ' \u00b7 Founding vendor' : '') + '</h3><p class="muted">Clients planning events in your city now see you' + (v.founding ? ' first, with a Founding vendor badge' : '') + '. Check <b>Client requests</b> for people asking for quotes.</p>' +
+      '<div class="stack"><b>Add this to your Instagram bio</b><div class="note small" style="word-break:break-all">' + esc(bio) + '</div><button class="btn small" id="cpBio">Copy for my bio</button></div>' +
+      '<div class="stack"><b>Bring the vendors you work with</b><span class="muted small">Your DJ, decorator, zaffe group or photographer: when they join, clients can book your whole team.</span><button class="btn small ghost" id="invV">Invite vendors</button></div>' +
+      '<div class="row"><a class="btn" href="#/vendors/requests" data-close>See client requests</a><button class="btn ghost" data-close>Done</button></div>');
+    $('#cpBio').addEventListener('click', function () { copyText(bio, 'Bio link'); });
+    $('#invV').addEventListener('click', function () { if (navigator.share) navigator.share({ title: 'Event Couture', text: invite }).catch(function () {}); else copyText(invite, 'Invitation'); });
+  }
+  function reqLine(r) { return [r.type, r.date ? fmtDate(r.date) : 'Date not set', r.guests ? plural(r.guests, 'guest') : '', r.city].filter(Boolean).map(esc).join(' \u00b7 '); }
+  function vendorRequests() {
+    var v = store.get('vendor', {});
+    if (!SHARING || !v.serverId) { frame('<div class="stack"><h2>Client requests</h2><p class="muted">List your business first; requests from clients in your city show up here once you\u2019re live.</p><div><a class="btn" href="#/vendors">List my business</a></div></div>'); return; }
+    frame('<div class="stack-lg"><div class="stack"><h2>Client requests</h2><p class="muted">Clients planning events in your city and category. Reply with your price and a short note; your contact details go with your reply, and the client reaches out to book.</p><div class="row"><a class="btn small ghost" href="#/vendors">Edit my listing</a></div></div><div id="reqs"><p class="muted">Loading\u2026</p></div></div>');
+    apiMarket('req/list', { key: vendorKey(v), vid: v.serverId }).then(function (j) {
+      var list = j.requests || [];
+      if (!list.length) { $('#reqs').innerHTML = '<div class="panel stack"><b>No requests yet</b><p class="muted small">New requests appear here as clients plan. Share your bio link so your followers plan with you.</p></div>'; return; }
+      $('#reqs').innerHTML = list.map(function (r) {
+        return '<div class="panel stack" data-req="' + esc(r.id) + '"><div class="row" style="justify-content:space-between"><b>' + esc(r.need || catLabel(r.cat)) + '</b>' + (r.replied ? '<span class="badge">You replied</span>' : '') + '</div><div class="small muted">' + reqLine(r) + '</div>' +
+          (r.budget ? '<div class="small">Budget for this: <b>' + money(r.budget) + '</b></div>' : '') + (r.theme ? '<div class="small">Theme: ' + esc(r.theme) + '</div>' : '') + (r.notes ? '<div class="small">' + esc(r.notes) + '</div>' : '') +
+          '<label class="field"><span>Your reply</span><textarea class="input" data-msg placeholder="Available? What\u2019s included? Anything they should know?"></textarea></label><label class="field"><span>Your price (USD, optional)</span><input class="input num" type="number" min="0" data-price></label><button class="btn small" data-send>' + (r.replied ? 'Update my reply' : 'Send my reply') + '</button><span class="muted small">' + (r.replies ? plural(r.replies, 'vendor') + ' replied so far' : 'Be the first to reply') + '</span></div>';
+      }).join('');
+      $$('[data-send]').forEach(function (b) { b.addEventListener('click', function () {
+        var box = b.closest('[data-req]'), msg = $('[data-msg]', box).value.trim(); if (!msg) { toast('Write a short reply'); $('[data-msg]', box).focus(); return; }
+        b.disabled = true; apiMarket('req/reply', { key: vendorKey(v), vid: v.serverId, id: box.dataset.req, msg: msg, price: +$('[data-price]', box).value || 0 }).then(function () { b.disabled = false; b.textContent = 'Update my reply'; toast('Reply sent'); }).catch(function (e) { b.disabled = false; toast(e.message); });
+      }); });
+    }).catch(function (e) { $('#reqs').innerHTML = '<p class="muted">' + esc(e.message || 'Requests aren\u2019t available right now.') + '</p>'; });
+  }
+  function vendorProfile(id) {
+    frame('<div class="stack" id="vp"><p class="muted">Loading\u2026</p></div>');
+    if (!SHARING) { $('#vp').innerHTML = '<h2>Vendor pages open when Event Couture launches</h2>'; return; }
+    apiMarket('vendor/' + encodeURIComponent(id)).then(function (j) {
+      var x = j.vendor;
+      $('#vp').innerHTML = '<div class="stack-lg"><div class="stack"><span class="small muted">' + (x.founding ? 'Founding Event Couture vendor' : 'Event Couture vendor') + '</span><h2>' + esc(x.name) + '</h2><div class="small muted">' + esc(x.cats.map(catLabel).join(', ')) + ' \u00b7 ' + esc(x.cities.join(', ')) + '</div></div>' +
+        (x.bio ? '<p>' + esc(x.bio) + '</p>' : '') +
+        (x.pkgName || x.price ? '<div class="panel stack"><b>' + esc(x.pkgName || 'Packages') + '</b>' + (x.price ? '<span>' + esc(x.priceType || 'From') + ' ' + money(x.price) + '</span>' : '') + (x.pkgIncl ? '<span class="small muted">' + esc(x.pkgIncl) + '</span>' : '') + '</div>' : '') +
+        (x.langs ? '<div class="small">Languages: ' + esc(x.langs) + '</div>' : '') +
+        '<div class="row">' + (x.ig ? '<a class="btn small" target="_blank" rel="noopener" href="https://instagram.com/' + esc(x.ig) + '">Instagram</a>' : '') + (x.site ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.site) + '">Website</a>' : '') + (x.phone ? '<a class="btn small ghost" href="tel:' + esc(x.phone.replace(/[^0-9+]/g, '')) + '">Call</a>' : '') + '</div>' +
+        '<div class="panel stack"><b>Planning an event?</b><span class="muted small">Event Couture plans the whole thing from one photo or a few words: looks, budget, venues and vendors.</span><a class="btn gold" href="#/new/1">Plan my event free</a></div>' +
+        '<button class="link small muted" id="rpt">Report this listing</button></div>';
+      $('#rpt').addEventListener('click', function () { apiMarket('vendor/report', { id: id }).then(function () { toast('Thanks. We\u2019ll take a look.'); }).catch(function () {}); });
+    }).catch(function (e) { $('#vp').innerHTML = '<h2>This vendor isn\u2019t listed right now</h2><p class="muted"><a href="#/new/1">Plan your event</a></p>'; });
+  }
   function vendorJoin() {
     var v = store.get('vendor', {});
     function req() { return VFIELDS.reduce(function (a, s) { return a.concat(s[1].filter(function (f) { return f[3]; })); }, []); }
@@ -2260,7 +2395,7 @@
       return '<input class="input" id="' + id + '" aria-label="' + esc(f[1]) + '" value="' + esc(val || '') + '">';
     }
     var pct = Math.round(done() * 100);
-    frame('<div class="wizard stack-lg"><div class="stack"><h2>List your business on Event Couture</h2><p class="muted">Listing is free. Once vendor accounts launch, hosts planning events in your area will see your packages and prices inside their plans. Until then your listing saves on this device as you go.</p></div>' +
+    frame('<div class="wizard stack-lg"><div class="stack"><h2>List your business on Event Couture</h2><p class="muted">' + (SHARING ? 'Listing is free. Once your listing is complete, it goes live: clients planning events in your city see you first, and you can answer their quote requests.' : 'Listing is free. Once vendor accounts launch, hosts planning events in your area will see your packages and prices inside their plans. Until then your listing saves on this device as you go.') + '</p>' + (SHARING && v.serverId ? '<div class="row"><a class="btn small" href="#/vendors/requests">See client requests</a>' + (v.live ? '<a class="btn small ghost" href="#/v/' + esc(v.serverId) + '">View my page</a>' : '') + '</div>' : '') + '</div>' +
       '<div class="panel stack"><div class="row" style="justify-content:space-between"><b>Listing complete</b><span class="num" id="pct">' + pct + '%</span></div><div class="meter"><i id="bar" style="width:' + pct + '%"></i></div><p class="muted small">Complete listings with full prices will show first in hosts\u2019 plans.</p>' +
       '</div>' +
       VFIELDS.map(function (s) { return '<fieldset class="panel stack" style="border:1px solid var(--line)"><legend class="display" style="font-size:1.15rem;padding:0 6px">' + esc(s[0]) + '</legend>' + s[1].map(function (f) { return f[2] === 'check' ? input(f) : '<div class="field"><span>' + esc(f[1]) + (f[3] ? '' : ' (optional)') + '</span>' + input(f) + '</div>'; }).join('') + '</fieldset>'; }).join('') +
@@ -2276,7 +2411,14 @@
     if ($('#autofill')) $('#autofill').addEventListener('click', function () { sheet('<h3>Fill in from your website</h3><p class="muted">Paste your website or Instagram link and the AI fills in the form for you to check. This turns on when the app launches.</p><button class="btn block" data-close>OK</button>'); });
     $('#submit').addEventListener('click', function () { collect(); if (v.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(v.email).trim())) { toast('Enter a valid business email'); var em = document.getElementById('v_email'); if (em) em.focus(); return; } if (done() < 1) { var missing = req().filter(function (f) { var x = v[f[0]]; return Array.isArray(x) ? !x.length : (f[2] === 'check' ? x !== true : !x || !String(x).trim()); }); toast('Still needed: ' + missing.slice(0, 3).map(function (f) { return f[1].toLowerCase(); }).join(', ')); var el = document.getElementById('v_' + missing[0][0]); if (el) el.scrollIntoView({ block: 'center' }); return; }
       v.published = new Date().toISOString(); store.set('vendor', v); T('vendor_listing_published', { categories: [].concat(v.cats || []).join(',') });
-      sheet('<h3>Your listing is saved</h3><p class="muted">It\u2019s saved on this device for now. Listings open to hosts when vendor accounts launch; you\u2019ll be able to sign in, confirm it and go live then. Nothing is shared before you do.</p><button class="btn block" data-close>Done</button>'); });
+      if (!SHARING) return sheet('<h3>Your listing is saved</h3><p class="muted">It\u2019s saved on this device for now. Listings open to hosts when vendor accounts launch; you\u2019ll be able to sign in, confirm it and go live then. Nothing is shared before you do.</p><button class="btn block" data-close>Done</button>');
+      var btn = $('#submit'); btn.disabled = true; btn.textContent = 'Saving\u2026';
+      apiMarket('vendor/save', { key: vendorKey(v), id: v.serverId, listing: listingOut(v) }).then(function (j) {
+        v.serverId = j.id; v.live = j.live; v.founding = j.founding; store.set('vendor', v); btn.disabled = false; btn.textContent = 'Save my listing';
+        if (!j.live) return sheet('<h3>Saved, almost live</h3><p class="muted">Add ' + esc((j.missing || []).map(function (m) { return { ig: 'your Instagram or website', agree: 'the price agreement at the bottom', name: 'your business name', cats: 'what you offer', cities: 'the cities you serve' }[m] || m; }).join(' and ')) + ' and save again to go live.</p><button class="btn block" data-close>OK</button>');
+        vendorLiveSheet(v);
+      }).catch(function (e) { btn.disabled = false; btn.textContent = 'Save my listing'; toast(e.message || 'Couldn\u2019t save right now. Try again.'); });
+    });
   }
 
   /* ---------- help assistant ---------- */
@@ -2288,6 +2430,7 @@
     ['What if my guest list grows?', 'Move up a size under Overview, Your pass. You pay only the difference, and your plan stays exactly as it is.', 'grow grows growing more upgrade capacity bigger places full waitlist'],
   ];
   FAQ = FAQ.concat([
+    ['How do I get quotes from vendors?', 'Open your plan, then Budget & bookings, Vendors, and tap See options on what you need. Tap Get quotes from vendors: Event Couture vendors in your city see your date, guest count, theme and budget, never your name or contact, and reply with prices right there. Found someone on Instagram? Add their handle and message them your request in one tap.', 'quote quotes vendor request price instagram singer dj'],
     ['Can I get a refund?', 'Planning is free, so you see your whole plan before you pay. If something you paid for doesn\u2019t work, contact us and we\u2019ll make it right. Purchases made in the iPhone or Android app are refunded through Apple or Google from your purchase history.', 'refund money back cancel charged'],
     ['How do I contact you?', CFG.supportEmail ? 'Email us at ' + CFG.supportEmail + '. We reply within one business day.' : 'Start with the answers on this page. If you still need help, use the contact details on the Event Couture website.', 'contact support email phone talk person help reach'],
     ['Is my data safe?', 'Yes. Your plans, guest lists and photos stay on your device. To create your concepts, your details and inspiration go through our server to Google\u2019s AI and aren\u2019t kept by Event Couture. We never sell your data, and guest details are never shown to vendors. Google Analytics counts visits and which buttons are tapped, never names, photos or what you type. See Privacy for the details.', 'safe secure privacy data private sell share'],
@@ -2298,7 +2441,7 @@
     ['How do I add a co-host?', 'Open Guests & invitations, Guests, and add them under Co-hosts. Choose whether they can edit, edit without seeing the budget, or only view and vote.', 'cohost co-host partner share plan'],
     ['Can I change my concept?', 'Yes. Open Overview, Change concept. You can also see three different concepts once, for free.', 'concept theme change different'],
     ['How do I delete my data?', 'Open the event, go to Overview, Your pass, and choose Delete event. The plan, guest list and photos are removed from your device.', 'delete data privacy remove account'],
-    ['How do vendors join?', 'Vendors list their business for free at For vendors, with packages, prices and policies. Listings appear to hosts planning events in their area once vendor accounts launch.', 'vendor business list join']
+    ['How do vendors join?', SHARING ? 'Vendors list their business for free at For vendors (at the bottom of every page), with their Instagram, packages and prices. Complete listings go live right away: clients planning in their city see them first and can send them quote requests.' : 'Vendors list their business for free at For vendors, with packages, prices and policies. Listings appear to hosts planning events in their area once vendor accounts launch.', 'vendor business list join instagram']
   ]);
   if (SHARING) FAQ = FAQ.map(function (q) {   /* invitations open on guests' own phones */
     if (/^Do my guests need the app/.test(q[0])) return [q[0], 'No. Guests open your invitation link in any browser to see the details, RSVP, vote and see your gift list. Their RSVPs come into your Guests list.', q[2]];
