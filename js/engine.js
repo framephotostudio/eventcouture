@@ -430,18 +430,18 @@
   function hexToRgb(h) { h = h.replace('#', ''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; }
   function dist(a, b) { var dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2]; return Math.sqrt(2 * dr * dr + 4 * dg * dg + 3 * db * db); }
   var WORDS = {
-    pink: ['pink', 'blush', 'rose'], gold: ['gold', 'champagne', 'glam'], black: ['black', 'noir'], white: ['white', 'minimal', 'clean'],
-    green: ['green', 'greenery', 'botanical', 'sage', 'eucalyptus', 'olive', 'mint'], emerald: ['emerald', 'jewel tone', 'hunter green', 'forest green'], holiday: ['holiday', 'christmas', 'winter', 'festive', 'december', 'new year'], boho: ['boho', 'pampas', 'bohemian'], rustic: ['rustic', 'barn', 'wood', 'farm'],
-    coastal: ['beach', 'coastal', 'ocean', 'nautical', 'blue'], tropical: ['tropical', 'palm', 'island', 'luau'], disco: ['disco', 'sparkle', 'sequin', '70s'],
-    vintage: ['vintage', 'hollywood', 'gatsby', 'roaring'], pastel: ['pastel', 'whimsy', 'baby pink', 'baby blue', 'candy', 'rainbow'], purple: ['purple', 'lavender', 'plum', 'lilac', 'royal'],
-    red: ['red', 'burgundy', 'wine'], ivory: ['ivory', 'cream', 'chandelier', 'ballroom'], classic: ['classic', 'timeless', 'black tie', 'formal'],
-    lavender: ['lavender', 'lilac'], tea: ['tea party', 'high tea', 'afternoon tea'], dark: ['moody', 'dark', 'velvet'], outdoor: ['outdoor', 'backyard', 'park', 'garden'], romantic: ['romantic', 'love', 'romance'], celestial: ['moon', 'stars', 'starry', 'celestial', 'galaxy', 'navy', 'midnight', 'twinkle'], silver: ['silver', 'metallic', 'chrome'], autumn: ['fall ', 'autumn', 'harvest', 'thanksgiving'],
-    orange: ['orange', 'coral', 'citrus', 'tangerine', 'fuchsia', 'hot pink', 'magenta'], fiesta: ['fiesta', 'bougainvillea', 'cinco de mayo'], yellow: ['yellow', 'lemon', 'butter', 'sunshine', 'daisy', 'daisies', 'sunflower'],
+    pink: ['pink', 'blush', 'rose', 'mauve'], gold: ['gold', 'champagne', 'glam', 'luxe'], black: ['black', 'noir'], white: ['white', 'minimal', 'clean'],
+    green: ['green', 'greenery', 'botanical', 'sage', 'eucalyptus', 'olive', 'mint'], emerald: ['emerald', 'jewel tone', 'hunter green', 'forest green', 'enchanted forest'], holiday: ['holiday', 'christmas', 'winter', 'festive', 'december', 'new year'], boho: ['boho', 'pampas', 'bohemian', 'copper'], rustic: ['rustic', 'barn', 'wood', 'farm', 'western', 'cowboy', 'cowgirl', 'cozy'], neutral: ['neutral', 'nude', 'taupe', 'beige'],
+    coastal: ['beach', 'coastal', 'ocean', 'nautical', 'blue', 'teal'], tropical: ['tropical', 'palm', 'island', 'luau'], disco: ['disco', 'sparkle', 'sequin', '70s', 'retro'],
+    vintage: ['vintage', 'hollywood', 'gatsby', 'roaring', 'art deco'], pastel: ['pastel', 'whimsy', 'baby pink', 'baby blue', 'candy', 'rainbow', 'fairytale', 'whimsical'], purple: ['purple', 'lavender', 'plum', 'lilac', 'royal'],
+    red: ['red', 'burgundy', 'wine'], ivory: ['ivory', 'cream', 'chandelier', 'ballroom'], classic: ['classic', 'timeless', 'black tie', 'formal', 'elegant', 'parisian'],
+    lavender: ['lavender', 'lilac'], tea: ['tea party', 'high tea', 'afternoon tea'], dark: ['moody', 'dark', 'velvet'], outdoor: ['outdoor', 'backyard', 'park', 'garden'], romantic: ['romantic', 'love', 'romance', 'fairytale', 'parisian'], celestial: ['moon', 'stars', 'starry', 'celestial', 'galaxy', 'navy', 'midnight', 'twinkle'], silver: ['silver', 'metallic', 'chrome', 'wonderland', 'snow'], autumn: ['fall ', 'autumn', 'harvest', 'thanksgiving'],
+    orange: ['orange', 'coral', 'citrus', 'tangerine', 'fuchsia', 'hot pink', 'magenta', 'neon', 'glow'], fiesta: ['fiesta', 'bougainvillea', 'cinco de mayo'], yellow: ['yellow', 'lemon', 'butter', 'sunshine', 'daisy', 'daisies', 'sunflower'],
     chinoiserie: ['chinoiserie', 'blue and white', 'porcelain', 'toile', 'blue willow', 'ginger jar'], tuscan: ['tuscan', 'tuscany', 'italian villa', 'olive grove'], amalfi: ['amalfi', 'positano', 'capri', 'mediterranean', 'italian summer'], peach: ['peach', 'apricot']
   };
   var COLOR_TAGS = ['emerald', 'orange', 'yellow', 'chinoiserie', 'peach', 'boho', 'rustic', 'disco', 'vintage', 'pink', 'gold', 'black', 'white', 'green', 'purple', 'red', 'ivory', 'coastal', 'lavender', 'celestial', 'silver', 'pastel', 'tropical'];
   function matchStyles(colors, text, liked) {
-    text = ((text || '') + ' ' + (liked || []).join(' ')).toLowerCase();
+    text = ((text || '') + ' ' + (liked || []).join(' ')).toLowerCase().replace(/royal blue/g, 'cobalt blue');   /* royal blue is a blue, not a purple */
     /* The first color the host names breaks ties: "ivory and gold … florals" is ivory first. */
     var firstTag = null, firstAt = 1e9;
     COLOR_TAGS.forEach(function (tag) { (WORDS[tag] || []).forEach(function (w) { var at = text.indexOf(w); if (at >= 0 && at < firstAt) { firstAt = at; firstTag = tag; } }); });

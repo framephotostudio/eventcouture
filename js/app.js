@@ -312,6 +312,16 @@
       notFound();
     } catch (err) { console.error(err); frame('<div class="stack"><h2>Something went wrong on this screen</h2><p class="muted">Your events are saved. Go back to <a href="#/events">My events</a> and open it again.</p></div>'); }
   }
+  /* A tab left open keeps running the version it loaded. Every 10 minutes the site checks for a newer one,
+     and the next time she moves to another page it reloads into it (her plans and drafts are saved on the device). */
+  var BUILD = (function () { var m = /app\.js\?v=([a-z0-9]+)/.exec([].map.call(document.scripts, function (x) { return x.getAttribute('src') || ''; }).join(' ')); return m ? m[1] : ''; })();
+  var NEWER = false, lastCheck = Date.now();
+  function checkNewer() {
+    if (CFG.app || !BUILD || NEWER || Date.now() - lastCheck < 6e5) return; lastCheck = Date.now();
+    fetch('index.html?check=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) { var m = /app\.js\?v=([a-z0-9]+)/.exec(t); if (m && m[1] !== BUILD) NEWER = true; }).catch(function () {});
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) checkNewer(); });
+  window.addEventListener('hashchange', function () { if (NEWER) { location.reload(); return; } checkNewer(); });
   window.addEventListener('hashchange', function () { clearToasts(); $$('.sheet-back').forEach(function (x) { x.remove(); }); route(); });   /* pop-ups never follow you to another page */
   function notFound() { frame('<div class="stack"><h2>This page doesn’t exist</h2><p class="muted">It may have been removed. <a href="#/">Go to the home page</a>.</p></div>'); }
 
@@ -460,7 +470,7 @@
     });
   }
   var TYPE_WORD = { brunch: 'Brunch', birthday: 'Birthday', milestone: 'Birthday', dinner: 'Dinner', 'bridal-shower': 'Bridal Shower', 'baby-shower': 'Baby Shower', 'gender-reveal': 'Gender Reveal', bachelorette: 'Bachelorette', graduation: 'Graduation', engagement: 'Engagement Party', quince: 'Quincea\u00f1era', anniversary: 'Anniversary', holiday: 'Holiday Party', christmas: 'Christmas Party', retirement: 'Retirement Party', 'kids-birthday': 'Birthday', sweet16: 'Sweet 16', corporate: 'Corporate Event', wedding: 'Wedding', gala: 'Gala', other: 'Celebration' };
-  var VIBE_NOUN = { Romantic: 'Romance', Glam: 'Glamour', Garden: 'A Garden Party', Modern: 'Modern Luxe', Classic: 'Classic Elegance', Boho: 'Boho Dreams', Rustic: 'Rustic Charm', Tropical: 'A Tropical Escape', Coastal: 'A Coastal Breeze', Playful: 'Sweet Moments', Minimal: 'Quiet Luxury', Vintage: 'Vintage Glamour', Disco: 'Disco Nights', Moody: 'Moody Elegance' };
+  var VIBE_NOUN = { Romantic: 'Romance', Glam: 'Glamour', Garden: 'A Garden Party', Modern: 'Modern Luxe', Classic: 'Classic Elegance', Boho: 'Boho Dreams', Rustic: 'Rustic Charm', Tropical: 'A Tropical Escape', Coastal: 'A Coastal Breeze', Playful: 'Sweet Moments', Minimal: 'Quiet Luxury', Vintage: 'Vintage Glamour', Disco: 'Disco Nights', Moody: 'Moody Elegance', Elegant: 'Timeless Elegance', Luxe: 'Pure Luxury', 'Black tie': 'A Black Tie Evening', Western: 'Western Chic', Mediterranean: 'A Mediterranean Summer', Parisian: 'A Parisian Dream', Fairytale: 'A Fairytale', Whimsical: 'A Whimsical Dream', 'Enchanted forest': 'An Enchanted Forest', 'Old Hollywood': 'Old Hollywood Glamour', 'Art deco': 'Art Deco Glamour', Retro: 'Retro Fun', Neon: 'Neon Nights', Celestial: 'Under the Stars', 'Winter wonderland': 'A Winter Wonderland', Royal: 'Royal Elegance', Cozy: 'Cozy Charm' };
   function suggestNames(d, type) {
     var vibes = (d.inspiration && d.inspiration.vibes) || [];
     var colors = [].concat.apply([], ((d.inspiration && d.inspiration.photos) || []).map(function (p) { return p.colors; }));
@@ -479,11 +489,11 @@
     var typed = ['Blush', 'Pink', 'Ivory', 'Cream', 'Gold', 'Champagne', 'Sage', 'Emerald', 'Black', 'White', 'Navy', 'Silver', 'Lavender', 'Plum', 'Purple', 'Burgundy', 'Red', 'Terracotta', 'Blue', 'Pastel'].filter(function (w) { return new RegExp('\\b' + w + '\\b', 'i').test(text); }).sort(function (a, b) { return text.toLowerCase().indexOf(a.toLowerCase()) - text.toLowerCase().indexOf(b.toLowerCase()); });
     var STYLE_COLOR = { 'champagne-garden': 'Sage', 'modern-noir': 'Black', 'blush-romance': 'Blush', 'boho-sunset': 'Terracotta', 'coastal-linen': 'Blue', 'tropical-glam': 'Tropical', 'old-hollywood': 'Red', 'pastel-whimsy': 'Pastel', 'ivory-ballroom': 'Ivory', 'minimal-white': 'White', 'disco-glam': 'Silver', 'moody-floral': 'Burgundy', 'rustic-elegance': 'Rustic', 'royal-purple': 'Plum', 'midnight-celestial': 'Midnight' };
     picked = picked.concat(typed.filter(function (w) { return picked.indexOf(w) < 0; }));
-    picked = picked.map(function (w) { return /^(champagne|soft gold)$/i.test(w) ? 'Gold' : w; }).filter(function (w, i, a) { return a.indexOf(w) === i; });   /* no drink names in event names */
+    picked = picked.map(function (w) { return /^(champagne|soft gold)$/i.test(w) ? 'Gold' : w === 'Bright colors' ? 'Colorful' : w === 'Pastels' ? 'Pastel' : w.replace(/\b[a-z]/g, function (m) { return m.toUpperCase(); }); }).filter(function (w, i, a) { return a.indexOf(w) === i; });   /* no drink names in event names */
     var c1 = picked[0] || STYLE_COLOR[style.id] || 'Gold', c2 = picked[1];
     var hr = E.startHour({ time: d.timeTouched && d.time ? d.time : defaultTime(type, d.kids) });
     var partOfDay = (d.kids && /birthday/.test(type)) ? 'A Party' : hr < 12 ? 'A Morning' : hr < 16 ? 'An Afternoon' : 'An Evening';
-    var vibe = vibes.filter(function (v) { return VIBE_NOUN[v] && !(kid && /Disco|Moody|Glam|Vintage/.test(v)); })[0];
+    var vibe = vibes.filter(function (v) { return VIBE_NOUN[v] && !(kid && /Disco|Moody|Glam|Vintage|Black tie|Old Hollywood|Art deco|Luxe/.test(v)); })[0];
     var art = function (w) { return /^[AEIOU]/i.test(w) ? 'An ' : 'A '; };
     var out = [style.name + ' ' + word,
       c2 ? art(c1) + c1 + ' and ' + c2 + ' ' + (type === 'wedding' ? 'Affair' : word) : art(c1) + c1 + ' ' + word,
@@ -492,8 +502,13 @@
     var ip = E.inspoOf(d); if (ip) out.unshift(E.inspoName(ip, type));
     return out.filter(function (n, i) { return out.indexOf(n) === i; });
   }
-  var VIBE_COLORS = [['Blush', '#F2C9CF'], ['Ivory', '#F7F1E3'], ['Gold', '#C9A86A'], ['Soft gold', '#E8D9BC'], ['White', '#FFFFFF'], ['Black', '#151515'], ['Sage', '#A9B89A'], ['Burgundy', '#7B2D3B'], ['Lavender', '#C9B3DD'], ['Dusty blue', '#A9C7D3'], ['Terracotta', '#C47C4E'], ['Silver', '#C0C0C8'], ['Pastels', '#F9E1EC'], ['Bright colors', '#F2B544']];
-  var VIBES = ['Romantic', 'Glam', 'Garden', 'Modern', 'Classic', 'Boho', 'Rustic', 'Tropical', 'Coastal', 'Playful', 'Minimal', 'Vintage', 'Disco', 'Moody'];
+  /* The colors and vibes people ask for most, in rough order of popularity. */
+  var VIBE_COLORS = [['Blush', '#F2C9CF'], ['Ivory', '#F7F1E3'], ['Gold', '#C9A86A'], ['Soft gold', '#E8D9BC'], ['Rose gold', '#D9A39A'], ['White', '#FFFFFF'], ['Black', '#151515'], ['Sage', '#A9B89A'], ['Emerald', '#1E6B4F'],
+    ['Burgundy', '#7B2D3B'], ['Red', '#B3202B'], ['Pink', '#E97AA8'], ['Dusty rose', '#C99197'], ['Mauve', '#A87C8F'], ['Lavender', '#C9B3DD'], ['Plum', '#5E2B55'], ['Navy', '#1F2A4A'], ['Royal blue', '#2A4BA0'],
+    ['Dusty blue', '#A9C7D3'], ['Teal', '#2A8C8C'], ['Mint', '#BFE3D0'], ['Peach', '#F6C4A3'], ['Coral', '#F27C6B'], ['Butter yellow', '#F6E3A1'], ['Terracotta', '#C47C4E'], ['Copper', '#B87333'],
+    ['Nude', '#D8BFAA'], ['Silver', '#C0C0C8'], ['Pastels', '#F9E1EC'], ['Bright colors', '#F2B544']];
+  var VIBES = ['Romantic', 'Elegant', 'Glam', 'Luxe', 'Garden', 'Modern', 'Classic', 'Black tie', 'Boho', 'Rustic', 'Western', 'Tropical', 'Coastal', 'Mediterranean', 'Parisian', 'Fairytale', 'Whimsical', 'Enchanted forest',
+    'Old Hollywood', 'Art deco', 'Vintage', 'Retro', 'Disco', 'Neon', 'Celestial', 'Winter wonderland', 'Royal', 'Cozy', 'Playful', 'Minimal', 'Moody'];
   var MUSTS = [['photographer', 'Great photos'], ['videographer', 'Video'], ['florals', 'Lots of flowers'], ['catering', 'Amazing food'], ['bar', 'Open bar'], ['dj', 'DJ and dancing'], ['liveMusic', 'Live music'], ['venue', 'Stunning venue'], ['decor', 'Wow decor'], ['lighting', 'Lighting'], ['hairMakeup', 'Hair and makeup'], ['photoBooth', 'Photo booth'], ['cake', 'Show-stopping cake']];
   function hexRgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
 
