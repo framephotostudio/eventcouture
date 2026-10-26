@@ -50,7 +50,7 @@ export default {
       if (url.pathname === '/api/places') {
         if (!env.GOOGLE_MAPS_KEY) return json({ error: 'Venue search is not connected yet.' }, 503);
         if (!(await freePlaces(env)) && !(await reserve(env, COST.places))) return json({ error: 'Daily search limit reached. Try again tomorrow.' }, 429);
-        return json({ places: await places(env, String(body.query || '').slice(0, 120), String(body.city || '').slice(0, 120), ['L', 'S', 'U'].includes(body.level) ? body.level : 'S', body.kind === 'vendor') });
+        return json({ places: await places(env, String(body.query || '').slice(0, 120), String(body.city || '').slice(0, 120), ['L', 'S', 'U'].includes(body.level) ? body.level : 'S', body.kind === 'vendor', String(body.cat || '').slice(0, 30), String(body.hint || '').slice(0, 60)) });
       }
       if (url.pathname === '/api/drive') {
         if (!env.GOOGLE_MAPS_KEY) return json({ error: 'Drive times are not connected yet.' }, 503);
@@ -170,7 +170,27 @@ const LEVEL = {
   U: { minRating: 4.5, minReviews: 100, priceLevels: ['PRICE_LEVEL_EXPENSIVE', 'PRICE_LEVEL_VERY_EXPENSIVE'] }
 };
 const PLANNERS = /planner|planning|coordinat|wedding(s)? by|event management|wedding consult/i;
-async function places(env, query, city, level = 'S', vendor = false) {
+/* Each kind of vendor must actually be that business: a DJ search never returns a nightclub, a mobile bar never a pub,
+   a photographer never a camera shop. Checked against Google's place types and the business name. */
+const SHOPS = /store|supermarket|grocery|department_store|shopping_mall|convenience|pharmacy|gas_station/;
+const CAT_RULES = {
+  dj: { types: /night_club|bar\b|pub|restaurant|karaoke|casino|store/, names: /lounge|night ?club|\bclub\b|\bbar\b|grill|tavern|pub\b|karaoke|hookah/i },
+  liveMusic: { types: /night_club|bar\b|pub|restaurant|store/, names: /lounge|night ?club|\bbar\b|grill|tavern|guitar center|music store/i },
+  bar: { types: /night_club|\bbar\b|pub|restaurant|liquor_store|store|winery|brewery/, names: /sports bar|tavern|pub\b|grill|lounge|liquor|wine (shop|store)|brewing|brewery/i },
+  bartender: { types: /night_club|\bbar\b|pub|restaurant|liquor_store|store/, names: /sports bar|tavern|pub\b|grill|lounge|liquor|bartending school/i },
+  photographer: { types: /store|school|lab\b/, names: /camera|photo lab|printing|passport|school|cvs|walgreens|walmart/i },
+  videographer: { types: /store|school/, names: /camera|school|rental house/i },
+  florals: { types: SHOPS, names: /walmart|kroger|h-e-b|heb\b|costco|trader joe|whole foods|safeway|publix|1-800/i },
+  cake: { types: /supermarket|grocery|convenience|gas_station|fast_food/, names: /walmart|kroger|h-e-b|heb\b|costco|sam's club|safeway|publix|dunkin|krispy|donut/i },
+  catering: { types: /fast_food|convenience|gas_station|supermarket/, names: /mcdonald|chick-fil-a|subway|taco bell|wendy|burger king|domino|pizza hut|papa john|panda express|popeyes|kfc/i },
+  hairMakeup: { types: /store|school|nail_salon|barber/, names: /beauty supply|sally beauty|ulta|sephora|school|academy|barber|nail/i },
+  rentals: { types: /car_rental|truck|storage/, names: /u-haul|penske|budget truck|storage|car rental/i },
+  balloons: { types: /supermarket|grocery|department_store/, names: /party city|walmart|dollar|kroger/i },
+  decor: { types: /home_goods_store|furniture_store|department_store|supermarket/, names: /hobby lobby|michaels|home goods|homegoods|walmart|target|ikea|at home/i },
+  photoBooth: { types: /store|school/, names: /camera|school/i }
+};
+async function places(env, query, city, level = 'S', vendor = false, cat = '', hint = '') {
+  const rule = CAT_RULES[cat], hintRe = hint ? new RegExp('\\b(' + hint.split(/[,|]/).map(w => w.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean).join('|') + ')', 'i') : null;
   const L = vendor ? { minRating: 4.5, minReviews: 15, priceLevels: [] } : (LEVEL[level] || LEVEL.S);
   const search = async (withPrice) => {
     const body = { textQuery: `${query} in ${city}`, maxResultCount: 20, minRating: L.minRating };
@@ -178,7 +198,7 @@ async function places(env, query, city, level = 'S', vendor = false) {
     const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': env.GOOGLE_MAPS_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions,places.businessStatus' },
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions,places.businessStatus,places.types,places.primaryType' },
       body: JSON.stringify(body)
     });
     if (!r.ok) throw new Error('places');
@@ -192,8 +212,11 @@ async function places(env, query, city, level = 'S', vendor = false) {
     .filter(p => !BUDGET_CHAINS.test(p.displayName?.text || '') && (level === 'L' || !MID_CHAINS.test(p.displayName?.text || '')))
     .filter(p => vendor || !p.priceLevel || L.priceLevels.includes(p.priceLevel))
     .filter(p => !vendor || /coordinator/.test(query) || !PLANNERS.test(p.displayName?.text || ''))   // vendors means the actual service, never planners   // places with no price level (ballrooms, estates) are judged by rating alone
+    .filter(p => !rule || (!rule.types.test([p.primaryType || ''].concat(p.types || []).join(' ')) && !rule.names.test(p.displayName?.text || '')))
     .filter(p => (p.rating || 0) >= L.minRating && (p.userRatingCount || 0) >= L.minReviews)
-    .sort((a, b) => (b.rating * Math.log10(10 + b.userRatingCount)) - (a.rating * Math.log10(10 + a.userRatingCount)))
+    /* best reviewed first; a business that names this occasion (a wedding DJ for a wedding) moves up */
+    .map(p => ({ p, score: p.rating * Math.log10(10 + p.userRatingCount) * (hintRe && hintRe.test(p.displayName?.text || '') ? 1.12 : 1) }))
+    .sort((a, b) => b.score - a.score).map(x => x.p)
     .slice(0, 8)
     .map(p => ({ id: p.id, name: p.displayName?.text, address: p.formattedAddress, rating: p.rating, reviews: p.userRatingCount,
       priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, hours: p.regularOpeningHours?.weekdayDescriptions || [], source: 'Google' }));

@@ -684,6 +684,8 @@
       window.addEventListener('pagehide', saveNow, { once: true }); window.addEventListener('beforeunload', saveNow, { once: true });
       $('#city').addEventListener('change', function () { $('#cityOtherWrap').hidden = this.value !== 'Other US city'; if (this.value === 'Other US city') $('#cityOther').focus(); });
       bindArea($('#area'), $('#areaOther'), $('#city'));
+      $('#expected').addEventListener('input', function () { draft.expectedTouched = true; });
+      $('#guests').addEventListener('input', function () { if (!draft.expectedTouched && +this.value >= 1) $('#expected').value = Math.round(+this.value); });
       $('#alcohol').addEventListener('click', function () { draft.alcoholTouched = true; });
       ['alcohol', 'payer'].forEach(function (g) { $('#' + g).addEventListener('click', function (e) { var bt = e.target.closest('button'); if (!bt) return; $$('#' + g + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === bt); }); }); });
       $('#musts').addEventListener('click', function (e) { var b = e.target.closest('[data-must]'); if (b) draft.mustsTouched = true; if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
@@ -709,7 +711,8 @@
         if (stv === 'restaurant' && g > 40) return toast('Ordering from the menu works for groups up to about 40. Choose a private room or an event venue for ' + g.toLocaleString('en-US') + ' people.');
         if (stv === 'privateRoom' && g > 150) return toast('Private dining rooms hold up to about 150. Choose an event venue for ' + g.toLocaleString('en-US') + ' people.');
         if (stv === 'home' && g > 150) return toast('Home events work for up to about 150 people. Choose a venue or outdoors for ' + g.toLocaleString('en-US') + '.');
-        if (ex > g) return toast('Expected to attend can’t be more than the number of people you’re inviting');
+        if (ex > g && !draft.expectedTouched) { ex = g; $('#expected').value = g; }   /* the folded 'expected' follows the guest count unless she set it */
+        if (ex > g) { var md2 = $('details.more'); if (md2) md2.open = true; $('#expected').focus(); return toast('Expected to attend can’t be more than the number of people you’re inviting'); }
         if ($('#date').value && $('#date').value < todayISO()) { var md = $('details.more'); if (md) md.open = true; $('#date').focus(); return toast('That date has already passed. Choose an upcoming date, or leave it blank for now.'); }
         if ($('#city').value === 'Other US city' && !$('#cityOther').value.trim()) { $('#cityOther').focus(); return toast('Type your city and state'); }
         if (!$('#setting [aria-pressed="true"]')) { $('#whereLbl').scrollIntoView({ block: 'center' }); return toast('Choose where it is: a restaurant, a venue, outdoors or at home'); }
@@ -1341,11 +1344,21 @@
   var PKG_SKIP = ['venue', 'privateDining', 'tent', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'restaurantFood', 'restaurantDrinks', 'cakeFee', 'tableDecor'];
   function pkgCats(ev, b) {
     var lvl = venueLevel(ev, b), vc = venueCat(ev), out = [];
-    if (ev.setting !== 'home' && !ev.settingOpen && b.items.some(function (i) { return i.id === vc; })) { var vt = venueTypesFor(ev)[0]; if (vt) out.push({ cat: vc, kind: 'venue', type: vt, q: venueQuery(vt, ev, b), lvl: lvl }); }
+    if (ev.setting !== 'home' && !ev.settingOpen && b.items.some(function (i) { return i.id === vc; })) { var vt = themeVenue(ev, venueTypesFor(ev)); if (vt) out.push({ cat: vc, kind: 'venue', type: vt, q: venueQuery(vt, ev, b), lvl: lvl }); }
     b.items.forEach(function (i) { if (PKG_SKIP.indexOf(i.id) < 0 && NO_SEARCH.indexOf(i.id) < 0) out.push({ cat: i.id, kind: 'vendor', q: vendorQuery(ev, i, lvl), lvl: lvl }); });
     return out;
   }
-  function pkgSearch(ev, c) { var city = (ev.area ? ev.area + ', ' : '') + ev.city; return findPlaces(ev, c.kind === 'venue' ? { query: c.q, level: c.lvl, city: city } : { query: c.q, level: c.lvl, kind: 'vendor', city: city }); }
+  /* The kind of venue that suits the look: chandeliers and velvet mean a ballroom, greenery a garden, a skyline a rooftop. */
+  var VENUE_CUES = [[/ballroom|chandelier|velvet|crystal|grand|gilded|royal|black tie|old hollywood/, /ballroom|banquet|mansion/i], [/garden|greenery|botanical|floral arch|outdoor|pergola|vine/, /garden|estate|lawn|patio|cafe/i],
+    [/rooftop|skyline|city lights|terrace/, /rooftop/i], [/rustic|barn|vineyard|wood|country|boho/, /vineyard|barn/i], [/industrial|loft|modern|minimal|neon|disco/, /loft|lounge|gallery/i], [/beach|coastal|ocean|seaside|waterfront|nautical/, /beach|waterfront/i],
+    [/museum|art|gallery/, /museum|gallery/i], [/tea|brunch|high tea/, /tea|brunch|cafe/i], [/steak|supper|dinner/, /steakhouse|dining/i]];
+  function themeVenue(ev, types) {
+    var c = ev.concept || {}, t = [c.name, c.styleName, c.mood, (c.decor || []).join(' '), (c.outline || []).join(' '), ev.inspiration && ev.inspiration.text].join(' ').toLowerCase();
+    var best = types[0], bs = 0;
+    types.forEach(function (v, i) { var sc = VENUE_CUES.reduce(function (a, cue) { return a + (cue[0].test(t) && cue[1].test(v) ? (t.match(new RegExp(cue[0].source, 'g')) || []).length : 0); }, 0) - i * 0.01; if (sc > bs) { bs = sc; best = v; } });
+    return best;
+  }
+  function pkgSearch(ev, c) { var city = (ev.area ? ev.area + ', ' : '') + ev.city; return findPlaces(ev, c.kind === 'venue' ? { query: c.q, level: c.lvl, city: city } : { query: c.q, level: c.lvl, kind: 'vendor', cat: c.cat, hint: occasionHint(ev), city: city }); }
   function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '' }; }
   function usedIn(ev, cat, id, except) { return (ev.packages || []).some(function (pk, k) { return k !== except && pk.items[cat] === id; }); }
   function putInPackage(ev, k, cat, p) {
@@ -1587,7 +1600,7 @@
   };
   var LEVEL_WORD = { L: 'stylish highly rated', S: 'upscale', U: 'luxury five-star', F: 'upscale' };
   function venueLevel(ev, b) { var t = (b && b.tier && b.tier.id) || ev.tier || 'S'; if (t === 'F') { var pp = (b && b.total || 0) / Math.max(1, ev.guests || 1); t = pp > 250 ? 'U' : pp < 70 ? 'L' : 'S'; } return t; }
-  function venueQuery(v, ev, b) { return LEVEL_WORD[venueLevel(ev, b)] + ' ' + (VENUE_SEARCH[v] || v); }
+  function venueQuery(v, ev, b) { return ((ev.type === 'kids-birthday' ? '' : LEVEL_WORD[venueLevel(ev, b)] + ' ') + (VENUE_SEARCH[v] || v)).trim(); }
   function venueProsCons(v, ev) {
     var m = {
       'Private dining room': ['food and space in one booking, no setup', 'food and drink minimums, set end time'],
@@ -1626,7 +1639,7 @@
   /* Place searches are remembered on the plan for a week, so results come back instantly and nothing is paid for twice. */
   function HOWTO(kind) { return '<ol class="howto" aria-label="How to choose"><li><b>See</b> real, top-rated ' + (kind === 'venue' ? 'places' : 'businesses') + ' near you</li><li><b>Save</b> up to 3 you like</li><li><b>Compare</b> them, then mark the one you book</li></ol>'; }
   function findPlaces(ev, body) {
-    var key = JSON.stringify([body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
+    var key = JSON.stringify(['v2', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
     if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(hit.places);
     return fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.places || []; }); })
@@ -1671,13 +1684,47 @@
 
   /* Vendors: by category with estimates; ask for a price */
   var NO_SEARCH = ['venue', 'privateDining', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'restaurantFood', 'restaurantDrinks', 'cakeFee', 'tableDecor', 'contingency'];
-  function vendorQuery(ev, i, lvl) { var vs = ev.alcohol === 'none' && i.id === 'bar' ? 'mocktail bar service' : ev.alcohol === 'none' && i.id === 'bartender' ? 'mocktail bartender service' : VENDOR_SEARCH[i.id]; return (LEVEL_WORD[lvl] + ' ' + (vs || i.name.split(' (')[0])).replace('luxury five-star', 'luxury'); }
+  /* Searches name the occasion and, where it matters, the theme: a wedding photographer, a quinceañera DJ,
+     red and gold wedding decor, unicorn party balloons, catering for 150 guests. */
+  var OCCASION_WORD = { wedding: 'wedding', engagement: 'engagement party', quince: 'quincea\u00f1era', sweet16: 'sweet 16', 'baby-shower': 'baby shower', 'bridal-shower': 'bridal shower', 'gender-reveal': 'gender reveal', 'kids-birthday': 'kids party', birthday: 'birthday party', milestone: 'birthday party', graduation: 'graduation party', corporate: 'corporate event', gala: 'gala', christmas: 'holiday party', holiday: 'holiday party', brunch: 'brunch', dinner: 'private dinner', anniversary: 'anniversary party', retirement: 'retirement party', bachelorette: 'bachelorette party' };
+  var BY_OCCASION = ['photographer', 'videographer', 'dj', 'florals', 'cake', 'catering', 'hairMakeup', 'decor', 'balloons', 'liveMusic', 'entertainment', 'kids'];
+  var BY_THEME = ['decor', 'balloons', 'kids', 'entertainment'];
+  function occasionHint(ev) { return { wedding: 'wedding,bridal', quince: 'quince,quincea\u00f1era,xv', 'kids-birthday': 'kids,party', 'baby-shower': 'baby,shower', 'bridal-shower': 'bridal,wedding', corporate: 'corporate,event' }[ev.type] || ''; }
+  function vendorQuery(ev, i, lvl) {
+    var vs = ev.alcohol === 'none' && i.id === 'bar' ? 'mocktail bar service' : ev.alcohol === 'none' && i.id === 'bartender' ? 'mocktail bartender service' : VENDOR_SEARCH[i.id];
+    var base = (vs || i.name.split(' (')[0]), occ = OCCASION_WORD[ev.type] || '';
+    if (BY_OCCASION.indexOf(i.id) >= 0 && occ) {
+      base = base.replace(/^event /, '').replace(/^kids party /, '').replace(/ for events$/, '');
+      if (i.id === 'hairMakeup') base = /wedding|quince|bridal|engagement|bachelorette/.test(ev.type) ? 'bridal hair and makeup artist' : 'hair and makeup artist for events';
+      else if (i.id === 'cake') base = occ + (ev.type === 'wedding' ? ' cakes bakery' : ' cake bakery');
+      else if (i.id === 'catering') base = occ + ' catering' + (ev.guests >= 100 ? ' for large events' : '');
+      else base = occ + ' ' + base;
+    }
+    var kidsy = /kids|baby|gender/.test(ev.type);
+    if (i.id === 'florals' && kidsy) base = 'florist';
+    var theme = themeWords(ev);
+    if ((BY_THEME.indexOf(i.id) >= 0 || (kidsy && i.id === 'cake')) && theme && base.indexOf(theme) < 0) base = theme + ' ' + base;
+    return ((ev.type === 'kids-birthday' ? '' : LEVEL_WORD[lvl] + ' ') + base).replace('luxury five-star', 'luxury').replace(/\s+/g, ' ').trim();
+  }
+  /* The theme in plain search words: a motif for kids' parties (unicorn, princess), otherwise the look's two main colors. */
+  var KID_MOTIF = /\b(unicorn|princess|space|rainbow|mermaid|dinosaur|safari|superhero|fairy|pirate|carnival|jungle|under the sea|butterfly|construction|cowboy)\b/i;
+  var HEX_NAMES = [['red', 200, 30, 40], ['burgundy', 122, 14, 27], ['gold', 212, 175, 55], ['pink', 247, 198, 217], ['blush', 236, 196, 190], ['lavender', 200, 182, 255], ['light blue', 184, 224, 246], ['navy', 20, 30, 80], ['blue', 40, 90, 200], ['sage', 156, 175, 136], ['emerald', 10, 110, 70], ['green', 60, 150, 60], ['silver', 192, 192, 200], ['black', 17, 17, 17], ['white', 250, 250, 248], ['ivory', 247, 241, 227], ['orange', 240, 140, 40], ['yellow', 245, 215, 60], ['purple', 110, 40, 140], ['teal', 20, 130, 130], ['brown', 110, 70, 40]];
+  function hexName(h) { var m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if (!m) return ''; var n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255, best = '', d = 1e9; HEX_NAMES.forEach(function (c) { var e = (r - c[1]) * (r - c[1]) + (g - c[2]) * (g - c[2]) + (b - c[3]) * (b - c[3]); if (e < d) { d = e; best = c[0]; } }); return best; }
+  function themeWords(ev) {
+    var c = ev.concept || {}; if (c.shop) return String(c.shop).replace(/ party$/, '');
+    var label = String(c.styleName || c.name || '');
+    if (/kids/.test(ev.type)) { var k = KID_MOTIF.exec(label + ' ' + (ev.text || '')); if (k) return k[1].toLowerCase(); }
+    var cols = [];
+    (c.palette || []).forEach(function (h) { var n = hexName(h); if (n && cols.indexOf(n) < 0 && !/^(white|ivory|black)$/.test(n)) cols.push(n); });
+    if (cols.indexOf('burgundy') >= 0 && cols.indexOf('red') >= 0) cols.splice(cols.indexOf('red'), 1);
+    return cols.slice(0, 2).join(' and ');
+  }
   /* Real, top-rated businesses for one category, shown under the button that asked for them (Vendors and Budget pages). */
   function openVendorResults(ev, btn) {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; });
       var box = document.querySelector('.live-res[data-for="v-' + btn.dataset.vendor + '"]'); if (!box) return; box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding top-rated businesses\u2026</p>';
       ev.lastVendor = btn.dataset.vendor;
-      findPlaces(ev, { query: btn.dataset.q, level: btn.dataset.level || 'S', kind: 'vendor', city: (ev.area ? ev.area + ', ' : '') + ev.city })
+      findPlaces(ev, { query: btn.dataset.q, level: btn.dataset.level || 'S', kind: 'vendor', cat: btn.dataset.vendor, hint: occasionHint(ev), city: (ev.area ? ev.area + ', ' : '') + ev.city })
         .then(function (list) {
           if (!list.length) { box.innerHTML = '<p class="muted small">No well-reviewed matches nearby. Try a different area on the Venues tab.</p>'; return; }
           var bizAll = list.length; list = cut(list, 3, ev);
