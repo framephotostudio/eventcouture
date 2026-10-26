@@ -28,6 +28,11 @@
   }
 
   /* ---------- Budget ---------- */
+  /* Cultural weddings (Arabic, Indian, Persian) are weddings with their own traditions and music. */
+  function culture(ev) { return ev && ev.type === 'wedding' && ev.culture && D.CULTURES && D.CULTURES[ev.culture] || null; }
+  var MUSIC_CATS = ['dj', 'liveMusic', 'singer', 'zaffe', 'dhol', 'dabke'];
+  function musicOf(ev) { var cu = culture(ev); if (!cu) return []; var ok = cu.music.map(function (m) { return m[0]; }); var m = (Array.isArray(ev.music) ? ev.music : cu.musicDefault).filter(function (x) { return ok.indexOf(x) >= 0; }); return m; }
+  function typeName(ev) { var cu = culture(ev); return cu ? cu.name : typeOf(ev && ev.type).name; }
   function categoriesFor(ev) {
     var t = typeOf(ev.type);
     if (ev.setting === 'restaurant' || ev.setting === 'privateRoom') {
@@ -53,12 +58,14 @@
     if ((ev.type === 'holiday' || ev.type === 'christmas')) list = list.filter(function (c) { return (c !== 'cake' && c !== 'cakeFee') || (ev.include || []).indexOf(c) >= 0; });
     var said = ((ev.inspiration && ev.inspiration.text) || '').toLowerCase();
     if (ev.setting === 'outdoor' && /\b(park|backyard|beach|yard|lake)\b/.test(said)) list = list.filter(function (c) { return c !== 'venue'; });   /* a park or backyard needs a permit, not a rental */
+    var cu = culture(ev);
+    if (cu) list = list.filter(function (c) { return MUSIC_CATS.indexOf(c) < 0 || (ev.priorities || []).indexOf(c) >= 0 && musicOf(ev).indexOf(c) >= 0; }).concat(musicOf(ev), cu.add);
     var seen = {};
     return list.filter(function (c) { if (seen[c] || (ev.exclude || []).indexOf(c) >= 0) return false; seen[c] = 1; return true; });
   }
 
   function rules(ev) { return (D.SETTING_RULES && D.SETTING_RULES[ev.setting]) || {}; }
-  function tiersFor(catId, ev) { var r = rules(ev).tiers; return (r && r[catId]) || D.CATEGORIES[catId].tier; }
+  function tiersFor(catId, ev) { if (musicOf(ev).indexOf(catId) >= 0) return 'LSU'; var r = rules(ev).tiers; return (r && r[catId]) || D.CATEGORIES[catId].tier; }
   /* Start hour; midnight to 4 AM counts as late night (24 to 28), never as daytime. */
   function startHour(ev) { var h = +String((ev && ev.time) || '18:00').split(':')[0]; return h < 5 ? h + 24 : h; }
   function isDaytime(ev) { var h = startHour(ev); return h < 15; }
@@ -71,7 +78,7 @@
     var hours = ev.hours || t.hours;
     var mult = (adj[catId] || 1) * city.index * tier.mult;
     var lo = 0, hi = 0;
-    var fscale = Math.min(1.5, Math.max(0.4, Math.sqrt(guests / 50)));
+    var fscale = c.flat ? 1 : Math.min(1.5, Math.max(0.4, Math.sqrt(guests / 50)));
     if (c.fixed) { lo += c.fixed[0] * fscale; hi += c.fixed[1] * fscale; }
     if (c.perGuest) { lo += c.perGuest[0] * guests; hi += c.perGuest[1] * guests; }
     if (c.perHour) {
@@ -84,7 +91,8 @@
       lo += c.perPerson[0] * people; hi += c.perPerson[1] * people;
     }
     lo *= mult; hi *= mult;
-    var mealNote = '', label = c.name;
+    var mealNote = '', label = c.name, cu = culture(ev);
+    if (cu && cu.labels[catId]) label = cu.labels[catId];
     if (catId === 'tableDecor' && ev.kids && /birthday/.test(ev.type || '')) label = 'Table decor (small centerpiece, confetti, party favors)';   /* no candles at a child's party */
     /* Drinks follow the host's alcohol choice: none = soft drinks and mocktails, wine = beer and wine only */
     if (catId === 'bar' || catId === 'restaurantDrinks') {
@@ -157,7 +165,7 @@
     }
     if (total() > target) {
       /* Some things are part of the occasion itself: hair and makeup for a bride or quinceañera, flowers at a wedding. */
-      var essential = { wedding: ['hairMakeup', 'florals'], quince: ['hairMakeup', 'florals'] }[ev.type] || [];
+      var essential = ({ wedding: ['hairMakeup', 'florals'], quince: ['hairMakeup', 'florals'] }[ev.type] || []).concat(musicOf(ev), (culture(ev) || {}).add || []);   /* the music they chose and their traditions stay in */
       var optional = OPTIONAL.concat(['dinner', 'holiday', 'christmas', 'brunch'].indexOf(ev.type) >= 0 ? ['photographer', 'decor'] : []).concat(ev.kids && /birthday/.test(ev.type) ? ['dj', 'photographer'] : []);
       rows.filter(function (r) { return !r.pri && !r.fixed && optional.indexOf(r.id) >= 0 && essential.indexOf(r.id) < 0 && r.amt > 0; })
         .sort(function (a, b) { return b.amt - a.amt; })
@@ -358,7 +366,7 @@
     today = today || new Date();
     var st = ev.setting || 'indoor';
     var bigEvent = ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0;
-    return D.CHECKLIST.filter(function (c) { return !(bigEvent && /^Book the venue or reserve|^Book key vendors/.test(c.t)) && (!c.only || c.only.indexOf(ev.type) >= 0) && (!c.not || c.not.indexOf(st) < 0) && (!c.in || c.in.indexOf(st) >= 0) && (!c.minGuests || (ev.guests || 0) >= c.minGuests || ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0); }).map(function (c, i) {
+    return D.CHECKLIST.filter(function (c) { return (!c.cu || c.cu === (culture(ev) && ev.culture)) && !(bigEvent && /^Book the venue or reserve|^Book key vendors/.test(c.t)) && (!c.only || c.only.indexOf(ev.type) >= 0) && (!c.not || c.not.indexOf(st) < 0) && (!c.in || c.in.indexOf(st) >= 0) && (!c.minGuests || (ev.guests || 0) >= c.minGuests || ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0); }).map(function (c, i) {
       var due = date ? new Date(date.getTime() - c.w * 7 * 864e5) : null;
       /* A step whose usual lead time had already passed when the plan was made isn't "overdue": it's simply first. */
       var start = new Date((ev.created || today.toISOString().slice(0, 10)) + 'T00:00:00'); if (isNaN(start)) start = today;
@@ -376,6 +384,8 @@
     var bill = ev.payer === 'own' ? 'Everyone settles their own check' : ev.payer === 'shared' ? 'Settle the bill and split it' : 'Settle the bill';
     var plan = (ev.setting === 'restaurant' || ev.setting === 'privateRoom')
       ? [[-30, 'Host arrives to set the table decor'], [0, 'Guests arrive and order drinks'], [20, 'Order food'], [Math.round(hours * 60 * 0.55), 'Toasts'], [Math.round(hours * 60 * 0.75), /birthday|milestone/.test(ev.type) ? 'Cake or dessert and the birthday song' : 'Dessert'], [hours * 60 - 10, bill], [hours * 60, 'Goodbyes and photos outside']]
+      : culture(ev)
+      ? [[-180, 'Vendors arrive and setup begins'], [-120, 'Hair and makeup finishing touches']].concat(culture(ev).moments.map(function (m) { return [m[0] === 'end' ? hours * 60 - 15 : m[0], m[1]]; }), [[hours * 60, 'Breakdown and cleanup']])
       : t.style === 'wedding'
       ? [[-180, 'Vendors arrive and setup begins'], [-120, 'Hair and makeup finishing touches'], [-30, 'Guests arrive'], [0, 'Ceremony'], [30, ev.alcohol === 'none' ? 'Welcome hour with mocktails and appetizers' : 'Cocktail hour'], [90, 'Grand entrance and dinner'], [150, 'Toasts and first dance'], [180, 'Cake cutting and dancing'], [hours * 60 - 15, 'Send-off'], [hours * 60, 'Breakdown and cleanup']]
       : (function () {
@@ -689,6 +699,6 @@
     KIDS_TEXT: KIDS_TEXT,
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
-    placesUsed: placesUsed, startHour: startHour, concepts: concepts, inspoOf: inspoOf, inspoName: inspoName, wordsDiffer: wordsDiffer, kidSafePhoto: kidSafePhoto, swapDrinks: swapDrinks, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, cityOf: cityOf
+    placesUsed: placesUsed, startHour: startHour, concepts: concepts, inspoOf: inspoOf, inspoName: inspoName, wordsDiffer: wordsDiffer, kidSafePhoto: kidSafePhoto, swapDrinks: swapDrinks, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, culture: culture, musicOf: musicOf, typeName: typeName, MUSIC_CATS: MUSIC_CATS, cityOf: cityOf
   };
 })(typeof window !== 'undefined' ? window : globalThis);

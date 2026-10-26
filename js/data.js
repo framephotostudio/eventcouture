@@ -66,6 +66,16 @@
     restrooms:    { name: 'Restroom trailer', group: 'Outdoor', fixed: [300, 1400], tier: 'SU', outdoor: true },
     generator:    { name: 'Generator', group: 'Outdoor', fixed: [300, 900], tier: 'SU', outdoor: true },
     permits:      { name: 'Permits', group: 'Outdoor', fixed: [50, 450], tier: 'LSU', outdoor: true },
+    /* Cultural weddings: traditions with their own vendors. "flat" prices don't grow with the guest count. */
+    zaffe:        { name: 'Zaffe group (drums, dancers and the grand entrance)', group: 'Music and fun', fixed: [900, 2800], flat: true, tier: 'LSU', tip: true },
+    singer:       { name: 'Wedding singer', group: 'Music and fun', fixed: [900, 3500], flat: true, tier: 'LSU', tip: true },
+    dabke:        { name: 'Dabke dance troupe', group: 'Music and fun', fixed: [600, 1800], flat: true, tier: 'U', tip: true },
+    kosha:        { name: 'Kosha (the couple\u2019s stage and seating)', group: 'Style', fixed: [900, 4000], flat: true, tier: 'LSU', taxable: true },
+    dhol:         { name: 'Dhol player', group: 'Music and fun', fixed: [300, 900], flat: true, tier: 'LSU', tip: true },
+    mandap:       { name: 'Mandap (ceremony canopy and decor)', group: 'Style', fixed: [1500, 6500], flat: true, tier: 'LSU', taxable: true },
+    mehndi:       { name: 'Mehndi (henna) artist for the bride and guests', group: 'Look', fixed: [350, 1400], flat: true, tier: 'LSU', tip: true },
+    baraat:       { name: 'Baraat (the groom\u2019s horse or car arrival)', group: 'Logistics', fixed: [900, 2800], flat: true, tier: 'SU' },
+    sofreh:       { name: 'Sofreh aghd (the ceremony spread)', group: 'Style', fixed: [800, 3500], flat: true, tier: 'LSU', taxable: true },
     /* Restaurant, ordering from the menu: no venue, catering or rentals. Lunch and brunch cost about 20% less than dinner. */
     restaurantFood:   { name: 'Meals ordered from the menu', group: 'Food and drink', perGuest: [26, 42], tier: 'LSU', taxable: true, gratuity: true, meal: true },
     restaurantDrinks: { name: 'Drinks (about two per person)', group: 'Food and drink', perGuest: [12, 22], tier: 'LSU', taxable: true, gratuity: true, meal: true },
@@ -108,6 +118,36 @@
     'baby-shower': {}, brunch: {}, dinner: {}, birthday: {}
   };
 
+  /* Cultural weddings: each tradition's music choices, the vendors it always has, and what lines are called. */
+  var CULTURES = {
+    arabic: {
+      name: 'Arabic wedding', guests: 250, hours: 6, menu: 'arabic',
+      music: [['zaffe', 'Zaffe group'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dj', 'DJ'], ['dabke', 'Dabke troupe']], musicDefault: ['zaffe', 'liveMusic', 'dj'],
+      add: ['kosha'],
+      labels: { liveMusic: 'Live band (Arabic music)', singer: 'Arabic wedding singer', officiant: 'Officiant (sheikh or priest)', catering: 'Middle Eastern catering', cake: 'Wedding cake and Arabic sweets', dj: 'DJ (Arabic and international music)' },
+      search: { liveMusic: 'arabic wedding band', singer: 'arabic wedding singer', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern lebanese catering', cake: 'arabic sweets bakery', officiant: 'sheikh imam or priest wedding officiant' },
+      hint: 'arabic,arab,lebanese,middle eastern,zaffe,zaffa,mediterranean',
+      moments: [[-30, 'Guests arrive and are seated'], [0, 'Zaffe: drums and dancers lead the couple in'], [20, 'The couple takes their seats at the kosha'], [40, 'First dance'], [60, 'Dinner'], [120, 'Dabke and dancing'], [180, 'Cake cutting and sweets'], ['end', 'Send-off']]
+    },
+    indian: {
+      name: 'Indian wedding', guests: 300, hours: 7, menu: 'indian',
+      music: [['dhol', 'Dhol player'], ['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dhol', 'dj'],
+      add: ['mandap', 'mehndi', 'baraat'],
+      labels: { officiant: 'Pandit (priest) for the ceremony', catering: 'Indian catering', dj: 'DJ (Bollywood and bhangra)', liveMusic: 'Live band (Indian music)', singer: 'Wedding singer (Indian music)', cake: 'Wedding cake and mithai' },
+      search: { dhol: 'dhol player', dj: 'indian wedding DJ', liveMusic: 'indian wedding band', singer: 'indian wedding singer', mandap: 'mandap decor rental', mehndi: 'mehndi henna artist', baraat: 'baraat horse rental', catering: 'indian wedding catering', officiant: 'hindu priest pandit wedding', cake: 'indian sweets mithai', photographer: 'indian wedding photographer', hairMakeup: 'indian bridal makeup artist', decor: 'indian wedding decor' },
+      hint: 'indian,desi,south asian,bollywood,punjabi,dhol,mandap,mehndi,henna',
+      moments: [[-60, 'Baraat: the groom arrives with dhol and dancing'], [-15, 'Milni: the families greet each other'], [0, 'Ceremony at the mandap'], [90, 'Cocktail hour and appetizers'], [150, 'Grand entrance and dinner'], [210, 'Speeches and first dance'], [240, 'Dancing'], ['end', 'Vidaai: the send-off']]
+    },
+    persian: {
+      name: 'Persian wedding', guests: 200, hours: 6, menu: 'persian',
+      music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj', 'liveMusic'],
+      add: ['sofreh'],
+      labels: { officiant: 'Aghd officiant', catering: 'Persian catering', dj: 'DJ (Persian and international music)', liveMusic: 'Live band (Persian music)', singer: 'Persian wedding singer', cake: 'Wedding cake and Persian sweets' },
+      search: { dj: 'persian wedding DJ', liveMusic: 'persian wedding band', singer: 'persian wedding singer', sofreh: 'sofreh aghd', catering: 'persian catering', officiant: 'persian aghd officiant', cake: 'persian bakery sweets' },
+      hint: 'persian,iranian,sofreh,aghd',
+      moments: [[-30, 'Guests arrive'], [0, 'Aghd ceremony at the sofreh'], [45, 'Sugar rubbed over a cloth held above the couple, and blessings'], [75, 'Grand entrance'], [90, 'Dinner'], [150, 'Knife dance and cake cutting'], [180, 'Dancing'], ['end', 'Send-off']]
+    }
+  };
   var TIERS = [
     { id: 'L', name: 'Luxe for Less', mult: 0.65, blurb: 'The same look with smart swaps: DIY styling, fewer hired services, simpler venue.' },
     { id: 'S', name: 'Signature', mult: 1.0, blurb: 'The balanced version: key pieces done by pros, the look kept intact.' },
@@ -264,6 +304,9 @@
     kids: ['Mini pizzas', 'Chicken tenders with dips', 'Fruit cups and veggie cups', 'Mac and cheese bites', 'Cupcakes or a fun cake', 'Pink lemonade and juice boxes'],
     holiday: ['Herb-crusted beef tenderloin', 'Roasted winter vegetables', 'Baked brie with cranberry', 'Mini crab cakes', 'Peppermint chocolate tart', 'Spiced cider and a holiday punch'],
     quince: ['Carne asada or chicken in mole', 'Arroz and frijoles charros', 'Elote cups', 'Taco or tostada station', 'Tres leches cake', 'Aguas frescas: horchata and jamaica'],
+    arabic: ['Mezze: hummus, moutabal, tabbouleh and fattoush', 'Mixed grill: shish tawook and kafta', 'Ouzi or mansaf (lamb with rice)', 'Stuffed grape leaves and kibbeh', 'Knafeh and baklava', 'Fresh juices, mint lemonade and Arabic coffee'],
+    indian: ['Paneer tikka and samosas', 'Butter chicken and dal makhani', 'Biryani', 'Naan and rice', 'Gulab jamun and mithai', 'Mango lassi and masala chai'],
+    persian: ['Mast-o-khiar and Shirazi salad', 'Joojeh and koobideh kabob', 'Jeweled rice (morasa polo) with tahdig', 'Ghormeh sabzi', 'Persian sweets and saffron ice cream', 'Rose sharbat and Persian tea'],
     sweet: ['Finger sandwiches', 'Fruit skewers', 'Mini quiches', 'Macaron tower', 'Cake pops', 'Pink lemonade'],
     party: ['Loaded slider bar', 'Wings and dips', 'Taco station', 'Veggie crudités', 'Cupcake tower', 'Glitter cocktail and mocktail']
   };
@@ -272,6 +315,16 @@
 
   /* Checklist: weeks before the event. */
   var CHECKLIST = [
+    { w: 40, t: 'Book the pandit and confirm the ceremony time (muhurat)', cu: 'indian' },
+    { w: 26, t: 'Book the mandap, dhol player and baraat horse or car', cu: 'indian' },
+    { w: 12, t: 'Book the mehndi artist for the bride and guests', cu: 'indian' },
+    { w: 4, t: 'Order mithai for guests and the families', cu: 'indian' },
+    { w: 28, t: 'Book the zaffe group, band and singer early: the best ones fill up first', cu: 'arabic' },
+    { w: 16, t: 'Choose the kosha design and its flowers', cu: 'arabic' },
+    { w: 4, t: 'Order Arabic sweets (knafeh, baklava) and favors', cu: 'arabic' },
+    { w: 24, t: 'Book the aghd officiant', cu: 'persian' },
+    { w: 12, t: 'Plan the sofreh aghd: mirror, candelabras, sweets, honey and flowers', cu: 'persian' },
+    { w: 4, t: 'Order Persian sweets and the wedding cake', cu: 'persian' },
     { w: 52, t: 'Set the budget and guest count', only: ['wedding', 'gala', 'quince'] },
     { w: 40, t: 'Book the venue', only: ['wedding', 'gala', 'quince'], not: ['home', 'restaurant', 'privateRoom'] },
     { w: 40, t: 'Reserve the private dining room', only: ['wedding', 'gala', 'quince'], in: ['privateRoom'] },
@@ -349,7 +402,7 @@
   root.EC_DATA = {
     NEW_VENUES: NEW_VENUES, STYLE_PIECES: STYLE_PIECES,
     SETTINGS: SETTINGS, SETTING_RULES: SETTING_RULES, GRATUITY: 0.20,
-    EVENT_TYPES: EVENT_TYPES, CATEGORIES: CATEGORIES, PROFILES: PROFILES, ADJUST: ADJUST, TIERS: TIERS,
+    EVENT_TYPES: EVENT_TYPES, CULTURES: CULTURES, CATEGORIES: CATEGORIES, PROFILES: PROFILES, ADJUST: ADJUST, TIERS: TIERS,
     CITIES: CITIES, AREAS: AREAS, STYLES: STYLES, MENUS: MENUS, DIETS: DIETS, CHECKLIST: CHECKLIST, PASSES: PASSES,
     CREDIT_PACKS: CREDIT_PACKS, PACKAGES: PACKAGES, ADDONS: ADDONS, ALLOWANCE: ALLOWANCE,
     VENUE_TYPES: VENUE_TYPES, PLAYLIST_SEARCH: PLAYLIST_SEARCH, CONTINGENCY: 0.10, SERVICE: 0.20, TIP: 0.10
