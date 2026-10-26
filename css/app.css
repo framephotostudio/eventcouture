@@ -729,3 +729,4 @@ body:has(.pkg [data-pkuse]):not(:has(.sheet-back)) .toast { bottom: calc(96px + 
 .inv-frame > div:last-child:not(.inv-mono):not(.inv-orn) { margin-top: 16px; }
 .inv-edit summary { cursor: pointer; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; min-height: 36px; }
 .inv-own summary { cursor: pointer; color: var(--gold-text); min-height: 36px; display: flex; align-items: center; }
+.keep-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 2px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }

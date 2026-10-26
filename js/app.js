@@ -851,7 +851,7 @@
   /* ---------- Keep this plan: the Event Pass, asked for once the plan is built ---------- */
   function isKept(ev) { return ev.sample || !!(ev.paid && ev.paid.price !== undefined); }
   /* Free preview: every section shows a taste; keeping the plan reveals the rest. Sample plans are always complete. */
-  function preview(ev) { return !isKept(ev); }
+  function preview(ev) { return false; }   /* planning shows everything; the pass is asked for only when she shares or saves her plan */
   function cut(arr, n, ev) { return preview(ev) ? arr.slice(0, n) : arr; }
   function more(ev, total, shown, noun) {
     if (!preview(ev) || total <= shown) return '';
@@ -871,7 +871,7 @@
     /* In the iPhone and Android apps, keeping a plan is free until in-app purchase is connected, so no prices are shown there. */
     sheet('<h3>' + esc(why || 'Keep your plan') + '</h3><p class="muted">' + (CFG.app ? 'Keeping ' + esc(ev.name) + ' is free in the app. Guests never pay to view, RSVP or vote.' : 'One payment for ' + esc(ev.name) + ', ' + esc(pass.label.toLowerCase()) + '. No subscription. Guests never pay to view, RSVP or vote.') + '</p>' +
       (CFG.app ? '' : '<div class="price-big num">$' + pass.price.toFixed(2) + '</div>') +
-      '<ul class="incl"><li><span>Your full plan unlocked: every budget line, all venues and vendors, the menu, shopping and playlist</span></li><li><span>Saved with every edit until <b>' + esc(accessUntil(ev)) + '</b></span></li><li><span>Guest list, RSVPs' + (ev.setting === 'restaurant' ? '' : ', seating') + ', voting' + (hasRegistry(ev) ? ' and registry' : '') + (canSplit(ev) ? ' and cost splitting' : '') + '</span></li><li><span>Checklist with due dates and your day-of schedule</span></li></ul>' +
+      '<ul class="incl"><li><span>Send your invitation, collect RSVPs and save your finished plan as a PDF</span></li><li><span>Saved with every edit until <b>' + esc(accessUntil(ev)) + '</b></span></li><li><span>Guest list, RSVPs' + (ev.setting === 'restaurant' ? '' : ', seating') + ', voting' + (hasRegistry(ev) ? ' and registry' : '') + (canSplit(ev) ? ' and cost splitting' : '') + '</span></li><li><span>Checklist with due dates and your day-of schedule</span></li></ul>' +
       (SHARING ? '<p class="muted small">Your plan is saved on this ' + (CFG.app ? 'phone' : 'device') + '. Guests RSVP from your invitation link on their own phones.</p>' : CFG.app ? '<p class="muted small">Your plan is saved on this phone. Send your invitation from the Invitation page.</p>' : CFG.preview ? '<p class="muted small">Right now your plan is saved on this device. Sending your invitation to guests on their own phones turns on when accounts launch.</p>' : '') +
       (CFG.app ? '' : '<p class="muted small">Guest list grows past ' + pass.max.toLocaleString('en-US') + '? You pay only the difference.</p>') +
       (CFG.preview && !CFG.app ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
@@ -930,9 +930,9 @@
     }).join('') + '</nav>';
     var lockedTab = preview(ev) && LOCKED_TABS[tab];
     var body = lockedTab ? '<div class="stack"><div class="lock-card big"><h3>' + esc(LOCKED_TABS[tab]) + '</h3><p class="muted">Keep your plan to invite guests, track RSVPs and plan together. Your concept and estimates stay exactly as they are.</p><button class="btn" data-keep>Keep my plan</button></div></div>' : (TAB_VIEWS[tab] || TAB_VIEWS.overview)(ev, b);
-    var keepBar = isKept(ev) ? '' : '<div class="keep-bar"><span><b>' + (b.shortBy ? 'Keep this plan' : 'Love this plan?') + '</b> <span class="muted">' + (CFG.app ? 'Keep it, free, to unlock every detail and plan with guests.' : 'Keep it to unlock every detail and plan with guests for ' + usd2(E.passFor(ev.guests).price) + ', one time.') + '</span></span><button class="btn small" id="keepBtn">Keep my plan</button></div>';
+    var keepBar = isKept(ev) || ev.keepNoteHidden ? '' : '<div class="keep-note small muted"><span>' + (CFG.app ? 'Planning is free.' : 'Planning is free. You pay once, ' + usd2(E.passFor(ev.guests).price) + ', only when you share your invitation or save your plan.') + '</span><button class="link small quiet" id="keepNoteX" aria-label="Hide this note">Got it</button></div>';
     frame(head + keepBar + groupBar + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
-    var kb = $('#keepBtn'); if (kb) kb.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { planView(ev, tab); }); });
+    var kn = $('#keepNoteX'); if (kn) kn.addEventListener('click', function () { ev.keepNoteHidden = true; saveEvent(ev); kn.closest('.keep-note').remove(); });
     if (!ev.sample) syncQuotes(ev);
     if (!ev.sample && isKept(ev) && ev.published) { publishInvite(ev).catch(function () {}); syncInbox(ev, function () { if (location.hash.indexOf('#/e/' + ev.id) === 0 && !document.querySelector('.sheet-back')) planView(ev, tab); }); }   /* guests' RSVPs come in; edits reach the shared invitation */
     var cur = $('.rail [aria-current]'); if (cur && cur.scrollIntoView && window.innerWidth < 960) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
@@ -1120,6 +1120,7 @@
   }
   TAB_BIND.plan = function (ev, save, rerender) {
     if (!$('#pdfPlan')) return;
+    ['#pdfPlan', '#mailPlan', '#sharePlan', '#printPlan'].forEach(function (sel) { var el = $(sel); if (el) el.addEventListener('click', function (e) { if (ev.sample || isKept(ev)) return; e.stopImmediatePropagation(); keepSheet(ev, 'Keep your plan to save or share it', function () { rerender(); }); }); });
     $('#pdfPlan').addEventListener('click', function () { savePlanPdf(ev); });
     $('#mailPlan').addEventListener('click', function () {
       var d = planData(ev), body = planText(d, true) + '\n\nTip: tap Save as PDF in Event Couture for the full plan with your schedule and shopping list.';

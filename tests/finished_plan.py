@@ -18,7 +18,7 @@ with sync_playwright() as p:
         if SH: pg.query_selector('.steps-card').scroll_into_view_if_needed(); pg.screenshot(path=SH + '/steps-%d.png' % w)
         pg.click('[data-step=when]'); pg.wait_for_selector('.sheet #wd'); pg.fill('.sheet #wd', '2027-04-17'); pg.click('.sheet #ok'); pg.wait_for_timeout(300)
         check('2 of 6 done' in pg.inner_text('#tab'), t + 'date step did not tick')
-        pg.goto(U + base + '/plan'); pg.wait_for_timeout(300); check('Keep my plan to see it' in pg.inner_text('#tab'), t + 'finished plan not gated in preview')
+        pg.goto(U + base + '/plan'); pg.wait_for_timeout(300); check('Your look' in pg.inner_text('#tab') and pg.query_selector('#pdfPlan'), t + 'finished plan visible while planning'); pg.click('#pdfPlan'); pg.wait_for_selector('.sheet #keepPay'); check('save or share' in pg.inner_text('.sheet'), t + 'saving asks to keep'); pg.click('.sheet [data-close] >> nth=-1'); pg.wait_for_timeout(200)
         pg.click('[data-keep]'); pg.click('.sheet #keepPay'); pg.wait_for_timeout(300); pg.goto(U + base + '/plan'); pg.wait_for_timeout(300); fp = pg.inner_text('#tab')
         for want in ['Your look', 'Budget', 'Venue and vendors', 'Day-of schedule', 'Estimated total', 'Still to book']:
             check(want in fp, t + 'finished plan missing ' + want)
