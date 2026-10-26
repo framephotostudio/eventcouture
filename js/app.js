@@ -344,7 +344,8 @@
   }
   function openInspo(id, type) {
     var p = INSPO.find(function (x) { return x.id === id; }); if (!p) return;
-    var pick = type && p.types.indexOf(type) >= 0 ? type : p.types[0];
+    var dt = inspoFor_ && drafts()[inspoFor_] && drafts()[inspoFor_].type;   /* changing the photo on a plan already set to a wedding keeps it a wedding */
+    var pick = type && p.types.indexOf(type) >= 0 ? type : dt && p.types.indexOf(dt) >= 0 ? dt : p.types[0];
     sheet('<div class="thumb ibig"><img src="' + srcOf(INSPO_IMG + p.id + '.jpg') + '" alt="' + esc(p.alt) + '">' + AI_TAG + '</div>' +
       '<div class="stack"><h3 id="iname">' + esc(E.inspoName(p, pick)) + '</h3>' + dots(p.palette, p.name + ' colors') + '<p class="muted">' + esc(p.mood) + '</p></div>' +
       '<div class="stack"><b class="small">In this photo</b><ul class="incl">' + p.decor.map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul></div>' +
@@ -1683,7 +1684,7 @@
   function menuItems(ev) {
     var day = E.startHour(ev) < 15;
     var said = ((ev.inspiration && ev.inspiration.text) || '').toLowerCase();
-    var mstyle = ev.concept.menuStyle;
+    var mstyle = ev.concept.menuStyle; if (mstyle === 'quince' && ['quince', 'sweet16'].indexOf(ev.type) < 0) mstyle = 'elegant';   /* a quinceañera photo used for another event */
     if (/tea party|high tea|afternoon tea/.test(said)) mstyle = 'sweet';
     else if ((day || ev.type === 'brunch') && ['modern', 'elegant', 'classic', 'party', 'rustic'].indexOf(mstyle) >= 0) mstyle = 'garden';   /* daytime gets brunch and lunch dishes */
     if (mstyle === 'garden' && !day && ev.type !== 'brunch') mstyle = 'gardenDinner';

@@ -133,14 +133,14 @@
   /* Style library used to build concepts. Palettes are hex values shown as swatches. */
   var STYLES = [
     { id: 'champagne-garden', shop: 'sage green and ivory', name: 'Sage Garden', palette: ['#F3E7D3', '#D9C29C', '#A9B89A', '#FFFFFF', '#6F7D63'], tags: ['garden', 'neutral', 'elegant', 'outdoor', 'green', 'gold', 'sage', 'cream'],
-      mood: 'Soft gold light, garden greenery and candlelit tables.', decor: ['Greenery runners with white blooms', 'Gold chargers and blush napkins', 'Floating candles in tall glass', 'Champagne tower welcome moment'],
+      mood: 'Soft gold light, garden greenery and candlelit tables.', decor: ['Greenery runners with white blooms', 'Gold chargers and blush napkins', 'Floating candles in tall glass', 'Gold candlelit welcome table'],
       music: 'jazz brunch acoustic', dress: 'Soft neutrals, garden formal', menu: 'garden' },
     { id: 'modern-noir', shop: 'black and gold', name: 'Modern Noir', palette: ['#111111', '#2B2B2B', '#C9A86A', '#F5F2EC', '#7A6A55'], tags: ['black', 'dark', 'gold', 'modern', 'glam', 'evening'],
       mood: 'Black and gold, sharp lines and dramatic low light.', decor: ['Black linens with gold flatware', 'Mirrored table numbers', 'Tall black taper candles', 'Neon sign with the guest of honor’s name'],
       music: 'r&b lounge house', dress: 'All black, cocktail to black tie', menu: 'modern' },
     { id: 'blush-romance', shop: 'blush pink', name: 'Blush Romance', palette: ['#F7DCDC', '#E8B4B8', '#C98B92', '#FFF7F3', '#B88A5A'], tags: ['pink', 'blush', 'romantic', 'soft', 'floral', 'gold', 'tea'],
       mood: 'Blush roses, soft draping and a romantic glow.', decor: ['Blush and ivory rose centerpieces', 'Sheer draped backdrop', 'Rose-gold accents', 'Pearl-dotted dessert table'],
-      music: 'love songs soul', dress: 'Blush, ivory and champagne', menu: 'elegant' },
+      music: 'love songs soul', dress: 'Blush, ivory and soft gold', menu: 'elegant' },
     { id: 'boho-sunset', shop: 'terracotta boho', name: 'Boho Sunset', palette: ['#E9C9A6', '#C47C4E', '#8C5A3C', '#F4EBDD', '#6B7A55'], tags: ['boho', 'terracotta', 'warm', 'rustic', 'orange', 'outdoor'],
       mood: 'Warm sunset tones, pampas grass and low lounge seating.', decor: ['Pampas and dried-flower arrangements', 'Lounge corners with floor cushions', 'Rattan and macramé accents', 'Lantern-lit pathway'],
       music: 'indie acoustic sunset', dress: 'Flowy earth tones', menu: 'rustic' },

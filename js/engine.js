@@ -479,7 +479,7 @@
     if (!type || p.types[0] === type) return p.name;
     var base = p.name, prev; do { prev = base; base = base.replace(OCCASION_WORDS, ''); } while (base !== prev && base);
     if (!base || base === p.name) return p.name;
-    return base.replace(/\s*&\s*$/, '') + ' ' + (TYPE_TITLE[type] || 'Celebration');
+    return base.replace(/\s*&\s*$/, '').replace(/\s+/g, ' ').trim() + ' ' + (TYPE_TITLE[type] || 'Celebration');
   }
   var KIDS_NO = ['disco-glam', 'modern-noir', 'moody-floral', 'old-hollywood'];
   var KIDS_BAD = /night ?club|\bclub\b|neon|strobe|bottle service|lounge|cocktail|\bbar\b|bartender|candle|candlelit|\bdark\b|noir|moody|velvet curtains|disco/i;
@@ -487,11 +487,21 @@
   var KIDS_TEXT = /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|\b([1-9]|1[0-2])[- ]?(year|yr)s?[- ]old\b|\bturning ([1-9]|1[0-2])\b|for my (son|daughter|kids?|little one|toddler|grandson|granddaughter)\b|kids'? (party|birthday)|\bchildren\b|\b(unicorn|princess|dinosaur|dino|superhero|mermaid|paw patrol|bluey|first birthday|1st birthday)\b/i;
   function isKidsParty(ev) { return !!(ev && ((ev.kids && /birthday/.test(ev.type || '')) || ev.type === 'kids-birthday')); }
   function kidSafePhoto(p) { return p.types.indexOf('kids-birthday') >= 0 || (KIDS_NO.indexOf(p.style) < 0 && !KIDS_BAD.test(p.mood + ' ' + p.decor.join(' '))); }
+  /* A photo made for one occasion, used for another: its words follow this event (a quinceañera's throne becomes the couple's). */
+  var HONOREE = { wedding: 'the couple', engagement: 'the couple', anniversary: 'the couple', quince: 'the quincea\u00f1era', sweet16: 'the birthday girl', 'bridal-shower': 'the bride', bachelorette: 'the bride', 'baby-shower': 'the mom-to-be', 'gender-reveal': 'the parents-to-be', graduation: 'the graduate', retirement: 'the retiree', gala: 'the hosts', corporate: 'the hosts' };
+  var OTHER_HONOREE = /\bthe (quincea(?:ñ|n)era|birthday girl|birthday boy|bride|bride-to-be|mom-to-be|graduate|couple|guest of honou?r)\b/gi;
+  function forOccasion(t, ev, p) {
+    if (!t || !ev || !ev.type || (p && p.types[0] === ev.type)) return t;
+    var who = HONOREE[ev.type] || 'the guest of honor';
+    return String(t).replace(OTHER_HONOREE, function (m) { return m.toLowerCase() === who ? m : who; }).replace(/\bquincea(?:ñ|n)era\b/gi, function (m) { return ev.type === 'quince' ? m : TYPE_TITLE[ev.type] || 'celebration'; });
+  }
+  function menuFor(p, ev) { return p.menu === 'quince' && ['quince', 'sweet16'].indexOf(ev.type) < 0 ? 'elegant' : p.menu === 'kids' && !isKidsParty(ev) ? 'party' : p.menu; }
   function inspoConcept(ev, p) {
     var s = D.STYLES.find(function (x) { return x.id === p.style; }) || D.STYLES[0], nm = inspoName(p, ev.type);
-    return { id: s.id, inspo: p.id, img: 'img/inspo/' + p.id + '.jpg', name: nm, styleName: nm, palette: p.palette, mood: p.mood, decor: p.decor.slice(), shop: p.shop,
-      dress: 'A standout look in ' + s.dress.charAt(0).toLowerCase() + s.dress.slice(1), menuStyle: p.menu, music: s.music, fit: 'The look in the photo you chose',
-      outline: ['Setting: ' + p.decor[0].toLowerCase(), 'Details: ' + p.decor[1].toLowerCase() + ', plus ' + p.decor[2].charAt(0).toLowerCase() + p.decor[2].slice(1), 'Moment: ' + p.decor[3].toLowerCase(), 'Dress code: ' + dressCode(ev).toLowerCase()] };
+    var fo = function (t) { return forOccasion(t, ev, p); };
+    return { id: s.id, inspo: p.id, img: 'img/inspo/' + p.id + '.jpg', name: nm, styleName: nm, palette: p.palette, mood: fo(p.mood), decor: p.decor.map(fo), shop: p.shop,
+      dress: 'A standout look in ' + s.dress.charAt(0).toLowerCase() + s.dress.slice(1), menuStyle: menuFor(p, ev), music: s.music, fit: 'The look in the photo you chose',
+      outline: ['Setting: ' + fo(p.decor[0]).toLowerCase(), 'Details: ' + fo(p.decor[1]).toLowerCase() + ', plus ' + fo(p.decor[2]).charAt(0).toLowerCase() + fo(p.decor[2]).slice(1), 'Moment: ' + fo(p.decor[3]).toLowerCase(), 'Dress code: ' + dressCode(ev).toLowerCase()] };
   }
   /* Colors the host typed herself win over the photo: the photo's look then comes second instead of first. */
   function hostNamedColors(ev) {
@@ -665,7 +675,7 @@
     });
     (ev.inspiration && ev.inspiration.photos || []).forEach(function (p) { (p.loves || []).forEach(function (l) { var x = LOVE_PIECES[l.label]; if (x) add(x[0], x[1], x[2], 'loved'); }); });
     var list = c.pieces && c.pieces.length ? c.pieces.map(function (x) { return [x.name || x.item, x.q || x.search || '', x.hire && x.hire !== 'none' ? x.hire : '']; })
-      : c.inspo && root.EC_INSPO ? ((root.EC_INSPO.find(function (p) { return p.id === c.inspo; }) || {}).pieces || []).map(function (x) { return [x.name, x.q, x.hire]; })
+      : c.inspo && root.EC_INSPO ? (function () { var ph = root.EC_INSPO.find(function (p) { return p.id === c.inspo; }) || { pieces: [], types: [] }; return (ph.pieces || []).map(function (x) { return [ev.type === 'wedding' && /throne/i.test(x.name) && ph.types[0] !== 'wedding' ? 'Sweetheart chairs for the couple' : forOccasion(x.name, ev, ph), x.q, x.hire]; }); })()
       : (D.STYLE_PIECES || {})[c.id] || [];
     list.forEach(function (x) { if (x[0]) add(x[0], x[1], x[2], c.inspo ? 'photo' : c.pieces ? 'ai' : 'look'); });
     return out;
@@ -674,6 +684,7 @@
   function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
 
   root.EC_ENGINE = {
+    forOccasion: forOccasion,
     similarPhoto: similarPhoto, fitOccasion: fitOccasion,
     KIDS_TEXT: KIDS_TEXT,
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
