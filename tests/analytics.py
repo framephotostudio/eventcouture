@@ -1,6 +1,7 @@
 # Analytics: the live site sends the right events and never personal details; local and Do Not Track send nothing: python3 tests/analytics.py
 import os, json, mimetypes
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 problems = []
 def check(ok, msg):
@@ -24,7 +25,7 @@ with sync_playwright() as p:
         ev = lambda: [list(x) for x in pg.evaluate("(window.dataLayer||[]).map(a => Array.from(a)).filter(a => a[0]==='event')")]
         pg.click('[data-scroll=inspo]'); pg.click('#ifilter [data-t=graduation]'); pg.click('[data-inspo=emerald-garden-graduation]'); pg.click('.sheet #useInspo'); pg.wait_for_selector('.inspo-chosen')
         pg.fill('#text', 'secret garden for grandma'); pg.click('#next'); pg.wait_for_selector('#type')
-        pg.select_option('#city', 'Houston, TX'); pg.fill('#budget', '6000'); pg.fill('#name', 'Maya'); pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept h3'); pg.wait_for_timeout(400)
+        pg.select_option('#city', 'Houston, TX'); pg.fill('#budget', '6000'); pg.fill('#name', 'Maya'); pg.click('#next'); pg.wait_for_selector('.concept h3'); pg.wait_for_timeout(400)
         pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
         base = pg.url.split('#')[1]
         pg.goto(U + '#' + base + '/guests'); pg.wait_for_timeout(300); pg.fill('#gn', 'Ava Stone'); pg.click('#addg button'); pg.wait_for_timeout(200)

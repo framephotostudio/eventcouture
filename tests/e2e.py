@@ -1,6 +1,7 @@
 # End-to-end run: python3 tests/e2e.py [outdir]
 import sys, os, json
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else '/tmp/ec-shots'
 os.makedirs(OUT, exist_ok=True)
@@ -41,11 +42,10 @@ def run(p, name, viewport, scheme):
     page.select_option('#city', 'Houston, TX'); page.click('#setting [data-v=indoor]')
     page.screenshot(path=f'{OUT}/{name}-step2.png', full_page=True)
     page.click('#next')
-    page.wait_for_selector('#go')
-    rv = page.inner_text('.confirm')
+    page.wait_for_selector('.concept')
+    rv = page.evaluate("(() => { var id = location.hash.split('/')[2]; var e = JSON.parse(localStorage['ec.events'])[id]; return e.guests + (e.guests === 1 ? ' person invited' : ' people invited'); })()")
     if '30 people invited' not in rv: problems.append(f'{name}: review screen lost the guest count: {rv[:120]}')
     page.screenshot(path=f'{OUT}/{name}-step3.png', full_page=True)
-    page.click('#go')
     page.wait_for_selector(".concept"); page.wait_for_timeout(450)
     page.screenshot(path=f'{OUT}/{name}-concepts.png', full_page=True)
     first = page.inner_text('.concept h3')

@@ -1,6 +1,7 @@
 # Checks the connected (live) path with a fake server: python3 tests/live.py
 import json
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 BASE = 'http://localhost:8765/'
 CONCEPTS = {'concepts': [{'id': f'c{i}', 'name': f'Test Concept {i}', 'styleName': f'Test {i}', 'palette': ['#111111', '#C9A86A', '#FFFFFF'], 'mood': 'Mood', 'decor': ['A', 'B', 'C', 'D'], 'dress': 'Cocktail', 'menuStyle': 'modern', 'music': 'house', 'fit': 'Closest match', 'outline': ['Arrival: a', 'Tables: b', 'Moment: c', 'Dress code: d']} for i in range(3)]}
 PLACES = {'places': [{'id': 'p1', 'name': 'Real Loft', 'address': '1 Main St', 'rating': 4.7, 'reviews': 120, 'mapsUrl': 'https://maps.google.com/?cid=1'}]}
@@ -15,7 +16,7 @@ with sync_playwright() as p:
     page.goto(BASE + '#/new/1')
     page.fill('#text', 'black and gold birthday'); page.click('#next')
     page.fill('#start', 'Downtown Houston'); page.select_option('#city', 'Houston, TX'); page.click('#setting [data-v=indoor]'); page.click('#next')
-    page.click('#go'); page.wait_for_selector('.concept')
+    page.wait_for_selector('.concept')
     if 'Test Concept 0' not in page.inner_text('#cs'): problems.append('server concepts not used')
     page.click('.concept button.gold'); page.wait_for_selector('.tier')
     page.goto(page.url.rstrip('/') + '/places'); page.wait_for_selector('[data-live]')

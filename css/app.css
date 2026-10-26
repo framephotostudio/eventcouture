@@ -687,3 +687,6 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 @media (max-width: 560px) { .pkg-cta { flex-direction: column; align-items: stretch; } .pkg-cta .btn { width: 100%; justify-content: center; } }
 .pkg .pkg-go { min-height: 52px; font-size: 1rem; }
 body:has(.sheet-back) .toast { bottom: auto !important; top: calc(16px + env(safe-area-inset-top, 0px)); }   /* never cover a pop-up's buttons */
+/* Plan form: the essentials first, everything else folded */
+.wizard details.more { border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; background: var(--surface); }
+.wizard details.more > summary { cursor: pointer; font-weight: 500; }

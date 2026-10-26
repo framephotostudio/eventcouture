@@ -1,5 +1,6 @@
 # Prices typed on the Budget page and prices on saved options stay in step: python3 tests/prices.py
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 import json
 U='http://localhost:8765/'
 PL=json.dumps({'places':[{'id':'g','name':'Grand Hall','rating':4.8,'reviews':10,'address':'1 A St, Houston','mapsUrl':'https://maps.google.com/?q=g'},{'id':'r','name':'Rose Room','rating':4.6,'reviews':9,'address':'2 B St, Houston','mapsUrl':'https://maps.google.com/?q=r'},{'id':'s','name':'Sky Loft','rating':4.7,'reviews':8,'address':'3 C St, Houston','mapsUrl':'https://maps.google.com/?q=s'},{'id':'m','name':'Maison','rating':4.5,'reviews':7,'address':'4 D St, Houston','mapsUrl':'https://maps.google.com/?q=m'}]})
@@ -21,7 +22,7 @@ with sync_playwright() as p:
         pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
         pg.goto(U+'#/new/1'); pg.wait_for_timeout(300); pg.fill('#text','gold 40th birthday'); pg.click('#next'); pg.wait_for_timeout(250)
         pg.select_option('#type','birthday'); pg.fill('#guests','50'); pg.fill('#expected','50'); pg.fill('#time','19:00'); pg.select_option('#city','Houston, TX'); pg.click('#setting [data-v=indoor]')
-        pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
+        pg.click('#next'); pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
         base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2]); eid=base.split('/')[2]
         ev=lambda: pg.evaluate("id => JSON.parse(localStorage['ec.events'])[id]", eid)
         pg.goto(U+base+'/places'); pg.wait_for_timeout(300); pg.click('[data-live] >> nth=0'); pg.wait_for_selector('.live-res [data-short]')

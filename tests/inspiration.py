@@ -1,6 +1,7 @@
 # AI-generated inspiration photos: browse by occasion, plan from a photo, and the plan follows the photo: python3 tests/inspiration.py [shots_dir]
 import sys
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 U = 'http://localhost:8765/'
 SHOTS = sys.argv[1] if len(sys.argv) > 1 else None
 problems = []
@@ -36,8 +37,7 @@ with sync_playwright() as p:
         check(pg.query_selector('#setting [data-v=outdoor][aria-pressed=true]') is not None, tag + ': outdoor not preselected')
         check('Emerald Garden Graduation' in pg.inner_text('#names'), tag + ': photo name not offered as a name')
         pg.select_option('#city', 'Houston, TX'); pg.fill('#budget', '6000')
-        pg.click('#next'); pg.wait_for_selector('#go'); check('Inspiration photo: Emerald Garden Graduation' in pg.inner_text('.confirm'), tag + ': review missing photo')
-        pg.click('#go'); pg.wait_for_selector('.concept h3'); pg.wait_for_timeout(400)
+        pg.click('#next'); pg.wait_for_selector('.concept h3'); pg.wait_for_timeout(400)
         first = pg.inner_text('.concept h3 >> nth=0')
         check(first == 'Emerald Garden Graduation', tag + ': photo look not first: ' + first)
         check('AI-generated inspiration' in pg.inner_text('.concept >> nth=0'), tag + ': concept photo not labeled')
@@ -59,7 +59,7 @@ with sync_playwright() as p:
         pg.goto(U + '#/inspiration/graduation'); pg.wait_for_timeout(400)
         pg.click('#igrid [data-inspo=emerald-garden-graduation]'); pg.click('.sheet #useInspo'); pg.wait_for_selector('.inspo-chosen')
         pg.fill('#text', 'same feel but navy and silver'); pg.click('#next'); pg.wait_for_selector('#type')
-        pg.select_option('#city', 'Houston, TX'); pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept h3'); pg.wait_for_timeout(300)
+        pg.select_option('#city', 'Houston, TX'); pg.click('#next'); pg.wait_for_selector('.concept h3'); pg.wait_for_timeout(300)
         ns = [x.inner_text() for x in pg.query_selector_all('.concept h3')]
         check(ns[0] != 'Emerald Garden Graduation' and 'Emerald Garden Graduation' in ns, tag + ': host colors did not lead: ' + str(ns))
         # typed or spoken ideas: every named piece shows up to buy or hire
@@ -68,7 +68,7 @@ with sync_playwright() as p:
         pg.set_input_files('#files', ['tests/pink.jpg']); pg.wait_for_timeout(1200)
         pg.click('#photos img'); pg.wait_for_selector('.sheet [data-v=Cake]'); pg.click('.sheet [data-v=Cake]'); pg.wait_for_timeout(200)
         pg.click('#next'); pg.wait_for_selector('#type'); pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]')
-        pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept h3'); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
+        pg.click('#next'); pg.wait_for_selector('.concept h3'); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
         base = '#/' + '/'.join(pg.url.split('#/')[1].split('/')[:2]); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
         pg.goto(U + base + '/style'); pg.wait_for_timeout(300); sty = pg.inner_text('#tab')
         for want in ['Balloon arch', 'Arrangements with peonies', 'Custom neon sign', 'Velvet chairs', 'Gold charger plates', 'A cake like the one in your photo']:
@@ -77,7 +77,7 @@ with sync_playwright() as p:
         # new venue: Houston indoor birthday
         pg.goto(U + '#/inspiration/milestone'); pg.wait_for_timeout(300)
         pg.click('#igrid [data-inspo=black-and-gold-soiree]'); pg.click('.sheet #useInspo'); pg.wait_for_selector('.inspo-chosen'); pg.click('#next'); pg.wait_for_selector('#type')
-        pg.select_option('#city', 'Houston, TX'); pg.fill('#guests', '120'); pg.fill('#expected', '120'); pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept h3'); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
+        pg.select_option('#city', 'Houston, TX'); pg.fill('#guests', '120'); pg.fill('#expected', '120'); pg.click('#next'); pg.wait_for_selector('.concept h3'); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
         base = '#/' + '/'.join(pg.url.split('#/')[1].split('/')[:2])
         pg.goto(U + base + '/places'); pg.wait_for_timeout(300)
         check('Deco House River Oaks' in pg.inner_text('#tab'), tag + ': new Houston venue missing')

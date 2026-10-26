@@ -1,6 +1,7 @@
 # Every control a host touches after the plan is made, on phone and desktop: python3 tests/interactions.py
 import os, re
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 U = 'http://localhost:8765/'
 HERE = os.path.dirname(os.path.abspath(__file__))
 problems = []
@@ -12,7 +13,7 @@ def plan(pg, payer='shared', kept=True):
     pg.fill('#text', 'black and gold 40th birthday, splitting with friends'); pg.click('#next'); pg.wait_for_timeout(300)
     pg.select_option('#type', 'milestone'); pg.fill('#guests', '30'); pg.fill('#expected', '30'); pg.fill('#budget', '6000')
     pg.click('#payer [data-v=%s]' % payer); pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]')
-    pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(250)
+    pg.click('#next'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(250)
     pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
     if kept: pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
     return '#/' + '/'.join(pg.url.split('#/')[1].split('/')[:2])

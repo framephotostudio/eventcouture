@@ -1,6 +1,7 @@
 # The live AI's answers are untrusted: messy, unsafe or off-brand answers must never reach a host. python3 tests/ai_chaos.py
 import json, re
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 U = 'http://localhost:8765/'
 problems = []
 def check(ok, msg):
@@ -25,7 +26,7 @@ def plan(pg, text, typ, alcohol=None, kids=False, setting='indoor', photo=None, 
     pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=%s]' % setting)
     if alcohol: pg.click('#alcohol [data-v=%s]' % alcohol)
     if kids and not pg.is_checked('#kids'): pg.click('#kids')
-    pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept h3', timeout=25000); pg.wait_for_timeout(300)
+    pg.click('#next'); pg.wait_for_selector('.concept h3', timeout=25000); pg.wait_for_timeout(300)
     return [x.inner_text() for x in pg.query_selector_all('.concept h3')], pg.inner_text('#cs')
 DRINK = re.compile(r'champagne|prosecco|mimosa|sangria|margarita|ros[eé]\b|whiske?y|merlot|bartender', re.I)
 with sync_playwright() as p:

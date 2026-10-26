@@ -1,5 +1,6 @@
 # Problems an independent reviewer found, kept fixed: python3 tests/review_regressions.py
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 U = 'http://localhost:8765/'
 problems = []
 def check(ok, msg):
@@ -15,7 +16,7 @@ def start(pg, text, typ, guests, setting, budget=None, time=None, kids=False, pa
     pg.click('#setting [data-v=%s]' % setting)
 
 def finish(pg):
-    pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(300)
+    pg.click('#next'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(300)
     names = [x.inner_text() for x in pg.query_selector_all('.concept h3')]
     pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
     return names, '#/' + '/'.join(pg.url.split('#/')[1].split('/')[:2])
@@ -67,7 +68,7 @@ with sync_playwright() as p:
         pg.goto(U + base + '/timeline'); pg.wait_for_timeout(300); check('Overdue' not in pg.inner_text('#tab'), tag + ': brand-new plan shows overdue steps')
         # restaurant limits and refresh keeps typed details
         start(pg, 'birthday dinner', 'birthday', 120, 'restaurant')
-        pg.click('#next'); pg.wait_for_timeout(300); check(pg.query_selector('#go') is None, tag + ': 120 people ordering off a menu was accepted')
+        pg.click('#next'); pg.wait_for_timeout(300); check('/new/2' in pg.url, tag + ': 120 people ordering off a menu was accepted')
         pg.fill('#guests', '35'); pg.fill('#budget', '2000'); pg.wait_for_timeout(700); pg.reload(); pg.wait_for_timeout(500)
         check(pg.input_value('#guests') == '35' and pg.input_value('#budget') == '2000', tag + ': refresh lost typed details')
         # second review: quinceañera, office holiday party, engagement in a park

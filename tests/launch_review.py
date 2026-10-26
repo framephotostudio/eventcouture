@@ -1,6 +1,7 @@
 # Whole-site review (31 issues), kept fixed: python3 tests/launch_review.py
 import json, datetime
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 U = 'http://localhost:8765/'
 problems = []
 def check(ok, msg):
@@ -13,7 +14,7 @@ def plan(pg, text='birthday party', typ='birthday', guests=25, setting='indoor',
     if time: pg.fill('#time', time)
     if kids and not pg.is_checked('#kids'): pg.click('#kids')
     if alcohol: pg.click('#alcohol [data-v=%s]' % alcohol)
-    pg.click('#setting [data-v=%s]' % setting); pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(200)
+    pg.click('#setting [data-v=%s]' % setting); pg.click('#next'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(200)
     pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
     if keep: pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(250)
     return '#/' + '/'.join(pg.url.split('#/')[1].split('/')[:2])
@@ -42,7 +43,7 @@ with sync_playwright() as p:
         pg.click('#next'); pg.wait_for_selector('#type'); pg.select_option('#type', 'birthday'); pg.fill('#hours', '7'); pg.select_option('#type', 'milestone')
         check(pg.input_value('#hours') == '7', t + '#8 typed hours overwritten')
         pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]'); pg.fill('#date', '2025-01-10'); pg.click('#next'); pg.wait_for_timeout(300)
-        check(pg.query_selector('#go') is None, t + '#9 past date accepted')
+        check('/new/2' in pg.url, t + '#9 past date accepted')
         base4 = plan(pg, setting='restaurant', guests=10, time='00:30'); go(pg, base4 + '/food')
         check('pancake' not in pg.inner_text('#tab').lower(), t + '#10 brunch menu after midnight')
         base5 = plan(pg, typ='wedding', setting='privateRoom', guests=60); go(pg, base5 + '/timeline'); tl = pg.inner_text('#tab')
@@ -70,7 +71,7 @@ with sync_playwright() as p:
         base9 = plan(pg, typ='wedding', guests=100, alcohol='none'); go(pg, base9 + '/timeline'); check('Cocktail hour' not in pg.inner_text('#tab'), t + '#26 cocktail hour at a dry wedding')
         go(pg, base9 + '/invite'); check('like a anniversary' not in pg.inner_text('#tab'), t + '#27 grammar')
         pg.goto(U + '#/new/1'); pg.wait_for_selector('#text'); pg.fill('#text', 'party'); pg.click('#next'); pg.wait_for_selector('#type'); pg.select_option('#type', 'birthday'); pg.select_option('#city', 'Other US city'); pg.click('#setting [data-v=indoor]'); pg.click('#next'); pg.wait_for_timeout(300)
-        check(pg.query_selector('#go') is None, t + '#28 empty Other US city accepted')
+        check('/new/2' in pg.url, t + '#28 empty Other US city accepted')
         go(pg, '#/sample/1'); alts = pg.evaluate("Array.from(document.querySelectorAll('img')).map(i => i.getAttribute('alt'))"); check(any(a and len(a) > 10 for a in alts), t + '#29 alt text')
         go(pg, base9 + '/timeline'); cb = pg.query_selector('[data-ck]:checked')
         if cb: k = cb.get_attribute('data-ck'); cb.uncheck(); pg.wait_for_timeout(200); go(pg, base9 + '/timeline'); check(not pg.query_selector('[data-ck="%s"]:checked' % k.replace('"', '\\"')), t + '#30 untick did not stay')

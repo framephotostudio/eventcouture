@@ -1,6 +1,7 @@
 # Realistic customer scenarios, end to end in the browser: python3 tests/scenarios.py
 # Checks that what the host enters is what the plan uses, totals are honest, and the plan is free until kept.
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 import re
 U = 'http://localhost:8765/'
 problems = []
@@ -21,9 +22,8 @@ def run(pg, text, typ, guests, setting, time='18:00', budget=None, alcohol=None,
     if payer: pg.click(f'#payer [data-v={payer}]')
     pg.select_option('#city', 'Houston, TX'); pg.click(f'#setting [data-v={setting}]')
     names = pg.inner_text('#names')
-    pg.click('#next'); pg.wait_for_selector('#go')
-    review = pg.inner_text('.confirm')
-    pg.click('#go'); pg.wait_for_selector('.concept'); pg.wait_for_timeout(250)
+    pg.click('#next'); pg.wait_for_selector('.concept')
+    review = pg.evaluate("(() => { var id = location.hash.split('/')[2]; var e = JSON.parse(localStorage['ec.events'])[id]; return e.guests + (e.guests === 1 ? ' person invited' : ' people invited'); })()"); pg.wait_for_timeout(250)
     pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.wait_for_timeout(250)
     head = pg.inner_text('.plan-head'); base = pg.url.rstrip('/')
     if keep:

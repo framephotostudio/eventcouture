@@ -1,5 +1,6 @@
 # Shortlist and bookings with a stand-in server: python3 tests/bookings.py <screenshot folder>
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 import json
 U='http://localhost:8765/'
 PL=json.dumps({'places':[{'id':'p1','name':'Gilded Florals','rating':4.8,'reviews':212,'address':'1 Main St, Dallas, TX','mapsUrl':'https://maps.google.com/?q=1','website':'https://example.com'},{'id':'p2','name':'Bloom House','rating':4.7,'reviews':98,'address':'2 Elm St, Dallas, TX','mapsUrl':'https://maps.google.com/?q=2'}]})
@@ -17,7 +18,7 @@ with sync_playwright() as p:
         pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
         pg.goto(U+'#/new/1'); pg.wait_for_timeout(300); pg.fill('#text','black and gold 30th birthday'); pg.click('#next'); pg.wait_for_timeout(250)
         pg.select_option('#type','birthday'); pg.fill('#guests','40'); pg.fill('#expected','40'); pg.fill('#time','19:00'); pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]')
-        pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept', timeout=20000); pg.wait_for_timeout(250)
+        pg.click('#next'); pg.wait_for_selector('.concept', timeout=20000); pg.wait_for_timeout(250)
         pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
         base=pg.url.split('#')[1].split('/'); base='#/'+base[1]+'/'+base[2]
         pg.goto(U+base+'/vendors'); pg.wait_for_timeout(300)

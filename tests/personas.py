@@ -2,6 +2,7 @@
 # python3 tests/personas.py <folder for plan text>   (needs the local server on :8765)
 import sys, os, re, json
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 U = 'http://localhost:8765/'
 OUT = sys.argv[1] if len(sys.argv) > 1 else '/tmp/personas'; os.makedirs(OUT, exist_ok=True)
 TABS = ['overview', 'style', 'extras', 'budget', 'places', 'vendors', 'food', 'guests', 'invite', 'votes', 'after', 'timeline']
@@ -60,8 +61,8 @@ with sync_playwright() as p:
         name = pg.input_value('#name')
         drinks_default = pg.inner_text('#alcohol [aria-pressed=true]')
         time_default = pg.input_value('#time')
-        pg.click('#next'); pg.wait_for_selector('#go'); review = pg.inner_text('.confirm')
-        pg.click('#go'); pg.wait_for_selector('.concept', timeout=20000); pg.wait_for_timeout(300)
+        pg.click('#next'); pg.wait_for_selector('.concept', timeout=20000); review = pg.evaluate("(() => { var id = location.hash.split('/')[2]; var e = JSON.parse(localStorage['ec.events'])[id]; return e.guests + (e.guests === 1 ? ' person invited' : ' people invited'); })()")
+        pg.wait_for_selector('.concept', timeout=20000); pg.wait_for_timeout(300)
         concepts = pg.inner_text('main')
         pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.wait_for_timeout(200)
         pg.click('#keepBtn'); pg.wait_for_timeout(200); keep = pg.inner_text('.sheet'); pg.click('#keepPay'); pg.wait_for_timeout(300)

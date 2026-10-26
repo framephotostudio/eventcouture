@@ -1,6 +1,7 @@
 # Step tracker, finished plan page and optional gift list: python3 tests/finished_plan.py [shots_dir]
 import sys
 from playwright.sync_api import sync_playwright
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 U = 'http://localhost:8765/'; SH = sys.argv[1] if len(sys.argv) > 1 else None
 problems = []
 def check(ok, msg):
@@ -10,7 +11,7 @@ with sync_playwright() as p:
     for w in (390, 1280):
         t = str(w) + ': '; pg = b.new_page(viewport={'width': w, 'height': 900}); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.goto(U + '#/inspiration/kids-birthday'); pg.wait_for_selector('#igrid'); pg.click('[data-inspo=princess-castle]'); pg.click('.sheet #useInspo'); pg.wait_for_selector('.inspo-chosen')
-        pg.click('#next'); pg.wait_for_selector('#type'); pg.select_option('#city', 'Houston, TX'); pg.click('#next'); pg.wait_for_selector('#go'); pg.click('#go'); pg.wait_for_selector('.concept'); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.wait_for_timeout(300)
+        pg.click('#next'); pg.wait_for_selector('#type'); pg.select_option('#city', 'Houston, TX'); pg.click('#next'); pg.wait_for_selector('.concept'); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.wait_for_timeout(300)
         base = '#/' + '/'.join(pg.url.split('#/')[1].split('/')[:2])
         ov = pg.inner_text('#tab')
         check('Your plan, step by step' in ov and '1 of 6 done' in ov and 'Next: Set your date' in ov, t + 'tracker: ' + ov[:300])
