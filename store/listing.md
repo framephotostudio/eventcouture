@@ -15,27 +15,31 @@ Plan a beautiful event from one photo, a few words, or just your colors.
 
 Event Couture by Always Luxe turns inspiration into a complete plan:
 - Three event concepts made for your occasion, colors and budget
-- A detailed budget with every cost, sized to your city and guest count, including the fees people forget
-- Venues and vendors in your city: save up to 3 options for each, compare them side by side, pick a front-runner and track what you book
-- "Get this look": exactly what to buy or hire to recreate your inspiration
-- Menu ideas and how much food and drink to get
-- A 25-song playlist made for your event
-- A checklist with due dates and a day-of schedule
-- Invitations guests open on any phone: they RSVP, vote and see your gift list, and their answers come straight into your guest list
+- A detailed budget with every cost, sized to your city and guest count, including tax, service charges and tips
+- Cultural weddings planned with their own traditions, music and food: Arabic, Indian, Pakistani, Persian, Mexican, Chinese, Vietnamese, Korean, Filipino, Nigerian, Moroccan, Greek, Spanish, Russian and African American
+- Venues and vendors near you, matched to your occasion and theme: build up to 3 booking packages and compare them side by side, swap anything, remove what you don't need
+- Get quotes from vendors without sharing your name or number, or message vendors you found on Instagram in one tap
+- A guided booking checklist: one vendor at a time, with the message written for you
+- Formal invitations written for your event, with names, monogram, dress code and reply date; guests RSVP, vote and see your gift list from any phone
+- Menu ideas, a playlist, what to buy to get the look, a checklist with due dates and a day-of schedule
 - Guest list, seating, cost splitting and thank-you notes
-- Your finished plan in one place: save it as a PDF, email it to yourself or share it, and change any part anytime
+- Your finished plan in one place: save it as a PDF, email it or share it
+- Works across the United States and Canada, with prices in your currency
 
-Not sure where to start? Browse inspiration by occasion: birthdays, kids' themed birthdays, showers, weddings, quinceañeras, Sweet 16s, graduations, holiday and Christmas parties, corporate events and more. Inspiration photos are AI-generated samples, clearly labeled.
+Not sure where to start? Browse inspiration by occasion: birthdays, kids' themed birthdays, showers, weddings, quinceañeras, Sweet 16s, graduations, holiday parties, corporate events and more. Inspiration photos are AI-generated samples, clearly labeled.
 
 Planning and keeping your plan are free. No subscription.
 
 Also from Always Luxe: Face Couture, for photo-ready glam.
 
 ## Keywords (iPhone, 100 max)
-party planner,event planning,birthday,baby shower,wedding,budget,venue,quinceanera,sweet 16,ideas
+party planner,event planner,wedding,birthday,baby shower,quinceanera,budget,venue,invitation,cultural
 
 ## What's new (first release)
 Plan any celebration from an inspiration photo: concepts, budget, venues, shopping list and more.
 
 ## App Review notes (paste into App Store Connect > App Review Information > Notes)
-No sign-in is needed. To try the app: tap Plan, type "black and gold 30th birthday for 40 guests in Houston", tap Next, choose any city and setting, then Create my concepts and choose one. Tap Keep my plan (free) to open every section. Under Budget & bookings > Venues, tap View venues to see live places from Google; Save up to 3 and tap Compare. Your finished plan (Overview tab) has Save as PDF, Email it to me and Share. Sample plans are on the Home screen. Inspiration photos are AI-generated and labeled as such. To see sharing: keep a plan, open Guests & invitations > Invitation and tap Send invitation; the link opens the guest page in any browser. Plans are stored on the device; only shared invitations and guests' RSVPs are stored on our server. There are no purchases in this version.
+No sign-in is needed and there are no purchases in this version. To try the app: tap Plan, type "black and gold 30th birthday for 40 guests in Houston", tap Next, choose a city and where it is, then Create my concepts and choose one. Every section is open. Under Budget & bookings, tap Create package 1 to get top-rated venues and vendors from Google, then Create package 2 to compare them side by side, and Choose one to start the booking checklist. Get quotes from vendors sends an anonymous request (no name or contact) that listed vendors can answer. Your finished plan has Save as PDF, Email it to me and Share. Sample plans are on the Home screen. Inspiration photos are AI-generated and labeled as such. To see sharing: open Guests & invitations > Invitation and tap Send invitation; the link opens the guest page in any browser. Plans are stored on the device; only shared invitations, guests' RSVPs and anonymous quote requests are stored on our server.
+
+## Screenshots
+Made from the real app screens by the "Store screenshots" job: store/shots/iphone-6.9 (App Store, required size), store/shots/iphone-6.5 and store/shots/android-phone (Google Play). Upload 1.png to 6.png in order.

@@ -7,7 +7,8 @@
   - User Content > Photos or Videos. Purpose: App Functionality. Not linked to identity, not used for tracking. (Inspiration photos are sent to our server and Google's AI to create concepts.)
   - User Content > Other User Content. Purpose: App Functionality. Not linked, not tracking. (The event description, city and guest count are sent to create concepts and find venues.)
   - Contact Info > Name. Purpose: App Functionality. Not linked, not tracking. (When a host shares an invitation, guests' RSVP names, plus-ones and dietary needs are stored on our server so the host can see them; deleted 30 days after the event.)
-  - Usage Data and Diagnostics: not collected. The app itself runs no analytics (Google Analytics only runs on the website).
+    - User Content > Other User Content (quote requests). Purpose: App Functionality. Not linked, not tracking. (When a host taps Get quotes, the city, kind of vendor, date, guest count, theme, budget for that item and any note are stored on our server for listed vendors to answer. No name or contact details are included. Requests are deleted 14 days after the event date.)
+- Usage Data and Diagnostics: not collected. The app itself runs no analytics (Google Analytics only runs on the website).
 - Plans, guest lists and photos stay on the phone. Only a shared invitation (event name, date, place, dress code, polls, gift list) and the RSVPs and votes guests send back are stored on our server, and they're deleted 30 days after the event or when the host deletes it.
 - If Google's AI ever keeps requests (free Gemini plan), the answers above still apply; just make sure the Privacy Policy says so.
 

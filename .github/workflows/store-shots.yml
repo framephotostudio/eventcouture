@@ -1,0 +1,23 @@
+name: Store screenshots
+# Makes the App Store and Google Play screenshots from the real app screens (with the brand fonts) and saves them in store/shots.
+on: { workflow_dispatch: {} }
+permissions: { contents: write }
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with: { ref: main, path: site }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm run build:web
+        env: { APP_VERSION: '1.0.0' }
+      - run: npm install --no-save playwright@1 && npx playwright install --with-deps chromium
+      - run: node scripts/store-shots.mjs
+      - uses: actions/upload-artifact@v4
+        with: { name: store-screenshots, path: store/shots }
+      - name: Save them in the project
+        run: |
+          git config user.name "Event Couture build"; git config user.email "build@facecouture.app"
+          git add store/shots && git commit -m "Store screenshots" && git pull --rebase && git push || echo "no changes"
