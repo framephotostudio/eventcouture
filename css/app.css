@@ -734,3 +734,9 @@ body:has(.pkg [data-pkuse]):not(:has(.sheet-back)) .toast { bottom: calc(96px + 
 .guest-promo img { border-radius: 10px; flex: none; }
 .guest-promo b { font-family: var(--display); font-size: 1.1rem; font-weight: 500; }
 .guest-promo p { margin: 4px 0 10px; }
+.culture-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.culture-card { display: grid; gap: 8px; align-content: start; border-top: 3px solid var(--champagne); }
+.culture-card h3 { margin: 0; }
+.culture-card p { margin: 0; }
+.culture-card .inv-orn { margin: 0; font-size: 1.2rem; }
+@media (max-width: 760px) { .culture-cards { grid-template-columns: 1fr; } }
