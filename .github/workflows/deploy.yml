@@ -65,6 +65,8 @@ jobs:
           cat js/config.js
       - name: Package site
         run: mkdir _site && cp -r index.html manifest.json css js img _site/
+      - name: Planning guides for search engines (one page per city and per occasion, plus a sitemap)
+        run: node tools/seo.cjs _site
       - name: Make returning visitors load this version's files (no old and new files mixed)
         run: |
           v=$(git rev-parse --short HEAD)
