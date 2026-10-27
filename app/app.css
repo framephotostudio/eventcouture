@@ -17,6 +17,3 @@ html.ec-app .toast { bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !impo
 html.ec-app .sheet-back { z-index: 60; }
 html.ec-app .sheet { padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
 html.ec-app body:has(.sheet-back) .toast { bottom: auto !important; top: calc(16px + env(safe-area-inset-top, 0px)); }   /* never cover a pop-up's buttons */
-/* Guided package: the Choose button stays above the tab bar, and messages above it */
-html.ec-app .pkg [data-pkuse] { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
-html.ec-app body:has(.pkg [data-pkuse]):not(:has(.sheet-back)) .toast { bottom: calc(146px + env(safe-area-inset-bottom, 0px)) !important; }
