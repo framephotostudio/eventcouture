@@ -83,7 +83,7 @@ with sync_playwright() as p:
         check(n, '1 of' in pg.inner_text('.pkg-top') and pg.get_attribute('.pkg-next','data-pkrow')!=first and '2 of' in pg.inner_text('.pkg-next .eyebrow').lower(), 'after booking, the next vendor comes up')
         sk=pg.get_attribute('.pkg-next','data-pkrow'); pg.click('.pkg-next [data-pkskip]'); pg.wait_for_timeout(300)
         check(n, pg.get_attribute('.pkg-next','data-pkrow')!=sk, 'skip for now moves on')
-        pg.click('.pkg-all summary'); pg.wait_for_timeout(200); check(n, 'Booked' in pg.inner_text('.pkg-all .pk-row >> nth=0'), 'whole package list shows what is booked')
+        check(n, 'Your final package' in pg.inner_text('#pkg') and 'You chose Package' in pg.inner_text('#pkg'), 'after choosing, it says this is the final package and how to finalize it'); check(n, 'Booked' in pg.inner_text('.pkg-all .pk-row >> nth=0'), 'whole package list shows what is booked')
         pg.goto(U+base+'/plan'); pg.wait_for_timeout(400); t=pg.inner_text('#tab'); check(n, 'Booked:' in t and 'Front-runner:' in t, 'finished plan shows the package')
         # remove package 1
         pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkback]'); pg.wait_for_timeout(300); pg.click('[data-pkdel="0"]'); pg.wait_for_timeout(300); d=ev()

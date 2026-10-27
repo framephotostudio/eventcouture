@@ -1522,7 +1522,7 @@
       }).join('');
       var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
       return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(2) + '<div class="pkg-top"><h3>Compare your packages</h3></div>' + AREA_LINE(ev) +
-        '<p class="pkg-guide">Each package has a top-rated pick for every part of your plan. Tap <b>Swap</b> on anything you don’t like, <b>×</b> to remove what you don’t need, then <b>Choose</b> your favorite.</p>' +
+        '<p class="pkg-guide">Each package has a top-rated pick for every part of your plan. Tap <b>Swap</b> on anything you don’t like, <b>×</b> to remove what you don’t need. When you’re happy, tap <b>Choose</b> on the one you like best: it becomes your <b>final package</b>, and we walk you through booking it.</p>' +
         '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of every package and your budget, and your estimated total goes down to match. You can add it back anytime.</p>' +
         '<div class="pkg-cmp-wrap"><table class="pkg-cmp" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + '</tbody></table></div>' +
         (ex.length && !ev.sample ? '<p class="small muted">Removed: ' + ex.map(function (id) { return esc(catName(id, ev)) + ' <button class="link small" data-pkunx="' + id + '">Add back</button>'; }).join(' · ') + '</p>' : '') +
@@ -1530,14 +1530,14 @@
     }
     var cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], skipped = ev.pkgSkipped || [];
     var open = cats.filter(function (c) { return statusOf(ev, c.cat) !== 'booked'; });
-    var all = '<details class="pkg-all"><summary>See your whole package (' + bookedN + ' of ' + cats.length + ' booked)</summary><div class="pkg-rows">' + cats.map(function (c) { return row(c, cp, 'book'); }).join('') + '</div></details>';
-    var back = '<button class="link small quiet" data-pkback>Go back and change packages</button>';
+    var all = '<details class="pkg-all" open><summary>Your final package (' + bookedN + ' of ' + cats.length + ' booked)</summary><div class="pkg-rows">' + cats.map(function (c) { return row(c, cp, 'book'); }).join('') + '</div></details>';
+    var back = '<button class="link small quiet" data-pkback>Change my choice: go back to comparing packages</button>';
     /* Step 4: everything booked. */
-    if (!open.length) return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(4) + '<div class="pkg-top"><h3>Everything is booked</h3></div><div class="meter"><i style="width:100%"></i></div><p class="pkg-guide">All ' + cats.length + ' parts of your plan are booked. Next, invite your guests.</p><a class="btn gold block" href="#/e/' + esc(ev.id) + '/invite">Invite my guests</a>' + all + '</div>';
+    if (!open.length) return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(4) + '<div class="pkg-top"><h3>Your package is final</h3></div><div class="meter"><i style="width:100%"></i></div><p class="pkg-guide">Everything is booked: all ' + cats.length + ' parts of your plan. Next, invite your guests.</p><a class="btn gold block" href="#/e/' + esc(ev.id) + '/invite">Invite my guests</a>' + all + '</div>';
     /* Step 3: one vendor at a time. */
     var next = open.find(function (c) { return skipped.indexOf(c.cat) < 0; }) || open[0], x = bizOf(cp, next.cat), pos = cats.indexOf(next) + 1;
-    return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(3) + '<div class="pkg-top"><h3>Book your vendors</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div><div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' +
-      '<p class="pkg-guide">We’ll go one at a time. When one is booked, we show you the next.</p>' +
+    return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(3) + '<div class="pkg-top"><h3>Your final package: Package ' + (Math.min(ev.pkgChosen || 0, pks.length - 1) + 1) + '</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div><div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' +
+      '<div class="note small pkg-final"><b>\u2713 You chose Package ' + (Math.min(ev.pkgChosen || 0, pks.length - 1) + 1) + '.</b> To finalize it, book each one: contact them, agree on the price, then tap <b>I booked it</b>. We\u2019ll take you through them one at a time. When all ' + cats.length + ' are booked, your package is final.</div>' +
       '<div class="pkg-next" data-pkrow="' + next.cat + '"><p class="eyebrow">Next up · ' + pos + ' of ' + cats.length + '</p><h3>' + esc(catName(next.cat, ev)) + '</h3>' +
         (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + (est(next.cat) ? ' · ' + est(next.cat) : '') + '</span></div>' +
           '<ol class="howto"><li><b>Contact them</b> to check your date and ask for a quote.<div class="row" style="margin-top:6px">' + links(x) + '</div></li>' +
@@ -2298,7 +2298,7 @@
   var FC_LINK = '<a class="fc-try small" href="https://facecouture.app/" target="_blank" rel="noopener" data-fc>\u2728 Try your glam look first on Face Couture</a>';
   /* After the party: the photos get their finish on Face Couture, the sister app. */
   function fcFinish(guest) {
-    return '<div class="panel fc-finish"><img src="img/brand/facecouture-icon-128.png" alt="" width="52" height="52"><div><span class="eyebrow">' + (guest ? 'Before you post' : 'After the party') + '</span><b>' + (guest ? 'Edit your photos from tonight with Face Couture' : 'Edit your event photos with Face Couture') + '</b><p class="small muted">' + (guest ? 'Glow, glam and a flawless finish in seconds, so every photo from tonight is ready to share.' : 'Glow, glam and a flawless finish for every photo from your celebration, in seconds. Picture perfect, every time.') + '</p><a class="btn small gold" href="https://facecouture.app/" target="_blank" rel="noopener" data-fc>Edit my photos</a></div></div>';
+    return '<div class="panel fc-finish"><img src="img/brand/facecouture-icon-128.png" alt="" width="52" height="52"><div><span class="eyebrow">' + (guest ? 'Before you post' : 'After the party') + '</span><b>' + (guest ? 'Edit your photos from tonight with Face Couture' : 'Edit your event photos with Face Couture') + '</b><p class="small muted">' + (guest ? 'Glow, glam and a flawless finish in seconds, so every photo from tonight is ready to share.' : 'Glow, glam and a flawless finish for every photo from your celebration, in seconds. Picture perfect, every time.') + '</p><div class="row"><a class="btn small gold" href="https://facecouture.app/" target="_blank" rel="noopener" data-fc>Edit on the website</a>' + (CFG.faceCoutureApp ? '<a class="btn small ghost" href="' + esc(CFG.faceCoutureApp) + '" target="_blank" rel="noopener" data-fc>Get the app</a>' : '<span class="badge">iPhone app coming soon</span>') + '</div></div></div>';
   }
   function guestPromo() {
     return '<div class="panel guest-promo"><img src="img/brand/ec-mark-128.png" alt="" width="44" height="44"><div><b>Planning something of your own?</b><p class="small muted">This celebration was planned with Event Couture by Always Luxe. Share one photo or a few words and get the whole event: the look, the budget, venues, vendors and an invitation like this one. Free to plan.</p><a class="btn small gold" href="#/new/1" data-promo>Plan my event</a></div></div>';
