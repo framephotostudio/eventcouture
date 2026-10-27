@@ -42,7 +42,7 @@
   /* ---------- Budget ---------- */
   /* Cultural weddings (Arabic, Indian, Persian) are weddings with their own traditions and music. */
   function culture(ev) { return ev && ev.type === 'wedding' && ev.culture && D.CULTURES && D.CULTURES[ev.culture] || null; }
-  var MUSIC_CATS = ['dj', 'liveMusic', 'singer', 'zaffe', 'dhol', 'dabke', 'qawwali', 'mariachi', 'lionDance'];
+  var MUSIC_CATS = ['dj', 'liveMusic', 'singer', 'zaffe', 'dhol', 'dabke', 'qawwali', 'mariachi', 'lionDance', 'flamenco', 'dakka'];
   function musicOf(ev) { var cu = culture(ev); if (!cu) return []; var ok = cu.music.map(function (m) { return m[0]; }); var m = (Array.isArray(ev.music) ? ev.music : cu.musicDefault).filter(function (x) { return ok.indexOf(x) >= 0; }); return m; }
   function typeName(ev) { var cu = culture(ev); return cu ? cu.name : typeOf(ev && ev.type).name; }
   function categoriesFor(ev) {

@@ -540,7 +540,7 @@
   function selCulture() { var o = $('#type') && $('#type').selectedOptions[0]; return (o && o.dataset.culture) || ''; }
   function guessCulture(text) {
     text = (text || '').toLowerCase();
-    if (/\b(arab|arabic|lebanese|syrian|palestinian|jordanian|iraqi|egyptian|moroccan|zaffe|zaffa|zaffeh|dabke|kosha)\b/.test(text)) return 'arabic';
+    if (/\b(arab|arabic|lebanese|syrian|palestinian|jordanian|iraqi|egyptian|zaffe|zaffa|zaffeh|dabke|kosha)\b/.test(text)) return 'arabic';
     if (/\b(indian|desi|hindu|sikh|punjabi|gujarati|mandap|baraat|sangeet|pheras)\b/.test(text)) return 'indian';
     if (/\b(persian|iranian|sofreh|aghd)\b/.test(text)) return 'persian';
     if (/\b(pakistani|nikah|walima|rukhsati|dholki|qawwali)\b/.test(text)) return 'pakistani';
@@ -551,6 +551,9 @@
     if (/\b(filipino|filipina|pinoy|ninong|ninang|lechon)\b/.test(text)) return 'filipino';
     if (/\b(nigerian|naija|yoruba|igbo|aso ebi|aso-ebi|gele)\b/.test(text)) return 'nigerian';
     if (/\b(greek|stefana|koumbaro|bouzouki)\b/.test(text)) return 'greek';
+    if (/\b(moroccan|morocco|negafa|takchita|amariya|amaria)\b/.test(text)) return 'moroccan';
+    if (/\b(spanish|spain|espa\u00f1ola|flamenco)\b/.test(text)) return 'spanish';
+    if (/\b(russian|ukrainian|tamada|karavai)\b/.test(text)) return 'russian';
     return '';
   }
   function musicChips(d) {

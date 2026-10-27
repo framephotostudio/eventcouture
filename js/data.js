@@ -86,6 +86,11 @@
     gele:         { name: 'Gele tying for the bride and family', group: 'Look', fixed: [150, 600], flat: true, tier: 'LSU', tip: true },
     stefana:      { name: 'Stefana crowns and koumbaro gifts', group: 'Style', fixed: [150, 500], flat: true, tier: 'LSU', taxable: true },
     lazo:         { name: 'Lazo, arras and padrinos gifts', group: 'Style', fixed: [80, 350], flat: true, tier: 'LSU', taxable: true },
+    flamenco:     { name: 'Flamenco or rumba group', group: 'Music and fun', fixed: [800, 2500], flat: true, tier: 'LSU', tip: true },
+    jamon:        { name: 'Jam\u00f3n carver station', group: 'Food and drink', fixed: [600, 1800], flat: true, tier: 'LSU', taxable: true },
+    karavai:      { name: 'Karavai bread for the bread-and-salt welcome', group: 'Food and drink', fixed: [80, 250], flat: true, tier: 'LSU', taxable: true },
+    negafa:       { name: 'Negafa: outfit changes, jewelry and the amariya', group: 'Look', fixed: [1500, 5000], flat: true, tier: 'LSU', tip: true },
+    dakka:        { name: 'Dakka marrakchia or Andalusian band', group: 'Music and fun', fixed: [1000, 3500], flat: true, tier: 'LSU', tip: true },
     /* Restaurant, ordering from the menu: no venue, catering or rentals. Lunch and brunch cost about 20% less than dinner. */
     restaurantFood:   { name: 'Meals ordered from the menu', group: 'Food and drink', perGuest: [26, 42], tier: 'LSU', taxable: true, gratuity: true, meal: true },
     restaurantDrinks: { name: 'Drinks (about two per person)', group: 'Food and drink', perGuest: [12, 22], tier: 'LSU', taxable: true, gratuity: true, meal: true },
@@ -219,6 +224,33 @@
       search: { liveMusic: 'nigerian live band', dj: 'afrobeats wedding DJ', mc: 'nigerian wedding MC', catering: 'nigerian catering', gele: 'gele tying stylist', photographer: 'nigerian wedding photographer', hairMakeup: 'nigerian bridal makeup artist', decor: 'nigerian wedding decor' },
       hint: 'nigerian,naija,yoruba,igbo,african,afrobeats,aso ebi',
       moments: [[-30, 'Guests arrive in aso ebi'], [0, 'Grand entrance of the families'], [30, 'The couple dances in as guests spray money'], [60, 'Dinner'], [120, 'Toasts and the cake'], [150, 'Dancing and spraying'], ['end', 'Send-off']]
+    },
+    spanish: {
+      name: 'Spanish wedding', guests: 180, hours: 7, menu: 'spanish', blurb: 'The 13 arras coins and padrinos, a jam\u00f3n carver, a late dinner, detalles for guests and flamenco or rumba.',
+      music: [['dj', 'DJ'], ['flamenco', 'Flamenco or rumba'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj', 'flamenco'],
+      add: ['lazo', 'jamon'], pre: 'Together with their families and padrinos',
+      labels: { lazo: 'Arras (13 coins) and padrinos gifts', catering: 'Spanish catering', favors: 'Detalles (small gifts for every guest)', cake: 'Wedding cake and Spanish sweets', officiant: 'Priest or officiant' },
+      search: { flamenco: 'flamenco rumba group', dj: 'spanish wedding DJ', catering: 'spanish catering tapas', jamon: 'jamon carver cortador', cake: 'spanish bakery', photographer: 'wedding photographer' },
+      hint: 'spanish,spain,espanol,tapas,flamenco,paella',
+      moments: [[-30, 'Guests arrive'], [0, 'Ceremony with the arras and padrinos'], [60, 'C\u00f3ctel with the jam\u00f3n carver'], [120, 'Grand entrance and dinner'], [210, 'Detalles for the guests and the tie is cut and \u201csold\u201d'], [240, 'First dance and dancing'], ['end', 'Send-off']]
+    },
+    russian: {
+      name: 'Russian wedding', guests: 120, hours: 7, menu: 'russian', blurb: 'The bread-and-salt welcome, a tamada who runs the night, toasts, \u201cGorko!\u201d and a long feast.',
+      music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj', 'singer'],
+      add: ['mc', 'karavai'], pre: 'Together with their families',
+      labels: { mc: 'Tamada (toastmaster and host)', catering: 'Russian and Eastern European catering', singer: 'Wedding singer (Russian and English)', cake: 'Wedding cake and Russian desserts' },
+      search: { mc: 'russian wedding tamada host', dj: 'russian wedding DJ', singer: 'russian wedding singer', catering: 'russian restaurant banquet', karavai: 'russian bakery karavai', cake: 'russian bakery', photographer: 'russian wedding photographer' },
+      hint: 'russian,ukrainian,slavic,tamada,banquet',
+      moments: [[-150, 'The bride ransom games at her home'], [0, 'Guests arrive'], [20, 'Bread-and-salt welcome with the karavai'], [40, 'The tamada opens the feast with zakuski'], [90, 'Toasts and \u201cGorko!\u201d'], [150, 'Hot dishes, games and dancing'], [240, 'Cake'], ['end', 'Send-off']]
+    },
+    moroccan: {
+      name: 'Moroccan wedding', guests: 250, hours: 7, menu: 'moroccan', blurb: 'A negafa and several outfit changes, the amariya, dakka or Andalusian music, mint tea and pastilla.',
+      music: [['dakka', 'Dakka or Andalusian band'], ['dj', 'DJ'], ['singer', 'Singer']], musicDefault: ['dakka', 'dj'],
+      add: ['negafa', 'teaCeremony', 'mehndi'], pre: 'With the blessing of God and their families',
+      labels: { teaCeremony: 'Moroccan mint tea service', mehndi: 'Henna artist for the henna night', catering: 'Moroccan catering', officiant: 'Imam or officiant', cake: 'Wedding cake and Moroccan pastries', kosha: 'Stage for the couple' },
+      search: { dakka: 'dakka marrakchia band', dj: 'moroccan wedding DJ', singer: 'moroccan wedding singer', negafa: 'negafa moroccan wedding', catering: 'moroccan catering', teaCeremony: 'moroccan tea service', mehndi: 'henna artist', cake: 'moroccan pastries', photographer: 'moroccan wedding photographer' },
+      hint: 'moroccan,maghreb,arab,negafa,takchita,kaftan,amariya',
+      moments: [[-30, 'Guests arrive to mint tea and pastries'], [0, 'The couple enters on the amariya to dakka drums'], [45, 'First outfit and photos'], [90, 'Dinner: pastilla, tagine and mechoui'], [150, 'Outfit changes and dancing'], [240, 'Cake and the final outfit'], ['end', 'Send-off']]
     },
     greek: {
       name: 'Greek wedding', guests: 200, hours: 6, menu: 'greek', blurb: 'The stefana crowns and koumbaro, the Dance of Isaiah, a Greek band and the money dance.',
@@ -426,6 +458,9 @@
     filipino: ['Lumpia shanghai', 'Lechon', 'Chicken adobo and pancit', 'Kare-kare', 'Leche flan, ube cake and buko pandan', 'Calamansi juice'],
     nigerian: ['Small chops: puff puff, samosa, spring rolls', 'Jollof rice and fried rice', 'Peppered chicken and suya', 'Pounded yam with egusi soup', 'Chin chin and wedding cake', 'Zobo and Chapman mocktail'],
     greek: ['Spanakopita and dips with pita', 'Greek salad', 'Lamb or chicken souvlaki', 'Moussaka or pastitsio', 'Baklava and koufeta (sugared almonds)', 'Lemonade and Greek coffee'],
+    spanish: ['Tapas: croquetas, tortilla espa\u00f1ola, gambas al ajillo', 'Jam\u00f3n ib\u00e9rico carved to order', 'Paella', 'Solomillo or sea bass', 'Turr\u00f3n, crema catalana and wedding cake', 'Fresh juices and Spanish hot chocolate'],
+    russian: ['Zakuski: blini with caviar, herring under a fur coat, pickles', 'Olivier salad', 'Pelmeni and pirozhki', 'Beef stroganoff or shashlik', 'Medovik and napoleon cake', 'Mors (berry drink) and tea'],
+    moroccan: ['Moroccan salads and briouats', 'Chicken or seafood pastilla', 'Lamb tagine with prunes and almonds', 'Mechoui and couscous', 'Moroccan pastries: cornes de gazelle, chebakia', 'Mint tea'],
     sweet: ['Finger sandwiches', 'Fruit skewers', 'Mini quiches', 'Macaron tower', 'Cake pops', 'Pink lemonade'],
     party: ['Loaded slider bar', 'Wings and dips', 'Taco station', 'Veggie crudités', 'Cupcake tower', 'Glitter cocktail and mocktail']
   };
@@ -460,6 +495,13 @@
     { w: 20, t: 'Book the MC and live band', cu: 'nigerian' },
     { w: 2, t: 'Get crisp bills for spraying', cu: 'nigerian' },
     { w: 32, t: 'Book the church and meet the priest', cu: 'greek' },
+    { w: 24, t: 'Choose your padrinos and the 13 arras coins', cu: 'spanish' },
+    { w: 8, t: 'Order the detalles for every guest', cu: 'spanish' },
+    { w: 28, t: 'Book the tamada first: the night runs around them', cu: 'russian' },
+    { w: 4, t: 'Order the karavai and plan the bride ransom games', cu: 'russian' },
+    { w: 32, t: 'Book the negafa and choose the outfits and the amariya', cu: 'moroccan' },
+    { w: 20, t: 'Book the dakka or Andalusian band', cu: 'moroccan' },
+    { w: 8, t: 'Plan the henna night', cu: 'moroccan' },
     { w: 12, t: 'Choose your koumbaro or koumbara and the stefana', cu: 'greek' },
     { w: 12, t: 'Plan the sofreh aghd: mirror, candelabras, sweets, honey and flowers', cu: 'persian' },
     { w: 4, t: 'Order Persian sweets and the wedding cake', cu: 'persian' },
