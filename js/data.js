@@ -76,6 +76,16 @@
     mehndi:       { name: 'Mehndi (henna) artist for the bride and guests', group: 'Look', fixed: [350, 1400], flat: true, tier: 'LSU', tip: true },
     baraat:       { name: 'Baraat (the groom\u2019s horse or car arrival)', group: 'Logistics', fixed: [900, 2800], flat: true, tier: 'SU' },
     sofreh:       { name: 'Sofreh aghd (the ceremony spread)', group: 'Style', fixed: [800, 3500], flat: true, tier: 'LSU', taxable: true },
+    qawwali:      { name: 'Qawwali group', group: 'Music and fun', fixed: [1200, 4000], flat: true, tier: 'LSU', tip: true },
+    mariachi:     { name: 'Mariachi band', group: 'Music and fun', fixed: [600, 1800], flat: true, tier: 'LSU', tip: true },
+    lionDance:    { name: 'Lion dance troupe', group: 'Music and fun', fixed: [600, 1600], flat: true, tier: 'LSU', tip: true },
+    teaCeremony:  { name: 'Tea ceremony set and setup', group: 'Style', fixed: [150, 700], flat: true, tier: 'LSU', taxable: true },
+    giftTrays:    { name: 'M\u00e2m qu\u1ea3 gift trays (betel, fruit, sweets, tea)', group: 'Style', fixed: [300, 1200], flat: true, tier: 'LSU', taxable: true },
+    pyebaek:      { name: 'Pyebaek ceremony set and hanbok rental', group: 'Look', fixed: [400, 1500], flat: true, tier: 'LSU', taxable: true },
+    sponsors:     { name: 'Veil, cord and coins for the sponsors\u2019 rites', group: 'Style', fixed: [100, 400], flat: true, tier: 'LSU', taxable: true },
+    gele:         { name: 'Gele tying for the bride and family', group: 'Look', fixed: [150, 600], flat: true, tier: 'LSU', tip: true },
+    stefana:      { name: 'Stefana crowns and koumbaro gifts', group: 'Style', fixed: [150, 500], flat: true, tier: 'LSU', taxable: true },
+    lazo:         { name: 'Lazo, arras and padrinos gifts', group: 'Style', fixed: [80, 350], flat: true, tier: 'LSU', taxable: true },
     /* Restaurant, ordering from the menu: no venue, catering or rentals. Lunch and brunch cost about 20% less than dinner. */
     restaurantFood:   { name: 'Meals ordered from the menu', group: 'Food and drink', perGuest: [26, 42], tier: 'LSU', taxable: true, gratuity: true, meal: true },
     restaurantDrinks: { name: 'Drinks (about two per person)', group: 'Food and drink', perGuest: [12, 22], tier: 'LSU', taxable: true, gratuity: true, meal: true },
@@ -121,7 +131,7 @@
   /* Cultural weddings: each tradition's music choices, the vendors it always has, and what lines are called. */
   var CULTURES = {
     arabic: {
-      name: 'Arabic wedding', guests: 250, hours: 6, menu: 'arabic',
+      name: 'Arabic wedding', guests: 250, hours: 6, menu: 'arabic', blurb: 'Zaffe entrance, live band and singer, the kosha, dabke and a mezze-to-knafeh menu.', pre: 'With the blessing of God and their families',
       music: [['zaffe', 'Zaffe group'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dj', 'DJ'], ['dabke', 'Dabke troupe']], musicDefault: ['zaffe', 'liveMusic', 'dj'],
       add: ['kosha'],
       labels: { liveMusic: 'Live band (Arabic music)', singer: 'Arabic wedding singer', officiant: 'Officiant (sheikh or priest)', catering: 'Middle Eastern catering', cake: 'Wedding cake and Arabic sweets', dj: 'DJ (Arabic and international music)' },
@@ -130,7 +140,7 @@
       moments: [[-30, 'Guests arrive and are seated'], [0, 'Zaffe: drums and dancers lead the couple in'], [20, 'The couple takes their seats at the kosha'], [40, 'First dance'], [60, 'Dinner'], [120, 'Dabke and dancing'], [180, 'Cake cutting and sweets'], ['end', 'Send-off']]
     },
     indian: {
-      name: 'Indian wedding', guests: 300, hours: 7, menu: 'indian',
+      name: 'Indian wedding', guests: 300, hours: 7, menu: 'indian', blurb: 'Baraat with dhol, the mandap, mehndi artist, Bollywood DJ and a full Indian menu.', pre: 'With the blessings of their families',
       music: [['dhol', 'Dhol player'], ['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dhol', 'dj'],
       add: ['mandap', 'mehndi', 'baraat'],
       labels: { officiant: 'Pandit (priest) for the ceremony', catering: 'Indian catering', dj: 'DJ (Bollywood and bhangra)', liveMusic: 'Live band (Indian music)', singer: 'Wedding singer (Indian music)', cake: 'Wedding cake and mithai' },
@@ -139,13 +149,85 @@
       moments: [[-60, 'Baraat: the groom arrives with dhol and dancing'], [-15, 'Milni: the families greet each other'], [0, 'Ceremony at the mandap'], [90, 'Cocktail hour and appetizers'], [150, 'Grand entrance and dinner'], [210, 'Speeches and first dance'], [240, 'Dancing'], ['end', 'Vidaai: the send-off']]
     },
     persian: {
-      name: 'Persian wedding', guests: 200, hours: 6, menu: 'persian',
+      name: 'Persian wedding', guests: 200, hours: 6, menu: 'persian', blurb: 'Sofreh aghd, the aghd ceremony, live Persian music, the knife dance and jeweled rice.',
       music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj', 'liveMusic'],
       add: ['sofreh'],
       labels: { officiant: 'Aghd officiant', catering: 'Persian catering', dj: 'DJ (Persian and international music)', liveMusic: 'Live band (Persian music)', singer: 'Persian wedding singer', cake: 'Wedding cake and Persian sweets' },
       search: { dj: 'persian wedding DJ', liveMusic: 'persian wedding band', singer: 'persian wedding singer', sofreh: 'sofreh aghd', catering: 'persian catering', officiant: 'persian aghd officiant', cake: 'persian bakery sweets' },
       hint: 'persian,iranian,sofreh,aghd',
       moments: [[-30, 'Guests arrive'], [0, 'Aghd ceremony at the sofreh'], [45, 'Sugar rubbed over a cloth held above the couple, and blessings'], [75, 'Grand entrance'], [90, 'Dinner'], [150, 'Knife dance and cake cutting'], [180, 'Dancing'], ['end', 'Send-off']]
+    },
+    pakistani: {
+      name: 'Pakistani wedding', guests: 300, hours: 6, menu: 'pakistani', blurb: 'Nikah with an imam, the baraat with dhol, a stage for the couple, qawwali and the rukhsati.',
+      music: [['dhol', 'Dhol player'], ['dj', 'DJ'], ['qawwali', 'Qawwali group'], ['singer', 'Singer'], ['liveMusic', 'Live band']], musicDefault: ['dhol', 'dj'],
+      add: ['kosha', 'mehndi'], pre: 'With the blessings of their families',
+      labels: { kosha: 'Stage and seating for the couple', officiant: 'Imam or maulvi for the nikah', catering: 'Pakistani catering', dj: 'DJ (Punjabi, Bollywood and pop)', cake: 'Wedding cake and mithai', mehndi: 'Mehndi (henna) artist for the bride and family' },
+      search: { dhol: 'dhol player', dj: 'pakistani wedding DJ', qawwali: 'qawwali group', singer: 'pakistani wedding singer', kosha: 'pakistani wedding stage decor', mehndi: 'mehndi henna artist', catering: 'pakistani catering', officiant: 'imam nikah officiant', cake: 'pakistani sweets mithai', photographer: 'pakistani wedding photographer', hairMakeup: 'pakistani bridal makeup artist', decor: 'pakistani wedding decor' },
+      hint: 'pakistani,desi,south asian,nikah,mehndi,dhol,halal',
+      moments: [[-60, 'Baraat: the groom and his family arrive with dhol'], [0, 'Nikah ceremony'], [45, 'The couple takes the stage'], [75, 'Dinner'], [150, 'Photos with family and friends'], [180, 'Music and dancing'], ['end', 'Rukhsati: the bride\u2019s send-off']]
+    },
+    mexican: {
+      name: 'Mexican wedding', guests: 200, hours: 6, menu: 'mexican', blurb: 'Padrinos, the lazo and arras, mariachi, the v\u00edbora de la mar and the money dance.',
+      music: [['mariachi', 'Mariachi'], ['liveMusic', 'Banda or live band'], ['dj', 'DJ']], musicDefault: ['mariachi', 'dj'],
+      add: ['lazo'], pre: 'Together with their families and padrinos',
+      labels: { officiant: 'Priest or officiant', catering: 'Mexican catering', liveMusic: 'Banda or live band', dj: 'DJ (Latin and pop)', cake: 'Wedding cake and Mexican sweets' },
+      search: { mariachi: 'mariachi band', liveMusic: 'banda musical para bodas', dj: 'latin wedding DJ', catering: 'mexican catering', officiant: 'catholic wedding priest', cake: 'mexican bakery wedding cake', lazo: 'wedding lazo arras', photographer: 'latino wedding photographer' },
+      hint: 'mexican,latino,latina,hispanic,boda,mariachi,taqueria',
+      moments: [[-30, 'Guests arrive'], [0, 'Ceremony with the lazo and arras'], [45, 'Cocktail hour with mariachi'], [105, 'Grand entrance and dinner'], [165, 'First dance and the money dance'], [195, 'La v\u00edbora de la mar'], [225, 'Cake and dancing'], ['end', 'Send-off']]
+    },
+    chinese: {
+      name: 'Chinese wedding', guests: 200, hours: 5, menu: 'chinese', blurb: 'Tea ceremony, red and gold, the door games, a banquet of many courses and lion dancers.',
+      music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['lionDance', 'Lion dance troupe']], musicDefault: ['dj', 'lionDance'],
+      add: ['teaCeremony'], pre: 'Together with their families',
+      labels: { catering: 'Chinese banquet (8 to 10 courses)', cake: 'Wedding cake and Chinese desserts', decor: 'Red and gold decor with double happiness' },
+      search: { lionDance: 'lion dance troupe', dj: 'chinese wedding DJ', liveMusic: 'wedding band', catering: 'chinese banquet restaurant', teaCeremony: 'chinese tea ceremony set', cake: 'chinese bakery', photographer: 'chinese wedding photographer', decor: 'chinese wedding decor', hairMakeup: 'asian bridal makeup artist' },
+      hint: 'chinese,cantonese,mandarin,banquet,dim sum,tea ceremony',
+      moments: [[-90, 'Tea ceremony with both families'], [-15, 'Guests arrive; red envelopes go in the box'], [0, 'Lion dance welcome'], [30, 'Grand entrance'], [45, 'Banquet begins, course by course'], [120, 'Toasts and table visits'], [150, 'Outfit change into a qipao'], [180, 'Cake and dancing'], ['end', 'Send-off']]
+    },
+    vietnamese: {
+      name: 'Vietnamese wedding', guests: 250, hours: 5, menu: 'vietnamese', blurb: 'The procession with gift trays, a tea ceremony at the family altar, \u00e1o d\u00e0i and a banquet.',
+      music: [['dj', 'DJ'], ['singer', 'Singer'], ['liveMusic', 'Live band']], musicDefault: ['dj', 'singer'],
+      add: ['giftTrays', 'teaCeremony'], pre: 'Together with their families',
+      labels: { catering: 'Vietnamese banquet (multi-course)', cake: 'Wedding cake and Vietnamese desserts', singer: 'Wedding singer (Vietnamese and English)' },
+      search: { dj: 'vietnamese wedding DJ', singer: 'vietnamese wedding singer', catering: 'vietnamese banquet restaurant', giftTrays: 'mam qua wedding trays', teaCeremony: 'vietnamese tea ceremony set', photographer: 'vietnamese wedding photographer', hairMakeup: 'asian bridal makeup artist', attire: 'ao dai boutique' },
+      hint: 'vietnamese,viet,ao dai,banquet,pho',
+      moments: [[-120, 'Procession with gift trays to the bride\u2019s home'], [-90, 'Tea ceremony at the family altar'], [0, 'Guests arrive at the reception'], [30, 'Grand entrance'], [45, 'Banquet, course by course'], [120, 'Toasts and table visits by the couple'], [150, 'Cake and dancing'], ['end', 'Send-off']]
+    },
+    korean: {
+      name: 'Korean wedding', guests: 200, hours: 4, menu: 'korean', blurb: 'A pyebaek ceremony in hanbok with chestnuts and dates, then dinner and dancing.',
+      music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj'],
+      add: ['pyebaek'], pre: 'Together with their families',
+      labels: { catering: 'Korean catering', cake: 'Wedding cake and rice cakes (tteok)' },
+      search: { dj: 'korean wedding DJ', pyebaek: 'pyebaek ceremony hanbok rental', catering: 'korean catering', cake: 'korean bakery', photographer: 'korean wedding photographer', hairMakeup: 'korean bridal makeup artist' },
+      hint: 'korean,hanbok,pyebaek,kbbq',
+      moments: [[-30, 'Guests arrive'], [0, 'Ceremony'], [40, 'Pyebaek in hanbok with the families'], [90, 'Grand entrance and dinner'], [150, 'Toasts and first dance'], [180, 'Cake and dancing'], ['end', 'Send-off']]
+    },
+    filipino: {
+      name: 'Filipino wedding', guests: 200, hours: 6, menu: 'filipino', blurb: 'Veil, cord and coin sponsors, the money dance, a live band and lechon.',
+      music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj', 'singer'],
+      add: ['sponsors'], pre: 'Together with their families and principal sponsors',
+      labels: { catering: 'Filipino catering (with lechon)', cake: 'Wedding cake and Filipino desserts', officiant: 'Priest or officiant' },
+      search: { dj: 'filipino wedding DJ', singer: 'filipino wedding singer', catering: 'filipino catering lechon', cake: 'filipino bakery ube cake', photographer: 'filipino wedding photographer', officiant: 'catholic wedding priest' },
+      hint: 'filipino,pinoy,lechon,ninong,ninang',
+      moments: [[-30, 'Guests arrive'], [0, 'Ceremony with the veil, cord and coins'], [60, 'Cocktail hour'], [105, 'Grand entrance and dinner'], [165, 'First dance and the money dance'], [195, 'Cake and dancing'], ['end', 'Send-off']]
+    },
+    nigerian: {
+      name: 'Nigerian wedding', guests: 300, hours: 6, menu: 'nigerian', blurb: 'Aso ebi for guests, gele, a lively MC, a live band, spraying money and jollof.',
+      music: [['liveMusic', 'Live band (highlife or juju)'], ['dj', 'DJ'], ['singer', 'Singer']], musicDefault: ['liveMusic', 'dj'],
+      add: ['gele', 'mc'], pre: 'Together with their families',
+      labels: { catering: 'Nigerian catering', liveMusic: 'Live band (highlife or juju)', dj: 'DJ (Afrobeats and more)', mc: 'MC to run the reception', cake: 'Wedding cake and small chops' },
+      search: { liveMusic: 'nigerian live band', dj: 'afrobeats wedding DJ', mc: 'nigerian wedding MC', catering: 'nigerian catering', gele: 'gele tying stylist', photographer: 'nigerian wedding photographer', hairMakeup: 'nigerian bridal makeup artist', decor: 'nigerian wedding decor' },
+      hint: 'nigerian,naija,yoruba,igbo,african,afrobeats,aso ebi',
+      moments: [[-30, 'Guests arrive in aso ebi'], [0, 'Grand entrance of the families'], [30, 'The couple dances in as guests spray money'], [60, 'Dinner'], [120, 'Toasts and the cake'], [150, 'Dancing and spraying'], ['end', 'Send-off']]
+    },
+    greek: {
+      name: 'Greek wedding', guests: 200, hours: 6, menu: 'greek', blurb: 'The stefana crowns and koumbaro, the Dance of Isaiah, a Greek band and the money dance.',
+      music: [['liveMusic', 'Greek band (bouzouki)'], ['dj', 'DJ'], ['singer', 'Singer']], musicDefault: ['liveMusic', 'dj'],
+      add: ['stefana'], pre: 'With the blessing of God and their families',
+      labels: { officiant: 'Greek Orthodox priest', catering: 'Greek catering', liveMusic: 'Greek band (bouzouki)', cake: 'Wedding cake and Greek sweets' },
+      search: { liveMusic: 'greek band bouzouki', dj: 'greek wedding DJ', catering: 'greek catering', officiant: 'greek orthodox church wedding', stefana: 'stefana wedding crowns', cake: 'greek bakery', photographer: 'greek wedding photographer' },
+      hint: 'greek,hellenic,orthodox,bouzouki',
+      moments: [[-30, 'Guests arrive'], [0, 'Ceremony with the stefana crowns and the Dance of Isaiah'], [60, 'Cocktail hour'], [105, 'Grand entrance and dinner'], [165, 'First dance and the money dance'], [195, 'Kalamatianos circle dance'], [225, 'Cake and dancing'], ['end', 'Send-off']]
     }
   };
   var TIERS = [
@@ -336,6 +418,14 @@
     arabic: ['Mezze: hummus, moutabal, tabbouleh and fattoush', 'Mixed grill: shish tawook and kafta', 'Ouzi or mansaf (lamb with rice)', 'Stuffed grape leaves and kibbeh', 'Knafeh and baklava', 'Fresh juices, mint lemonade and Arabic coffee'],
     indian: ['Paneer tikka and samosas', 'Butter chicken and dal makhani', 'Biryani', 'Naan and rice', 'Gulab jamun and mithai', 'Mango lassi and masala chai'],
     persian: ['Mast-o-khiar and Shirazi salad', 'Joojeh and koobideh kabob', 'Jeweled rice (morasa polo) with tahdig', 'Ghormeh sabzi', 'Persian sweets and saffron ice cream', 'Rose sharbat and Persian tea'],
+    pakistani: ['Chicken and beef seekh kebabs', 'Chicken karahi', 'Mutton biryani', 'Nihari with naan', 'Kheer, gulab jamun and mithai', 'Mango lassi and doodh patti chai'],
+    mexican: ['Guacamole, salsas and ceviche', 'Carne asada and chicken in mole', 'Arroz and frijoles charros', 'Taco or tamale station', 'Tres leches cake and churros', 'Aguas frescas: horchata and jamaica'],
+    chinese: ['Roast suckling pig or Peking duck', 'Lobster or crab with ginger and scallion', 'Steamed whole fish', 'Longevity noodles and fried rice', 'Sweet red bean soup and lotus buns', 'Jasmine tea'],
+    vietnamese: ['Fresh spring rolls and crispy cha gio', 'Lobster or crab with garlic noodles', 'Roast duck or quail', 'Fried rice and stir-fried greens', 'Che and sesame balls', 'Jasmine tea and Vietnamese iced coffee'],
+    korean: ['Japchae and pajeon', 'Galbi (marinated short ribs)', 'Bulgogi with lettuce wraps', 'Banchan and rice', 'Tteok rice cakes and fruit', 'Barley tea and sikhye'],
+    filipino: ['Lumpia shanghai', 'Lechon', 'Chicken adobo and pancit', 'Kare-kare', 'Leche flan, ube cake and buko pandan', 'Calamansi juice'],
+    nigerian: ['Small chops: puff puff, samosa, spring rolls', 'Jollof rice and fried rice', 'Peppered chicken and suya', 'Pounded yam with egusi soup', 'Chin chin and wedding cake', 'Zobo and Chapman mocktail'],
+    greek: ['Spanakopita and dips with pita', 'Greek salad', 'Lamb or chicken souvlaki', 'Moussaka or pastitsio', 'Baklava and koufeta (sugared almonds)', 'Lemonade and Greek coffee'],
     sweet: ['Finger sandwiches', 'Fruit skewers', 'Mini quiches', 'Macaron tower', 'Cake pops', 'Pink lemonade'],
     party: ['Loaded slider bar', 'Wings and dips', 'Taco station', 'Veggie crudités', 'Cupcake tower', 'Glitter cocktail and mocktail']
   };
@@ -352,6 +442,25 @@
     { w: 16, t: 'Choose the kosha design and its flowers', cu: 'arabic' },
     { w: 4, t: 'Order Arabic sweets (knafeh, baklava) and favors', cu: 'arabic' },
     { w: 24, t: 'Book the aghd officiant', cu: 'persian' },
+    { w: 32, t: 'Book the imam or maulvi and prepare the nikah nama', cu: 'pakistani' },
+    { w: 20, t: 'Plan the dholki and mehndi nights', cu: 'pakistani' },
+    { w: 16, t: 'Plan the walima, the groom\u2019s family reception', cu: 'pakistani' },
+    { w: 24, t: 'Ask your padrinos and choose the lazo and arras', cu: 'mexican' },
+    { w: 20, t: 'Book the mariachi early: the best ones fill up first', cu: 'mexican' },
+    { w: 40, t: 'Choose a lucky date and book the banquet restaurant', cu: 'chinese' },
+    { w: 16, t: 'Book the lion dance and order the red envelope box', cu: 'chinese' },
+    { w: 8, t: 'Plan the door games and the tea ceremony', cu: 'chinese' },
+    { w: 16, t: 'Order the gift trays and plan the procession', cu: 'vietnamese' },
+    { w: 12, t: 'Order \u00e1o d\u00e0i for the couple and family', cu: 'vietnamese' },
+    { w: 16, t: 'Reserve the hanbok and pyebaek set', cu: 'korean' },
+    { w: 6, t: 'Choose who joins the pyebaek and prepare the chestnuts and dates', cu: 'korean' },
+    { w: 24, t: 'Ask your principal and secondary sponsors', cu: 'filipino' },
+    { w: 8, t: 'Order the lechon', cu: 'filipino' },
+    { w: 24, t: 'Choose your aso ebi fabric and tell guests how to order it', cu: 'nigerian' },
+    { w: 20, t: 'Book the MC and live band', cu: 'nigerian' },
+    { w: 2, t: 'Get crisp bills for spraying', cu: 'nigerian' },
+    { w: 32, t: 'Book the church and meet the priest', cu: 'greek' },
+    { w: 12, t: 'Choose your koumbaro or koumbara and the stefana', cu: 'greek' },
     { w: 12, t: 'Plan the sofreh aghd: mirror, candelabras, sweets, honey and flowers', cu: 'persian' },
     { w: 4, t: 'Order Persian sweets and the wedding cake', cu: 'persian' },
     { w: 52, t: 'Set the budget and guest count', only: ['wedding', 'gala', 'quince'] },

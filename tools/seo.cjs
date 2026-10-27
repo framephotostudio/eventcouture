@@ -16,7 +16,7 @@ const PHRASE = { brunch: 'a brunch or tea party', birthday: 'a birthday party', 
   engagement: 'an engagement party', quince: 'a quinceañera', sweet16: 'a sweet 16', anniversary: 'an anniversary party', retirement: 'a retirement party', christmas: 'a Christmas party',
   holiday: 'a holiday party', wedding: 'a wedding', gala: 'a gala or fundraiser', corporate: 'a corporate event' };
 const OCC = D.EVENT_TYPES.filter(t => t.id !== 'other').map(t => ({ key: t.id, type: t.id, name: t.name, phrase: PHRASE[t.id] || 'an event', guests: t.defaultGuests, hours: t.hours, start: t.id }))
-  .concat(Object.keys(D.CULTURES).map(k => ({ key: k + '-wedding', type: 'wedding', culture: k, name: D.CULTURES[k].name, phrase: 'an ' + D.CULTURES[k].name.replace(/^./, c => c.toLowerCase()).replace(/^(arabic|indian|persian)/i, m => m[0].toUpperCase() + m.slice(1)), guests: D.CULTURES[k].guests, hours: D.CULTURES[k].hours, start: k + '-wedding' })));
+  .concat(Object.keys(D.CULTURES).map(k => ({ key: k + '-wedding', type: 'wedding', culture: k, name: D.CULTURES[k].name, phrase: (/^[AEIOU]/.test(D.CULTURES[k].name) ? 'an ' : 'a ') + D.CULTURES[k].name.replace(/ Wedding$/, ' wedding'), guests: D.CULTURES[k].guests, hours: D.CULTURES[k].hours, start: k + '-wedding' })));
 OCC.forEach(o => { o.slug = slug(o.name.replace(/’s/, 's')); o.phrase = o.phrase.replace(/^an (Arabic|Indian|Persian)/, 'an $1'); });
 const CITIES = D.CITIES.filter(c => !/^Other /.test(c.name)).map(c => Object.assign({ slug: slug(c.name) }, c));
 const BIG = ['New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Dallas, TX', 'Miami, FL', 'Atlanta, GA', 'Washington, DC', 'Philadelphia, PA', 'Phoenix, AZ', 'San Diego, CA', 'San Francisco, CA',

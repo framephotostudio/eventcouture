@@ -42,7 +42,7 @@
   /* ---------- Budget ---------- */
   /* Cultural weddings (Arabic, Indian, Persian) are weddings with their own traditions and music. */
   function culture(ev) { return ev && ev.type === 'wedding' && ev.culture && D.CULTURES && D.CULTURES[ev.culture] || null; }
-  var MUSIC_CATS = ['dj', 'liveMusic', 'singer', 'zaffe', 'dhol', 'dabke'];
+  var MUSIC_CATS = ['dj', 'liveMusic', 'singer', 'zaffe', 'dhol', 'dabke', 'qawwali', 'mariachi', 'lionDance'];
   function musicOf(ev) { var cu = culture(ev); if (!cu) return []; var ok = cu.music.map(function (m) { return m[0]; }); var m = (Array.isArray(ev.music) ? ev.music : cu.musicDefault).filter(function (x) { return ok.indexOf(x) >= 0; }); return m; }
   function typeName(ev) { var cu = culture(ev); return cu ? cu.name : typeOf(ev && ev.type).name; }
   function categoriesFor(ev) {
@@ -77,7 +77,7 @@
   }
 
   function rules(ev) { return (D.SETTING_RULES && D.SETTING_RULES[ev.setting]) || {}; }
-  function tiersFor(catId, ev) { if (musicOf(ev).indexOf(catId) >= 0) return 'LSU'; var r = rules(ev).tiers; return (r && r[catId]) || D.CATEGORIES[catId].tier; }
+  function tiersFor(catId, ev) { if (musicOf(ev).indexOf(catId) >= 0 || ((culture(ev) || {}).add || []).indexOf(catId) >= 0) return 'LSU';   /* the music she chose and her traditions are in every version */ var r = rules(ev).tiers; return (r && r[catId]) || D.CATEGORIES[catId].tier; }
   /* Start hour; midnight to 4 AM counts as late night (24 to 28), never as daytime. */
   function startHour(ev) { var h = +String((ev && ev.time) || '18:00').split(':')[0]; return h < 5 ? h + 24 : h; }
   function isDaytime(ev) { var h = startHour(ev); return h < 15; }
@@ -183,7 +183,7 @@
         .sort(function (a, b) { return b.amt - a.amt; })
         .forEach(function (r) { if (total() > target) { dropped.push(r.id); r.amt = 0; } });
       /* Essentials go only if the host's own must-haves would otherwise be cut. */
-      rows.filter(function (r) { return !r.pri && !r.fixed && essential.indexOf(r.id) >= 0 && r.amt > 0; })
+      rows.filter(function (r) { return !r.pri && !r.fixed && essential.indexOf(r.id) >= 0 && musicOf(ev).indexOf(r.id) < 0 && r.amt > 0; })   /* music she chose is trimmed, never dropped */
         .forEach(function (r) { if (total() > target) { dropped.push(r.id); r.amt = 0; } });
     }
     if (total() > target) {

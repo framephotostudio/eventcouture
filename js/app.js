@@ -413,7 +413,7 @@
       '<div id="demoLines" class="demo-lines" hidden>' + lines + '<p class="muted small" style="margin:8px 0 0">Every line already includes tax, service charges and tips.</p></div></section>' +
       '<section id="inspo" class="stack section"><h2>What are you celebrating?</h2><p class="muted">No idea yet? Pick your occasion and tap a photo you love. Your whole plan is built around it.</p>' + inspoGallery('', 7) + '</section>' +
       '<section id="cultural" class="stack section"><h2>Cultural weddings</h2><p class="muted">Planned with the traditions, music and food that make them yours.</p><div class="culture-cards">' +
-      [['arabic', 'Zaffe entrance, live band and singer, the kosha, dabke and a mezze-to-knafeh menu.'], ['indian', 'Baraat with dhol, the mandap, mehndi artist, Bollywood DJ and a full Indian menu.'], ['persian', 'Sofreh aghd, the aghd ceremony, live Persian music, the knife dance and jeweled rice.']].map(function (c) { var cu = D.CULTURES[c[0]]; return '<div class="panel culture-card"><span class="inv-orn" aria-hidden="true">\u2766</span><h3>' + esc(cu.name) + '</h3><p class="small muted">' + esc(c[1]) + '</p><div class="row"><a class="btn small gold" href="#/start/' + c[0] + '-wedding/">Plan ' + (/^[aeiou]/i.test(cu.name) ? 'an ' : 'a ') + esc(cu.name) + '</a>' + (CFG.app ? '' : '<a class="link small" href="plan/' + c[0] + '-wedding/">What it costs</a>') + '</div></div>'; }).join('') + '</div></section>' +
+      Object.keys(D.CULTURES).map(function (k, i) { var c = [k, D.CULTURES[k].blurb], cu = D.CULTURES[k]; return '<div class="panel culture-card"' + (i >= 6 ? ' data-cmore hidden' : '') + '><span class="inv-orn" aria-hidden="true">\u2766</span><h3>' + esc(cu.name) + '</h3><p class="small muted">' + esc(c[1]) + '</p><div class="row"><a class="btn small gold" href="#/start/' + c[0] + '-wedding/" aria-label="Plan ' + (/^[aeiou]/i.test(cu.name) ? 'an ' : 'a ') + esc(cu.name) + '">Start planning</a>' + (CFG.app ? '' : '<a class="link small" href="plan/' + c[0] + '-wedding/">What it costs</a>') + '</div></div>'; }).join('') + '</div>' + (Object.keys(D.CULTURES).length > 6 ? '<div><button class="btn ghost" id="allCult" aria-expanded="false">See all ' + Object.keys(D.CULTURES).length + ' cultural weddings</button></div>' : '') + '</section>' +
       '<section id="gallery" class="stack section"><h2>Explore sample plans</h2><p class="muted">Complete plans you can open for free. Photos are AI-generated inspiration, not events we organized.</p><div class="samples home-samples">' +
       FEATURED.map(function (i) { return sampleCard(SAMPLES[i], i); }).join('') + '</div>' +
       '<div class="samples" id="moreSamples" hidden>' + SAMPLES.map(function (s, i) { return FEATURED.indexOf(i) >= 0 ? '' : sampleCard(s, i); }).join('') + '</div>' +
@@ -430,6 +430,7 @@
     hots.forEach(function (h) { h.addEventListener('click', function () { var open = h.getAttribute('aria-expanded') === 'true'; hots.forEach(function (o) { o.setAttribute('aria-expanded', 'false'); }); h.setAttribute('aria-expanded', open ? 'false' : 'true'); }); });
     $('#showBudget').addEventListener('click', function () { var l = $('#demoLines'), open = l.hidden; l.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Hide example budget' : 'See example budget'; });
     bindInspo(7);
+    var ac = $('#allCult'); if (ac) ac.addEventListener('click', function () { $$('[data-cmore]').forEach(function (x) { x.hidden = false; }); ac.remove(); });
     $('#allSamples').addEventListener('click', function () { var m = $('#moreSamples'), open = m.hidden; m.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Show fewer' : 'See all ' + SAMPLES.length + ' sample plans'; });
   }
 
@@ -542,6 +543,14 @@
     if (/\b(arab|arabic|lebanese|syrian|palestinian|jordanian|iraqi|egyptian|moroccan|zaffe|zaffa|zaffeh|dabke|kosha)\b/.test(text)) return 'arabic';
     if (/\b(indian|desi|hindu|sikh|punjabi|gujarati|mandap|baraat|sangeet|pheras)\b/.test(text)) return 'indian';
     if (/\b(persian|iranian|sofreh|aghd)\b/.test(text)) return 'persian';
+    if (/\b(pakistani|nikah|walima|rukhsati|dholki|qawwali)\b/.test(text)) return 'pakistani';
+    if (/\b(mexican|latino|latina|hispanic|lazo|arras|mariachi|padrinos|boda)\b/.test(text)) return 'mexican';
+    if (/\b(vietnamese|viet|ao dai|\u00e1o d\u00e0i)\b/.test(text)) return 'vietnamese';
+    if (/\b(korean|hanbok|pyebaek)\b/.test(text)) return 'korean';
+    if (/\b(chinese|lion dance|double happiness|qipao|cheongsam)\b|tea ceremony/.test(text)) return 'chinese';
+    if (/\b(filipino|filipina|pinoy|ninong|ninang|lechon)\b/.test(text)) return 'filipino';
+    if (/\b(nigerian|naija|yoruba|igbo|aso ebi|aso-ebi|gele)\b/.test(text)) return 'nigerian';
+    if (/\b(greek|stefana|koumbaro|bouzouki)\b/.test(text)) return 'greek';
     return '';
   }
   function musicChips(d) {
@@ -554,7 +563,7 @@
   }
   function guessType(text) {
     text = (text || '').toLowerCase();
-    var rules = [['wedding', /wedding|reception|bride and groom/], ['bachelorette', /bachelorette|bach party/], ['bridal-shower', /bridal shower/], ['baby-shower', /baby shower|sprinkle/],
+    var rules = [['wedding', /wedding|reception|bride and groom|\bnikah\b|\bwalima\b|\bboda\b|\bshaadi\b|\bshadi\b/], ['bachelorette', /bachelorette|bach party/], ['bridal-shower', /bridal shower/], ['baby-shower', /baby shower|sprinkle/],
       ['gender-reveal', /gender reveal/], ['quince', /quince/], ['sweet16', /sweet 16|sweet sixteen|16th birthday/], ['corporate', /corporate|company|office|client|team (event|dinner|party)|product launch|conference/], ['graduation', /graduat/], ['engagement', /engagement/], ['anniversary', /anniversary/],
       ['retirement', /retire/], ['kids-birthday', /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|kids'? (party|birthday)|birthday for my (son|daughter)|(son|daughter)'s birthday|\b([1-9]|1[0-2])[- ]?(year|yr)s?[- ]old\b|\bturning ([1-9]|1[0-2])\b|\b(unicorn|princess|dinosaur|dino|superhero|mermaid|paw patrol|bluey) (party|birthday|theme)|first birthday|1st birthday/], ['milestone', /\b(30|40|50|60|70)th\b|milestone/], ['birthday', /birthday|bday/], ['gala', /gala|fundraiser/], ['christmas', /christmas|xmas/], ['holiday', /holiday|new year/],
       ['brunch', /brunch/], ['dinner', /dinner party|dinner/]];
@@ -1869,7 +1878,7 @@
     var b = E.budget(ev, ev.tier || 'S'), line = b.items.find(function (i) { return i.id === cat; });
     var theme = themeWords(ev);
     var tn = ev.type === 'other' ? 'celebration' : E.typeName(ev);
-    return 'Hi! I\u2019m planning ' + (/^[aeiou]/i.test(tn) ? 'an ' : 'a ') + tn.toLowerCase().replace(/arabic|indian|persian/, function (m) { return m.charAt(0).toUpperCase() + m.slice(1); }) + ' in ' + ev.city.split(',')[0] + (ev.date ? ' on ' + fmtDate(ev.date) : ev.dateFrom ? ' sometime between ' + shortDate(ev.dateFrom) + ' and ' + shortDate(ev.dateTo || ev.dateFrom) : '') + ' for about ' + plural(ev.guests, 'guest') + ', and I\u2019d love a quote for ' + need + '.' + (theme ? ' The theme is ' + theme + '.' : '') + (line && !CFG.app ? ' My budget for this is about ' + money(line.mid) + '.' : '') + ' Are you available?\n\nPlanned with Event Couture by Always Luxe. Vendors: get listed free at ' + siteBase() + '#/vendors';
+    return 'Hi! I\u2019m planning ' + (/^[aeiou]/i.test(tn) ? 'an ' : 'a ') + (E.culture(ev) ? tn.charAt(0) + tn.slice(1).toLowerCase() : tn.toLowerCase()) + ' in ' + ev.city.split(',')[0] + (ev.date ? ' on ' + fmtDate(ev.date) : ev.dateFrom ? ' sometime between ' + shortDate(ev.dateFrom) + ' and ' + shortDate(ev.dateTo || ev.dateFrom) : '') + ' for about ' + plural(ev.guests, 'guest') + ', and I\u2019d love a quote for ' + need + '.' + (theme ? ' The theme is ' + theme + '.' : '') + (line && !CFG.app ? ' My budget for this is about ' + money(line.mid) + '.' : '') + ' Are you available?\n\nPlanned with Event Couture by Always Luxe. Vendors: get listed free at ' + siteBase() + '#/vendors';
   }
   function marketBlock(ev, cat) {
     var q = (ev.quotes || {})[cat], reps = ((ev.quoteReplies || {})[cat]) || [];
@@ -2227,7 +2236,7 @@
     var follow = has('catering') || has('privateDining') || has('restaurantFood') ? ((has('dj') || has('liveMusic')) ? 'Dinner and dancing to follow' : 'Dinner to follow') : (has('dj') || has('liveMusic')) ? 'Music and dancing' : '';
     var theme = themeWords(ev);
     if (t === 'wedding') {
-      if (names) { pre(host || (cu && cu.name === 'Arabic wedding' ? 'With the blessing of God and their families' : cu && cu.name === 'Indian wedding' ? 'With the blessings of their families' : 'Together with their families')); big(names); body('request the honour of your presence'); body('at the celebration of their marriage'); }
+      if (names) { pre(host || (cu && cu.pre) || 'Together with their families'); big(names); body('request the honour of your presence'); body('at the celebration of their marriage'); }
       else { pre('The honour of your presence is requested'); body('at the wedding celebration of'); big(ev.name); }
     } else if (t === 'engagement') { pre(host ? host + ' invite you' : 'Please join us'); body('in celebrating the engagement of'); big(names || ev.name); }
     else if (t === 'anniversary') { pre(host ? host + ' invite you' : 'Please join us'); body('in celebrating ' + (age ? words(age) + ' years of marriage' : 'the anniversary') + ' of'); big(names || ev.name); }
