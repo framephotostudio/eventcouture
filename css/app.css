@@ -780,3 +780,9 @@ main .pkg-cmp th, main .pkg-cmp td, main .pkg-cmp b, main .pkg-cmp span { overfl
   .pkg-cmp .pk-swaprow, .pkg-cmp .pk-swaprow td { display: block; position: static; }
   .pk-addcol span.small { display: none; }
 }
+.fc-try { display: inline-flex; align-items: center; gap: 4px; color: var(--gold-text); text-decoration: underline; text-underline-offset: 3px; margin-left: 4px; }
+.app-soon { display: flex; gap: 16px; align-items: center; border-color: var(--champagne); background: linear-gradient(135deg, var(--surface), color-mix(in srgb, var(--champagne) 12%, var(--surface))); }
+.app-soon img { border-radius: 14px; flex: none; box-shadow: 0 6px 18px rgba(60, 20, 45, .18); }
+.app-soon b { display: block; font-family: var(--display); font-size: 1.2rem; font-weight: 500; color: var(--ink); margin: 2px 0 4px; }
+.app-soon p { margin: 0; }
+.app-soon .eyebrow { margin: 0; }
