@@ -552,6 +552,7 @@
     if (/\b(nigerian|naija|yoruba|igbo|aso ebi|aso-ebi|gele)\b/.test(text)) return 'nigerian';
     if (/\b(greek|stefana|koumbaro|bouzouki)\b/.test(text)) return 'greek';
     if (/\b(moroccan|morocco|negafa|takchita|amariya|amaria)\b/.test(text)) return 'moroccan';
+    if (/african american|black love|jump(ing)? the broom|\blibation\b|\bkente\b|second line|four elements/.test(text)) return 'africanamerican';
     if (/\b(spanish|spain|espa\u00f1ola|flamenco)\b/.test(text)) return 'spanish';
     if (/\b(russian|ukrainian|tamada|karavai)\b/.test(text)) return 'russian';
     return '';
@@ -559,7 +560,7 @@
   function musicChips(d) {
     var cu = d.culture && D.CULTURES[d.culture]; if (!cu) return '';
     var on = Array.isArray(d.music) ? d.music : cu.musicDefault;
-    return '<h3 id="musicLbl">Music and entertainment</h3><span class="muted small">Pick everything you want. Each one gets its own line in your budget and its own vendor options.</span><div class="chips" id="music" role="group" aria-labelledby="musicLbl">' + cu.music.map(function (m) { return '<button type="button" class="chip" data-music="' + m[0] + '" aria-pressed="' + (on.indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div>';
+    return '<h3 id="musicLbl">' + esc(cu.chipsTitle || 'Music and entertainment') + '</h3><span class="muted small">' + esc(cu.chipsNote || 'Pick everything you want. Each one gets its own line in your budget and its own vendor options.') + '</span><div class="chips" id="music" role="group" aria-labelledby="musicLbl">' + cu.music.map(function (m) { return '<button type="button" class="chip" data-music="' + m[0] + '" aria-pressed="' + (on.indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div>';
   }
   function bindMusic(box, d, after) {
     box.addEventListener('click', function (e) { var b = e.target.closest('[data-music]'); if (!b) return; b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); d.music = $$('[data-music]', box).filter(function (x) { return x.getAttribute('aria-pressed') === 'true'; }).map(function (x) { return x.dataset.music; }); if (after) after(); });

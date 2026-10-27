@@ -16,9 +16,9 @@ for (const [k, cu] of Object.entries(D.CULTURES)) {
   for (const [id, label] of Object.entries(cu.labels)) { const it = items.find(i => i.id === id); if (it) assert.equal(it.name, label, `${k}: label for ${id}`); }
   assert.ok(D.MENUS[cu.menu] && D.MENUS[cu.menu].length === 6, `${k}: menu`);
   const ros = E.runOfShow(ev).map(r => r.text).join(' | ');
-  assert.ok(cu.moments.every(m => ros.includes(m[1])), `${k}: schedule`);
+  assert.ok(cu.moments.filter(m => !m[2]).every(m => ros.includes(m[1])), `${k}: schedule`);
   const cl = E.checklist(ev, new Date('2098-06-12')).map(c => c.text).join(' | ');
-  const mine = D.CHECKLIST.filter(c => c.cu === k); assert.ok(mine.length >= 2 && mine.every(c => cl.includes(c.t.slice(0, 20))), `${k}: checklist`);
+  const mine = D.CHECKLIST.filter(c => c.cu === k && !c.needs); assert.ok(mine.length >= 2 && mine.every(c => cl.includes(c.t.slice(0, 20))), `${k}: checklist`);
   assert.ok(cu.blurb && cu.hint && cu.search, `${k}: blurb, hint, search`);
   assert.equal(E.typeName(ev), cu.name);
   // a plain wedding never gets these

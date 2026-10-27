@@ -73,7 +73,7 @@ for (const o of OCC) {
   const d = new Date(); d.setFullYear(d.getFullYear() + 1);
   const steps = E.checklist(Object.assign({}, ev, { date: d.toISOString().slice(0, 10) }), new Date()).slice(0, 14).map(c => `<li>${esc(c.text)}</li>`).join('');
   const cu = o.culture && D.CULTURES[o.culture];
-  const extra = cu ? `<h2>Traditions and music</h2><p>Music most families choose from: ${cu.music.map(m => esc(m[1])).join(', ')}. Traditions to budget for: ${cu.add.map(a => esc(D.CATEGORIES[a].name)).join('; ')}.</p><p>Menu ideas: ${D.MENUS[cu.menu].map(esc).join(' · ')}.</p>` : '';
+  const extra = cu ? `<h2>Traditions and music</h2><p>${cu.chipsTitle ? 'Traditions and music couples choose from' : 'Music most families choose from'}: ${cu.music.map(m => esc(m[1])).join(', ')}.${cu.add.length ? ' Traditions to budget for: ' + cu.add.map(a => esc(D.CATEGORIES[a].name)).join('; ') + '.' : ''}</p><p>Menu ideas: ${D.MENUS[cu.menu].map(esc).join(' · ')}.</p>` : '';
   const q = `How much does ${o.phrase} cost?`;
   const body = `<p>For about ${o.guests} guests, ${o.phrase} typically costs <b>${money(t[0], nat)}</b> done smartly, <b>${money(t[1], nat)}</b> with the key pieces handled by pros, and <b>${money(t[2], nat)}</b> or more for full-service luxury, at average US prices in ${YEAR}. Here is where the money goes, what it costs in major cities, a sample schedule and what to book when.</p>
 <h2>Budget breakdown (Signature, ${o.guests} guests)</h2><div class="table-wrap panel"><table class="qty"><tbody>${lines}<tr><td>Contingency (unexpected costs)</td><td class="n">${money(b.contingency, nat)}</td></tr><tr><td><b>Estimated total</b></td><td class="n"><b>${money(b.total, nat)}</b></td></tr></tbody></table></div>

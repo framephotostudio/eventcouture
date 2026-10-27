@@ -42,7 +42,7 @@
   /* ---------- Budget ---------- */
   /* Cultural weddings (Arabic, Indian, Persian) are weddings with their own traditions and music. */
   function culture(ev) { return ev && ev.type === 'wedding' && ev.culture && D.CULTURES && D.CULTURES[ev.culture] || null; }
-  var MUSIC_CATS = ['dj', 'liveMusic', 'singer', 'zaffe', 'dhol', 'dabke', 'qawwali', 'mariachi', 'lionDance', 'flamenco', 'dakka'];
+  var MUSIC_CATS = ['dj', 'liveMusic', 'singer', 'zaffe', 'dhol', 'dabke', 'qawwali', 'mariachi', 'lionDance', 'flamenco', 'dakka', 'gospel', 'secondLine'];
   function musicOf(ev) { var cu = culture(ev); if (!cu) return []; var ok = cu.music.map(function (m) { return m[0]; }); var m = (Array.isArray(ev.music) ? ev.music : cu.musicDefault).filter(function (x) { return ok.indexOf(x) >= 0; }); return m; }
   function typeName(ev) { var cu = culture(ev); return cu ? cu.name : typeOf(ev && ev.type).name; }
   function categoriesFor(ev) {
@@ -378,7 +378,7 @@
     today = today || new Date();
     var st = ev.setting || 'indoor';
     var bigEvent = ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0;
-    return D.CHECKLIST.filter(function (c) { return (!c.cu || c.cu === (culture(ev) && ev.culture)) && !(bigEvent && /^Book the venue or reserve|^Book key vendors/.test(c.t)) && (!c.only || c.only.indexOf(ev.type) >= 0) && (!c.not || c.not.indexOf(st) < 0) && (!c.in || c.in.indexOf(st) >= 0) && (!c.minGuests || (ev.guests || 0) >= c.minGuests || ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0); }).map(function (c, i) {
+    return D.CHECKLIST.filter(function (c) { return (!c.cu || c.cu === (culture(ev) && ev.culture)) && (!c.needs || musicOf(ev).indexOf(c.needs) >= 0) && !(bigEvent && /^Book the venue or reserve|^Book key vendors/.test(c.t)) && (!c.only || c.only.indexOf(ev.type) >= 0) && (!c.not || c.not.indexOf(st) < 0) && (!c.in || c.in.indexOf(st) >= 0) && (!c.minGuests || (ev.guests || 0) >= c.minGuests || ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0); }).map(function (c, i) {
       var due = date ? new Date(date.getTime() - c.w * 7 * 864e5) : null;
       /* A step whose usual lead time had already passed when the plan was made isn't "overdue": it's simply first. */
       var start = new Date((ev.created || today.toISOString().slice(0, 10)) + 'T00:00:00'); if (isNaN(start)) start = today;
@@ -397,7 +397,7 @@
     var plan = (ev.setting === 'restaurant' || ev.setting === 'privateRoom')
       ? [[-30, 'Host arrives to set the table decor'], [0, 'Guests arrive and order drinks'], [20, 'Order food'], [Math.round(hours * 60 * 0.55), 'Toasts'], [Math.round(hours * 60 * 0.75), /birthday|milestone/.test(ev.type) ? 'Cake or dessert and the birthday song' : 'Dessert'], [hours * 60 - 10, bill], [hours * 60, 'Goodbyes and photos outside']]
       : culture(ev)
-      ? [[-180, 'Vendors arrive and setup begins'], [-120, 'Hair and makeup finishing touches']].concat(culture(ev).moments.map(function (m) { return [m[0] === 'end' ? hours * 60 - 15 : m[0], m[1]]; }), [[hours * 60, 'Breakdown and cleanup']])
+      ? [[-180, 'Vendors arrive and setup begins'], [-120, 'Hair and makeup finishing touches']].concat(culture(ev).moments.filter(function (m, i, all) { if (m[2]) return musicOf(ev).indexOf(m[2]) >= 0; return !(m[0] === 'end' && all.some(function (o) { return o[0] === 'end' && o[2] && musicOf(ev).indexOf(o[2]) >= 0; })); }).map(function (m) { return [m[0] === 'end' ? hours * 60 - 15 : m[0], m[1]]; }), [[hours * 60, 'Breakdown and cleanup']])
       : t.style === 'wedding'
       ? [[-180, 'Vendors arrive and setup begins'], [-120, 'Hair and makeup finishing touches'], [-30, 'Guests arrive'], [0, 'Ceremony'], [30, ev.alcohol === 'none' ? 'Welcome hour with mocktails and appetizers' : 'Cocktail hour'], [90, 'Grand entrance and dinner'], [150, 'Toasts and first dance'], [180, 'Cake cutting and dancing'], [hours * 60 - 15, 'Send-off'], [hours * 60, 'Breakdown and cleanup']]
       : (function () {
