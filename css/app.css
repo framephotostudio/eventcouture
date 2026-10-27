@@ -786,3 +786,8 @@ main .pkg-cmp th, main .pkg-cmp td, main .pkg-cmp b, main .pkg-cmp span { overfl
 .app-soon b { display: block; font-family: var(--display); font-size: 1.2rem; font-weight: 500; color: var(--ink); margin: 2px 0 4px; }
 .app-soon p { margin: 0; }
 .app-soon .eyebrow { margin: 0; }
+.fc-finish { display: flex; gap: 14px; align-items: flex-start; text-align: left; border-color: var(--champagne); background: linear-gradient(135deg, var(--surface), color-mix(in srgb, var(--blush, #F2C9CF) 18%, var(--surface))); }
+.fc-finish img { border-radius: 12px; flex: none; }
+.fc-finish b { display: block; font-family: var(--display); font-size: 1.15rem; font-weight: 500; color: var(--ink); margin: 2px 0 4px; }
+.fc-finish p { margin: 0 0 10px; }
+.fc-finish .eyebrow { margin: 0; }

@@ -325,7 +325,7 @@
     fetch('index.html?check=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) { var m = /app\.js\?v=([a-z0-9]+)/.exec(t); if (m && m[1] !== BUILD) NEWER = true; }).catch(function () {});
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) checkNewer(); });
-  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-fc]')) T('face_couture_click', { from: 'hair_and_makeup' }); });
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-fc]')) T('face_couture_click', { from: e.target.closest('.fc-finish') ? 'photos' : 'hair_and_makeup' }); });
   window.addEventListener('hashchange', function () { if (NEWER) { location.reload(); return; } checkNewer(); });
   window.addEventListener('hashchange', function () { clearToasts(); $$('.sheet-back').forEach(function (x) { x.remove(); }); route(); });   /* pop-ups never follow you to another page */
   function notFound() { frame('<div class="stack"><h2>This page doesn’t exist</h2><p class="muted">It may have been removed. <a href="#/">Go to the home page</a>.</p></div>'); }
@@ -1028,13 +1028,13 @@
     var vend = vendorCats(ev, b), booked = vend.filter(function (i) { return statusOf(ev, i.id) === 'booked'; }).length;
     var where = ev.settingOpen ? { done: false, label: 'Decide where to host it', detail: 'Compare a restaurant, a venue, outdoors and home', href: base }
       : ev.setting === 'home' ? { done: true, label: 'Where: at home', detail: 'No venue to book' }
-      : { done: vst === 'booked', label: rest ? 'Reserve the restaurant' : ev.setting === 'privateRoom' ? 'Book the private room' : 'Book your venue', detail: vst === 'booked' ? 'Booked' : saved ? 'Front-runner: ' + pickOf(ev, vc).name + (saved > 1 ? ', ' + plural(saved, 'option') + ' to compare' : '') : 'Browse places that fit your plan, then mark the one you book', href: base + '/budget' };
+      : { done: vst === 'booked', label: rest ? 'Choose your restaurant' : ev.setting === 'privateRoom' ? 'Choose your private room' : 'Choose your venue', detail: vst === 'booked' ? 'Booked' : saved ? 'Front-runner: ' + pickOf(ev, vc).name + (saved > 1 ? ', ' + plural(saved, 'option') + ' to compare' : '') : 'Browse places that fit your plan, then mark the one you book', href: base + '/budget' };
     return [
       { done: true, label: 'Choose your look', detail: ev.concept.styleName, href: base + '/concepts' },
       { done: !!(ev.date || ev.dateFrom), label: 'Set your date', detail: ev.date || ev.dateFrom ? whenText(ev) : 'One date, or a range if you\u2019re not sure yet', act: 'when' },
       ev.setting === 'home' || ev.settingOpen ? null : { done: !!(ev.areaChosen || ev.area), label: 'Choose the area for your venue', detail: ev.area || 'Anywhere in ' + ev.city.split(',')[0], act: 'area' },
       where,
-      { done: !vend.length || booked === vend.length, label: 'Book your vendors', detail: vend.length ? booked + ' of ' + vend.length + ' booked' : 'No other vendors needed', href: base + '/budget' },
+      { done: !vend.length || booked === vend.length, label: 'Choose your vendors', detail: vend.length ? booked + ' of ' + vend.length + ' booked' : 'No other vendors needed', href: base + '/budget' },
       { done: isKept(ev), label: 'Keep your plan', detail: isKept(ev) ? 'Saved and unlocked' : 'Unlocks every detail, invitations and RSVPs', act: 'keep' },
       { done: !!ev.invited || (ev.guestsList || []).some(function (g) { return g.status === 'yes' || g.status === 'declined'; }), label: 'Invite your guests', detail: (ev.guestsList || []).length ? plural(ev.guestsList.length, 'guest') + ' on your list' : 'Send your invitation link', href: base + '/invite' }
     ];
@@ -1446,7 +1446,8 @@
     types.forEach(function (v, i) { var sc = VENUE_CUES.reduce(function (a, cue) { return a + (cue[0].test(t) && cue[1].test(v) ? (t.match(new RegExp(cue[0].source, 'g')) || []).length : 0); }, 0) - i * 0.01; if (sc > bs) { bs = sc; best = v; } });
     return best;
   }
-  function pkgSearch(ev, c) { var city = (ev.area ? ev.area + ', ' : '') + ev.city; return findPlaces(ev, c.kind === 'venue' ? { query: c.q, level: c.lvl, city: city } : { query: c.q, level: c.lvl, kind: 'vendor', cat: c.cat, hint: occasionHint(ev), city: city }); }
+  /* Only the venue follows her area; vendors travel to her, so they're searched across the whole city. */
+  function pkgSearch(ev, c) { return findPlaces(ev, c.kind === 'venue' ? { query: c.q, level: c.lvl, city: (ev.area ? ev.area + ', ' : '') + ev.city } : { query: c.q, level: c.lvl, kind: 'vendor', cat: c.cat, hint: occasionHint(ev), city: ev.city }); }
   function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '' }; }
   function usedIn(ev, cat, id, except) { return (ev.packages || []).some(function (pk, k) { return k !== except && pk.items[cat] === id; }); }
   function putInPackage(ev, k, cat, p) {
@@ -1522,6 +1523,7 @@
       var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
       return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(2) + '<div class="pkg-top"><h3>Compare your packages</h3></div>' + AREA_LINE(ev) +
         '<p class="pkg-guide">Each package has a top-rated pick for every part of your plan. Tap <b>Swap</b> on anything you don’t like, <b>×</b> to remove what you don’t need, then <b>Choose</b> your favorite.</p>' +
+        '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of every package and your budget, and your estimated total goes down to match. You can add it back anytime.</p>' +
         '<div class="pkg-cmp-wrap"><table class="pkg-cmp" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + '</tbody></table></div>' +
         (ex.length && !ev.sample ? '<p class="small muted">Removed: ' + ex.map(function (id) { return esc(catName(id, ev)) + ' <button class="link small" data-pkunx="' + id + '">Add back</button>'; }).join(' · ') + '</p>' : '') +
         '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
@@ -1780,7 +1782,7 @@
   /* Place searches are remembered on the plan for a week, so results come back instantly and nothing is paid for twice. */
   function HOWTO(kind) { return '<ol class="howto" aria-label="How to choose"><li><b>See</b> real, top-rated ' + (kind === 'venue' ? 'places' : 'businesses') + ' near you</li><li><b>Save</b> up to 3 you like</li><li><b>Compare</b> them, then mark the one you book</li></ol>'; }
   function findPlaces(ev, body) {
-    var key = JSON.stringify(['v2', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
+    var key = JSON.stringify(['v3', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
     if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(hit.places);
     var sendBody = Object.assign({}, body); if (E.countryOf(ev.city).id === 'CA' && !/canada/i.test(sendBody.city || '')) sendBody.city = (sendBody.city || '') + ', Canada';   /* London, ON is not London, England */
     return fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sendBody) })
@@ -1943,7 +1945,7 @@
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; });
       var box = document.querySelector('.live-res[data-for="v-' + btn.dataset.vendor + '"]'); if (!box) return; box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding top-rated businesses\u2026</p>';
       ev.lastVendor = btn.dataset.vendor;
-      findPlaces(ev, { query: btn.dataset.q, level: btn.dataset.level || 'S', kind: 'vendor', cat: btn.dataset.vendor, hint: occasionHint(ev), city: (ev.area ? ev.area + ', ' : '') + ev.city })
+      findPlaces(ev, { query: btn.dataset.q, level: btn.dataset.level || 'S', kind: 'vendor', cat: btn.dataset.vendor, hint: occasionHint(ev), city: ev.city })
         .then(function (list) {
           if (!list.length) { box.innerHTML = '<p class="muted small">No well-reviewed matches nearby. Try a different area on the Venues tab.</p>'; return; }
           var bizAll = list.length; list = cut(list, 3, ev);
@@ -2294,6 +2296,10 @@
   /* Every guest who opens an invitation sees, once, how it was made: the event's best way to bring in new hosts. */
   /* Hair and makeup: try the glam look first on Face Couture, the sister app. */
   var FC_LINK = '<a class="fc-try small" href="https://facecouture.app/" target="_blank" rel="noopener" data-fc>\u2728 Try your glam look first on Face Couture</a>';
+  /* After the party: the photos get their finish on Face Couture, the sister app. */
+  function fcFinish(guest) {
+    return '<div class="panel fc-finish"><img src="img/brand/facecouture-icon-128.png" alt="" width="52" height="52"><div><span class="eyebrow">' + (guest ? 'Before you post' : 'After the party') + '</span><b>' + (guest ? 'Edit your photos from tonight with Face Couture' : 'Edit your event photos with Face Couture') + '</b><p class="small muted">' + (guest ? 'Glow, glam and a flawless finish in seconds, so every photo from tonight is ready to share.' : 'Glow, glam and a flawless finish for every photo from your celebration, in seconds. Picture perfect, every time.') + '</p><a class="btn small gold" href="https://facecouture.app/" target="_blank" rel="noopener" data-fc>Edit my photos</a></div></div>';
+  }
   function guestPromo() {
     return '<div class="panel guest-promo"><img src="img/brand/ec-mark-128.png" alt="" width="44" height="44"><div><b>Planning something of your own?</b><p class="small muted">This celebration was planned with Event Couture by Always Luxe. Share one photo or a few words and get the whole event: the look, the budget, venues, vendors and an invitation like this one. Free to plan.</p><a class="btn small gold" href="#/new/1" data-promo>Plan my event</a></div></div>';
   }
@@ -2357,7 +2363,7 @@
 
   /* After: album and thank-yous */
   TAB_VIEWS.after = function (ev) {
-    return '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Shared album</h3><label class="btn small"><input type="file" accept="image/*" multiple id="alb" class="sr">Add photos</label></div>' +
+    return fcFinish(false) + '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Shared album</h3><label class="btn small"><input type="file" accept="image/*" multiple id="alb" class="sr">Add photos</label></div>' +
       ((ev.album || []).length ? '<div class="album">' + ev.album.map(function (s, i) { return '<figure class="ph"><img src="' + esc(s) + '" alt="Event photo ' + (i + 1) + '"><button type="button" class="ph-rm" data-rmph="' + i + '" aria-label="Remove photo ' + (i + 1) + '">\u00d7</button></figure>'; }).join('') + '</div>' : '<p class="muted">Guests can add photos from the event page after the party.</p>') + '</div>' +
       '<div class="stack"><h3>Gifts and thank-yous</h3><div class="panel list">' + ((ev.gifts || []).length ? ev.gifts.map(function (g, i) { return '<label class="check' + (g.thanked ? ' done' : '') + '"><input type="checkbox" data-th="' + i + '"' + (g.thanked ? ' checked' : '') + '><span class="grow"><span class="t">' + esc(g.from) + '</span><br><span class="small muted">' + esc(g.gift) + '</span></span><button class="link small" type="button" data-draft="' + i + '">Thank-you note</button><button class="link small" type="button" data-rmg="' + i + '" aria-label="Remove gift from ' + esc(g.from) + '">Remove</button></label>'; }).join('') : '<p class="muted">Track who gave what, then tick each one off when you’ve said thank you.</p>') + '</div>' +
       '<form id="gadd" class="row"><input class="input" aria-label="Gift from" id="gf" placeholder="From" style="flex:1 1 150px"><input class="input" aria-label="Gift" id="gg" placeholder="Gift" style="flex:2 1 180px"><button class="btn">Add</button></form></div>';
@@ -2469,7 +2475,7 @@
       ((ev.registry.items || []).length || (ev.registry.funds || []).length ? '<div class="panel stack" style="text-align:left"><h3>Registry</h3><div class="list">' + ev.registry.items.map(function (it, i) { return '<div class="it"><span class="grow">' + esc(it.name) + (it.bought ? ' <span class="badge ok">Purchased</span>' : '') + '</span>' + (it.url ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(it.url) + '">View</a>' : '') + (it.bought ? '' : '<button class="btn small" data-buy="' + i + '">I bought this</button>') + '</div>'; }).join('') +
         (ev.registry.funds || []).map(function (f) { return '<div class="it"><span class="grow">' + esc(f.name) + '</span>' + (payBtns || '<span class="muted small">Ask the host how to give</span>') + '</div>'; }).join('') + '</div></div>' : '') +
       (canSplit(ev) && share ? '<div class="panel stack" style="text-align:left"><h3>Your share</h3><p>Each person’s share is <b class="num">' + money(share) + '</b>.</p><div class="row">' + (payBtns || '<span class="muted small">The host will share how to pay.</span>') + '</div><p class="muted small">Payments go straight to the host.</p></div>' : '') +
-      '<div class="panel stack" style="text-align:left"><h3>Share your photos</h3><p class="muted small">Add your pictures from the celebration to the host\u2019s album.</p><div><label class="btn small"><input type="file" accept="image/*" multiple id="galb" class="sr">Add photos</label></div><p class="small muted" id="galbMsg" aria-live="polite"></p></div>' +
+      fcFinish(true) + '<div class="panel stack" style="text-align:left"><h3>Share your photos</h3><p class="muted small">Add your pictures from the celebration to the host\u2019s album.</p><div><label class="btn small"><input type="file" accept="image/*" multiple id="galb" class="sr">Add photos</label></div><p class="small muted" id="galbMsg" aria-live="polite"></p></div>' +
       guestPromo() + '</div>', { noRibbon: false });
     $('#galb').addEventListener('change', function () { if (ev.sample) return toast('This is a sample plan, so photos aren\u2019t saved'); var files = Array.prototype.slice.call(this.files);
       Promise.all(files.map(function (f) { return readPhoto(f).catch(function () { return null; }); })).then(function (ps) { ps = ps.filter(Boolean); var prevAlb = (ev.album || []).slice(); ev.album = prevAlb.concat(ps.map(function (p) { return p.src; })); if (ps.length && !saveEvent(ev)) { ev.album = prevAlb; $('#galbMsg').textContent = 'This device is out of space, so those photos weren\u2019t added. Try fewer photos.'; return; } $('#galbMsg').textContent = ps.length ? 'Thank you! ' + plural(ps.length, 'photo') + ' added to the album.' : 'Those files couldn\u2019t be added. Choose photos.'; }); });

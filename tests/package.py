@@ -38,7 +38,7 @@ with sync_playwright() as p:
         rows=pg.query_selector_all('tr[data-pkrow]'); filled=pg.query_selector_all('tr[data-pkrow] td > b')
         check(n, len(rows)>=8 and len(filled)==len(rows), f'package fills venue and every vendor in one tap: {len(filled)}/{len(rows)}')
         first_calls=calls[0]
-        check(n, 'River Oaks' in pg.inner_text('.pkg-area') and cities and all(c.startswith('River Oaks, Houston') for c in cities), 'area chosen in the form is used for the package searches')
+        check(n, 'River Oaks' in pg.inner_text('.pkg-area') and cities and any(c.startswith('River Oaks, Houston') for c in cities) and sum(1 for c in cities if c.startswith('River Oaks'))==1 and all(c.startswith('Houston') for c in cities if not c.startswith('River Oaks')), 'the venue is searched in her area, vendors across the whole city')
         check(n, 'Venue' in pg.inner_text('tr[data-pkrow] >> nth=0'), 'venue first')
         d=ev(); check(n, all(any(x['cat']==c and x.get('pick') for x in d['shortlist']) for c in d['packages'][0]['items']), 'package 1 picks are the front-runners')
         pg.screenshot(path=f'{OUT}/pkg1_{n}.png', full_page=True)

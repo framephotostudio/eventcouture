@@ -185,7 +185,7 @@ const CAT_RULES = {
   bartender: { types: /night_club|\bbar\b|pub|restaurant|liquor_store|store/, names: /sports bar|tavern|pub\b|grill|lounge|liquor|bartending school/i },
   photographer: { types: /store|school|lab\b/, names: /camera|photo lab|printing|passport|school|cvs|walgreens|walmart/i },
   videographer: { types: /store|school/, names: /camera|school|rental house/i },
-  florals: { types: SHOPS, names: /walmart|kroger|h-e-b|heb\b|costco|trader joe|whole foods|safeway|publix|1-800/i },
+  florals: { types: /supermarket|grocery|department_store|shopping_mall|convenience|pharmacy|gas_station/, names: /walmart|kroger|h-e-b|heb\b|costco|trader joe|whole foods|safeway|publix|1-800/i },
   cake: { types: /supermarket|grocery|convenience|gas_station|fast_food/, names: /walmart|kroger|h-e-b|heb\b|costco|sam's club|safeway|publix|dunkin|krispy|donut/i },
   catering: { types: /fast_food|convenience|gas_station|supermarket/, names: /mcdonald|chick-fil-a|subway|taco bell|wendy|burger king|domino|pizza hut|papa john|panda express|popeyes|kfc/i },
   hairMakeup: { types: /store|school|nail_salon|barber/, names: /beauty supply|sally beauty|ulta|sephora|school|academy|barber|nail/i },
@@ -194,6 +194,27 @@ const CAT_RULES = {
   decor: { types: /home_goods_store|furniture_store|department_store|supermarket/, names: /hobby lobby|michaels|home goods|homegoods|walmart|target|ikea|at home/i },
   photoBooth: { types: /store|school/, names: /camera|school/i }
 };
+/* Vendors are businesses that provide the service, never the mall, a store or a restaurant they sit near.
+   The primary type decides (Google tags a florist as a "store" too). Some categories must look like the thing itself. */
+const NEVER_VENDOR = /^(shopping_mall|department_store|tourist_attraction|clothing_store|shoe_store|jewelry_store|supermarket|grocery_store|convenience_store|gas_station|pharmacy|hotel|lodging|park|museum|church|school|university)$/;
+const FOOD_PLACE = /restaurant|cafe|meal_takeaway|meal_delivery|food_court|fast_food/;
+const FOOD_OK = ['catering', 'cake', 'bar', 'bartender', 'privateDining', 'restaurantFood'];
+const MUST_LOOK_LIKE = {
+  florals: { types: /florist/, names: /flor|flower|bloom|blossom|petal|botanic|stem|rose|bouquet|garden/i },
+  cake: { types: /bakery|dessert|confection|cake|pastry/, names: /cake|bak(e|er|ing)|patisser|p\u00e2tisser|sweet|dessert|confection|cupcake|cookie|pastr|mithai|tres leches/i },
+  balloons: { types: /party|event/, names: /balloon|ballon|party|decor|event/i },
+  photographer: { types: /photograph/, names: /photo|studio|image|portrait|film|captur|lens|visual/i },
+  videographer: { types: /video|film|photograph/, names: /video|film|cinema|motion|studio|media|production/i },
+  hairMakeup: { types: /beauty|hair|spa|makeup/, names: /makeup|mua|beauty|glam|hair|bridal|artistry|lash|face/i },
+  decor: { types: /event|party|florist|furniture_rental|interior/, names: /decor|design|event|rental|styl|backdrop|balloon|floral|draper|luxe|occasion/i }
+};
+function rightKind(p, cat) {
+  const prim = String(p.primaryType || ''), name = p.displayName?.text || '', types = [prim].concat(p.types || []).join(' ');
+  if (NEVER_VENDOR.test(prim) && !(cat === 'attire' && /clothing_store/.test(prim))) return false;
+  if (FOOD_PLACE.test(prim) && !FOOD_OK.includes(cat)) return false;
+  const must = MUST_LOOK_LIKE[cat]; if (must && !must.types.test(types) && !must.names.test(name)) return false;
+  return true;
+}
 async function places(env, query, city, level = 'S', vendor = false, cat = '', hint = '') {
   const rule = CAT_RULES[cat], hintRe = hint ? new RegExp('\\b(' + hint.split(/[,|]/).map(w => w.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean).join('|') + ')', 'i') : null;
   const L = vendor ? { minRating: 4.5, minReviews: 15, priceLevels: [] } : (LEVEL[level] || LEVEL.S);
@@ -217,7 +238,8 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
     .filter(p => !BUDGET_CHAINS.test(p.displayName?.text || '') && (level === 'L' || !MID_CHAINS.test(p.displayName?.text || '')))
     .filter(p => vendor || !p.priceLevel || L.priceLevels.includes(p.priceLevel))
     .filter(p => !vendor || /coordinator/.test(query) || !PLANNERS.test(p.displayName?.text || ''))   // vendors means the actual service, never planners   // places with no price level (ballrooms, estates) are judged by rating alone
-    .filter(p => !rule || (!rule.types.test([p.primaryType || ''].concat(p.types || []).join(' ')) && !rule.names.test(p.displayName?.text || '')))
+    .filter(p => !rule || (!rule.types.test(cat === 'florals' ? String(p.primaryType || '') : [p.primaryType || ''].concat(p.types || []).join(' ')) && !rule.names.test(p.displayName?.text || '')))
+    .filter(p => !vendor || rightKind(p, cat))
     .filter(p => (p.rating || 0) >= L.minRating && (p.userRatingCount || 0) >= L.minReviews)
     /* best reviewed first; a business that names this occasion (a wedding DJ for a wedding) moves up */
     .map(p => ({ p, score: p.rating * Math.log10(10 + p.userRatingCount) * (hintRe && hintRe.test(p.displayName?.text || '') ? 1.12 : 1) }))
