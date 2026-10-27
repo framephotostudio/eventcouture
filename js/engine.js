@@ -374,7 +374,7 @@
     return t;
   }
   function checklist(ev, today) {
-    var date = ev.date ? new Date(ev.date + 'T12:00:00') : null;
+    var date = ev.date || ev.dateFrom ? new Date((ev.date || ev.dateFrom) + 'T12:00:00') : null;   /* with a range, plan for the earliest date */
     today = today || new Date();
     var st = ev.setting || 'indoor';
     var bigEvent = ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0;

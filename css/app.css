@@ -708,8 +708,6 @@ body:has(.sheet-back) .toast { bottom: auto !important; top: calc(16px + env(saf
 .pkg-all summary { cursor: pointer; font-weight: 500; color: var(--ink); padding: 8px 0; min-height: 40px; display: flex; align-items: center; }
 .pkg-all .pkg-rows { margin-top: 8px; }
 @media (max-width: 560px) { .pkg-steps li { flex-direction: column; align-items: flex-start; gap: 4px; font-size: .72rem; } }
-.pkg [data-pkuse] { position: sticky; bottom: 12px; z-index: 5; box-shadow: 0 6px 20px rgba(60, 20, 45, .25); }
-body:has(.pkg [data-pkuse]):not(:has(.sheet-back)) .toast { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 
 /* Formal invitation card */
 .invite-card .in { padding: 18px; }
@@ -740,3 +738,45 @@ body:has(.pkg [data-pkuse]):not(:has(.sheet-back)) .toast { bottom: calc(96px + 
 .culture-card p { margin: 0; }
 .culture-card .inv-orn { margin: 0; font-size: 1.2rem; }
 @media (max-width: 760px) { .culture-cards { grid-template-columns: 1fr; } }
+
+/* Packages side by side */
+.pkg-cmp-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
+.pkg-cmp { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 560px; }
+.pkg-cmp th, .pkg-cmp td { padding: 12px 10px; vertical-align: top; text-align: left; border-bottom: 1px solid var(--line); background: var(--surface); }
+.pkg-cmp thead th { position: sticky; top: 0; z-index: 2; border-bottom: 2px solid var(--champagne); }
+.pkg-cmp th[scope=row], .pkg-cmp .pk-corner { position: sticky; left: 0; z-index: 1; min-width: 132px; max-width: 160px; box-shadow: 1px 0 0 var(--line); }
+.pkg-cmp .pk-corner { z-index: 3; }
+.pkg-cmp td { min-width: 170px; }
+.pkg-cmp td > b, .pkg-cmp td > span { display: block; }
+.pkg-cmp .pk-colh { display: table-cell; }
+.pk-coln { display: block; font-family: var(--display); font-size: 1.05rem; color: var(--ink); margin-bottom: 6px; }
+.pkg-cmp .pk-colh .btn { margin-right: 6px; }
+.pk-addcol { background: color-mix(in srgb, var(--champagne) 8%, var(--surface)) !important; }
+.pk-addcol span.small { display: block; margin-top: 6px; }
+.pk-rh { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+.pk-x { border: 1px solid var(--line); background: var(--surface); color: var(--muted); width: 28px; height: 28px; border-radius: 50%; flex: none; cursor: pointer; font-size: 1rem; line-height: 1; display: grid; place-items: center; }
+.pk-x:hover { color: var(--bad); border-color: currentColor; }
+.pk-cell-acts { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+.pkg-cmp .pk-swaprow td { padding: 0; border-bottom: 0; }
+.pkg-cmp .pk-swaprow .pk-swap:not(:empty) { padding: 10px; border-bottom: 1px solid var(--line); }
+.pkg-cmp .pk-swaprow td { position: sticky; left: 0; }
+main .pkg-cmp th, main .pkg-cmp td, main .pkg-cmp b, main .pkg-cmp span { overflow-wrap: break-word; word-break: normal; }
+/* Phones: every package side by side under each item's title row */
+@media (max-width: 640px) {
+  .pkg-cmp { min-width: 0; }
+  .pkg-cmp thead tr, .pkg-cmp tbody tr[data-pkrow] { display: grid; grid-template-columns: repeat(var(--pkn), minmax(0, 1fr)); }
+  .pkg-cmp .pk-corner { display: none; }
+  .pkg-cmp thead th { position: static; padding: 8px 6px; }
+  .pkg-cmp .pk-colh .btn { padding: 6px 12px; margin: 0 0 4px; }
+  .pkg-cmp .pk-colh .link { display: block; }
+  .pk-coln { font-size: .95rem; }
+  .pkg-cmp th[scope=row] { grid-column: 1 / -1; position: static; min-width: 0; max-width: none; box-shadow: none; border-bottom: 0; padding: 12px 6px 2px; background: transparent; }
+  .pk-rh { justify-content: flex-start; gap: 10px; align-items: center; }
+  .pkg-cmp th[scope=row] > .small { display: block; }
+  .pkg-cmp td { min-width: 0; padding: 6px 6px 12px; font-size: .84rem; border-left: 1px solid var(--line); }
+  .pkg-cmp td:first-of-type { border-left: 0; }
+  .pkg-cmp td .small.muted { font-size: .74rem; }
+  .pk-cell-acts { gap: 8px; }
+  .pkg-cmp .pk-swaprow, .pkg-cmp .pk-swaprow td { display: block; position: static; }
+  .pk-addcol span.small { display: none; }
+}

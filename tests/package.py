@@ -32,24 +32,25 @@ with sync_playwright() as p:
         base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2]); eid=base.split('/')[2]
         ev=lambda: pg.evaluate("id => JSON.parse(localStorage['ec.events'])[id]", eid)
         check(n, 'Venues' not in pg.inner_text('.groupbar') and pg.query_selector('a[href$="/budget"]') is not None, 'one booking page in the menu')
-        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pk-row', timeout=15000); pg.wait_for_timeout(400)
+        pg.goto(U+base+'/budget'); pg.wait_for_selector('#pkgGo'); check(n, pg.query_selector('#pkArea') is not None and pg.query_selector('[data-pkwhen]') is not None, 'create step asks for the date and the venue area first')
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=15000); pg.wait_for_timeout(400)
         check(n, pg.url.endswith('/budget'), 'Create my package on the Summary starts it right away')
-        rows=pg.query_selector_all('.pk-row'); filled=pg.query_selector_all('.pk-row .pk-biz')
+        rows=pg.query_selector_all('tr[data-pkrow]'); filled=pg.query_selector_all('tr[data-pkrow] td > b')
         check(n, len(rows)>=8 and len(filled)==len(rows), f'package fills venue and every vendor in one tap: {len(filled)}/{len(rows)}')
         first_calls=calls[0]
         check(n, 'River Oaks' in pg.inner_text('.pkg-area') and cities and all(c.startswith('River Oaks, Houston') for c in cities), 'area chosen in the form is used for the package searches')
-        check(n, 'Venue' in pg.inner_text('.pk-row >> nth=0'), 'venue first')
+        check(n, 'Venue' in pg.inner_text('tr[data-pkrow] >> nth=0'), 'venue first')
         d=ev(); check(n, all(any(x['cat']==c and x.get('pick') for x in d['shortlist']) for c in d['packages'][0]['items']), 'package 1 picks are the front-runners')
         pg.screenshot(path=f'{OUT}/pkg1_{n}.png', full_page=True)
-        pg.click('#pkgMore'); pg.wait_for_selector('[data-pkview="1"][aria-selected=true]', timeout=15000); pg.wait_for_timeout(300)
+        pg.click('#pkgMore'); pg.wait_for_selector('th:has-text("Package 2")', timeout=15000); pg.wait_for_timeout(300)
         d=ev(); p1,p2=d['packages'][0]['items'],d['packages'][1]['items']
         check(n, all(p1[c]!=p2.get(c) for c in p1), 'package 2 has different picks for every item')
         check(n, calls[0]==first_calls, f'second package needed no new searches ({calls[0]-first_calls})')
-        check(n, not d.get('pkgConfirmed') and 'Choose package 2 and start booking' in pg.inner_text('#pkg') and 'I booked it' not in pg.inner_text('#pkg'), 'step 2: choose first, no booking buttons yet')
+        check(n, not d.get('pkgConfirmed') and len(pg.query_selector_all('[data-pkuse]'))==2 and 'Compare your packages' in pg.inner_text('#pkg') and 'I booked it' not in pg.inner_text('#pkg'), 'step 2: choose first, no booking buttons yet')
         check(n, pg.get_attribute('.pkg-steps li.on','aria-current')=='step' and 'Choose' in pg.inner_text('.pkg-steps li.on'), 'step tracker shows Choose')
         pg.screenshot(path=f'{OUT}/pkg2_{n}.png', full_page=True)
         # swap one item in package 2
-        pg.click('[data-pkswap] >> nth=1'); pg.wait_for_selector('[data-pkpick]'); old=ev()['packages'][1]['items']; cat=pg.get_attribute('[data-pkswap] >> nth=1','data-pkswap')
+        pg.click('[data-pkswap][data-pk="1"] >> nth=1'); pg.wait_for_selector('[data-pkpick]'); old=ev()['packages'][1]['items']; cat=pg.get_attribute('[data-pkswap][data-pk="1"] >> nth=1','data-pkswap')
         pg.click('[data-pkpick] >> nth=0'); pg.wait_for_timeout(300); new=ev()['packages'][1]['items']
         check(n, new[cat]!=old[cat] and new[cat]!=ev()['packages'][0]['items'][cat], 'swap replaces just that item')
         check(n, all(len([x for x in ev()['shortlist'] if x['cat']==c])<=3 for c in new), 'never more than 3 saved per category')
@@ -58,7 +59,7 @@ with sync_playwright() as p:
         key=pg.get_attribute('[data-topkg] >> nth=0','data-topkg'); pg.click('[data-topkg] >> nth=0'); pg.wait_for_timeout(300)
         check(n, ev()['packages'][1]['items'][vc]==key.split('|')[1], 'Put in package adds a business from the full list')
         # add one she found herself
-        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkswap] >> nth=2'); pg.wait_for_selector('.pk-swap .cmp-add'); oc=pg.get_attribute('[data-pkswap] >> nth=2','data-pkswap')
+        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkswap][data-pk="1"] >> nth=2'); pg.wait_for_selector('.pk-swap .cmp-add'); oc=pg.get_attribute('[data-pkswap][data-pk="1"] >> nth=2','data-pkswap')
         pg.click('.pk-swap .cmp-add summary'); pg.fill('[data-ownname]','Bella Cakes by Ana'); pg.fill('[data-ownlink]','bellacakes.com'); pg.click('[data-ownadd]'); pg.wait_for_timeout(300)
         check(n, 'Bella Cakes by Ana' in pg.inner_text('#pkg'), 'her own business goes into the package')
         # change the venue area from the package
@@ -66,6 +67,10 @@ with sync_playwright() as p:
         pg.click('.sheet #ok'); pg.wait_for_timeout(800)
         d=ev(); new_v=d['packages'][d['pkgView']]['items']; vcat=[c for c in new_v if c in ('venue','privateDining')][0]
         check(n, d['area']=='Rice Village' and new_v[vcat]!=old_v[vcat] and cities[-1].startswith('Rice Village, Houston'), 'changing the area finds a venue there')
+        # remove something she doesn't need, then put it back
+        xc=pg.get_attribute('[data-pkx] >> nth=-1','data-pkx'); nrows=len(pg.query_selector_all('tr[data-pkrow]')); pg.click('[data-pkx] >> nth=-1'); pg.wait_for_timeout(300)
+        check(n, len(pg.query_selector_all('tr[data-pkrow]'))==nrows-1 and xc in ev().get('exclude',[]), 'x removes an item from the package and the plan')
+        pg.click('[data-pkunx="'+xc+'"]'); pg.wait_for_timeout(300); check(n, len(pg.query_selector_all('tr[data-pkrow]'))==nrows, 'Add back returns it')
         # choose package 2
         pg.click('[data-pkuse="1"]'); pg.wait_for_timeout(300); d=ev()
         check(n, d['pkgChosen']==1 and all(any(x['cat']==c and x['id']==d['packages'][1]['items'][c] and x.get('pick') for x in d['shortlist']) for c in d['packages'][1]['items']), 'choosing package 2 makes its picks the front-runners')
@@ -81,7 +86,7 @@ with sync_playwright() as p:
         pg.click('.pkg-all summary'); pg.wait_for_timeout(200); check(n, 'Booked' in pg.inner_text('.pkg-all .pk-row >> nth=0'), 'whole package list shows what is booked')
         pg.goto(U+base+'/plan'); pg.wait_for_timeout(400); t=pg.inner_text('#tab'); check(n, 'Booked:' in t and 'Front-runner:' in t, 'finished plan shows the package')
         # remove package 1
-        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkback]'); pg.wait_for_timeout(300); pg.click('[data-pkview="0"]'); pg.wait_for_timeout(200); pg.click('[data-pkdel="0"]'); pg.wait_for_timeout(300); d=ev()
+        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkback]'); pg.wait_for_timeout(300); pg.click('[data-pkdel="0"]'); pg.wait_for_timeout(300); d=ev()
         check(n, len(d['packages'])==1 and d['pkgChosen']==0, 'removing the other package keeps the chosen one')
         # finish: book everything left and land on Done
         pg.click('[data-pkuse="0"]'); pg.wait_for_timeout(300)
