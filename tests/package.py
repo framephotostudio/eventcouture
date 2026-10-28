@@ -83,7 +83,16 @@ with sync_playwright() as p:
         check(n, '1 of' in pg.inner_text('.pkg-top') and pg.get_attribute('.pkg-next','data-pkrow')!=first and '2 of' in pg.inner_text('.pkg-next .eyebrow').lower(), 'after booking, the next vendor comes up')
         sk=pg.get_attribute('.pkg-next','data-pkrow'); pg.click('.pkg-next [data-pkskip]'); pg.wait_for_timeout(300)
         check(n, pg.get_attribute('.pkg-next','data-pkrow')!=sk, 'skip for now moves on')
-        check(n, 'Your final package' in pg.inner_text('#pkg') and 'You chose Package' in pg.inner_text('#pkg'), 'after choosing, it says this is the final package and how to finalize it'); check(n, 'Booked' in pg.inner_text('.pkg-all .pk-row >> nth=0'), 'whole package list shows what is booked')
+        st=pg.inner_text('#pkgSum'); check(n, 'Package 2' in st and 'Estimated total' in st and pg.query_selector('[data-pksum="pdf"]') and pg.query_selector('[data-pksum="mail"]'), 'package summary shows the chosen package, total and save/email buttons')
+        check(n, 'Booked' in pg.inner_text('#pkgSum') and 'Booked' in pg.inner_text('.pkg-all .pk-row >> nth=0'), 'summary and booking list show what is booked')
+        pg.evaluate("document.querySelector('#pkgSum').scrollIntoView({block:'start'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/pkgsum_{n}.png', full_page=False)
+        nsum=len(pg.query_selector_all('.pkg-sum-r')); xb=pg.get_attribute('.pkg-all [data-pkx] >> nth=-1','data-pkx'); tot0=ev().get('exclude',[])
+        pg.click('.pkg-all [data-pkx] >> nth=-1'); pg.wait_for_timeout(300)
+        check(n, len(pg.query_selector_all('.pkg-sum-r'))==nsum-1 and xb in ev().get('exclude',[]), 'x in the booking list removes it from the package summary and budget')
+        pg.click('[data-pkunx="'+xb+'"]'); pg.wait_for_timeout(300); check(n, len(pg.query_selector_all('.pkg-sum-r'))==nsum, 'add back from the booking list')
+        if n=='desktop':
+            with pg.expect_download() as dl: pg.click('[data-pksum="pdf"]')
+            pth=dl.value.path(); check(n, open(pth,'rb').read(5)==b'%PDF-' and dl.value.suggested_filename.endswith('-package.pdf'), 'package PDF downloads'); import shutil; shutil.copy(pth, f'{OUT}/package.pdf')
         pg.goto(U+base+'/plan'); pg.wait_for_timeout(400); t=pg.inner_text('#tab'); check(n, 'Booked:' in t and 'Front-runner:' in t, 'finished plan shows the package')
         # remove package 1
         pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkback]'); pg.wait_for_timeout(300); pg.click('[data-pkdel="0"]'); pg.wait_for_timeout(300); d=ev()

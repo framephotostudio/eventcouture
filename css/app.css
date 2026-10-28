@@ -791,3 +791,20 @@ main .pkg-cmp th, main .pkg-cmp td, main .pkg-cmp b, main .pkg-cmp span { overfl
 .fc-finish b { display: block; font-family: var(--display); font-size: 1.15rem; font-weight: 500; color: var(--ink); margin: 2px 0 4px; }
 .fc-finish p { margin: 0 0 10px; }
 .fc-finish .eyebrow { margin: 0; }
+.app-soon-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin: -6px 0 18px; border: 1px solid var(--champagne); border-radius: 999px; background: linear-gradient(135deg, var(--surface), color-mix(in srgb, var(--champagne) 14%, var(--surface))); font-size: .9rem; color: var(--text); }
+.app-soon-bar img { border-radius: 8px; flex: none; }
+.app-soon-bar b { color: var(--ink); font-weight: 600; }
+@media (max-width: 560px) { .app-soon-bar { border-radius: 16px; font-size: .84rem; align-items: flex-start; } }
+/* Package summary: the chosen package at a glance, savable booked or not */
+.pkg-sum { border: 1px solid var(--gold, #C9A86A); border-radius: 14px; padding: 16px; background: var(--card, #fff); display: flex; flex-direction: column; gap: 10px; }
+.pkg-sum-h h3 { margin: 2px 0; }
+.pkg-sum-rows { display: flex; flex-direction: column; }
+.pkg-sum-r { display: grid; grid-template-columns: 34% 1fr 7.5em; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line, rgba(0,0,0,.08)); align-items: baseline; }
+.pkg-sum-c { color: var(--muted, #6b5f66); font-size: .9em; }
+.pkg-sum-a { white-space: nowrap; font-size: .92em; text-align: right; }
+.pkg-sum-t { display: flex; justify-content: space-between; border-top: 2px solid var(--gold, #C9A86A); padding-top: 10px; font-size: 1.05em; }
+.pkg-sum-acts { gap: 8px; flex-wrap: wrap; }
+.pkg-row .pk-h .pk-x { margin-left: 4px; }
+@media (max-width: 560px) { .pkg-sum-r { grid-template-columns: 1fr 7.5em; } .pkg-sum-n { grid-column: 1 / -1; order: 3; margin-top: -4px; } }
+.culture-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.culture-row select { flex: 1; min-width: 200px; }

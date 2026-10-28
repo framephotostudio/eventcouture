@@ -126,7 +126,7 @@
     document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600);
   }
   /* Undo: big plan changes show a message with an Undo button for 8 seconds. */
-  var UNDO_KEYS = ['tier', 'exclude', 'include', 'overrides', 'hours', 'guests', 'expected', 'budget', 'alcohol', 'setting', 'city', 'shortlist', 'date', 'time', 'ros', 'settingOpen'];
+  var UNDO_KEYS = ['tier', 'exclude', 'include', 'overrides', 'hours', 'guests', 'expected', 'budget', 'alcohol', 'setting', 'city', 'shortlist', 'date', 'time', 'ros', 'settingOpen', 'culture', 'music'];
   function snap(ev) { var o = {}; UNDO_KEYS.forEach(function (k) { o[k] = ev[k] === undefined ? undefined : JSON.parse(JSON.stringify(ev[k])); }); return o; }
   function undoToast(ev, before, msg, rerender) {
     clearToasts();
@@ -401,6 +401,7 @@
     var lines = [['Venue', 'venue'], ['Catering', 'catering'], ['Florals', 'florals'], ['Candles and decor', 'decor'], ['Cake', 'cake'], ['Photographer', 'photographer']].map(function (l) { return '<div class="line"><span>' + l[0] + '</span><span class="num">' + money(pick(l[1]).mid) + '</span></div>'; }).join('') +
       (function () { var shown = ['venue', 'catering', 'florals', 'decor', 'cake', 'photographer'].reduce(function (t, id) { return t + pick(id).mid; }, 0); return '<div class="line"><span>Bar, rentals, music, attire and more, plus a 10% cushion</span><span class="num">' + money(demo.total - shown) + '</span></div>'; })();
     frame(
+      (CFG.app ? '' : '<div class="app-soon-bar"><img src="img/brand/ec-mark-128.png" alt="" width="30" height="30"><span><b>The Event Couture app is coming soon</b> to iPhone and Android. Plan, book and invite from your phone.</span></div>') +
       '<section class="hero"><div class="hero-copy"><h1>Your inspiration. A beautifully planned event.</h1>' +
       '<p class="lead">Turn photos or ideas into three event concepts, a detailed budget and a step-by-step plan.</p>' +
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div></div>' +
@@ -413,7 +414,6 @@
       '<button class="link small" id="showBudget" aria-expanded="false" aria-controls="demoLines">See example budget</button>' +
       '<div id="demoLines" class="demo-lines" hidden>' + lines + '<p class="muted small" style="margin:8px 0 0">Every line already includes tax, service charges and tips.</p></div></section>' +
       '<section id="inspo" class="stack section"><h2>What are you celebrating?</h2><p class="muted">No idea yet? Pick your occasion and tap a photo you love. Your whole plan is built around it.</p>' + inspoGallery('', 7) + '</section>' +
-      (CFG.app ? '' : '<section class="panel app-soon"><img src="img/brand/ec-mark-128.png" alt="" width="56" height="56"><div><span class="eyebrow">Coming soon</span><b>The Event Couture app for iPhone and Android</b><p class="small muted">Plan, book and invite from your phone, wherever inspiration finds you. Coming soon to the App Store and Google Play.</p></div></section>') +
       '<section id="cultural" class="stack section"><h2>Cultural weddings</h2><p class="muted">Planned with the traditions, music and food that make them yours.</p><div class="culture-cards">' +
       Object.keys(D.CULTURES).map(function (k, i) { var c = [k, D.CULTURES[k].blurb], cu = D.CULTURES[k]; return '<div class="panel culture-card"' + (i >= 6 ? ' data-cmore hidden' : '') + '><span class="inv-orn" aria-hidden="true">\u2766</span><h3>' + esc(cu.name) + '</h3><p class="small muted">' + esc(c[1]) + '</p><div class="row"><a class="btn small gold" href="#/start/' + c[0] + '-wedding/" aria-label="Plan ' + (/^[aeiou]/i.test(cu.name) ? 'an ' : 'a ') + esc(cu.name) + '">Start planning</a>' + (CFG.app ? '' : '<a class="link small" href="plan/' + c[0] + '-wedding/">What it costs</a>') + '</div></div>'; }).join('') + '</div>' + (Object.keys(D.CULTURES).length > 6 ? '<div><button class="btn ghost" id="allCult" aria-expanded="false">See all ' + Object.keys(D.CULTURES).length + ' cultural weddings</button></div>' : '') + '</section>' +
       '<section id="gallery" class="stack section"><h2>Explore sample plans</h2><p class="muted">Complete plans you can open for free. Photos are AI-generated inspiration, not events we organized.</p><div class="samples home-samples">' +
@@ -563,6 +563,20 @@
     var cu = d.culture && D.CULTURES[d.culture]; if (!cu) return '';
     var on = Array.isArray(d.music) ? d.music : cu.musicDefault;
     return '<h3 id="musicLbl">' + esc(cu.chipsTitle || 'Music and entertainment') + '</h3><span class="muted small">' + esc(cu.chipsNote || 'Pick everything you want. Each one gets its own line in your budget and its own vendor options.') + '</span><div class="chips" id="music" role="group" aria-labelledby="musicLbl">' + cu.music.map(function (m) { return '<button type="button" class="chip" data-music="' + m[0] + '" aria-pressed="' + (on.indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div>';
+  }
+  /* Switch a wedding to (or from) a cultural wedding anytime after it's made. */
+  function cultureRow(ev) {
+    if (ev.type !== 'wedding' || ev.sample) return '';
+    return '<div class="culture-row"><label for="cultureSel"><b>Wedding tradition</b></label><select id="cultureSel"><option value="">Classic wedding</option>' +
+      Object.keys(D.CULTURES).map(function (k) { return '<option value="' + k + '"' + (ev.culture === k ? ' selected' : '') + '>' + esc(D.CULTURES[k].name) + '</option>'; }).join('') + '</select></div>' +
+      (ev.culture ? '' : '<span class="small muted">Planning a cultural wedding? Pick it here and we add its traditions, music and vendors to your plan.</span>');
+  }
+  function bindCulture(ev, save, rerender) {
+    var sel = $('#cultureSel'); if (!sel) return;
+    sel.addEventListener('change', function () {
+      if (lockSample(ev)) return; var bf = snap(ev); ev.culture = sel.value || ''; ev.music = null; delete ev.ros; save(); rerender();
+      undoToast(ev, bf, 'Now planned as ' + (ev.culture ? (/^[aeiou]/i.test(E.typeName(ev)) ? 'an ' : 'a ') + E.typeName(ev) : 'a classic wedding'), rerender);
+    });
   }
   function bindMusic(box, d, after) {
     box.addEventListener('click', function (e) { var b = e.target.closest('[data-music]'); if (!b) return; b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); d.music = $$('[data-music]', box).filter(function (x) { return x.getAttribute('aria-pressed') === 'true'; }).map(function (x) { return x.dataset.music; }); if (after) after(); });
@@ -1179,7 +1193,7 @@
     var pkgCta = AI.live && !ev.sample && !ev.settingOpen && pkgCats(ev, b).length ? ((ev.packages || []).length
       ? '<div class="panel pkg-cta"><div><b>Your booking package is ready</b><p class="small muted">Change anything, compare packages and mark what you book.</p></div><a class="btn" href="#/e/' + ev.id + '/budget">Open my package</a></div>'
       : '<div class="panel pkg-cta"><div><b>Next: book everything in one place</b><p class="small muted">One tap picks a top-rated ' + (pkgCats(ev, b)[0].kind === 'venue' ? 'venue and every vendor' : 'vendor for everything') + ' in ' + esc(ev.city.split(',')[0]) + '. Change anything you like.</p></div><button class="btn gold" id="pkgStart">Create my package</button></div>') : '';
-    return pkgCta + stepsCard(ev, b) + (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.budget ? 'Your plan' : 'Your budget versions') + '</h3><p class="muted">' + (picked ? 'You\u2019re using the ' + esc(tierName(ev.tier)) + ' version: about ' + money(all[0].total) + (all[0].total > ev.budget ? ', ' + money(all[0].total - ev.budget) + ' over your ' + money(ev.budget) + ' maximum.' : ', within your ' + money(ev.budget) + ' maximum.') + ' <button class="link small" data-tier="F">Back to my budget plan</button> <button class="link small" id="cmpLevels">Compare spending levels</button>' : ev.budget ? (all[0] && all[0].shortBy && all[0].shortBy <= ev.budget * 0.1 ? 'Your plan comes to ' + money(all[0].total) + ', about ' + money(all[0].shortBy) + ' over your ' + money(ev.budget) + ' maximum. One of the swaps below brings it under.' : all[0] && all[0].shortBy ? (/^[aeiou]/i.test(E.typeName(ev)) ? 'An ' : 'A ') + esc(E.typeName(ev).toLowerCase()) + ' for ' + plural(ev.guests, 'guest') + ' usually costs more than ' + money(ev.budget) + ' in ' + esc(ev.city.split(',')[0]) + '. This is the closest plan, kept as lean as the look allows. The budget guardian below shows ways to close the gap, like fewer guests or a different setting.' : 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there.') + ' <button class="link small" id="cmpLevels">Compare spending levels</button>' : '') + (ev.budget ? '' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
+    return pkgCta + (ev.type === 'wedding' && !ev.sample ? '<div class="stack">' + cultureRow(ev) + '</div>' : '') + stepsCard(ev, b) + (ev.settingOpen ? whereCompare(ev) : '') + '<div class="stack"><h3>' + (ev.budget ? 'Your plan' : 'Your budget versions') + '</h3><p class="muted">' + (picked ? 'You\u2019re using the ' + esc(tierName(ev.tier)) + ' version: about ' + money(all[0].total) + (all[0].total > ev.budget ? ', ' + money(all[0].total - ev.budget) + ' over your ' + money(ev.budget) + ' maximum.' : ', within your ' + money(ev.budget) + ' maximum.') + ' <button class="link small" data-tier="F">Back to my budget plan</button> <button class="link small" id="cmpLevels">Compare spending levels</button>' : ev.budget ? (all[0] && all[0].shortBy && all[0].shortBy <= ev.budget * 0.1 ? 'Your plan comes to ' + money(all[0].total) + ', about ' + money(all[0].shortBy) + ' over your ' + money(ev.budget) + ' maximum. One of the swaps below brings it under.' : all[0] && all[0].shortBy ? (/^[aeiou]/i.test(E.typeName(ev)) ? 'An ' : 'A ') + esc(E.typeName(ev).toLowerCase()) + ' for ' + plural(ev.guests, 'guest') + ' usually costs more than ' + money(ev.budget) + ' in ' + esc(ev.city.split(',')[0]) + '. This is the closest plan, kept as lean as the look allows. The budget guardian below shows ways to close the gap, like fewer guests or a different setting.' : 'Your plan, built to stay within your ' + money(ev.budget) + ' maximum' + ((ev.priorities || []).length ? ' while protecting your must-haves' : '') + '. Leftover money stays yours; it is not spent just because it is there.') + ' <button class="link small" id="cmpLevels">Compare spending levels</button>' : '') + (ev.budget ? '' : 'The same ' + esc(ev.concept.styleName) + ' look at three spending levels. Add a budget to get a plan made for it.') + '</p><div class="tiers">' +
       all.map(function (t) { var pc = E.prosCons(ev, t);
         return '<button class="tier" data-tier="' + t.tier.id + '" aria-pressed="' + (t.tier.id === ev.tier) + '"><span class="muted small">' + esc(t.tier.name) + '</span><span class="amt num">' + money(t.total) + '</span><span class="small muted">estimated</span><span class="small muted">' + (ev.setting === 'restaurant' ? 'About ' + money(t.perGuest) + ' a person all in: the menu bill, cake and table decor, with a 10% cushion' : 'Includes a 10% cushion for surprises') + '</span>' +
           '<div class="pc"><b>Pros</b><ul>' + pc.pros.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><b>Cons</b><ul>' + pc.cons.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' + (all.length > 1 ? '<span class="tier-pick">' + (t.tier.id === ev.tier ? '\u2713 Your plan uses this version' : 'Use this version') + '</span>' : '') + '</button>'; }).join('') + '</div></div>' +
@@ -1190,6 +1204,7 @@
       '<div class="panel stack"><h3>Your concept</h3>' + dots(ev.concept.palette, ev.concept.styleName + ' colors') + '<p>' + esc(moodFor(ev.concept, ev)) + '</p><ul class="incl">' + decorFor(ev.concept, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' + dressBlock(ev, 'muted small') + (ev.sample ? '' : '<div><a class="btn ghost small" href="#/e/' + ev.id + '/concepts">Change concept</a></div>') + '</div>';
   };
   TAB_BIND.overview = function (ev, save, rerender) {
+    bindCulture(ev, save, rerender);
     var ps = $('#pkgStart'); if (ps) ps.addEventListener('click', function () { if (lockSample(ev)) return; AUTO_PKG = true; location.hash = '#/e/' + ev.id + '/budget'; });
     bindWhere(ev, rerender); bindSteps(ev, rerender);
     var cl = $('#cmpLevels'); if (cl) cl.addEventListener('click', function () {
@@ -1294,6 +1309,11 @@
     return '<button class="btn small' + (on ? ' gold' : ' ghost') + '" data-short="' + esc(key) + '" aria-pressed="' + on + '">' + (on ? 'Saved' : 'Save') + '</button>' +
       (pks.length && !ev.sample ? (inPk ? '<span class="badge ok">In package ' + (k + 1) + '</span>' : '<button class="btn small" data-topkg="' + esc(key) + '">Put in package ' + (k + 1) + '</button>') : '');
   }
+  /* Hotel class by brand. Google's data has no official star rating, so only well-known brands are labeled. */
+  var LUX5 = /four seasons|ritz[- ]carlton|st\.? regis|waldorf astoria|mandarin oriental|the peninsula|rosewood|\baman\b|park hyatt|montage|bulgari|raffles|fairmont|\bconrad\b|jw marriott|\bedition\b|the langham|shangri-la|post oak hotel|auberge|pendry|four seasons/i;
+  var LUX4 = /marriott(?! (courtyard|fairfield|residence|springhill|towneplace))|\bhilton\b(?! (garden|homewood|hampton|home2))|hyatt regency|grand hyatt|\bwestin\b|sheraton|intercontinental|kimpton|^w [a-z]|\bw hotel|\bomni\b|le m[e\u00e9]ridien|renaissance|\bloews\b|thompson|autograph collection|curio collection|hard rock hotel|royal sonesta|the joule|hotel zaza|four points/i;
+  function hotelClass(name) { name = String(name || ''); if (!/hotel|resort|inn|suites|lodge|ritz|regis|seasons|waldorf|marriott|hilton|hyatt|westin|sheraton|kimpton|omni|loews|peninsula|rosewood|fairmont|conrad|langham|zaza|\bw\b/i.test(name)) return ''; if (/courtyard|fairfield|residence inn|springhill|towneplace|hampton|garden inn|homewood|home2|aloft|\bac hotel|four points|element|tru by|moxy|doubletree|embassy suites/i.test(name)) return ''; return LUX5.test(name) ? '5-star luxury brand' : LUX4.test(name) && !/four points/i.test(name) ? '4-star brand' : ''; }
+  function hotelBadge(name) { var c = hotelClass(name); return c ? ' <span class="badge est hotel-class" title="Hotel class by brand. Confirm with the hotel.">' + (c[0] === '5' ? '\u2605\u2605\u2605\u2605\u2605 ' : '\u2605\u2605\u2605\u2605 ') + c + '</span>' : ''; }
   function placeFromFound(f) { return { id: f.id, name: f.name, rating: f.rating, reviews: f.reviews, website: f.site, mapsUrl: f.maps, address: f.address, priceLevel: f.price }; }
   /* Up to three options per category; one is the front-runner (the first saved, until she stars another). */
   var MAX_OPTIONS = 3;
@@ -1499,12 +1519,12 @@
     }
     var k = Math.min(ev.pkgView || 0, pks.length - 1), pk = pks[k];
     var bizOf = function (pkx, cat) { var id = pkx.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };
-    var line = function (x) { return [x.rating ? '★ ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' · '); };
+    var line = function (x) { return hotelBadge(x.name).replace(/^ /, '') + [x.rating ? '★ ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' · '); };
     var est = function (cat) { var it = b.items.find(function (i) { return i.id === cat; }); return it ? 'est. ' + money(it.mid) : ''; };
     var links = function (x) { return (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : ''); };
     var row = function (c, pkx, mode) {
       var x = bizOf(pkx, c.cat), bk = x && isBooked(ev, c.cat, x);
-      return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + '<span class="num muted small">' + est(c.cat) + '</span></div>' +
+      return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + (mode === 'book' && !bk && !ev.sample ? '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don\u2019t need it">\u00d7</button>' : '') + '<span class="num muted small">' + est(c.cat) + '</span></div>' +
         (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + '</span></div>' +
           '<div class="pk-acts">' + links(x) + (ev.sample ? '' : (bk || mode === 'book' ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Change</button>') + (mode === 'book' ? '<button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked ✓' : 'I booked it') + '</button>' : '')) + '</div>'
         : '<p class="small muted">No top-rated match came back yet. ' + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '">See options</button>') + '</p>') +
@@ -1530,24 +1550,74 @@
     }
     var cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], skipped = ev.pkgSkipped || [];
     var open = cats.filter(function (c) { return statusOf(ev, c.cat) !== 'booked'; });
-    var all = '<details class="pkg-all" open><summary>Your final package (' + bookedN + ' of ' + cats.length + ' booked)</summary><div class="pkg-rows">' + cats.map(function (c) { return row(c, cp, 'book'); }).join('') + '</div></details>';
+    var exB = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
+    var all = '<details class="pkg-all" open><summary>Book each one (' + bookedN + ' of ' + cats.length + ' booked)</summary>' +
+      (ev.sample ? '' : '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of your package and your budget, and your estimated total goes down to match.</p>') +
+      '<div class="pkg-rows">' + cats.map(function (c) { return row(c, cp, 'book'); }).join('') + '</div>' +
+      (exB.length && !ev.sample ? '<p class="small muted">Removed: ' + exB.map(function (id) { return esc(catName(id, ev)) + ' <button class="link small" data-pkunx="' + id + '">Add back</button>'; }).join(' \u00b7 ') + '</p>' : '') + '</details>';
+    var summary = pkgSummaryCard(ev, b, cats, cp);
     var back = '<button class="link small quiet" data-pkback>Change my choice: go back to comparing packages</button>';
     /* Step 4: everything booked. */
-    if (!open.length) return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(4) + '<div class="pkg-top"><h3>Your package is final</h3></div><div class="meter"><i style="width:100%"></i></div><p class="pkg-guide">Everything is booked: all ' + cats.length + ' parts of your plan. Next, invite your guests.</p><a class="btn gold block" href="#/e/' + esc(ev.id) + '/invite">Invite my guests</a>' + all + '</div>';
+    if (!open.length) return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(4) + '<div class="pkg-top"><h3>Everything is booked</h3></div><div class="meter"><i style="width:100%"></i></div><p class="pkg-guide">All ' + cats.length + ' parts of your package are booked. Next, invite your guests.</p><a class="btn gold block" href="#/e/' + esc(ev.id) + '/invite">Invite my guests</a>' + summary + all + '</div>';
     /* Step 3: one vendor at a time. */
     var next = open.find(function (c) { return skipped.indexOf(c.cat) < 0; }) || open[0], x = bizOf(cp, next.cat), pos = cats.indexOf(next) + 1;
     return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(3) + '<div class="pkg-top"><h3>Your final package: Package ' + (Math.min(ev.pkgChosen || 0, pks.length - 1) + 1) + '</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div><div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' +
-      '<div class="note small pkg-final"><b>\u2713 You chose Package ' + (Math.min(ev.pkgChosen || 0, pks.length - 1) + 1) + '.</b> To finalize it, book each one: contact them, agree on the price, then tap <b>I booked it</b>. We\u2019ll take you through them one at a time. When all ' + cats.length + ' are booked, your package is final.</div>' +
+      summary +
+      '<div class="note small pkg-final"><b>Next: book it.</b> Contact each one, agree on the price, then tap <b>I booked it</b>. We\u2019ll take you through them one at a time. You can save or send your package anytime, booked or not.</div>' +
       '<div class="pkg-next" data-pkrow="' + next.cat + '"><p class="eyebrow">Next up · ' + pos + ' of ' + cats.length + '</p><h3>' + esc(catName(next.cat, ev)) + '</h3>' +
         (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + (est(next.cat) ? ' · ' + est(next.cat) : '') + '</span></div>' +
           '<ol class="howto"><li><b>Contact them</b> to check your date and ask for a quote.<div class="row" style="margin-top:6px">' + links(x) + '</div></li>' +
           '<li><b>Send your details.</b> We wrote the message for you.<div class="row" style="margin-top:6px"><button class="btn small ghost" data-pkcopy="' + next.cat + '">Copy my message</button></div></li>' +
           '<li><b>Booked?</b> Tap below and add the price you agreed on.</li></ol>' +
           '<button class="btn gold block" data-pkbook="' + next.cat + '">I booked ' + esc(x.name) + '</button>' +
-          '<div class="row pkg-foot"><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button></div>'
+          '<div class="row pkg-foot"><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button>' + (ev.sample ? '' : '<button class="link small quiet" data-pkx="' + next.cat + '">Don\u2019t need this? Remove it</button>') + '</div>'
         : '<p class="muted">We don’t have a top-rated pick for this yet.</p><button class="btn gold block" data-pkswap="' + next.cat + '">See options</button><div class="row pkg-foot"><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button></div>') +
         '<div class="pk-swap" data-pkswapbox="' + next.cat + '"></div></div>' +
       all + back + '</div>';
+  }
+  /* The chosen package as one clear summary she can save, email or forward, booked or not. */
+  function pkgData(ev, b, cats, cp) {
+    var bizOf = function (cat) { var id = cp.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };
+    var tot = 0, rows = cats.map(function (c) {
+      var x = bizOf(c.cat), it = b.items.find(function (i) { return i.id === c.cat; }), bk = statusOf(ev, c.cat) === 'booked', ov = (ev.overrides || {})[c.cat];
+      var amt = ov && ov.amount > 0 ? ov.amount : it ? it.mid : 0; tot += amt;
+      var info = x ? [x.name + (hotelClass(x.name) ? ' (' + hotelClass(x.name) + ')' : ''), x.address ? x.address.split(',').slice(0, 2).join(',') : '', siteOf(x) ? String(siteOf(x)).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : (x.phone || '')].filter(Boolean).join('\n') : 'Still to choose';
+      return { cat: catName(c.cat, ev), name: x ? x.name : '', info: info, status: bk ? 'Booked' : 'Not booked yet', amt: amt, est: !(ov && ov.amount > 0) };
+    });
+    var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; }).map(function (id) { return catName(id, ev); });
+    return { rows: rows, total: tot, removed: ex, n: Math.min(ev.pkgChosen || 0, (ev.packages || []).length - 1) + 1, booked: rows.filter(function (r) { return r.status === 'Booked'; }).length };
+  }
+  function pkgSummaryCard(ev, b, cats, cp) {
+    var d = pkgData(ev, b, cats, cp);
+    return '<div class="pkg-sum" id="pkgSum"><div class="pkg-sum-h"><p class="eyebrow">\u2713 Your final package</p><h3>Package ' + d.n + ' \u00b7 ' + esc(ev.name) + '</h3><p class="small muted">' + esc(whenText(ev)) + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p></div>' +
+      '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.est ? 'est. ' : '') + money(r.amt) + '</span></div>'; }).join('') + '</div>' +
+      '<div class="pkg-sum-t"><span>Estimated total' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
+      '<p class="small muted">' + d.booked + ' of ' + d.rows.length + ' booked' + (d.removed.length ? ' \u00b7 Not needed: ' + d.removed.map(esc).join(', ') : '') + '</p>' +
+      '<p class="small">This is your package. Save it as a PDF, email it to yourself or forward it to a co-host anytime, booked or not.</p><div class="row pkg-sum-acts"><button class="btn gold small" data-pksum="pdf">Save as PDF</button><button class="btn ghost small" data-pksum="mail">Email it</button><button class="btn ghost small" data-pksum="share">Share</button></div></div>';
+  }
+  function pkgSumDoc(ev) {
+    var b = E.budget(ev, ev.tier), cats = pkgCats(ev, b), pks = ev.packages || [], cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], d = pkgData(ev, b, cats, cp);
+    var secs = [{ h: 'Your package: Package ' + d.n + ' (' + d.booked + ' of ' + d.rows.length + ' booked)', rows: d.rows.map(function (r) { return [r.cat, r.info + '\n' + r.status, (r.est ? 'est. ' : '') + money(r.amt)]; }), total: ['Estimated total' + (ev.budget ? ' (budget ' + money(ev.budget) + ')' : ''), money(d.total)] }];
+    if (d.removed.length) secs.push({ h: 'Not needed', bullets: d.removed });
+    secs.push({ h: 'Next steps', bullets: ['Contact each one to check your date and get a quote.', 'Agree on the price, then mark it booked in Event Couture.', 'Pay vendors directly. Prices are estimates until you book.'] });
+    return { kicker: E.typeName(ev) + ' package', title: ev.name, palette: [], lines: [whenText(ev) + ' \u00b7 ' + whereText(ev) + ' \u00b7 ' + plural(ev.guests, 'guest')], sections: secs, foot: 'Planned with Event Couture by Always Luxe. Prices are estimates unless marked Booked. You pay vendors directly.' };
+  }
+  function pkgSumAction(ev, kind) {
+    var d = pkgSumDoc(ev), name = fileName(ev).replace(/-plan\.pdf$/, '-package.pdf');
+    if (kind === 'pdf') {
+      var bytes; try { bytes = window.ECPDF.plan(d); } catch (e) { return toast('Could not make the PDF right now.'); }
+      T('package_pdf_saved', { event_type: ev.type });
+      if (window.ECNative && window.ECNative.shareFile) { var bin = ''; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return window.ECNative.shareFile(name, btoa(bin), 'application/pdf', ev.name).catch(function () {}); }
+      var blob = new Blob([bytes], { type: 'application/pdf' }), file = null; try { file = new File([blob], name, { type: 'application/pdf' }); } catch (e) {}
+      var touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+      if (touch && file && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file], title: ev.name }).catch(function () {});
+      var url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      return toast('Saved ' + name + ' to your downloads');
+    }
+    var txt = planText(d);
+    if (kind === 'mail') { T('package_emailed', { event_type: ev.type }); return (window.ECMailTo || function (u) { location.href = u; })('mailto:?subject=' + encodeURIComponent('My Event Couture package: ' + ev.name) + '&body=' + encodeURIComponent(txt.slice(0, 1700))); }
+    T('package_shared', { event_type: ev.type });
+    if (navigator.share) navigator.share({ title: ev.name, text: txt }).catch(function () {}); else copyText(txt, 'Your package');
   }
   function PKG_STEPS(on) {
     return '<ol class="pkg-steps" aria-label="Step ' + on + ' of 4">' + ['Create', 'Choose', 'Book', 'Done'].map(function (t, i) { var n = i + 1; return '<li class="' + (n < on ? 'done' : n === on ? 'on' : '') + '"' + (n === on ? ' aria-current="step"' : '') + '><span>' + (n < on ? '✓' : n) + '</span>' + t + '</li>'; }).join('') + '</ol>';
@@ -1599,6 +1669,7 @@
       if (ev.packages.length && ch === k) { var np = ev.packages[ev.pkgChosen]; Object.keys(np.items).forEach(function (cat) { if (!savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, np.items[cat]); syncPrice(ev, cat); }); }
       save(); rerender(); toast('Package removed');
     }); });
+    $$('[data-pksum]').forEach(function (bt) { bt.addEventListener('click', function () { var k = bt.dataset.pksum; if (ev.sample || isKept(ev)) return pkgSumAction(ev, k); keepSheet(ev, 'Keep your plan to save or share your package', function () { rerender(); pkgSumAction(ev, k); }); }); });
     $$('[data-pkskip]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; ev.pkgSkipped = (ev.pkgSkipped || []).filter(function (c) { return c !== bt.dataset.pkskip; }).concat([bt.dataset.pkskip]); save(); rerender(); }); });
     $$('[data-pkcopy]').forEach(function (bt) { bt.addEventListener('click', function () { copyText(vendorAsk(ev, bt.dataset.pkcopy), 'Your message'); }); });
     $$('[data-pkback]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; ev.pkgConfirmed = false; ev.pkgView = ev.pkgChosen || 0; save(); rerender(); }); });
@@ -1611,7 +1682,7 @@
       box.innerHTML = '<p class="small muted">Finding other top-rated options\u2026</p>';
       pkgSearch(ev, c).then(function (list) {
         var inOther = (ev.packages || []).map(function (x) { return x.items[cat]; }); var others = list.filter(function (p) { return inOther.indexOf(p.id) < 0; }).slice(0, 5);   /* never the same business in two packages */
-        box.innerHTML = '<div class="curated">' + (others.length ? '<p class="eyebrow">Other top-rated choices</p>' + others.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + [p.rating ? '\u2605 ' + (Math.round(p.rating * 10) / 10) + ' (' + Number(p.reviews || 0).toLocaleString('en-US') + ')' : '', PRICE_SIGN[p.priceLevel] || '', p.address ? esc(p.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' \u00b7 ') + '</div></div><span class="acts">' + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<button class="btn small" data-pkpick="' + esc(p.id) + '">Use this</button></span></div>'; }).join('') : '<p class="muted small">No other top-rated matches nearby.</p>') +
+        box.innerHTML = '<div class="curated">' + (others.length ? '<p class="eyebrow">Other top-rated choices</p>' + others.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + [p.rating ? '\u2605 ' + (Math.round(p.rating * 10) / 10) + ' (' + Number(p.reviews || 0).toLocaleString('en-US') + ')' : '', PRICE_SIGN[p.priceLevel] || '', p.address ? esc(p.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' \u00b7 ') + '</div></div><span class="acts">' + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<button class="btn small" data-pkpick="' + esc(p.id) + '">Use this</button></span></div>'; }).join('') : '<p class="muted small">No other top-rated matches nearby.</p>') +
           '<p class="small"><a class="link" href="' + (ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id) + '/' + (c.kind === 'venue' ? 'places">See every kind of venue, by area and drive time' : 'vendors">See more businesses for every category') + '</a></p>' +
           '<details class="cmp-add"><summary class="link small">Add one you found yourself</summary><div class="grid2"><label class="field"><span>Business name</span><input class="input" data-ownname></label><label class="field"><span>Website or phone (optional)</span><input class="input" data-ownlink></label></div><button class="btn small" data-ownadd>Put it in package ' + (k + 1) + '</button></details></div>';
         var oa = box.querySelector('[data-ownadd]'); if (oa) oa.addEventListener('click', function () { if (lockSample(ev)) return; var nm = box.querySelector('[data-ownname]').value.trim(); if (!nm) return toast('Enter the business name'); var lk = box.querySelector('[data-ownlink]').value.trim(), phone = /^[\d\s().+-]{7,}$/.test(lk);
@@ -1626,7 +1697,7 @@
   TAB_VIEWS.budget = function (ev, b) {
     var groups = {}; cut(b.items, 3, ev).forEach(function (i) { (groups[i.group] = groups[i.group] || []).push(i); });
     var excluded = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
-    return (E.culture(ev) ? '<div class="stack" id="musicPlan">' + musicChips(ev) + '</div>' : '') + (AI.live ? packagePanel(ev, b) : '') + '<div class="stack"><div class="row" style="justify-content:space-between"><h3>' + (b.tier.id === 'F' ? 'Your budget plan' : esc(b.tier.name) + ' budget') + '</h3><div class="seg" id="tierseg">' + (ev.budget ? [{ id: 'F', name: 'My budget' }] : []).concat(D.TIERS).map(function (t) { return '<button data-tier="' + t.id + '" aria-pressed="' + (t.id === ev.tier) + '">' + t.name + '</button>'; }).join('') + '</div></div>' +
+    return (ev.type === 'wedding' && !ev.sample ? '<div class="stack" id="musicPlan">' + cultureRow(ev) + musicChips(ev) + '</div>' : E.culture(ev) ? '<div class="stack" id="musicPlan">' + musicChips(ev) + '</div>' : '') + (AI.live ? packagePanel(ev, b) : '') + '<div class="stack"><div class="row" style="justify-content:space-between"><h3>' + (b.tier.id === 'F' ? 'Your budget plan' : esc(b.tier.name) + ' budget') + '</h3><div class="seg" id="tierseg">' + (ev.budget ? [{ id: 'F', name: 'My budget' }] : []).concat(D.TIERS).map(function (t) { return '<button data-tier="' + t.id + '" aria-pressed="' + (t.id === ev.tier) + '">' + t.name + '</button>'; }).join('') + '</div></div>' +
       (ev.payer === 'own' ? (function () { var rest = ev.setting === 'restaurant' || ev.setting === 'privateRoom';
         /* at a restaurant guests pay their own bill; anywhere else they chip in for food and drinks */
         var own = b.items.filter(function (i) { return rest ? (i.id === 'restaurantFood' || i.id === 'restaurantDrinks' || i.id === 'privateDining') : ['catering', 'bar', 'bartender'].indexOf(i.id) >= 0; }).reduce(function (t, i) { return t + i.mid; }, 0); return own ? '<div class="note">Everyone pays their own ' + (rest ? 'meal and drinks' : 'share of the food and drinks') + ': about <b>' + money(own / Math.max(1, ev.expected || ev.guests)) + ' a person</b>' + (rest ? ', with tax and tip' : ', with tax and service') + '. You cover the rest (cake, decor and the 10% cushion), about <b>' + money(Math.max(0, b.total - own)) + '</b>. The total below is still the full cost of the event.</div>' : ''; })() : '') +
@@ -1648,6 +1719,7 @@
   };
   TAB_BIND.budget = function (ev, save, rerender) {
     var mp = $('#musicPlan'); if (mp) bindMusic(mp, ev, function () { save(); rerender(); toast('Music updated'); });
+    bindCulture(ev, save, rerender);
     if (AI.live) bindPackage(ev, save, rerender);
     if (PENDING_FIND && AI.live) { var pf = PENDING_FIND; PENDING_FIND = null; setTimeout(function () { var sb = document.querySelector('[data-pkswap="' + pf + '"]'); if (sb) { sb.closest('.pk-row').scrollIntoView({ block: 'center' }); sb.click(); } }, 60); }
     $$('#tierseg [data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { var bf = snap(ev); ev.tier = btn.dataset.tier; save(); rerender(); if (bf.tier !== ev.tier) undoToast(ev, bf, 'Switched to ' + tierName(ev.tier), rerender); }); });
@@ -1799,7 +1871,7 @@
           if (!list.length) { box.innerHTML = '<p class="muted">No well-reviewed matches nearby for this type. Try another venue type, or switch to a different budget version.</p>'; return; }
           var placesAll = list.length; list = cut(list, 3, ev);
           var ids = list.map(function (p) { return p.id; });
-          box.innerHTML = '<div class="curated"><p class="eyebrow">Top-rated ' + esc(btn.dataset.live.toLowerCase()) + 's in ' + esc(ev.city.split(',')[0]) + '</p>' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.rating ? '\u2605 ' + p.rating + ' \u00b7 ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews \u00b7 ' : '') + esc(p.address || '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts">' + saveBtn(ev, p, venueCat(ev)) + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Pricing and availability come directly from each venue when you inquire.</p></div>' + more(ev, placesAll, list.length, 'top-rated places');
+          box.innerHTML = '<div class="curated"><p class="eyebrow">Top-rated ' + esc(btn.dataset.live.toLowerCase()) + 's in ' + esc(ev.city.split(',')[0]) + '</p>' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + (p.rating ? '\u2605 ' + p.rating + ' \u00b7 ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews \u00b7 ' : '') + esc(p.address || '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts">' + saveBtn(ev, p, venueCat(ev)) + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Pricing and availability come directly from each venue when you inquire.</p></div>' + more(ev, placesAll, list.length, 'top-rated places');
           $$('[data-keep]', box).forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { location.reload(); }); }); });
           if (ev.start && ids.length) {
             var origin = /,|\d{5}/.test(ev.start) ? ev.start : ev.start + ', ' + ev.city;
@@ -1950,7 +2022,7 @@
           if (!list.length) { box.innerHTML = '<p class="muted small">No well-reviewed matches nearby. Try a different area on the Venues tab.</p>'; return; }
           var bizAll = list.length; list = cut(list, 3, ev);
           var PL = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
-          box.innerHTML = '<div class="curated">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + (p.rating ? '★ ' + p.rating + ' · ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews' : '') + (PL[p.priceLevel] ? ' · ' + PL[p.priceLevel] : '') + (p.address ? ' · ' + esc(p.address.split(',').slice(0, 2).join(',')) : '') + '</div></div><span class="acts">' + saveBtn(ev, p, btn.dataset.vendor) + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Exact pricing comes from each business when you inquire.</p></div>' + more(ev, bizAll, list.length, 'top-rated businesses');
+          box.innerHTML = '<div class="curated">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + (p.rating ? '★ ' + p.rating + ' · ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews' : '') + (PL[p.priceLevel] ? ' · ' + PL[p.priceLevel] : '') + (p.address ? ' · ' + esc(p.address.split(',').slice(0, 2).join(',')) : '') + '</div></div><span class="acts">' + saveBtn(ev, p, btn.dataset.vendor) + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Exact pricing comes from each business when you inquire.</p></div>' + more(ev, bizAll, list.length, 'top-rated businesses');
           $$('[data-keep]', box).forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { location.reload(); }); }); });
         }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn’t available right now.') + '</p>'; });
   }
@@ -2058,7 +2130,7 @@
     return '<div class="stack"><h3>Get this look</h3><p class="muted">Everything it takes to bring ' + esc(ev.concept.styleName) + ' to life: the pieces you can buy yourself, and the ones a pro makes for you.' + (rest ? ' Only what a restaurant allows on the table is listed.' : '') + '</p><div class="list panel get-look">' +
       list.map(function (p) {
         var l = p.q ? shopLink(p.q) : null;
-        return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + esc(WHY[p.why] || '') + (p.hire ? ' \u00b7 Hire ' + esc(HIRE_WHO[p.hire] || 'a pro') : ' \u00b7 Buy it') + '</div></div><span class="acts">' +
+        return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + esc(WHY[p.why] || '') + (p.hire ? ' \u00b7 Hire ' + esc(HIRE_WHO[p.hire] || 'a pro') : ' \u00b7 Buy it') + '</div></div><span class="acts">' +
           (l ? '<a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a>' : '<a class="btn small ghost" href="' + base + '/vendors">Find ' + esc(HIRE_WHO[p.hire] || 'a pro') + '</a>') + '</span></div>';
       }).join('') + '</div>' + more(ev, all.length, list.length, 'pieces') +
       '<p class="small muted">Store links search for that exact piece so you can compare live prices and pick the one you like. Show your florist, baker or decorator your inspiration photo so they can match it.</p></div>';
@@ -2391,7 +2463,7 @@
       (CFG.app ? '<p class="muted small">Inviting more people? Tap the guest count at the top of your plan to change it; it\u2019s free in the app.</p></div></div>' : '<p class="muted small">Inviting more people? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>') +
       (!SELL_EXTRAS ? '' : '<div class="stack"><div class="row" style="justify-content:space-between"><h3>AI credits</h3><span class="num">' + w.credits + ' credits</span></div><p class="muted small">For extra AI work beyond what your pass includes. The exact credit cost is shown before every action, and credits never top up automatically.</p><div class="packs">' +
       D.CREDIT_PACKS.map(function (p, i) { return '<button class="tier" data-pack="' + i + '"><span class="amt num">' + p.credits + '</span><span class="muted">credits</span><b class="num">$' + p.price.toFixed(2) + '</b></button>'; }).join('') + '</div></div>' +
-      '<div class="stack"><h3>Creative packages</h3><div class="list panel">' + D.PACKAGES.map(function (p, i) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b><div class="small muted">' + esc(p.desc) + '</div></div><span class="num">$' + p.price.toFixed(2) + '</span><button class="btn small" data-pkg="' + i + '">Choose</button></div>'; }).join('') + '</div></div>' +
+      '<div class="stack"><h3>Creative packages</h3><div class="list panel">' + D.PACKAGES.map(function (p, i) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + esc(p.desc) + '</div></div><span class="num">$' + p.price.toFixed(2) + '</span><button class="btn small" data-pkg="' + i + '">Choose</button></div>'; }).join('') + '</div></div>' +
       '<div class="stack"><h3>Optional add-ons</h3><p class="muted small">Never needed to finish your plan.</p><div class="list panel">' + D.ADDONS.map(function (a, i) { return '<div class="it"><div class="grow"><b>' + esc(a.name) + '</b><div class="small muted">' + esc(a.desc) + '</div></div><span class="num">$' + a.price.toFixed(2) + '</span><button class="btn small ghost" data-add="' + i + '">Choose</button></div>'; }).join('') + '</div></div>') +
       (ev.sample ? '' : '<div class="stack"><h3>Delete this event</h3><p class="muted small">Removes the plan, guest list and photos from this device.' + (CFG.app ? '' : ' Purchases can\u2019t be reused after deleting') + '.</p><div><button class="btn small ghost" id="del" style="color:var(--bad)">Delete event</button></div></div>') +
       (CFG.app ? '' : '<div class="stack"><h3>Receipts</h3><div class="panel list">' + (mine.length ? mine.map(function (l) { return '<div class="it"><span class="grow">' + esc(l.kind) + '<br><span class="small muted">' + new Date(l.at).toLocaleDateString('en-US') + (l.note ? ', ' + esc(l.note) : '') + '</span></span><span class="num">' + money(l.amount) + '</span></div>'; }).join('') : '<p class="muted">Purchases for this event show here.</p>') + '</div></div>');
