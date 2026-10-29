@@ -634,6 +634,7 @@
       { name: 'Danny Ashkar', ig: 'danyachkar', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Lebanese singer for weddings, engagements and parties across California' },
       { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
       { name: 'Tamer Aldabouqi', ig: 'tamerdabouqi', cats: ['singer'], cultures: ['arabic'], note: 'Arabic singer with a live band for weddings and celebrations' },
+      { name: 'Tony Eid', ig: 'tony_eid', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese star singer for weddings, engagements and galas' },
       { name: 'Wissam Wahhab', ig: 'wissam_wahhab_official', cats: ['singer'], country: 'US', cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and celebrations' },
       { name: 'Salem Anan', ig: 'salemanan11', cats: ['singer'], cities: ['Toronto, ON', 'Hamilton, ON'], cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and celebrations in Mississauga and the Greater Toronto Area' },
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties); 'parties' = every event that isn't a wedding. */
