@@ -10,5 +10,5 @@ window.EC_CONFIG = {
   supportEmail: 'hello@eventcouture.app',
   legalName: 'Always Luxe',   /* the business name on Privacy and Terms */
   governingState: 'Texas',   /* e.g. 'Texas': the state whose laws govern the Terms */
-  version: '0.63.0'
+  version: '0.64.0'
 };
