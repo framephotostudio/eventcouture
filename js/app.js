@@ -400,7 +400,9 @@
     var tags = [['Candles and decor', pick('decor').mid, 36, 30], ['Cake', pick('cake').mid, 80, 36], ['Florals', pick('florals').mid, 52, 62], ['Linens and tableware', pick('rentals').mid, 34, 86]];
     var lines = [['Venue', 'venue'], ['Catering', 'catering'], ['Florals', 'florals'], ['Candles and decor', 'decor'], ['Cake', 'cake'], ['Photographer', 'photographer']].map(function (l) { return '<div class="line"><span>' + l[0] + '</span><span class="num">' + money(pick(l[1]).mid) + '</span></div>'; }).join('') +
       (function () { var shown = ['venue', 'catering', 'florals', 'decor', 'cake', 'photographer'].reduce(function (t, id) { return t + pick(id).mid; }, 0); return '<div class="line"><span>Bar, rentals, music, attire and more, plus a 10% cushion</span><span class="num">' + money(demo.total - shown) + '</span></div>'; })();
+    var lastEv = Object.values(events()).filter(function (e) { return e && e.id && !e.sample; }).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); })[0];
     frame(
+      (lastEv ? '<a class="resume-bar" href="#/e/' + esc(lastEv.id) + ((lastEv.packages || []).length ? '/budget' : '') + '"><span>Welcome back. <b>Continue planning ' + esc(lastEv.name || 'your event') + '</b></span><span aria-hidden="true">\u2192</span></a>' : '') +
       (CFG.app ? '' : '<div class="app-soon-bar"><img src="img/brand/ec-mark-128.png" alt="" width="30" height="30"><span><b>The Event Couture app is coming soon</b> to iPhone and Android. Plan, book and invite from your phone.</span></div>') +
       '<section class="hero"><div class="hero-copy"><h1>Your inspiration. A beautifully planned event.</h1>' +
       '<p class="lead">Turn photos or ideas into three event concepts, a detailed budget and a step-by-step plan.</p>' +
