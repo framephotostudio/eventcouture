@@ -611,7 +611,8 @@
       /* No cities: shown in every city. cultures: only for those cultural weddings. */
       { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties). */
-      { name: 'DJ Yamani', ig: 'dj_yamani', cats: ['dj'], cities: ['Houston, TX'], cultures: ['arabic', ''], note: 'Arabic and American music for weddings and parties' }
+      { name: 'DJ Yamani', ig: 'dj_yamani', cats: ['dj'], cities: ['Houston, TX'], cultures: ['arabic', ''], note: 'Arabic and American music for weddings and parties' },
+      { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hairMakeup'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' }
     ],
     CITIES: CITIES, COUNTRIES: COUNTRIES, PROVINCES: PROVINCES, AREAS: AREAS, STYLES: STYLES, MENUS: MENUS, DIETS: DIETS, CHECKLIST: CHECKLIST, PASSES: PASSES,
     CREDIT_PACKS: CREDIT_PACKS, PACKAGES: PACKAGES, ADDONS: ADDONS, ALLOWANCE: ALLOWANCE,

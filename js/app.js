@@ -1470,6 +1470,7 @@
   /* Vendors Always Luxe recommends for this city and line, shaped like a search result. */
   function recFor(ev, cat) {
     return (D.RECOMMENDED || []).filter(function (r) { return r.cats.indexOf(cat) >= 0 && (!r.cities || r.cities.indexOf(ev.city) >= 0) && (!r.cultures || r.cultures.indexOf(ev.culture || '') >= 0); })
+      .sort(function (a, b) { return (b.cities ? 1 : 0) - (a.cities ? 1 : 0); })   /* someone recommended for this city comes before someone recommended everywhere */
       .map(function (r) { return { id: 'ig:' + r.ig, name: r.name, website: 'https://instagram.com/' + r.ig, rec: true, note: r.note, ig: r.ig }; });
   }
   function pkgSearch(ev, c) {
