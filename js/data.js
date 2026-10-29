@@ -166,7 +166,7 @@
   var CULTURES = {
     arabic: {
       name: 'Arabic wedding', guests: 250, hours: 6, menu: 'arabic', blurb: 'Zaffe entrance, live band and singer, the kosha, dabke and a mezze-to-knafeh menu.', pre: 'With the blessing of God and their families',
-      music: [['zaffe', 'Zaffe and dabke group'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dj', 'DJ'], ['dabke', 'Dabke troupe']], musicDefault: ['zaffe', 'liveMusic', 'dj', 'singer'],
+      music: [['zaffe', 'Zaffe and dabke group'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dj', 'DJ']], musicDefault: ['zaffe', 'liveMusic', 'dj', 'singer'],
       add: ['kosha'],
       labels: { liveMusic: 'Live band (Arabic music)', singer: 'Arabic wedding singer', officiant: 'Officiant (sheikh or priest)', catering: 'Middle Eastern catering', cake: 'Wedding cake and Arabic sweets', dj: 'DJ (Arabic and international music)' },
       search: { liveMusic: 'arabic wedding band', singer: 'arabic wedding singer', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern mediterranean catering', officiant: 'sheikh imam or priest wedding officiant' },
