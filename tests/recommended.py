@@ -43,6 +43,7 @@ with sync_playwright() as p:
         base=plan(pg, 'Detroit, MI')
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
         zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]; check(n, zf[:2]==['Zaffet Joseph','Zaffet Al-Afrah'], 'Detroit: Zaffet Joseph first, then Zaffet Al-Afrah: '+str(zf[:2]))
+        at=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="attire"] td > b')]; check(n, at[:1]==['Joseph\u2019s Fashion'], 'Detroit: Joseph\u2019s Fashion is the attire pick: '+str(at[:1]))
         base=plan(pg, 'Toronto, ON')
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
         zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]; check(n, 'Zaffet Al-Afrah' in zf and 'Zaffet Joseph' in zf and 'Royal Zaffe Group' not in zf, 'Toronto: the worldwide groups show, the U.S.-only one does not: '+str(zf))
