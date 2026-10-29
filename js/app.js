@@ -630,6 +630,7 @@
   }
   function readArea(sel, txt) { var v = sel ? sel.value : ''; return v === '__other' ? (txt ? txt.value.trim() : '') : v; }
   /* Cities for one country; a city she typed herself selects that country's "Other" choice. */
+  var COMMON_WORD_CITIES = ['split', 'nice', 'goa', 'bali', 'provence', 'tuscany', 'cotswolds', 'algarve', 'dead sea', 'gold coast', 'amalfi coast', 'lake como', 'cork', 'mallorca', 'boracay'];
   function otherCity(typed, choice) {
     if (!typed) return choice;
     var co = D.COUNTRIES.find(function (k) { return k.other === choice; });
@@ -733,7 +734,7 @@
         '<div class="grid2">' +
         '<label class="field"><span>Event type</span><select class="input" id="type">' + (draft.type ? '' : '<option value="" selected disabled>Choose your event type</option>') + D.EVENT_TYPES.map(function (t) { return '<option value="' + t.id + '"' + (t.id === draft.type && !draft.culture ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '<optgroup label="Cultural weddings">' + Object.keys(D.CULTURES).map(function (k) { return '<option value="wedding" data-culture="' + k + '"' + (draft.type === 'wedding' && draft.culture === k ? ' selected' : '') + '>' + esc(D.CULTURES[k].name) + '</option>'; }).join('') + '</optgroup><optgroup label="Cultural engagement parties">' + Object.keys(D.CULTURES).filter(function (k) { return D.CULTURES[k].engagement; }).map(function (k) { return '<option value="engagement" data-culture="' + k + '"' + (draft.type === 'engagement' && draft.culture === k ? ' selected' : '') + '>' + esc(D.CULTURES[k].engagement.name) + '</option>'; }).join('') + '</optgroup></select></label>' + 
         (function () {
-          if (!draft.city) { var said = ((draft.inspiration && draft.inspiration.text) || '').toLowerCase(); var hit = D.CITIES.find(function (c) { return !/^Other /.test(c.name) && said.indexOf(c.name.split(',')[0].toLowerCase()) >= 0; }); if (hit) draft.city = hit.name; else if (!draft.country && /\bcanad/.test(said)) draft.country = 'CA'; }
+          if (!draft.city) { var said = ((draft.inspiration && draft.inspiration.text) || '').toLowerCase(); var hit = D.CITIES.find(function (c) { var cn = c.name.split(',')[0].toLowerCase(); return !/^Other /.test(c.name) && COMMON_WORD_CITIES.indexOf(cn) < 0 && new RegExp('\\b' + cn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(said); });   /* a whole city name, never a word like "split" or "nice" */ if (hit) draft.city = hit.name; else if (!draft.country && /\bcanad/.test(said)) draft.country = 'CA'; }
           var co = draft.city ? E.countryOf(draft.city) : (D.COUNTRIES.find(function (c) { return c.id === draft.country; }) || D.COUNTRIES[0]);
           var known = !draft.city || D.CITIES.some(function (c) { return c.name === draft.city; });
           return '<label class="field"><span>Country</span><select class="input" id="country">' + D.COUNTRIES.map(function (c) { return '<option value="' + c.id + '"' + (c.id === co.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></label>' +
