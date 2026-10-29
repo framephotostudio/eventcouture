@@ -620,7 +620,7 @@
       { name: 'Salem Omran', ig: 'salem_omran_official', cats: ['singer'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Arabic wedding and festival singer in Houston' },
       { name: 'Tur\u00e1th Folkoholic Dance Theatre', ig: 'zaffadabketexas', cats: ['zaffe', 'dabke'], cities: ['Houston, TX'], top: true, note: 'Epic zaffa wedding entrances and dabke: Lebanese, Palestinian, Jordanian, Syrian, Iraqi and Egyptian. Texas and nationwide' },
       { name: 'Watan Zaffe & Dabke Group', ig: 'watanzaffegroup', cats: ['zaffe', 'dabke'], cities: ['Houston, TX'], note: 'Zaffe entrances and dabke for weddings, Houston' },
-      /* first: ahead of everyone else wherever they show. top: first among the others for the same place. No cities, states or country: every US and Canadian city (they say they travel worldwide). states: every city in those states. country: everywhere in that country. notStates: not in those states. notTop: in those cities they're never in the first 3 picks, only further down the list. */
+      /* first: ahead of everyone else wherever they show. top: first among the others for the same place. No cities, states or country: every US and Canadian city (they say they travel worldwide). states: every city in those states. country: everywhere in that country. notStates: not in those states. onlyCities: only in those cities, with no extra rank (used to place someone last there). notTop: in those cities they're never in the first 3 picks, only further down the list. */
       { name: 'Zaffet Joseph', ig: 'zaffetjosephentertainment', cats: ['zaffe', 'dabke'], states: ['MI'], note: 'Michigan\u2019s first and original zaffa group: drummers, violin and DJ. Available worldwide' },
       { name: 'Zaffet El Ezz', ig: 'zaffetelezz', cats: ['zaffe', 'dabke'], states: ['CA'], note: 'Zaffe beyond traditions: weddings, engagements and parties. California based, travels nationwide' },
       { name: 'Zaffet Al-Afrah', ig: 'zaffet_al_afrah', cats: ['zaffe', 'dabke'], notTop: ['Houston, TX'], note: 'Zaffe, dabke and drummers for weddings. Detroit based, travels nationwide' },
@@ -632,10 +632,12 @@
       { name: 'Ronnie Altahan', ig: 'ronnie.altahan', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and parties across California' },
       { name: 'Farah Ibrahim', ig: 'farah_ibrahim_official', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Arab star singer for weddings, engagements and parties across California' },
       { name: 'Danny Ashkar', ig: 'danyachkar', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Lebanese singer for weddings, engagements and parties across California' },
+      { name: 'Nidal Nasr', ig: 'nidalnasrofficial', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and parties across California' },
+      { name: 'Tony Eid', ig: 'tony_eid', cats: ['singer'], notCities: ['Houston, TX'], cultures: ['arabic'], note: 'Lebanese star singer for weddings, engagements and galas' },
       { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
       { name: 'Tamer Aldabouqi', ig: 'tamerdabouqi', cats: ['singer'], cultures: ['arabic'], note: 'Arabic singer with a live band for weddings and celebrations' },
-      { name: 'Tony Eid', ig: 'tony_eid', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese star singer for weddings, engagements and galas' },
       { name: 'Wissam Wahhab', ig: 'wissam_wahhab_official', cats: ['singer'], country: 'US', cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and celebrations' },
+      { name: 'Tony Eid', ig: 'tony_eid', cats: ['singer'], onlyCities: ['Houston, TX'], cultures: ['arabic'], note: 'Lebanese star singer for weddings, engagements and galas' },
       { name: 'Salem Anan', ig: 'salemanan11', cats: ['singer'], cities: ['Toronto, ON', 'Hamilton, ON'], cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and celebrations in Mississauga and the Greater Toronto Area' },
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties); 'parties' = every event that isn't a wedding. */
       { name: 'DJ Yamani', ig: 'dj_yamani', cats: ['dj'], cities: ['Houston, TX'], cultures: ['arabic', ''], note: 'Arabic and American music for weddings and parties' },
