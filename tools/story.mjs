@@ -26,7 +26,7 @@ try {
     const sum = document.querySelector('#pkgSum');
     const rows = [...sum.querySelectorAll('.pkg-sum-r')], want = rows.find(r => r.querySelector('.badge.rec') && new RegExp(row, 'i').test(r.querySelector('.pkg-sum-c').textContent));
     if (want) { want.parentNode.prepend(want); want.classList.add('story-star'); }
-    sum.querySelectorAll('.pkg-sum-a, .pkg-sum-t, .pkg-adds-row, .pkg-pl, .pkg-sum-acts, .badge.ok').forEach(x => x.remove());
+    sum.querySelectorAll('.pkg-sum-a, .pkg-sum-t, .pkg-adds-row, .pkg-adds, .pkg-pl, .pkg-sum-acts, .badge.ok').forEach(x => x.remove());
     [...sum.children].forEach(c => { if (c.tagName === 'P') c.remove(); });
     rows.filter(r => !r.querySelector('.pkg-sum-n b') || /Still to choose/.test(r.textContent)).forEach(r => r.remove());
     const story = document.createElement('div'); story.id = 'story';
