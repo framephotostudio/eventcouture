@@ -609,7 +609,9 @@
     RECOMMENDED: [
       { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], cities: ['Los Angeles, CA', 'Orange County, CA'], note: 'International and Arabic music for weddings and private events' },
       /* No cities: shown in every city. cultures: only for those cultural weddings. */
-      { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' }
+      { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
+      /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties). */
+      { name: 'DJ Yamani', ig: 'dj_yamani', cats: ['dj'], cities: ['Houston, TX'], cultures: ['arabic', ''], note: 'Arabic and American music for weddings and parties' }
     ],
     CITIES: CITIES, COUNTRIES: COUNTRIES, PROVINCES: PROVINCES, AREAS: AREAS, STYLES: STYLES, MENUS: MENUS, DIETS: DIETS, CHECKLIST: CHECKLIST, PASSES: PASSES,
     CREDIT_PACKS: CREDIT_PACKS, PACKAGES: PACKAGES, ADDONS: ADDONS, ALLOWANCE: ALLOWANCE,
