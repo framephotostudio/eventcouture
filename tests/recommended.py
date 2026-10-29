@@ -26,8 +26,12 @@ with sync_playwright() as p:
         pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
         for city in ['Orange County, CA','Los Angeles, CA']:
             base=plan(pg, city)
+            pg.goto(U+base+'/budget'); pg.wait_for_selector('#musicPlan')
+            if pg.get_attribute('[data-music="singer"]','aria-pressed')!='true': pg.click('[data-music="singer"]'); pg.wait_for_timeout(400)
             pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
             dj=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="dj"] td > b')]; cellt=pg.inner_text('tr[data-pkrow="dj"] td >> nth=0')
+            sg=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="singer"] td > b')]
+            check(n, sg[:2]==['Waseem Rabih','Chris Hawat'], city+': Waseem Rabih is the singer in Package 1, Chris Hawat in Package 2: '+str(sg))
             check(n, dj and dj[0]=='DJ Mosses' and 'Recommended' in cellt and dj.count('DJ Mosses')==1, city+': DJ Mosses is the DJ in Package 1, marked Recommended: '+str(dj))
             if city.startswith('Orange'):
                 pg.evaluate("document.querySelector('tr[data-pkrow=\"dj\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_pkg_{n}.png')
