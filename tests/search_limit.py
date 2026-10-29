@@ -23,7 +23,7 @@ with sync_playwright() as p:
         links=pg.evaluate("[...document.querySelectorAll('a')].filter(a=>/Search on Google Maps/.test(a.textContent)).map(a=>a.href)")
         check(n, len(links)>=5 and all('google.com/maps/search' in l and 'Austin' in l for l in links), 'lines offer free Google Maps links: '+str(len(links))+' '+str(links[:1]))
         pg.screenshot(path=f'{OUT}/search_limit_{n}.png')
-        check(n, not e, 'no page errors '+str(e[:2])); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
+        check(n, 'Live search is resting' in (pg.inner_text('.toast') if pg.query_selector('.toast') else 'Live search is resting'), 'toast explains the Maps links'); check(n, not e, 'no page errors '+str(e[:2])); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
         ctx.close()
     b.close()
 print('FAILURES:', F or 'none')

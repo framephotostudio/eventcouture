@@ -1610,7 +1610,7 @@
         (pks.length < 3 && !ev.sample ? '<th class="pk-colh pk-addcol"><button class="btn small ghost" id="pkgMore">+ Create package ' + (pks.length + 1) + '</button><span class="small muted">Different picks to compare</span></th>' : '') + '</tr>';
       var rowsH = cats.map(function (c) {
         return '<tr data-pkrow="' + c.cat + '"><th scope="row"><div class="pk-rh"><b>' + esc(catName(c.cat, ev)) + '</b>' + (ev.sample ? '' : '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don’t need it">×</button>') + '</div><span class="small muted num">' + est(c.cat) + '</span></th>' +
-          pks.map(function (x, i) { var biz = bizOf(x, c.cat); return '<td>' + (biz ? '<b>' + esc(biz.name) + '</b><span class="small muted">' + line(biz) + '</span><div class="pk-cell-acts">' + (siteOf(biz) ? '<a class="link small" target="_blank" rel="noopener" href="' + esc(siteOf(biz)) + '">' + (/^ig:/.test(biz.id) ? 'Instagram' : /^rec:/.test(biz.id) ? 'Map' : 'Website') + '</a>' : '') + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Swap</button>') + '</div>' : '<span class="small muted">No match yet</span> ' + mapsBtn(ev, c.cat, c.q) + (ev.sample ? '' : ' <button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Find one</button>')) + '</td>'; }).join('') +
+          pks.map(function (x, i) { var biz = bizOf(x, c.cat); return '<td>' + (biz ? '<b>' + esc(biz.name) + '</b><span class="small muted">' + line(biz) + '</span><div class="pk-cell-acts">' + (siteOf(biz) ? '<a class="link small" target="_blank" rel="noopener" href="' + esc(siteOf(biz)) + '">' + (/^ig:/.test(biz.id) ? 'Instagram' : /^rec:/.test(biz.id) ? 'Map' : 'Website') + '</a>' : '') + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Swap</button>') + '</div>' : '<span class="small muted">No match yet</span><br>' + mapsBtn(ev, c.cat, c.q) + '<br>' + (ev.sample ? '' : ' <button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Find one</button>')) + '</td>'; }).join('') +
           (pks.length < 3 && !ev.sample ? '<td class="pk-addcol"></td>' : '') + '</tr><tr class="pk-swaprow"><td colspan="' + ncol + '"><div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></td></tr>';
       }).join('');
       var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
@@ -1716,7 +1716,7 @@
       if (lockSample(ev) || PKG_BUSY) return; PKG_BUSY = true; setTimeout(function () { PKG_BUSY = false; }, 60000); btn.disabled = true; var msg = $('#pkgMsg');
       buildPackage(ev, function (d, n) { if (msg) msg.textContent = 'Finding top-rated picks\u2026 ' + d + ' of ' + n; }).then(function (k) {
         setTimeout(function () { PKG_BUSY = false; }, 450); var m = ev.packages[k].miss || []; rerender();   /* a double tap's second tap doesn't start another package */
-        toast('Package ' + (k + 1) + ' is ready' + (m.length ? '. ' + plural(m.length, 'item') + ' had no top-rated match; tap See options there.' : ''));
+        toast('Package ' + (k + 1) + ' is ready' + (m.length ? (LIVE_RESTING ? '. Live search is resting until next month: tap Search on Google Maps on each line.' : '. ' + plural(m.length, 'item') + ' had no top-rated match; tap See options there.') : ''));
         var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' });
       });
     };
@@ -1956,12 +1956,13 @@
   /* Free fallback: the same search on Google Maps, opened by the guest (costs nothing). */
   function mapsSearch(ev, cat, q) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((q || VENDOR_SEARCH[cat] || catName(cat, ev)).replace(/^(upscale|luxury|affordable|budget-friendly) /i, '') + ' near ' + (ev.city || '').replace(/^Other (US city|city in )/, '')); }
   function mapsBtn(ev, cat, q, cls) { return '<a class="' + (cls || 'link small') + '" target="_blank" rel="noopener" href="' + esc(mapsSearch(ev, cat, q)) + '">Search on Google Maps</a>'; }
+  var LIVE_RESTING = false;   /* the month's free searches are used up */
   function findPlaces(ev, body) {
     var key = JSON.stringify(['v4', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
     if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(hit.places);
     var sendBody = Object.assign({}, body); var sco = E.countryOf(ev.city); if (sco.id === 'CA' && !/canada/i.test(sendBody.city || '')) sendBody.city = (sendBody.city || '') + ', Canada'; else if (sco.id !== 'US' && sco.id !== 'CA' && (sendBody.city || '').toLowerCase().indexOf(sco.name.toLowerCase()) < 0 && (sendBody.city || '').indexOf(sco.short) < 0) sendBody.city = (sendBody.city || '') + ', ' + sco.name;   /* London, ON is not London, England */
     return fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sendBody) })
-      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.places || []; }); })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) { if (j.code === 'limit') LIVE_RESTING = true; throw new Error(j.error); } return j.places || []; }); })
       .then(function (list) { if (!ev.sample) { c[key] = { at: Date.now(), places: list }; var ks = Object.keys(c).sort(function (a, b) { return c[b].at - c[a].at; }); ks.slice(30).forEach(function (k) { delete c[k]; }); saveEvent(ev); } return list; });
   }
   TAB_BIND.places = function (ev, save, rerender) {
