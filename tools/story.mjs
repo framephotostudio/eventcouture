@@ -48,10 +48,10 @@ try {
     document.body.innerHTML = ''; document.body.appendChild(story);
     const st = document.createElement('style'); st.textContent = `
       html, body { margin: 0; background: #F7F2EA; }
-      #story { width: 600px; height: 1067px; box-sizing: border-box; padding: 34px 26px 26px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
+      #story { width: 600px; height: 1067px; box-sizing: border-box; padding: 34px 26px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; overflow: hidden; }
       .st-top { font-family: 'Bodoni Moda', 'Didot', Georgia, serif; color: #4A1438; font-size: 26px; text-align: center; letter-spacing: .02em; }
       .st-top span { display: block; font-family: inherit; font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: #8A6A2F; margin-top: 4px; }
-      #story .pkg-sum { flex: 1; overflow: hidden; box-shadow: 0 10px 30px rgba(74,20,56,.10); }
+      #story .pkg-sum { flex: 0 1 auto; max-height: 900px; overflow: hidden; box-shadow: 0 10px 30px rgba(74,20,56,.10); }
       #story .pkg-sum { padding: 14px 16px; gap: 8px; }
       #story .pkg-sum-r { grid-template-columns: 40% 1fr; padding: 5px 0; font-size: 14.5px; }
       #story .story-star { background: #FBF3E2; border: 1.5px solid #C9A86A; border-radius: 12px; padding: 12px 12px; margin-bottom: 6px; }
@@ -59,7 +59,7 @@ try {
       .st-foot { text-align: center; font-family: 'Bodoni Moda', Georgia, serif; color: #4A1438; font-size: 17px; }
       .st-foot b { display: block; font-family: system-ui, sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .12em; color: #8A6A2F; margin-top: 4px; }`;
     document.head.appendChild(st);
-    const box = document.querySelector('#story .pkg-sum'), rs = document.querySelector('#story .pkg-sum-rows'); let fs = 14.5;
+    const box = document.querySelector('#story .pkg-sum'), rs = document.querySelector('#story .pkg-sum-rows'); let fs = 18; rs.style.fontSize = fs + 'px'; [...rs.children].forEach(r => r.style.fontSize = fs + 'px');
     while (box.scrollHeight > box.clientHeight && fs > 10) { fs -= 0.5; rs.style.fontSize = fs + 'px'; [...rs.children].forEach(r => r.style.fontSize = fs + 'px'); }   /* every line fits on one screen */
     return { fontSize: fs, found: !!want, rows: [...document.querySelectorAll('.pkg-sum-r')].map(r => r.innerText.replace(/\s+/g, ' ')), overflow: document.querySelector('#story .pkg-sum').scrollHeight - document.querySelector('#story .pkg-sum').clientHeight };
   }, [ROW, rmvList, nameMap]);
