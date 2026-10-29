@@ -581,8 +581,8 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 .topbar .icon-btn { width: 28px !important; height: 28px !important; background: transparent; border: .75px solid rgba(214, 190, 140, .75); color: #EAD5A4; }
 .topbar .icon-btn:hover { background: rgba(214, 190, 140, .12); }
 .topbar .icon-btn svg { width: 15px; height: 15px; stroke-width: 1.4; }
-@media (min-width: 700px) { .topbar { height: calc(env(safe-area-inset-top, 0px) + 63px); } .brand.logo-mark { grid-auto-flow: column; align-items: end; gap: 14px; } .brand.logo-mark img { height: 58px; } .brand.logo-mark .by { font-size: 18px; letter-spacing: .2em; margin: 0 0 9px !important; } }
-@media (min-width: 1100px) { .brand.logo-mark img { height: 59px; } .brand.logo-mark .by { font-size: 20px; } }
+@media (min-width: 700px) { .topbar { height: calc(env(safe-area-inset-top, 0px) + 63px); } .brand.logo-mark { grid-auto-flow: column; align-items: center; gap: 22px; } .brand.logo-mark img { height: 61px; } .brand.logo-mark .by { font-size: 26px; letter-spacing: .26em; margin: 8px 0 0 !important; } }
+@media (min-width: 1100px) { .brand.logo-mark img { height: 62px; } .brand.logo-mark .by { font-size: 30px; letter-spacing: .3em; } }
 @media (max-width: 360px) { .brand.logo-mark img { height: 44px; } .brand.logo-mark .by { font-size: 10.5px; letter-spacing: .12em; } .topbar { gap: 4px; padding-left: 8px; padding-right: 8px; } }
 
 /* Your plan, step by step */
