@@ -630,6 +630,7 @@
       { name: 'Salem Mawla', ig: 'salem_mawla', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and parties across California' },
       { name: 'Ronnie Altahan', ig: 'ronnie.altahan', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and parties across California' },
       { name: 'Farah Ibrahim', ig: 'farah_ibrahim_official', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Arab star singer for weddings, engagements and parties across California' },
+      { name: 'Danny Ashkar', ig: 'danyachkar', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Lebanese singer for weddings, engagements and parties across California' },
       { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
       { name: 'Tamer Aldabouqi', ig: 'tamerdabouqi', cats: ['singer'], cultures: ['arabic'], note: 'Arabic singer with a live band for weddings and celebrations' },
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties); 'parties' = every event that isn't a wedding. */
