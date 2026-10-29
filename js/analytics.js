@@ -8,7 +8,7 @@
   var noop = function () {};
   window.ecTrack = noop;
   try {
-    var live = /(^|\.)facecouture\.app$/.test(location.hostname);
+    var live = /(^|\.)(facecouture|eventcouture)\.app$/.test(location.hostname);
     var optOut = navigator.doNotTrack === '1' || window.doNotTrack === '1' || navigator.globalPrivacyControl === true;
     if (!live || optOut || !/^G-[A-Z0-9]{6,}$/.test(GA_ID)) return;
     window.dataLayer = window.dataLayer || [];
