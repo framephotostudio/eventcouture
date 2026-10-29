@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       city: { description: 'City', default: 'Orange County, CA' }
+      row: { description: 'Package line to show', default: 'dj' }
+      singer: { description: 'Turn on Singer (any text = yes)', default: '' }
 permissions: { contents: write }
 jobs:
   shots:
@@ -14,7 +16,7 @@ jobs:
         with: { node-version: 22 }
       - run: npm install --no-save playwright@1 && npx playwright install --with-deps chromium
       - run: node tools/showcase.mjs
-        env: { CITY: '${{ inputs.city }}' }
+        env: { CITY: '${{ inputs.city }}', ROW: '${{ inputs.row }}', SINGER: '${{ inputs.singer }}' }
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: showcase, path: showcase }
