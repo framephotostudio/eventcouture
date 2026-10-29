@@ -164,7 +164,7 @@
   /* Made for your budget: one plan that lands at the host's number, protecting must-haves. */
   var FIT_TIER = { id: 'F', name: 'Your budget plan', mult: 1, blurb: 'One plan built to your exact budget, with your must-haves protected.' };
   /* Never auto-dropped: venue, food, security and insurance (venues often require the last two). They can be trimmed, not removed. */
-  var OPTIONAL = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'cleanup', 'hairMakeup', 'florals', 'balloons', 'effects', 'danceFloor', 'chocolateFountain', 'dessertBar', 'iceCreamCart', 'coffeeBar', 'foodTruck', 'popcornCart', 'booth360', 'livePainter', 'caricature', 'flowerWall', 'bounceHouse', 'facePainter', 'characterVisit', 'gameTruck', 'magician', 'balloonTwister', 'craftStation', 'pettingZoo'];
+  var OPTIONAL = ['videographer', 'singer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'cleanup', 'hairMakeup', 'florals', 'balloons', 'effects', 'danceFloor', 'chocolateFountain', 'dessertBar', 'iceCreamCart', 'coffeeBar', 'foodTruck', 'popcornCart', 'booth360', 'livePainter', 'caricature', 'flowerWall', 'bounceHouse', 'facePainter', 'characterVisit', 'gameTruck', 'magician', 'balloonTwister', 'craftStation', 'pettingZoo'];
   /* Lowercase a category name for a sentence, keeping DJ, MC and LED as they are. */
   function lc(name) { return String(name).toLowerCase().replace(/\b(dj|mc|led)\b/g, function (m) { return m.toUpperCase(); }); }
   function listJoin(a) { return a.length < 2 || a.some(function (x) { return / and /.test(x); }) ? a.join(', ') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
@@ -306,7 +306,7 @@
   function guardian(ev, b) {
     if (!ev.budget || b.total <= ev.budget) return { over: 0, swaps: [] };
     var over = b.total - ev.budget;
-    var optional = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'security', 'photographer', 'dj', 'attire', 'hairMakeup', 'balloons', 'florals', 'effects', 'danceFloor', 'chocolateFountain', 'dessertBar', 'iceCreamCart', 'coffeeBar', 'foodTruck', 'popcornCart', 'booth360', 'livePainter', 'caricature', 'flowerWall', 'bounceHouse', 'facePainter', 'characterVisit', 'gameTruck', 'magician', 'balloonTwister', 'craftStation', 'pettingZoo'];
+    var optional = ['videographer', 'singer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'security', 'photographer', 'dj', 'attire', 'hairMakeup', 'balloons', 'florals', 'effects', 'danceFloor', 'chocolateFountain', 'dessertBar', 'iceCreamCart', 'coffeeBar', 'foodTruck', 'popcornCart', 'booth360', 'livePainter', 'caricature', 'flowerWall', 'bounceHouse', 'facePainter', 'characterVisit', 'gameTruck', 'magician', 'balloonTwister', 'craftStation', 'pettingZoo'];
     var pri = ev.priorities || [];
     var swaps = b.items.filter(function (i) { return optional.indexOf(i.id) >= 0 && pri.indexOf(i.id) < 0 && !(ev.type === 'wedding' && /photographer|attire/.test(i.id)); })
       .sort(function (a, b2) { return b2.mid - a.mid; })

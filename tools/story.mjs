@@ -42,7 +42,7 @@ try {
     const box0 = rows[0] && rows[0].parentNode; rows.map((r, i) => [rk(r) * 1000 + i, r]).sort((a, b) => a[0] - b[0]).forEach(x => box0.appendChild(x[1]));
     if (want) { want.parentNode.prepend(want); want.classList.add('story-star'); }
     (rmv || []).forEach(name => rows.filter(r => r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase() === name.toLowerCase()).forEach(r => r.remove()));
-    Object.entries(names || {}).forEach(([cat, nm]) => rows.filter(r => r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase() === cat.toLowerCase()).forEach(r => { r.querySelector('.pkg-sum-n b').textContent = nm; const bd = r.querySelector('.badge.rec'); if (bd) bd.remove(); }));
+    Object.entries(names || {}).forEach(([cat, nm]) => rows.filter(r => r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase() === cat.toLowerCase()).forEach(r => { const star = /\*$/.test(nm); r.querySelector('.pkg-sum-n b').textContent = nm.replace(/\*$/, ''); const bd = r.querySelector('.badge.rec'); if (bd) bd.remove(); if (star) r.querySelector('.pkg-sum-n b').insertAdjacentHTML('afterend', ' <span class="badge rec">\u2605 Recommended</span>'); }));   /* a trailing * = one of our recommended vendors */
     sum.querySelectorAll('.pkg-sum-a, .pkg-sum-t, .pkg-adds-row, .pkg-adds, .pkg-pl, .pkg-sum-acts, .badge.ok').forEach(x => x.remove());
     [...sum.children].forEach(c => { if (c.tagName === 'P') c.remove(); });
     rows.filter(r => !r.querySelector('.pkg-sum-n b') || /Still to choose/.test(r.textContent)).forEach(r => r.remove());

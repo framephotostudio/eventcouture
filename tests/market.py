@@ -36,7 +36,8 @@ for vp, size, port in [('phone', {'width': 390, 'height': 844}, 8791), ('desk', 
             pg.click('.sheet [data-close] >> nth=-1')
             # 2. the host plans an Arabic wedding in Houston
             pg.goto(U + '#/new/1'); pg.fill('#text', 'Arabic wedding, ivory and gold, with a zaffe'); pg.click('#next')
-            pg.click('#music [data-music=singer]'); pg.select_option('#city', 'Houston, TX'); pg.fill('#date', '2099-06-12'); pg.click('#setting [data-v=indoor]'); pg.click('#next')
+            pg.select_option('#city', 'Houston, TX');   # the singer is on by default
+            pg.fill('#date', '2099-06-12'); pg.click('#setting [data-v=indoor]'); pg.click('#next')
             pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
             base = '#/' + '/'.join(pg.url.split('#/')[1].split('/')[:2])
             pg.evaluate("(()=>{var a=JSON.parse(localStorage.getItem('ec.events'));var e=Array.isArray(a)?a[a.length-1]:Object.values(a).pop();e.paid={price:0};localStorage.setItem('ec.events',JSON.stringify(a))})()")
