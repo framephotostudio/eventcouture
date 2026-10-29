@@ -37,7 +37,7 @@ with sync_playwright() as p:
             check(n, zf[:2]==['Zaffet El Ezz','Zaffet Al-Afrah'], city+': California zaffe first, then the worldwide one: '+str(zf[:2]))
             hm=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="hairMakeup"] td > b')]
             check(n, (hm[:1]==['Hammoudeh Alex']) == city.startswith('Orange'), city+': Hammoudeh Alex is the hair stylist only in Orange County: '+str(hm[:1]))
-            check(n, dj[:2]==['DJ Mosses','DJ Roy'] and 'Recommended' in cellt, city+': DJ Mosses first in California, DJ Roy second: '+str(dj))
+            check(n, dj[:2]==(['DJ Mosses','DJ Roy'] if city.startswith('San Diego') else ['DJ Mosses','DJ L\u2019Rythm']) and 'Recommended' in cellt, city+': DJ Mosses first; then DJ L\u2019Rythm in OC and LA, DJ Roy in San Diego: '+str(dj))
             if city.startswith('Orange'):
                 pg.evaluate("document.querySelector('tr[data-pkrow=\"dj\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_pkg_{n}.png')
         base=plan(pg, 'Detroit, MI')
