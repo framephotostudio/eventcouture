@@ -37,7 +37,7 @@ with sync_playwright() as p:
             check(n, zf[:2]==['Zaffet El Ezz','Zaffet Al-Afrah'], city+': California zaffe first, then the worldwide one: '+str(zf[:2]))
             hm=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="hairMakeup"] td > b')]
             check(n, (hm[:1]==['Hammoudeh Alex']) == city.startswith('Orange'), city+': Hammoudeh Alex is the hair stylist only in Orange County: '+str(hm[:1]))
-            check(n, dj and dj[0]=='DJ Mosses' and 'Recommended' in cellt and dj.count('DJ Mosses')==1, city+': DJ Mosses is the DJ in Package 1, marked Recommended: '+str(dj))
+            check(n, dj[:2]==['DJ Roy','DJ Mosses'] and 'Recommended' in cellt, city+': DJ Roy first (all US), DJ Mosses second: '+str(dj))
             if city.startswith('Orange'):
                 pg.evaluate("document.querySelector('tr[data-pkrow=\"dj\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_pkg_{n}.png')
         base=plan(pg, 'Detroit, MI')
@@ -56,6 +56,9 @@ with sync_playwright() as p:
         check(n, sg[:2]==['Waseem Rabih','Jamal Kassab'] and zf[:1]==['Zaffet El Ezz'], 'Arabic engagement in Orange County gets the Arabic singers and zaffe: '+str(sg[:2])+str(zf[:1]))
         if n=='phone': pg.evaluate("document.querySelector('tr[data-pkrow=\"singer\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/arabic_engagement_{n}.png')
         pg.goto(U+base+'/timeline'); pg.wait_for_timeout(600); check(n, 'Ring exchange' in pg.inner_text('#tab'), 'engagement schedule has the ring exchange')
+        base=plan(pg, 'Dallas, TX')
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000)
+        dj=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="dj"] td > b')]; check(n, dj[:1]==['DJ Roy'], 'Dallas: DJ Roy first: '+str(dj[:1]))
         base=plan(pg, 'Chicago, IL')
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.click('#pkgMore'); pg.wait_for_timeout(1200); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
         zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]; check(n, zf[:3]==['Zaffet Al-Afrah','Zaffet Joseph','Tur\u00e1th Folkoholic Dance Theatre'], 'Chicago: the two Michigan groups, then Tur\u00e1th: '+str(zf[:3]))
@@ -73,7 +76,7 @@ with sync_playwright() as p:
         sg=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="singer"] td > b')]
         zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]; check(n, not ({'Zaffet Al-Afrah','Zaffet El Ezz','Royal Zaffe Group','Zaffet Joseph'} & set(zf[:3])), 'Houston: no travelling zaffe group in the first picks: '+str(zf)); check(n, zf[:2]==['Tur\u00e1th Folkoholic Dance Theatre','Watan Zaffe & Dabke Group'], 'Houston: Tur\u00e1th first, Watan second: '+str(zf[:2]))
         hm=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="hairMakeup"] td > b')]; check(n, hm and hm[0]=='Wassim Hair Stylist', 'Wassim is the recommended hair stylist for an Arabic wedding in Houston: '+str(hm))
-        dj=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="dj"] td > b')]; check(n, dj and dj[0]=='DJ Yamani', 'DJ Yamani is the recommended DJ for an Arabic wedding in Houston: '+str(dj))
+        dj=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="dj"] td > b')]; check(n, dj[:2]==['DJ Yamani','DJ Roy'], 'Houston Arabic wedding: DJ Yamani first, DJ Roy second: '+str(dj))
         check(n, sg[:2]==['Jabour Bakla','Salem Omran'], 'Houston Arabic wedding: Jabour Bakla and Salem Omran are the singers in Packages 1 and 2: '+str(sg))
         if n=='phone': pg.evaluate("document.querySelector('tr[data-pkrow=\"singer\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_singer_{n}.png')
         base=plan(pg, 'Houston, TX', '#/new/1', 'Ivory and gold wedding with white roses')
