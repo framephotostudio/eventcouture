@@ -1537,6 +1537,8 @@
     got = recFor(ev, c.cat);
     /* someone marked notTop for this city never takes one of the first 3 spots; they wait further down the list */
     var settle = function (list) { var late = list.filter(function (x) { return x.late; }), rest = list.filter(function (x) { return !x.late; }); return rest.length ? rest.slice(0, 3).concat(late, rest.slice(3)) : list; };
+    if (early() >= 3) return Promise.resolve(settle(got));   /* three recommended businesses already: no Google search needed */
+    backups = backups.slice(0, 1);   /* one backup search at most, to save Google searches */
     return ask(c.q).then(function (l) { add(l); return more(); }).then(settle);
   }
   function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rec: p.rec || undefined, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '', reservable: p.reservable || undefined }; }
@@ -1598,7 +1600,7 @@
       return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + (mode === 'book' && !bk && !ev.sample ? '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don\u2019t need it">\u00d7</button>' : '') + '<span class="num muted small">' + est(c.cat) + '</span></div>' +
         (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + '</span></div>' +
           '<div class="pk-acts">' + links(x, c.cat) + (ev.sample ? '' : (bk || mode === 'book' ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Change</button>') + (mode === 'book' ? '<button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked ✓' : 'I booked it') + '</button>' : '')) + '</div>'
-        : '<p class="small muted">No top-rated match came back yet. ' + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '">See options</button>') + '</p>') +
+        : '<p class="small muted">No top-rated match came back yet. ' + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '">See options</button> \u00b7 ' + mapsBtn(ev, c.cat, c.q)) + '</p>') +
         '<div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></div>';
     };
     /* Step 2: every package side by side; swap anything, remove what isn't needed, choose one. */
@@ -1608,7 +1610,7 @@
         (pks.length < 3 && !ev.sample ? '<th class="pk-colh pk-addcol"><button class="btn small ghost" id="pkgMore">+ Create package ' + (pks.length + 1) + '</button><span class="small muted">Different picks to compare</span></th>' : '') + '</tr>';
       var rowsH = cats.map(function (c) {
         return '<tr data-pkrow="' + c.cat + '"><th scope="row"><div class="pk-rh"><b>' + esc(catName(c.cat, ev)) + '</b>' + (ev.sample ? '' : '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don’t need it">×</button>') + '</div><span class="small muted num">' + est(c.cat) + '</span></th>' +
-          pks.map(function (x, i) { var biz = bizOf(x, c.cat); return '<td>' + (biz ? '<b>' + esc(biz.name) + '</b><span class="small muted">' + line(biz) + '</span><div class="pk-cell-acts">' + (siteOf(biz) ? '<a class="link small" target="_blank" rel="noopener" href="' + esc(siteOf(biz)) + '">' + (/^ig:/.test(biz.id) ? 'Instagram' : /^rec:/.test(biz.id) ? 'Map' : 'Website') + '</a>' : '') + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Swap</button>') + '</div>' : '<span class="small muted">No match yet</span>' + (ev.sample ? '' : ' <button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Find one</button>')) + '</td>'; }).join('') +
+          pks.map(function (x, i) { var biz = bizOf(x, c.cat); return '<td>' + (biz ? '<b>' + esc(biz.name) + '</b><span class="small muted">' + line(biz) + '</span><div class="pk-cell-acts">' + (siteOf(biz) ? '<a class="link small" target="_blank" rel="noopener" href="' + esc(siteOf(biz)) + '">' + (/^ig:/.test(biz.id) ? 'Instagram' : /^rec:/.test(biz.id) ? 'Map' : 'Website') + '</a>' : '') + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Swap</button>') + '</div>' : '<span class="small muted">No match yet</span> ' + mapsBtn(ev, c.cat, c.q) + (ev.sample ? '' : ' <button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Find one</button>')) + '</td>'; }).join('') +
           (pks.length < 3 && !ev.sample ? '<td class="pk-addcol"></td>' : '') + '</tr><tr class="pk-swaprow"><td colspan="' + ncol + '"><div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></td></tr>';
       }).join('');
       var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
@@ -1642,7 +1644,7 @@
           '<li><b>Booked?</b> Tap below and add the price you agreed on.</li></ol>' +
           '<button class="btn gold block" data-pkbook="' + next.cat + '">I booked ' + esc(x.name) + '</button>' +
           '<div class="row pkg-foot"><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button>' + (ev.sample ? '' : '<button class="link small quiet" data-pkx="' + next.cat + '">Don\u2019t need this? Remove it</button>') + '</div>'
-        : '<p class="muted">We don’t have a top-rated pick for this yet.</p><button class="btn gold block" data-pkswap="' + next.cat + '">See options</button><div class="row pkg-foot"><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button></div>') +
+        : '<p class="muted">We don’t have a top-rated pick for this yet.</p><button class="btn gold block" data-pkswap="' + next.cat + '">See options</button>' + mapsBtn(ev, next.cat, next.q, 'btn ghost block') + '<div class="row pkg-foot"><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button></div>') +
         '<div class="pk-swap" data-pkswapbox="' + next.cat + '"></div></div>' +
       summary + all + back + '</div>';
   }
@@ -1789,7 +1791,7 @@
           if (phone) { var so = savedFor(ev, cat).find(function (x) { return x.id === own.id; }); if (so) so.phone = lk; }
           save(); rerender(); toast(nm + ' is in package ' + (k + 1)); });
         $$('[data-pkpick]', box).forEach(function (pb) { pb.addEventListener('click', function () { if (lockSample(ev)) return; var p = list.find(function (x) { return x.id === pb.dataset.pkpick; }); if (!putInPackage(ev, k, cat, p)) return toast('Remove one of your saved options for this first.'); save(); rerender(); toast('Swapped in ' + p.name); }); });
-      }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn\u2019t available right now.') + '</p>'; });
+      }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn\u2019t available right now.') + ' ' + mapsBtn(ev, cat) + '</p>'; });
     }); });
   }
   TAB_VIEWS.budget = function (ev, b) {
@@ -1951,6 +1953,9 @@
   }
   /* Place searches are remembered on the plan for a week, so results come back instantly and nothing is paid for twice. */
   function HOWTO(kind) { return '<ol class="howto" aria-label="How to choose"><li><b>See</b> real, top-rated ' + (kind === 'venue' ? 'places' : 'businesses') + ' near you</li><li><b>Save</b> up to 3 you like</li><li><b>Compare</b> them, then mark the one you book</li></ol>'; }
+  /* Free fallback: the same search on Google Maps, opened by the guest (costs nothing). */
+  function mapsSearch(ev, cat, q) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((q || VENDOR_SEARCH[cat] || catName(cat, ev)).replace(/^(upscale|luxury|affordable|budget-friendly) /i, '') + ' near ' + (ev.city || '').replace(/^Other (US city|city in )/, '')); }
+  function mapsBtn(ev, cat, q, cls) { return '<a class="' + (cls || 'link small') + '" target="_blank" rel="noopener" href="' + esc(mapsSearch(ev, cat, q)) + '">Search on Google Maps</a>'; }
   function findPlaces(ev, body) {
     var key = JSON.stringify(['v4', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
     if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(hit.places);

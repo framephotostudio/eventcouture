@@ -54,12 +54,14 @@ export default {
       }
       if (url.pathname === '/api/places') {
         if (!env.GOOGLE_MAPS_KEY) return json({ error: 'Venue search is not connected yet.' }, 503);
-        if (!(await freePlaces(env)) && !(await reserve(env, COST.places))) return json({ error: 'Daily search limit reached. Try again tomorrow.' }, 429);
-        return json({ places: await places(env, String(body.query || '').slice(0, 120), String(body.city || '').slice(0, 120), ['L', 'S', 'U'].includes(body.level) ? body.level : 'S', body.kind === 'vendor', String(body.cat || '').slice(0, 30), String(body.hint || '').slice(0, 60)) });
+        let found;
+        try { found = await places(env, String(body.query || '').slice(0, 120), String(body.city || '').slice(0, 120), ['L', 'S', 'U'].includes(body.level) ? body.level : 'S', body.kind === 'vendor', String(body.cat || '').slice(0, 30), String(body.hint || '').slice(0, 60)); }
+        catch (e) { if (e.message === 'limit') return json({ error: 'Live search is resting until next month. Use Google Maps to find one.', code: 'limit' }, 429); throw e; }
+        return json({ places: found });
       }
       if (url.pathname === '/api/drive') {
         if (!env.GOOGLE_MAPS_KEY) return json({ error: 'Drive times are not connected yet.' }, 503);
-        if (!(await reserve(env, COST.drive))) return json({ error: 'Daily limit reached. Try again tomorrow.' }, 429);
+        if (!(await freeMonthly(env, 'drive', 9000, Math.min(10, (body.placeIds || []).length)))) return json({ error: 'Drive times are resting until next month.', code: 'limit' }, 429);   // Google's 10,000 free route elements a month, never more
         return json({ times: await drive(env, String(body.origin || '').slice(0, 200), (body.placeIds || []).slice(0, 10)) });
       }
       return json({ error: 'Not found' }, 404);
@@ -72,12 +74,19 @@ export default {
 /* ---------- spending cap ---------- */
 /* Google gives 1,000 detailed place searches a month free. Those don't count against the daily dollar cap;
    searches past that (with a little margin) are paid and are counted as before. */
-const FREE_PLACES = 950;
+const FREE_PLACES = 900;   // Google gives 1,000 free searches a month; stop at 900 to be safe
 async function freePlaces(env) {
   if (!env.EC_KV) return false;
   const key = 'places:' + new Date().toISOString().slice(0, 7), n = parseInt((await env.EC_KV.get(key)) || '0', 10);
   if (n >= FREE_PLACES) return false;
   await env.EC_KV.put(key, String(n + 1), { expirationTtl: 60 * 60 * 24 * 40 });
+  return true;
+}
+async function freeMonthly(env, name, limit, n) {
+  if (!env.EC_KV) return false;
+  const key = name + ':' + new Date().toISOString().slice(0, 7), used = parseInt((await env.EC_KV.get(key)) || '0', 10);
+  if (used + n > limit) return false;
+  await env.EC_KV.put(key, String(used + n), { expirationTtl: 60 * 60 * 24 * 40 });
   return true;
 }
 function cap(env) { return Number(env.DAILY_CAP_USD || 0.66); }
@@ -228,20 +237,31 @@ function nearCity(list, km = 70) {
   const c = { latitude: mid(pts.map(p => p.location.latitude)), longitude: mid(pts.map(p => p.location.longitude)) };
   return list.filter(p => !p.location || kmBetween(c, p.location) <= km);
 }
+/* Every Google search is remembered for a week (the same search from anyone costs nothing again),
+   and only the monthly free allowance is ever used: past it, searches stop until next month and the app offers Google Maps links instead. */
+async function googleSearch(env, body) {
+  const key = 'g:' + await sha(JSON.stringify(body));
+  const hit = env.EC_KV && await env.EC_KV.get(key, 'json').catch(() => null);
+  if (Array.isArray(hit)) return hit;
+  if (!(await freePlaces(env))) throw new Error('limit');
+  const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': env.GOOGLE_MAPS_KEY,
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions,places.businessStatus,places.types,places.primaryType,places.location' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error('places');
+  const list = (await r.json()).places || [];
+  if (env.EC_KV) await env.EC_KV.put(key, JSON.stringify(list), { expirationTtl: 60 * 60 * 24 * 7 });
+  return list;
+}
 async function places(env, query, city, level = 'S', vendor = false, cat = '', hint = '') {
   const rule = CAT_RULES[cat], hintRe = hint ? new RegExp('\\b(' + hint.split(/[,|]/).map(w => w.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean).join('|') + ')', 'i') : null;
   const L = vendor ? { minRating: 4.5, minReviews: 15, priceLevels: [] } : (LEVEL[level] || LEVEL.S);
   const search = async (withPrice) => {
     const body = { textQuery: `${query} in ${city}`, maxResultCount: 20, minRating: L.minRating };
     if (withPrice) body.priceLevels = L.priceLevels;
-    const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': env.GOOGLE_MAPS_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions,places.businessStatus,places.types,places.primaryType,places.location,places.reservable' },
-      body: JSON.stringify(body)
-    });
-    if (!r.ok) throw new Error('places');
-    return (await r.json()).places || [];
+    return googleSearch(env, body);
   };
   let raw = await search(!vendor);
   // venues like ballrooms and estates often have no price level; fill in from an unpriced search, still rating-filtered
@@ -260,7 +280,7 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
     .sort((a, b) => b.score - a.score).map(x => x.p)
     .slice(0, 8)
     .map(p => ({ id: p.id, name: p.displayName?.text, address: p.formattedAddress, rating: p.rating, reviews: p.userRatingCount,
-      priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, hours: p.regularOpeningHours?.weekdayDescriptions || [], reservable: !!p.reservable, restaurant: /restaurant|steak|bistro|brasserie|grill|dining/.test(String(p.primaryType || '')), source: 'Google' }));
+      priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, hours: p.regularOpeningHours?.weekdayDescriptions || [], restaurant: /restaurant|steak|bistro|brasserie|grill|dining/.test(String(p.primaryType || '')), source: 'Google' }));
 }
 
 /* ---------- drive times (Routes API) ---------- */
