@@ -676,6 +676,7 @@
       { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
       { name: 'Tamer Aldabouqi', ig: 'tamerdabouqi', cats: ['singer'], cultures: ['arabic'], note: 'Arabic singer with a live band for weddings and celebrations' },
       { name: 'Wissam Wahhab', ig: 'wissam_wahhab_official', cats: ['singer'], country: 'US', cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and celebrations' },
+      { name: 'Janho Brothers', ig: 'janhobrothers', cats: ['singer', 'liveMusic'], states: ['CA'], weight: -1, cultures: ['arabic'], note: 'Live band and singers: Arabic, Mediterranean and international music for every occasion' },
       { name: 'Tony Eid', ig: 'tony_eid', cats: ['singer'], onlyCities: ['Houston, TX'], cultures: ['arabic'], note: 'Lebanese star singer for weddings, engagements and galas' },
       { name: 'Salem Anan', ig: 'salemanan11', cats: ['singer'], cities: ['Toronto, ON', 'Hamilton, ON'], cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and celebrations in Mississauga and the Greater Toronto Area' },
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties); 'parties' = every event that isn't a wedding. */
