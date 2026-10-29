@@ -3,6 +3,11 @@
 (function (root) {
   'use strict';
   var D = root.EC_DATA;
+  /* Each cultural wedding's photo joins the inspiration library, for weddings (and engagements where that culture has one). */
+  if (D.CULTURE_LOOKS && root.EC_INSPO && !root.EC_INSPO.some(function (p) { return p.culture; })) D.CULTURE_LOOKS.forEach(function (l) {
+    var cu = D.CULTURES[l.culture]; if (!cu) return;
+    root.EC_INSPO.push(Object.assign({}, l, { types: cu.engagement ? ['wedding', 'engagement'] : ['wedding'], time: 'evening', menu: cu.menu, alt: 'AI-generated inspiration: ' + l.mood.charAt(0).toLowerCase() + l.mood.slice(1).replace(/\.$/, '') }));
+  });
 
   function round2(n) { return Math.round(n * 100) / 100; }
   function roundTo(n, step) { return Math.round(n / step) * step; }
@@ -13,6 +18,8 @@
     var hit = D.CITIES.find(function (c) { return c.name === name; }); if (hit) return hit;
     var m = CA_RE.exec(String(name || ''));
     if (m) { var base = D.CITIES.find(function (c) { return c.name === 'Other city in Canada'; }); var pv = m[1] && D.PROVINCES[m[1].toUpperCase()]; return pv ? Object.assign({}, base, { tax: pv.tax, taxName: pv.label }) : base; }
+    var t = String(name || '').toLowerCase(), co = (D.COUNTRIES || []).find(function (k) { return k.id !== 'US' && k.id !== 'CA' && (new RegExp(',\\s*(' + [k.name, k.short].map(function (x) { return x.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')\\s*$')).test(t); });
+    if (co) return D.CITIES.find(function (c) { return c.name === co.other; });   /* a city she typed in another country */
     return D.CITIES.find(function (c) { return c.name === 'Other US city'; });
   }
   function countryOf(city) { return D.COUNTRIES.find(function (c) { return c.id === cityOf(city).country; }) || D.COUNTRIES[0]; }
@@ -122,8 +129,9 @@
     var extras = [];
     if (c.service) extras.push({ label: 'Service charge (20%)', rate: D.SERVICE });
     if (c.taxable && city.tax) extras.push({ label: (city.taxName || 'Sales tax') + ' (' + city.tax + '%)', rate: city.tax / 100 });
-    if (c.tip) extras.push({ label: 'Tip (10%)', rate: D.TIP });
-    if (c.gratuity) extras.push({ label: 'Tip or automatic group gratuity (20%)', rate: D.GRATUITY });
+    var tipping = countryOf(city.name).tip !== false;   /* tips are a US and Canada custom */
+    if (c.tip && tipping) extras.push({ label: 'Tip (10%)', rate: D.TIP });
+    if (c.gratuity && tipping) extras.push({ label: 'Tip or automatic group gratuity (20%)', rate: D.GRATUITY });
     var rate = extras.reduce(function (s, e) { return s + e.rate; }, 0);
     lo = lo * (1 + rate); hi = hi * (1 + rate);
     var ov = ev.overrides && ev.overrides[catId];
@@ -134,7 +142,7 @@
       lo: ov && ov.amount > 0 ? ov.amount : roundTo(lo, 5), hi: ov && ov.amount > 0 ? ov.amount : roundTo(hi, 5), mid: ov && ov.amount > 0 ? ov.amount : roundTo((lo + hi) / 2, 5),
       extras: ov && ov.amount > 0 ? [] : extras.map(function (e) { return e.label; }),
       label: ov ? (ov.amount > 0 ? ({ vendor: 'Vendor-published price', quote: 'Confirmed quote', booking: 'Confirmed booking' }[ov.source] || 'Your price') : (ov.source === 'booking' ? 'Booked; estimate until you add the price' : 'Planning estimate')) : 'Planning estimate',
-      source: ov ? (ov.note || '') : ((isOtherCity(city) ? (ev.city && !/^Other /.test(ev.city) ? ev.city + ', typical ' + (city.country === 'CA' ? 'Canadian' : 'US') + ' prices' : 'Typical ' + (city.country === 'CA' ? 'Canadian' : 'US') + ' prices') : city.name + ' estimate') + ', ' + Number(guests).toLocaleString('en-US') + (guests === 1 ? ' guest' : ' guests') + mealNote)
+      source: ov ? (ov.note || '') : ((isOtherCity(city) ? (ev.city && !/^Other /.test(ev.city) ? ev.city + ', typical ' + countryOf(city.name).adj + ' prices' : 'Typical ' + countryOf(city.name).adj + ' prices') : city.name + ' estimate') + ', ' + Number(guests).toLocaleString('en-US') + (guests === 1 ? ' guest' : ' guests') + mealNote)
     };
   }
 
@@ -572,7 +580,7 @@
   }
   /* For a look without its own photo: the closest labeled AI inspiration photo for this occasion (colors and style), never one already shown. */
   function similarPhoto(c, ev, avoid) {
-    var list = (root.EC_INSPO || []).filter(function (p) { return (avoid || []).indexOf(p.id) < 0 && (!isKidsParty(ev) || kidSafePhoto(p)) && (isKidsParty(ev) || p.types.indexOf('kids-birthday') < 0 || p.types.length > 1); });
+    var list = (root.EC_INSPO || []).filter(function (p) { return (avoid || []).indexOf(p.id) < 0 && (!p.culture || p.culture === ev.culture) && (!isKidsParty(ev) || kidSafePhoto(p)) && (isKidsParty(ev) || p.types.indexOf('kids-birthday') < 0 || p.types.length > 1); });
     var rgb = function (h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(function (x) { return x + x; }).join(''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; };
     var dist = function (a, b) { var A = (a || []).slice(0, 4).map(rgb), B = (b || []).slice(0, 4).map(rgb); if (!A.length || !B.length) return 999; return A.reduce(function (t, x) { return t + Math.min.apply(null, B.map(function (y) { return Math.sqrt((x[0] - y[0]) * (x[0] - y[0]) + (x[1] - y[1]) * (x[1] - y[1]) + (x[2] - y[2]) * (x[2] - y[2])); })); }, 0) / A.length; };
     var best = null, bs = 1e9;
@@ -710,8 +718,9 @@
     return out;
   }
 
-  function money(n) { return (CUR === 'CAD' ? 'CA$' : '$') + Math.round(n).toLocaleString('en-US'); }
-  function moneyIn(n, city) { return (countryOf(city).currency === 'CAD' ? 'CA$' : '$') + Math.round(n).toLocaleString('en-US'); }
+  function symOf(cur) { var co = (D.COUNTRIES || []).find(function (k) { return k.currency === cur; }); return co ? co.sym : '$'; }
+  function money(n) { return symOf(CUR) + Math.round(n).toLocaleString('en-US'); }
+  function moneyIn(n, city) { return countryOf(city).sym + Math.round(n).toLocaleString('en-US'); }
 
   root.EC_ENGINE = {
     forOccasion: forOccasion,
@@ -719,6 +728,6 @@
     KIDS_TEXT: KIDS_TEXT,
     passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
-    placesUsed: placesUsed, startHour: startHour, concepts: concepts, inspoOf: inspoOf, inspoName: inspoName, wordsDiffer: wordsDiffer, kidSafePhoto: kidSafePhoto, swapDrinks: swapDrinks, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, typeOf: typeOf, countryOf: countryOf, useCountry: useCountry, currency: currency, moneyIn: moneyIn, culture: culture, musicOf: musicOf, typeName: typeName, MUSIC_CATS: MUSIC_CATS, cityOf: cityOf
+    placesUsed: placesUsed, startHour: startHour, concepts: concepts, inspoOf: inspoOf, inspoName: inspoName, wordsDiffer: wordsDiffer, kidSafePhoto: kidSafePhoto, swapDrinks: swapDrinks, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, symOf: symOf, typeOf: typeOf, countryOf: countryOf, useCountry: useCountry, currency: currency, moneyIn: moneyIn, culture: culture, musicOf: musicOf, typeName: typeName, MUSIC_CATS: MUSIC_CATS, cityOf: cityOf
   };
 })(typeof window !== 'undefined' ? window : globalThis);

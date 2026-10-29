@@ -237,7 +237,7 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
     const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': env.GOOGLE_MAPS_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions,places.businessStatus,places.types,places.primaryType,places.location' },
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions,places.businessStatus,places.types,places.primaryType,places.location,places.reservable' },
       body: JSON.stringify(body)
     });
     if (!r.ok) throw new Error('places');
@@ -260,7 +260,7 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
     .sort((a, b) => b.score - a.score).map(x => x.p)
     .slice(0, 8)
     .map(p => ({ id: p.id, name: p.displayName?.text, address: p.formattedAddress, rating: p.rating, reviews: p.userRatingCount,
-      priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, hours: p.regularOpeningHours?.weekdayDescriptions || [], source: 'Google' }));
+      priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, hours: p.regularOpeningHours?.weekdayDescriptions || [], reservable: !!p.reservable, restaurant: /restaurant|steak|bistro|brasserie|grill|dining/.test(String(p.primaryType || '')), source: 'Google' }));
 }
 
 /* ---------- drive times (Routes API) ---------- */

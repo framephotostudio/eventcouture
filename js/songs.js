@@ -21,6 +21,77 @@
   };
   /* Playlist names that fit each mood */
   root.EC_SONG_NAMES = {"jazz brunch acoustic": "Jazz & Sunday Best", "r&b lounge house": "Velvet Lounge", "love songs soul": "Love, Always", "indie acoustic sunset": "Golden Hour Garden", "yacht rock bossa nova": "Sunset on the Water", "afrobeats reggaeton summer": "Summer Heat", "swing jazz motown": "Supper Club Swing", "pop feel-good": "Feel-Good Celebration", "string quartet classics": "Black Tie Strings", "deep house chill": "After Hours", "disco funk dance": "Disco Ball Nights", "neo soul candlelight": "Candlelight Soul", "country folk acoustic": "Boots & String Lights", "r&b soul classics": "Old School Soul", "kids party": "Kids\u2019 Dance Party", "holiday classics": "Holiday Classics", "quinceanera": "Quincea\u00f1era Night"};
+  /* Cultural wedding playlists, in the order of the day. Each section's first song carries the section name. */
+  root.EC_CULTURE_SONGS = {
+    arabic: { name: 'Arabian Nights Wedding', sections: [
+      ['Zaffe and grand entrance', [['Ala Dalouna', 'Traditional'], ['El Bint El Shalabiya', 'Fairuz'], ['Barakallah', 'Maher Zain'], ['Boshret Kheir', 'Hussain Al Jassmi']]],
+      ['Dinner', [['Enta Omri', 'Umm Kulthum'], ['Nassam Alayna El Hawa', 'Fairuz'], ['Tamally Maak', 'Amr Diab'], ['Lama Bada Yatathanna', 'Fairuz'], ['Aa Bali Habibi', 'Elissa']]],
+      ['Dabke and dancing', [['Ah W Noss', 'Nancy Ajram'], ['Nour El Ein', 'Amr Diab'], ['3 Daqat', 'Abu feat. Yousra'], ['Ya Tabtab Wa Dalla', 'Nancy Ajram'], ['Boos El Wawa', 'Haifa Wehbe'], ['Ghmorni', 'Myriam Fares'], ['Bel Bont El Areed', 'Hussain Al Jassmi'], ['Wahashtini', 'Amr Diab'], ['Didi', 'Khaled'], ['Aicha', 'Khaled'], ['Ya Rayah', 'Rachid Taha'], ['Inta Eih', 'Nancy Ajram']]]] },
+    indian: { name: 'Shaadi Celebration', sections: [
+      ['Baraat and entrance', [['Mundian To Bach Ke', 'Panjabi MC'], ['Tunak Tunak Tun', 'Daler Mehndi'], ['Din Shagna Da', 'Jasleen Royal'], ['Mehndi Laga Ke Rakhna', 'Lata Mangeshkar & Udit Narayan']]],
+      ['Dinner', [['Tum Hi Ho', 'Arijit Singh'], ['Kesariya', 'Arijit Singh'], ['Raataan Lambiyan', 'Jubin Nautiyal'], ['Gerua', 'Arijit Singh'], ['Tera Ban Jaunga', 'Akhil Sachdeva & Tulsi Kumar'], ['Kabira', 'Tochi Raina & Rekha Bhardwaj']]],
+      ['Sangeet and dancing', [['London Thumakda', 'Labh Janjua, Sonu Kakkar & Neha Kakkar'], ['Gallan Goodiyaan', 'Shankar Mahadevan & others'], ['Kala Chashma', 'Badshah & Neha Kakkar'], ['Desi Girl', 'Shankar Mahadevan, Sunidhi Chauhan & Vishal Dadlani'], ['Nachde Ne Saare', 'Jasleen Royal'], ['Kar Gayi Chull', 'Badshah & Neha Kakkar'], ['Badtameez Dil', 'Benny Dayal'], ['Chaiyya Chaiyya', 'Sukhwinder Singh & Sapna Awasthi'], ['Bole Chudiyan', 'Kavita Krishnamurthy, Alka Yagnik, Udit Narayan & Sonu Nigam'], ['Mehendi Hai Rachne Wali', 'Alka Yagnik']]]] },
+    pakistani: { name: 'Mehndi and Baraat Nights', sections: [
+      ['Baraat and entrance', [['Larsha Pekhawar', 'Ali Zafar'], ['Jhoom', 'Ali Zafar'], ['Laung Gawacha', 'Quratulain Balouch']]],
+      ['Dinner and qawwali', [['Tajdar-e-Haram', 'Atif Aslam'], ['Afreen Afreen', 'Rahat Fateh Ali Khan & Momina Mustehsan'], ['Mere Rashke Qamar', 'Nusrat Fateh Ali Khan'], ['Chaap Tilak', 'Abida Parveen & Rahat Fateh Ali Khan'], ['Sanu Ek Pal Chain', 'Rahat Fateh Ali Khan']]],
+      ['Dancing', [['Pasoori', 'Ali Sethi & Shae Gill'], ['Tu Jhoom', 'Abida Parveen & Naseebo Lal'], ['Kana Yaari', 'Kaifi Khalil, Eva B & Abdul Wahab Bugti'], ['Tera Woh Pyar', 'Momina Mustehsan & Asim Azhar'], ['Ko Ko Korina', 'Ahmed Rushdi'], ['Dama Dam Mast Qalandar', 'Nusrat Fateh Ali Khan'], ['Bol Hu', 'Soch the Band']]]] },
+    persian: { name: 'Persian Wedding Nights', sections: [
+      ['Aghd ceremony', [['Ayeneh Shamdoon', 'Traditional'], ['Mobarak Bad', 'Traditional'], ['Hamsafar', 'Googoosh']]],
+      ['Dinner', [['Pol', 'Googoosh'], ['Man Amadeh Am', 'Googoosh'], ['Khalij', 'Ebi'], ['Bavar Kon', 'Dariush'], ['Behet Ghol Midam', 'Mohsen Yeganeh']]],
+      ['Dancing', [['Boro Boro', 'Arash'], ['Tike Tike Kardi', 'Arash feat. Shaggy'], ['Broken Angel', 'Arash feat. Helena'], ['Gentleman', 'Sasy'], ['Soltane Ghalbha', 'Aref'], ['Shab Zadeh', 'Ebi']]]] },
+    turkish: { name: 'Düğün Gecesi', sections: [
+      ['Davul, zurna and entrance', [['Erik Dalı', 'Traditional'], ['Ankara’nın Bağları', 'Traditional'], ['Leylim Ley', 'Traditional']]],
+      ['Dinner', [['Gülümse', 'Sezen Aksu'], ['Hadi Bakalım', 'Sezen Aksu'], ['Everyway That I Can', 'Sertab Erener'], ['Aşkın Olayım', 'Simge']]],
+      ['Halay and dancing', [['Şımarık', 'Tarkan'], ['Dudu', 'Tarkan'], ['Kuzu Kuzu', 'Tarkan'], ['Hepsi Senin Mi', 'Tarkan'], ['Bangır Bangır', 'Gülşen'], ['Düm Tek Tek', 'Hadise']]]] },
+    moroccan: { name: 'Moroccan Wedding Nights', sections: [
+      ['Amariya and entrance', [['Lalla Laaroussa', 'Traditional'], ['Dakka Marrakchia', 'Traditional']]],
+      ['Dinner', [['Ensay', 'Saad Lamjarred'], ['Ana Machi Sahel', 'Saad Lamjarred'], ['C’est la vie', 'Khaled']]],
+      ['Dancing', [['Lm3allem', 'Saad Lamjarred'], ['Ghaltana', 'Saad Lamjarred'], ['J’en ai marre', 'Najat Aatabou'], ['Aicha', 'Khaled'], ['Didi', 'Khaled'], ['Ya Rayah', 'Rachid Taha']]]] },
+    chinese: { name: 'Double Happiness', sections: [
+      ['Entrance and tea ceremony', [['The Moon Represents My Heart', 'Teresa Teng'], ['Tian Mi Mi', 'Teresa Teng'], ['Marry Me Today', 'David Tao & Jolin Tsai']]],
+      ['Banquet', [['Because of Love', 'Eason Chan & Faye Wong'], ['A Little Happiness', 'Hebe Tien'], ['Fairy Tale', 'Michael Wong'], ['Red Bean', 'Faye Wong'], ['Love Confession', 'Jay Chou']]],
+      ['Dancing', [['Simple Love', 'Jay Chou'], ['Rice Field', 'Jay Chou'], ['Mouse Loves Rice', 'Yang Chengang'], ['Ai Ni', 'Kimberley Chen']]]] },
+    korean: { name: 'Seoul Love Story', sections: [
+      ['Ceremony and entrance', [['All of My Life', 'Park Won'], ['Beautiful', 'Crush'], ['Love Poem', 'IU'], ['Stay With Me', 'Chanyeol & Punch']]],
+      ['Dinner', [['Through the Night', 'IU'], ['Palette', 'IU'], ['Ditto', 'NewJeans'], ['Celebrity', 'IU']]],
+      ['Dancing', [['Dynamite', 'BTS'], ['Butter', 'BTS'], ['Boy With Luv', 'BTS'], ['Gangnam Style', 'PSY'], ['Hype Boy', 'NewJeans'], ['Cupid', 'FIFTY FIFTY'], ['Fancy', 'TWICE'], ['Feel Special', 'TWICE'], ['Next Level', 'aespa'], ['How You Like That', 'BLACKPINK']]]] },
+    vietnamese: { name: 'Ngày Cưới', sections: [
+      ['Procession and ceremony', [['Đám Cưới Nha', 'Hồng Thanh & Mie'], ['Cưới Thôi', 'Masew, B Ray & TAP'], ['Một Nhà', 'Da LAB']]],
+      ['Banquet', [['Nơi Này Có Anh', 'Sơn Tùng M-TP'], ['Có Chàng Trai Viết Lên Cây', 'Phan Mạnh Quỳnh'], ['Em Của Ngày Hôm Qua', 'Sơn Tùng M-TP']]],
+      ['Dancing', [['Hãy Trao Cho Anh', 'Sơn Tùng M-TP'], ['See Tình', 'Hoàng Thùy Linh'], ['Để Mị Nói Cho Mà Nghe', 'Hoàng Thùy Linh'], ['Anh Ơi Ở Lại', 'Chi Pu']]]] },
+    mexican: { name: 'Fiesta de Boda', sections: [
+      ['Mariachi and entrance', [['El Son de la Negra', 'Mariachi Vargas de Tecalitlán'], ['Cielito Lindo', 'Traditional'], ['Hermoso Cariño', 'Vicente Fernández'], ['Si Nos Dejan', 'Luis Miguel']]],
+      ['Dinner', [['Volver Volver', 'Vicente Fernández'], ['El Rey', 'Vicente Fernández'], ['Como La Flor', 'Selena']]],
+      ['Dancing', [['La Víbora de la Mar', 'Traditional'], ['El Mariachi Loco', 'Traditional'], ['Payaso de Rodeo', 'Caballo Dorado'], ['Suavemente', 'Elvis Crespo'], ['Bidi Bidi Bom Bom', 'Selena'], ['La Bamba', 'Ritchie Valens'], ['Mi Gente', 'J Balvin & Willy William'], ['Danza Kuduro', 'Don Omar & Lucenzo'], ['Ella Baila Sola', 'Eslabon Armado & Peso Pluma']]]] },
+    spanish: { name: 'Boda en España', sections: [
+      ['Entrance', [['Ave María', 'David Bisbal'], ['Mediterráneo', 'Joan Manuel Serrat'], ['Corazón Contento', 'Marisol']]],
+      ['Dinner', [['Bamboléo', 'Gipsy Kings'], ['Volare', 'Gipsy Kings'], ['Me Quedo Contigo', 'Los Chunguitos']]],
+      ['Rumba and dancing', [['Paquito el Chocolatero', 'Traditional'], ['Y Viva España', 'Manolo Escobar'], ['Bulería', 'David Bisbal'], ['Malamente', 'Rosalía'], ['Bailando', 'Enrique Iglesias'], ['Aserejé', 'Las Ketchup'], ['Macarena', 'Los Del Río'], ['Despacito', 'Luis Fonsi & Daddy Yankee'], ['Quédate', 'Bizarrap & Quevedo']]]] },
+    filipino: { name: 'Kasal Celebration', sections: [
+      ['Ceremony and entrance', [['Ikaw', 'Yeng Constantino'], ['Forevermore', 'Side A'], ['Hawak Kamay', 'Yeng Constantino']]],
+      ['Dinner', [['Kahit Maputi Na Ang Buhok Ko', 'Rey Valera'], ['Tadhana', 'Up Dharma Down'], ['Buwan', 'Juan Karlos'], ['Mundo', 'IV of Spades']]],
+      ['Money dance and dancing', [['Tala', 'Sarah Geronimo'], ['Kilometro', 'Sarah Geronimo'], ['Pusong Bato', 'Alon'], ['Otso Otso', 'Bayani Agbayani']]]] },
+    nigerian: { name: 'Owambe All Night', sections: [
+      ['Grand entrance', [['Ada Ada', 'Flavour'], ['Nwa Baby', 'Flavour'], ['Johnny', 'Yemi Alade']]],
+      ['Dinner', [['Essence', 'Wizkid feat. Tems'], ['Fall', 'Davido'], ['Assurance', 'Davido'], ['Love Nwantiti', 'CKay']]],
+      ['Spraying and dancing', [['Ye', 'Burna Boy'], ['Last Last', 'Burna Boy'], ['If', 'Davido'], ['Unavailable', 'Davido'], ['Ojuelegba', 'Wizkid'], ['Calm Down', 'Rema'], ['Rush', 'Ayra Starr'], ['Joha', 'Asake'], ['Jerusalema', 'Master KG']]]] },
+    africanamerican: { name: 'Black Love Forever', sections: [
+      ['Ceremony and entrance', [['Spend My Life With You', 'Eric Benét & Tamia'], ['At Last', 'Etta James'], ['Ribbon in the Sky', 'Stevie Wonder'], ['Lovely Day', 'Bill Withers']]],
+      ['Dinner', [['Let’s Stay Together', 'Al Green'], ['Adorn', 'Miguel'], ['Best Part', 'Daniel Caesar & H.E.R.'], ['Golden', 'Jill Scott']]],
+      ['Line dances and dancing', [['Before I Let Go', 'Frankie Beverly & Maze'], ['Electric Boogie', 'Marcia Griffiths'], ['Cupid Shuffle', 'Cupid'], ['Wobble', 'V.I.C.'], ['Cha Cha Slide', 'DJ Casper'], ['September', 'Earth, Wind & Fire'], ['Candy', 'Cameo'], ['Love on Top', 'Beyoncé'], ['Crazy in Love', 'Beyoncé'], ['Wanna Be Startin’ Somethin’', 'Michael Jackson']]]] },
+    russian: { name: 'Gorko! Wedding Night', sections: [
+      ['Welcome and entrance', [['Svadba', 'Muslim Magomayev'], ['Kalinka', 'Traditional']]],
+      ['Dinner', [['Million Scarlet Roses', 'Alla Pugacheva'], ['Ya Budu', '5’nizza']]],
+      ['Dancing', [['Arlekino', 'Alla Pugacheva'], ['Moskau', 'Dschinghis Khan'], ['Katyusha', 'Traditional']]]] },
+    greek: { name: 'Opa! Greek Wedding', sections: [
+      ['Entrance', [['Kalamatianos', 'Traditional'], ['Never on Sunday', 'Melina Mercouri']]],
+      ['Dinner', [['Gia', 'Despina Vandi']]],
+      ['Dancing', [['Zorba the Greek (Syrtaki)', 'Mikis Theodorakis'], ['Misirlou', 'Traditional']]]] },
+    fusion: { name: 'Two Worlds, One Dance Floor', sections: [
+      ['Ceremony and entrance', [['Perfect', 'Ed Sheeran'], ['All of Me', 'John Legend'], ['Mehndi Laga Ke Rakhna', 'Lata Mangeshkar & Udit Narayan']]],
+      ['Dinner', [['Tamally Maak', 'Amr Diab'], ['Thinking Out Loud', 'Ed Sheeran'], ['Essence', 'Wizkid feat. Tems']]],
+      ['Dancing', [['Bailando', 'Enrique Iglesias'], ['Calm Down', 'Rema & Selena Gomez'], ['London Thumakda', 'Labh Janjua, Sonu Kakkar & Neha Kakkar'], ['3 Daqat', 'Abu feat. Yousra'], ['Pasoori', 'Ali Sethi & Shae Gill'], ['Mi Gente', 'J Balvin & Willy William'], ['Jerusalema', 'Master KG'], ['Dynamite', 'BTS'], ['Uptown Funk', 'Mark Ronson feat. Bruno Mars']]]] }
+  };
   /* Find the closest ready-made playlist for any mood text, including AI-written ones. */
   root.EC_SONGS_FOR = function (mood) {
     var m = String(mood || '').toLowerCase(); if (root.EC_SONGS[m]) return root.EC_SONGS[m];

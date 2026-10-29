@@ -294,11 +294,11 @@
   /* ---------- routes ---------- */
   var draft = null, pendingDraft = null;
   function route() {
-    var h = (location.hash || '#/').slice(1); var p = h.split('/').filter(Boolean); E.useCountry(null);   /* prices in a plan follow its country; everything else is US dollars */
+    var h = (location.hash || '#/').slice(1); var p = h.split('/').filter(Boolean); E.useCountry(null); SHOP_COUNTRY = null;   /* prices in a plan follow its country; everything else is US dollars */
     if (p[0] !== 'inspiration') inspoFor_ = null;   /* only the "choose a different photo" page swaps a photo on an existing draft */
     try {
       if (!p.length) return home();
-      if (p[0] === 'start') { var sd = newDraft(), st = decodeURIComponent(p[1] || ''), sc = decodeURIComponent(p[2] || ''); var cuk = Object.keys(D.CULTURES).find(function (k) { return st === k + '-wedding' || st === k + '-engagement' && D.CULTURES[k].engagement; }); if (cuk) { sd.type = /-engagement$/.test(st) ? 'engagement' : 'wedding'; sd.culture = cuk; } else if (D.EVENT_TYPES.some(function (t) { return t.id === st; })) sd.type = st; if (sd.type) { var tt = E.typeOf(sd.type); sd.guests = sd.expected = cuk ? E.culture(sd).guests : tt.defaultGuests; sd.hours = cuk ? E.culture(sd).hours : tt.hours; sd.typeChosen = true; } if (D.CITIES.some(function (c) { return c.name === sc; })) { sd.city = sc; sd.country = E.countryOf(sc).id; } T('guide_start', { event_type: sd.type || 'none', city: sd.city || 'none' }); saveDraft(sd); location.replace('#/new/1/' + sd.id); return; }
+      if (p[0] === 'start') { var sd = newDraft(), st = decodeURIComponent(p[1] || ''), sc = decodeURIComponent(p[2] || ''); var cuk = Object.keys(D.CULTURES).find(function (k) { return st === k + '-wedding' || st === k + '-engagement' && D.CULTURES[k].engagement; }); if (cuk) { sd.type = /-engagement$/.test(st) ? 'engagement' : 'wedding'; sd.culture = cuk; if ((window.EC_INSPO || []).some(function (q) { return q.id === 'culture-' + cuk; })) { sd.inspiration.inspo = 'culture-' + cuk; sd.typeChosen = true; } } else if (D.EVENT_TYPES.some(function (t) { return t.id === st; })) sd.type = st; if (sd.type) { var tt = E.typeOf(sd.type); sd.guests = sd.expected = cuk ? E.culture(sd).guests : tt.defaultGuests; sd.hours = cuk ? E.culture(sd).hours : tt.hours; sd.typeChosen = true; } if (D.CITIES.some(function (c) { return c.name === sc; })) { sd.city = sc; sd.country = E.countryOf(sc).id; } T('guide_start', { event_type: sd.type || 'none', city: sd.city || 'none' }); saveDraft(sd); location.replace('#/new/1/' + sd.id); return; }
       if (p[0] === 'new') return wizard(+(p[1] || 1), p[2]);
       if (p[0] === 'events') return myEvents();
       if (p[0] === 'inspiration') return inspirationPage(p[1] && p[1] !== 'all' ? decodeURIComponent(p[1]) : '', p[2]);
@@ -341,8 +341,14 @@
   var INSPO = window.EC_INSPO || [];
   function inspoTypes() { return D.EVENT_TYPES.filter(function (t) { return INSPO.some(function (p) { return p.types.indexOf(t.id) >= 0; }); }); }
   /* "All occasions" mixes occasions so the first row isn't all weddings. */
-  var INSPO_MIX = (function () { var by = {}, order = []; INSPO.forEach(function (p) { var k = p.types[0]; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(p); }); var out = [], more = true; for (var i = 0; more; i++) { more = false; order.forEach(function (k) { if (by[k][i]) { out.push(by[k][i]); more = true; } }); } return out; })();
-  function inspoFor(type) { return type ? INSPO.filter(function (p) { return p.types.indexOf(type) >= 0; }).sort(function (a, b) { return a.types.indexOf(type) - b.types.indexOf(type); }) : INSPO_MIX; }
+  var INSPO_MIX = (function () { var by = {}, order = []; INSPO.filter(function (p) { return !p.culture; }).forEach(function (p) { var k = p.types[0]; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(p); }); var out = [], more = true; for (var i = 0; more; i++) { more = false; order.forEach(function (k) { if (by[k][i]) { out.push(by[k][i]); more = true; } }); } return out; })();
+  /* A cultural wedding's own photo comes first; other cultures' photos come after the general ones. */
+  function inspoFor(type) {
+    var d = inspoFor_ && drafts()[inspoFor_], cu = d && d.culture;
+    if (!type) return INSPO_MIX;
+    var rank = function (p) { return p.culture ? (p.culture === cu ? -1 : 1) : 0; };
+    return INSPO.filter(function (p) { return p.types.indexOf(type) >= 0; }).sort(function (a, b) { return rank(a) - rank(b) || a.types.indexOf(type) - b.types.indexOf(type); });
+  }
   function inspoCards(type, limit) {
     var list = inspoFor(type), shown = limit ? list.slice(0, limit) : list;
     return shown.map(function (p) { return '<button type="button" class="icard" data-inspo="' + p.id + '" aria-label="' + esc(E.inspoName(p, type)) + ', AI-generated inspiration photo"><div class="thumb"><img src="' + srcOf(INSPO_IMG + 'sm/' + p.id + '.jpg') + '" alt="' + esc(p.alt) + '" loading="lazy">' + AI_TAG + '</div><span class="iname">' + esc(E.inspoName(p, type)) + '</span></button>'; }).join('') +
@@ -378,6 +384,7 @@
     var keep = inspoFor_ && drafts()[inspoFor_]; inspoFor_ = null;
     var d = keep || newDraft(), tt = E.typeOf(type);
     d.inspiration.inspo = p.id;
+    if (p.culture && (type === 'wedding' || type === 'engagement')) { if (d.culture !== p.culture) d.music = null; d.culture = p.culture; }   /* a cultural photo plans that cultural wedding */
     if (d.type !== type) { d.type = type; d.hours = tt.hours; if (!d.guestsTouched) d.guests = d.expected = tt.defaultGuests; }
     d.typeChosen = true;
     if (!d.settingChosen) { d.setting = p.setting; if ((d.setting === 'restaurant' || d.setting === 'privateRoom') && d.hours > 3) d.hours = 3; }
@@ -625,7 +632,8 @@
   /* Cities for one country; a city she typed herself selects that country's "Other" choice. */
   function otherCity(typed, choice) {
     if (!typed) return choice;
-    if (choice === 'Other city in Canada' && E.countryOf(typed).id !== 'CA') return typed + ', Canada';
+    var co = D.COUNTRIES.find(function (k) { return k.other === choice; });
+    if (co && co.id !== 'US' && E.countryOf(typed).id !== co.id) return typed + ', ' + (co.id === 'CA' ? 'Canada' : co.name);
     return typed;
   }
   function cityOptions(country, city) {
@@ -641,7 +649,7 @@
     var done = id && events()[id]; if (done) { if (JUST_CREATED[id] && done.concept) { history.back(); return; } location.replace('#/e/' + id + (done.concept ? '' : '/concepts')); return; }   /* Back past the finished form steps goes to where she was before planning */   /* Back from the concepts page returns to the plan, not a blank form */
     if (!id || (!drafts()[id] && !(pendingDraft && pendingDraft.id === id))) { pendingDraft = newDraft(); location.replace('#/new/1/' + pendingDraft.id); return; }
     draft = drafts()[id] || pendingDraft;   /* a new draft is saved only once the host adds something or continues */
-    E.useCountry(draft.city || (draft.country === 'CA' ? 'Other city in Canada' : null));
+    E.useCountry(draft.city || (draft.country && draft.country !== 'US' ? (D.COUNTRIES.find(function (k) { return k.id === draft.country; }) || {}).other || null : null));
     var W = '#/new/';
     function persist() { draft.step = Math.max(draft.step || 1, step); return saveDraft(draft); }
     function laterBtn() { return '<button type="button" class="link" id="later">Save and finish later</button>'; }
@@ -730,7 +738,7 @@
           var known = !draft.city || D.CITIES.some(function (c) { return c.name === draft.city; });
           return '<label class="field"><span>Country</span><select class="input" id="country">' + D.COUNTRIES.map(function (c) { return '<option value="' + c.id + '"' + (c.id === co.id ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></label>' +
             '<label class="field"><span>City</span><select class="input" id="city">' + cityOptions(co.id, draft.city) + '</select></label>' +
-            '<label class="field" id="cityOtherWrap"' + (known || !draft.city ? ' hidden' : '') + '><span id="cityOtherLbl">Your city and ' + co.region + '</span><input class="input" id="cityOther" placeholder="' + esc(co.example) + '" value="' + esc(known ? '' : draft.city) + '"></label>';
+            '<label class="field" id="cityOtherWrap"' + (known || !draft.city ? ' hidden' : '') + '><span id="cityOtherLbl">' + (co.region === 'city' ? 'Your city' : 'Your city and ' + co.region) + '</span><input class="input" id="cityOther" placeholder="' + esc(co.example) + '" value="' + esc(known ? '' : draft.city) + '"></label>';
         })() +
         areaField(draft.city, draft.area || '', ['area', 'areaOther']) +
         '<label class="field"><span>How many people are you inviting? (include plus-ones and yourself)</span><input class="input num" type="number" min="1" max="100000" id="guests" value="' + draft.guests + '"></label>' +
@@ -780,7 +788,7 @@
       function saveNow() { if (!draft || !$('#guests') || !(+$('#guests').value >= 1)) return; var typedName = $('#name').value.trim(); collect2(); if (!typedName) draft.name = ''; persist(); }
       window.addEventListener('pagehide', saveNow, { once: true }); window.addEventListener('beforeunload', saveNow, { once: true });
       $('#city').addEventListener('change', function () { var oth = /^Other /.test(this.value); $('#cityOtherWrap').hidden = !oth; if (oth) $('#cityOther').focus(); });
-      $('#country').addEventListener('change', function () { var co = D.COUNTRIES.find(function (c) { return c.id === $('#country').value; }); draft.country = co.id; E.useCountry(co.id === 'CA' ? 'Other city in Canada' : null); var bl = $('#budgetLbl'); if (bl) bl.textContent = 'Maximum budget for the event (' + co.currency + ', optional)'; $('#city').innerHTML = cityOptions(co.id, ''); $('#cityOtherWrap').hidden = true; $('#cityOther').value = ''; $('#cityOther').placeholder = co.example; $('#cityOtherLbl').textContent = 'Your city and ' + co.region; $('#city').dispatchEvent(new Event('change')); });
+      $('#country').addEventListener('change', function () { var co = D.COUNTRIES.find(function (c) { return c.id === $('#country').value; }); draft.country = co.id; E.useCountry(co.id === 'US' ? null : co.other); var bl = $('#budgetLbl'); if (bl) bl.textContent = 'Maximum budget for the event (' + co.currency + ', optional)'; $('#city').innerHTML = cityOptions(co.id, ''); $('#cityOtherWrap').hidden = true; $('#cityOther').value = ''; $('#cityOther').placeholder = co.example; $('#cityOtherLbl').textContent = co.region === 'city' ? 'Your city' : 'Your city and ' + co.region; $('#city').dispatchEvent(new Event('change')); });
       bindArea($('#area'), $('#areaOther'), $('#city'));
       $('#expected').addEventListener('input', function () { draft.expectedTouched = true; });
       $('#guests').addEventListener('input', function () { if (!draft.expectedTouched && +this.value >= 1) $('#expected').value = Math.round(+this.value); });
@@ -856,7 +864,7 @@
 
   /* ---------- concepts ---------- */
   function conceptsView(id) {
-    var ev = getEvent(id); if (!ev) return notFound(); E.useCountry(ev.city);
+    var ev = getEvent(id); if (!ev) return notFound(); E.useCountry(ev.city); SHOP_COUNTRY = E.countryOf(ev.city);
     frame('<div class="stack-lg"><div class="stack"><h2>Three looks for ' + (ev.nameAuto ? 'your ' + esc(E.typeName(ev).toLowerCase().replace(/christmas/, 'Christmas')) : esc(ev.name)) + '</h2><p class="muted">Each look has its own colors, atmosphere and decor. Pick one to see what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">' + (function () { var ins = ev.inspiration || {}, src = []; if (ins.inspo) src.push('the inspiration photo you chose'); if ((ins.photos || []).length) src.push('your photos'); if (ins.text) src.push('your description'); if ((ins.vibes || []).length) src.push('the colors and vibes you picked'); return src.length ? 'Built from ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' and ' + src[src.length - 1] : src[0]) + '.' : 'Built from your event details.'; })() + '</p></div><div id="cs" class="concepts"><div class="loading-concepts" role="status"><span class="spin" aria-hidden="true"></span><span id="lmsg">Reading your inspiration…</span></div></div>' +
       '<p class="small muted" id="srcNote" hidden></p>' + (ev.usedMoreConcepts && !SELL_EXTRAS ? '' : '<div class="row"><button class="btn ghost" id="more">Show three different concepts</button><span class="muted small">You can see three new looks once, free.</span></div>') + '</div>');
     var msgs = ['Reading your inspiration…', 'Choosing colors and decor…', 'Matching the look to your event…', 'Almost ready…'], mi = 0;
@@ -958,7 +966,7 @@
   function tierName(id) { if (id === 'F') return 'Your budget plan'; var t = D.TIERS.find(function (x) { return x.id === id; }); return t ? t.name : id; }
   function groupOf(tab) { if (tab === 'places' || tab === 'vendors') return 1; for (var i = 0; i < TAB_GROUPS.length; i++) if (TAB_GROUPS[i][1].some(function (t) { return t[0] === tab; })) return i; return 0; }
   function planView(ev, tab) {
-    E.useCountry(ev.city);
+    E.useCountry(ev.city); SHOP_COUNTRY = E.countryOf(ev.city);
     if (!ev.concept) { location.hash = '#/e/' + ev.id + '/concepts'; return; }
     var base = ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id;
     var save = function () { if (!ev.sample) saveEvent(ev); };
@@ -1094,7 +1102,7 @@
     var c = ev.concept, ros = ev.ros || E.runOfShow(ev);
     var stTxt = function (cat) { var st = statusOf(ev, cat), ov = (ev.overrides || {})[cat]; return st === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : st === 'quote' ? (ov && ov.opt ? 'Front-runner: ' + ov.note + ', quoted ' + money(ov.amount) : (ov && ov.source === 'vendor' ? 'Published price ' : 'Price added ') + money(ov.amount) + (ov && ov.note ? ' (' + ov.note + ')' : '')) : st === 'short' ? (function () { var pk = pickOf(ev, cat), o = savedFor(ev, cat).filter(function (x) { return x !== pk; }).map(function (x) { return x.name; }); return 'Front-runner: ' + pk.name + (o.length ? ' (also considering ' + o.join(' and ') + ')' : ''); })() : 'Still to book'; };
     var vend = [venueCat(ev)].concat(bookLines(ev, b).map(function (i) { return i.id; })).filter(function (x, i, a) { return a.indexOf(x) === i && b.items.some(function (it) { return it.id === x; }); });
-    var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
+    var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = (E.culture(ev) && window.EC_CULTURE_SONGS && window.EC_CULTURE_SONGS[ev.culture] || {}).name || c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
     var todo = E.checklist(ev).filter(function (x) { return !checkDone(ev, x.text); }).slice(0, 6);
     var pieces = lookList(ev);
     var go = '#/e/' + ev.id + '/';
@@ -1118,7 +1126,7 @@
     var st = function (cat) { var s2 = statusOf(ev, cat), ov = (ev.overrides || {})[cat], pk = pickOf(ev, cat), o = savedFor(ev, cat).filter(function (x) { return x !== pk; }).map(function (x) { return x.name; });
       return s2 === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : s2 === 'quote' ? (ov && ov.opt ? 'Front-runner: ' + ov.note + ', quoted ' + money(ov.amount) : (ov && ov.source === 'vendor' ? 'Published price ' : 'Price added ') + money(ov.amount) + (ov && ov.note ? ' (' + ov.note + ')' : '')) : s2 === 'short' ? 'Front-runner: ' + pk.name + (o.length ? ' (also considering ' + o.join(' and ') + ')' : '') : 'Still to book'; };
     var vend = [venueCat(ev)].concat(bookLines(ev, b).map(function (i) { return i.id; })).filter(function (x, i, a) { return a.indexOf(x) === i && b.items.some(function (it) { return it.id === x; }); });
-    var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
+    var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = (E.culture(ev) && window.EC_CULTURE_SONGS && window.EC_CULTURE_SONGS[ev.culture] || {}).name || c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
     var todo = E.checklist(ev).filter(function (x) { return !checkDone(ev, x.text); }).slice(0, 8);
     var hex = function (h) { return /^#[0-9a-f]{3}$/i.test(h) ? '#' + h.slice(1).split('').map(function (x) { return x + x; }).join('') : h; };
     var sections = [
@@ -1385,6 +1393,14 @@
     if (pk && pk.quote) o[cat] = { amount: pk.quote, source: 'quote', note: pk.name, opt: pk.id };
     else if (ov && ov.opt) delete o[cat];
   }
+  /* Restaurants: book a table where it's booked. OpenTable where it operates (search by name and city), otherwise the Google Maps listing, which shows the restaurant's own booking partner. */
+  var OPENTABLE = ['US', 'CA', 'GB', 'IE', 'DE', 'NL', 'AU', 'JP', 'MX', 'AE', 'IT', 'ES'];
+  function reserveLink(ev, x) {
+    var co = E.countryOf(ev.city), city = ev.city.replace(/^Other (US city|city in .+)$/, '').split(',')[0];
+    if (OPENTABLE.indexOf(co.id) >= 0) return 'https://www.opentable.com/s?term=' + encodeURIComponent(x.name + ' ' + city) + (CFG.opentableRef ? '&ref=' + encodeURIComponent(CFG.opentableRef) : '');
+    return x.maps || 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(x.name + ' ' + city);
+  }
+  function isRestaurantPick(ev, cat, x) { return x && !/^(ig|rec|own|ec):/.test(String(x.id || '')) && (x.reservable || ['privateDining', 'restaurantFood'].indexOf(cat) >= 0 || ev.setting === 'restaurant' || ev.setting === 'privateRoom' && cat === venueCat(ev)); }
   function siteOf(x) { return x.site || (x.url && !/google\.[a-z.]+\/maps|maps\.google|goo\.gl/i.test(x.url) ? x.url : ''); }
   function isBooked(ev, cat, x) { var ov = (ev.overrides || {})[cat]; return !!(ov && ov.source === 'booking' && (ov.opt ? ov.opt === x.id : ov.note === x.name)); }
   /* Side by side: her up to three options for one category, with the facts that matter and one front-runner. */
@@ -1484,7 +1500,7 @@
   /* Only the venue follows her area; vendors travel to her, so they're searched across the whole city. */
   /* Vendors Always Luxe recommends for this city and line, shaped like a search result. */
   function recFor(ev, cat) {
-    return (D.RECOMMENDED || []).filter(function (r) { var st = (ev.city || '').split(', ')[1] || ''; return r.cats.indexOf(cat) >= 0 && (!r.cities || r.cities.indexOf(ev.city) >= 0) && (!r.states || r.states.indexOf(st) >= 0) && (!r.notCities || r.notCities.indexOf(ev.city) < 0) && (!r.notStates || r.notStates.indexOf(st) < 0) && (!r.onlyCities || r.onlyCities.indexOf(ev.city) >= 0) && (!r.country || E.countryOf(ev.city).id === r.country) && (!r.cultures || r.cultures.indexOf(ev.culture || '') >= 0 || r.cultures.indexOf('parties') >= 0 && ev.type !== 'wedding' || r.types && r.types.indexOf(ev.type) >= 0); })
+    return (D.RECOMMENDED || []).filter(function (r) { var st = (ev.city || '').split(', ')[1] || ''; return r.cats.indexOf(cat) >= 0 && (!r.cities || r.cities.indexOf(ev.city) >= 0) && (!r.states || r.states.indexOf(st) >= 0) && (!r.notCities || r.notCities.indexOf(ev.city) < 0) && (!r.notStates || r.notStates.indexOf(st) < 0) && (!r.onlyCities || r.onlyCities.indexOf(ev.city) >= 0) && (!r.country || E.countryOf(ev.city).id === r.country) && (r.cities || r.states || r.country || ['US', 'CA'].indexOf(E.countryOf(ev.city).id) >= 0)   /* no place given: the US and Canada */ && (!r.cultures || r.cultures.indexOf(ev.culture || '') >= 0 || r.cultures.indexOf('parties') >= 0 && ev.type !== 'wedding' || r.types && r.types.indexOf(ev.type) >= 0); })
       .sort(function (a, b) { var w = function (r) { return r.weight != null ? r.weight : (r.first ? 100 : 0) + (r.cities ? 20 : r.states ? 10 : 0) + (r.top ? 5 : 0); }; return w(b) - w(a); })   /* this city first, then this state, then everywhere */
       .map(function (r) { var mp = !r.ig && 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.maps || r.name); return { id: r.ig ? 'ig:' + r.ig : 'rec:' + r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: r.name, website: r.ig ? 'https://instagram.com/' + r.ig : mp, rec: true, note: r.note, ig: r.ig, late: !!(r.notTop && r.notTop.indexOf(ev.city) >= 0) }; })
       .filter(function (r, i, a) { return a.findIndex(function (o) { return o.id === r.id; }) === i; });   /* one person listed twice (top in their state, and everywhere) shows once */
@@ -1501,7 +1517,7 @@
     var settle = function (list) { var late = list.filter(function (x) { return x.late; }), rest = list.filter(function (x) { return !x.late; }); return rest.length ? rest.slice(0, 3).concat(late, rest.slice(3)) : list; };
     return ask(c.q).then(function (l) { add(l); return more(); }).then(settle);
   }
-  function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rec: p.rec || undefined, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '' }; }
+  function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rec: p.rec || undefined, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '', reservable: p.reservable || undefined }; }
   function usedIn(ev, cat, id, except) { return (ev.packages || []).some(function (pk, k) { return k !== except && pk.items[cat] === id; }); }
   function putInPackage(ev, k, cat, p) {
     var pk = ev.packages[k], old = pk.items[cat], mine = savedFor(ev, cat);
@@ -1554,12 +1570,12 @@
     var bizOf = function (pkx, cat) { var id = pkx.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };
     var line = function (x) { return (x.rec ? '<span class="badge rec">\u2605 Recommended</span> ' : '') + hotelBadge(x.name).replace(/^ /, '') + [x.rec && /^ig:/.test(x.id) ? '@' + esc(String(x.id).slice(3)) : '',x.rating ? '★ ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' · '); };
     var est = function (cat) { var it = b.items.find(function (i) { return i.id === cat; }); return it ? 'est. ' + money(it.mid) : ''; };
-    var links = function (x) { return (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">' + (/^ig:/.test(x.id) ? 'Instagram' : /^rec:/.test(x.id) ? 'Map' : 'Website') + '</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : ''); };
+    var links = function (x, cat) { return (cat && isRestaurantPick(ev, cat, x) ? '<a class="btn small gold" target="_blank" rel="noopener" href="' + esc(reserveLink(ev, x)) + '">Reserve a table</a>' : '') + (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">' + (/^ig:/.test(x.id) ? 'Instagram' : /^rec:/.test(x.id) ? 'Map' : 'Website') + '</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : ''); };
     var row = function (c, pkx, mode) {
       var x = bizOf(pkx, c.cat), bk = x && isBooked(ev, c.cat, x);
       return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + (mode === 'book' && !bk && !ev.sample ? '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don\u2019t need it">\u00d7</button>' : '') + '<span class="num muted small">' + est(c.cat) + '</span></div>' +
         (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + '</span></div>' +
-          '<div class="pk-acts">' + links(x) + (ev.sample ? '' : (bk || mode === 'book' ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Change</button>') + (mode === 'book' ? '<button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked ✓' : 'I booked it') + '</button>' : '')) + '</div>'
+          '<div class="pk-acts">' + links(x, c.cat) + (ev.sample ? '' : (bk || mode === 'book' ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Change</button>') + (mode === 'book' ? '<button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked ✓' : 'I booked it') + '</button>' : '')) + '</div>'
         : '<p class="small muted">No top-rated match came back yet. ' + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '">See options</button>') + '</p>') +
         '<div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></div>';
     };
@@ -1579,7 +1595,7 @@
         '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of every package and your budget, and your estimated total goes down to match. You can add it back anytime.</p>' +
         '<div class="pkg-cmp-wrap"><table class="pkg-cmp" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + '</tbody></table></div>' +
         (ex.length && !ev.sample ? '<p class="small muted">Removed: ' + ex.map(function (id) { return esc(catName(id, ev)) + ' <button class="link small" data-pkunx="' + id + '">Add back</button>'; }).join(' · ') + '</p>' : '') +
-        '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
+        pkgExtras(ev, b) + '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
     }
     var cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], skipped = ev.pkgSkipped || [];
     var open = cats.filter(function (c) { return statusOf(ev, c.cat) !== 'booked'; });
@@ -1599,7 +1615,7 @@
       '<div class="note small pkg-final"><b>Next: book it.</b> Contact each one, agree on the price, then tap <b>I booked it</b>. We\u2019ll take you through them one at a time. You can save or send your package anytime, booked or not.</div>' +
       '<div class="pkg-next" data-pkrow="' + next.cat + '"><p class="eyebrow">Next up · ' + pos + ' of ' + cats.length + '</p><h3>' + esc(catName(next.cat, ev)) + '</h3>' +
         (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + (est(next.cat) ? ' · ' + est(next.cat) : '') + '</span></div>' +
-          '<ol class="howto"><li><b>Contact them</b> to check your date and ask for a quote.<div class="row" style="margin-top:6px">' + links(x) + '</div></li>' +
+          '<ol class="howto"><li><b>Contact them</b> to check your date and ask for a quote.<div class="row" style="margin-top:6px">' + links(x, next.cat) + '</div></li>' +
           '<li><b>Send your details.</b> We wrote the message for you.<div class="row" style="margin-top:6px"><button class="btn small ghost" data-pkcopy="' + next.cat + '">Copy my message</button></div></li>' +
           '<li><b>Booked?</b> Tap below and add the price you agreed on.</li></ol>' +
           '<button class="btn gold block" data-pkbook="' + next.cat + '">I booked ' + esc(x.name) + '</button>' +
@@ -1625,13 +1641,23 @@
     return '<div class="pkg-sum" id="pkgSum"><div class="pkg-sum-h"><p class="eyebrow">\u2713 Your final package</p><h3>Package ' + d.n + ' \u00b7 ' + esc(ev.name) + '</h3><p class="small muted">' + esc(whenText(ev)) + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p></div>' +
       '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.rec ? ' <span class="badge rec">\u2605 Recommended</span>' : '') + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.est ? 'est. ' : '') + money(r.amt) + '</span></div>'; }).join('') + '</div>' +
       '<div class="pkg-sum-t"><span>' + (d.booked === d.rows.length ? 'Package total, all booked' : 'Package total') + '<span class="small muted pkg-sum-note">Your plan\u2019s estimate also keeps a 10% cushion for surprises.</span>' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
+      pkgExtras(ev, b) +
       '<p class="small muted">' + d.booked + ' of ' + d.rows.length + ' booked' + (d.removed.length ? ' \u00b7 Not needed: ' + d.removed.map(esc).join(', ') : '') + '</p>' +
       '<p class="small">This is your package. Save it as a PDF, email it to yourself or forward it to a co-host anytime, booked or not.</p><div class="row pkg-sum-acts"><button class="btn gold small" data-pksum="pdf">Save as PDF</button><button class="btn ghost small" data-pksum="mail">Email it</button><button class="btn ghost small" data-pksum="share">Share</button></div></div>';
+  }
+  /* The playlist and optional add-ons, right in the package. */
+  var ADD_ONS = ['photographer', 'videographer', 'dj', 'liveMusic', 'hairMakeup', 'florals', 'decor', 'cake', 'lighting', 'photoBooth', 'transport', 'coordinator', 'favors', 'invitations', 'balloons'];
+  function pkgExtras(ev, b) {
+    var pl = ev.setting === 'restaurant' ? null : playlistOf(ev), have = b.items.map(function (i) { return i.id; });
+    var adds = ev.sample ? [] : ADD_ONS.filter(function (id) { return D.CATEGORIES[id] && have.indexOf(id) < 0 && !(id === 'balloons' && /wedding|gala|engagement|anniversary/.test(ev.type)); });
+    return (pl ? '<div class="pkg-pl"><span aria-hidden="true">\u266b</span><span class="grow"><b>Playlist: ' + esc(pl.name) + '</b><span class="small muted"> \u00b7 ' + pl.songs.length + ' songs, part of your package</span></span><a class="btn small ghost" href="#/e/' + esc(ev.id) + '/style" data-goto="playlist">See the songs</a></div>' : '') +
+      (adds.length ? '<div class="pkg-adds"><b class="small">Add to your package</b><span class="small muted"> Optional. Each one adds a line, a price and top-rated picks.</span><div class="chips">' + adds.map(function (id) { return '<button type="button" class="chip" data-pkadd="' + id + '">+ ' + esc(catName(id, ev)) + '</button>'; }).join('') + '</div></div>' : '');
   }
   function pkgSumDoc(ev) {
     var b = E.budget(ev, ev.tier), cats = pkgCats(ev, b), pks = ev.packages || [], cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], d = pkgData(ev, b, cats, cp);
     var secs = [{ h: 'Your package: Package ' + d.n + ' (' + d.booked + ' of ' + d.rows.length + ' booked)', rows: d.rows.map(function (r) { return [r.cat, r.info + '\n' + r.status, (r.est ? 'est. ' : '') + money(r.amt)]; }), total: ['Package total' + (ev.budget ? ' (budget ' + money(ev.budget) + ')' : ''), money(d.total)] }];
     if (d.removed.length) secs.push({ h: 'Not needed', bullets: d.removed });
+    if (ev.setting !== 'restaurant') { var pl = playlistOf(ev); secs.push({ h: 'Playlist: ' + pl.name, bullets: pl.songs.map(function (x) { return x[0] + (x[1] ? ' \u2014 ' + x[1] : ''); }) }); }
     secs.push({ h: 'Next steps', bullets: ['Contact each one to check your date and get a quote.', 'Agree on the price, then mark it booked in Event Couture.', 'Pay vendors directly. Prices are estimates until you book.'] });
     return { kicker: E.typeName(ev) + ' package', title: ev.name, palette: [], lines: [whenText(ev) + ' \u00b7 ' + whereText(ev) + ' \u00b7 ' + plural(ev.guests, 'guest')], sections: secs, foot: 'Planned with Event Couture by Always Luxe. Prices are estimates unless marked Booked. You pay vendors directly.' };
   }
@@ -1701,6 +1727,17 @@
       ev.packages.splice(k, 1); var ch = ev.pkgChosen || 0; ev.pkgChosen = ch === k ? 0 : ch > k ? ch - 1 : ch; ev.pkgView = Math.max(0, Math.min((ev.pkgView || 0), ev.packages.length - 1));
       if (ev.packages.length && ch === k) { var np = ev.packages[ev.pkgChosen]; Object.keys(np.items).forEach(function (cat) { if (!savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, np.items[cat]); syncPrice(ev, cat); }); }
       save(); rerender(); toast('Package removed');
+    }); });
+    $$('[data-goto]').forEach(function (a) { a.addEventListener('click', function () { var id = a.dataset.goto; setTimeout(function () { var el = document.getElementById(id); if (el) el.scrollIntoView({ block: 'start' }); }, 350); }); });
+    $$('[data-pkadd]').forEach(function (bt) { bt.addEventListener('click', function () {
+      if (lockSample(ev) || bt.disabled) return; var cat = bt.dataset.pkadd; bt.disabled = true;
+      ev.exclude = (ev.exclude || []).filter(function (x) { return x !== cat; }); ev.include = (ev.include || []).filter(function (x) { return x !== cat; }).concat([cat]); save();
+      var c = pkgCats(ev, E.budget(ev, ev.tier)).find(function (x) { return x.cat === cat; });
+      toast(catName(cat, ev) + ' added. Finding top-rated picks\u2026');
+      (c ? pkgSearch(ev, c) : Promise.resolve([])).then(function (list) {
+        (ev.packages || []).forEach(function (pk, k) { var taken = ev.packages.map(function (q) { return q.items[cat]; }); var p = list.find(function (x) { return taken.indexOf(x.id) < 0; }) || list[0]; if (p) putInPackage(ev, k, cat, p); });
+        save(); rerender(); toast(catName(cat, ev) + ' is in your package');
+      }).catch(function () { save(); rerender(); toast(catName(cat, ev) + ' added. Tap Find one to choose a business.'); });
     }); });
     $$('[data-pksum]').forEach(function (bt) { bt.addEventListener('click', function () { var k = bt.dataset.pksum; if (ev.sample || isKept(ev)) return pkgSumAction(ev, k); keepSheet(ev, 'Keep your plan to save or share your package', function () { rerender(); pkgSumAction(ev, k); }); }); });
     $$('[data-pkskip]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; ev.pkgSkipped = (ev.pkgSkipped || []).filter(function (c) { return c !== bt.dataset.pkskip; }).concat([bt.dataset.pkskip]); save(); rerender(); }); });
@@ -1805,7 +1842,7 @@
     types.sort(function (x, y) { return score(y) - score(x); });
     var typesAll = types.length; types = cut(types, 2, ev);
     var venueLine = b.items.find(function (i) { return i.id === 'venue' || i.id === 'privateDining'; });
-    var city = ev.city.replace(/^Other (US city|city in Canada)$/, '');
+    var city = ev.city.replace(/^Other (US city|city in .+)$/, '');
     var foodLine = b.items.filter(function (i) { return i.id === 'restaurantFood' || i.id === 'restaurantDrinks'; }).reduce(function (s2, i) { return s2 + i.mid; }, 0);
     var intro = ev.setting === 'restaurant'
       ? 'Your food and drinks come to about ' + money(foodLine / Math.max(1, ev.guests)) + ' per person with tax and tip. Look for restaurants that take reservations for ' + plural(ev.guests, 'guest') + '.'
@@ -1889,7 +1926,7 @@
   function findPlaces(ev, body) {
     var key = JSON.stringify(['v4', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
     if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(hit.places);
-    var sendBody = Object.assign({}, body); if (E.countryOf(ev.city).id === 'CA' && !/canada/i.test(sendBody.city || '')) sendBody.city = (sendBody.city || '') + ', Canada';   /* London, ON is not London, England */
+    var sendBody = Object.assign({}, body); var sco = E.countryOf(ev.city); if (sco.id === 'CA' && !/canada/i.test(sendBody.city || '')) sendBody.city = (sendBody.city || '') + ', Canada'; else if (sco.id !== 'US' && sco.id !== 'CA' && (sendBody.city || '').toLowerCase().indexOf(sco.name.toLowerCase()) < 0 && (sendBody.city || '').indexOf(sco.short) < 0) sendBody.city = (sendBody.city || '') + ', ' + sco.name;   /* London, ON is not London, England */
     return fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sendBody) })
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.places || []; }); })
       .then(function (list) { if (!ev.sample) { c[key] = { at: Date.now(), places: list }; var ks = Object.keys(c).sort(function (a, b) { return c[b].at - c[a].at; }); ks.slice(30).forEach(function (k) { delete c[k]; }); saveEvent(ev); } return list; });
@@ -1904,7 +1941,7 @@
           if (!list.length) { box.innerHTML = '<p class="muted">No well-reviewed matches nearby for this type. Try another venue type, or switch to a different budget version.</p>'; return; }
           var placesAll = list.length; list = cut(list, 3, ev);
           var ids = list.map(function (p) { return p.id; });
-          box.innerHTML = '<div class="curated"><p class="eyebrow">Top-rated ' + esc(btn.dataset.live.toLowerCase()) + 's in ' + esc(ev.city.split(',')[0]) + '</p>' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + (p.rating ? '\u2605 ' + p.rating + ' \u00b7 ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews \u00b7 ' : '') + esc(p.address || '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts">' + saveBtn(ev, p, venueCat(ev)) + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Pricing and availability come directly from each venue when you inquire.</p></div>' + more(ev, placesAll, list.length, 'top-rated places');
+          box.innerHTML = '<div class="curated"><p class="eyebrow">Top-rated ' + esc(btn.dataset.live.toLowerCase()) + 's in ' + esc(ev.city.split(',')[0]) + '</p>' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + (p.rating ? '\u2605 ' + p.rating + ' \u00b7 ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews \u00b7 ' : '') + esc(p.address || '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts">' + saveBtn(ev, p, venueCat(ev)) + (isRestaurantPick(ev, venueCat(ev), { id: p.id, name: p.name, maps: p.mapsUrl, reservable: p.reservable }) && (p.reservable || p.restaurant || ev.setting === 'restaurant' || ev.setting === 'privateRoom') ? '<a class="btn small gold" target="_blank" rel="noopener" href="' + esc(reserveLink(ev, { name: p.name, maps: p.mapsUrl })) + '">Reserve a table</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Pricing and availability come directly from each venue when you inquire.</p></div>' + more(ev, placesAll, list.length, 'top-rated places');
           $$('[data-keep]', box).forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { location.reload(); }); }); });
           if (ev.start && ids.length) {
             var origin = /,|\d{5}/.test(ev.start) ? ev.start : ev.start + ', ' + ev.city;
@@ -1979,7 +2016,7 @@
   var NOT_STAGE = /photo|foto|video|film|portrait|headshot/i;
   /* The state or province in a Google address ("..., Englewood, NJ 07631, USA"); a business in another state is never local. */
   function stateOf(addr) { var m = /,\s([A-Z]{2})\s(\d{5}|[A-Z]\d[A-Z])/.exec(addr || ''); return m ? m[1] : ''; }
-  function sameState(ev, p) { var want = (ev.city || '').split(', ')[1] || '', got = stateOf(p.address); return !want || !got || want === got || /orange county/i.test(ev.city) && got === 'CA'; }
+  function sameState(ev, p) { if (['US', 'CA'].indexOf(E.countryOf(ev.city).id) < 0) return true; var want = (ev.city || '').split(', ')[1] || '', got = stateOf(p.address); return !want || !got || want === got || /orange county/i.test(ev.city) && got === 'CA'; }
   var ADULT_FAVORS = /pi[ñn]ata|balloon|party (city|supply|supplies|store)|\btoys?\b|kids/i;
   var PKG_PREFER = { kosha: /stage|kosha|decor|design|backdrop|event/i, mandap: /mandap|stage|decor|design/i, sofreh: /sofreh|aghd|decor|design/i, mehndi: /henna|mehndi|mehendi|mehandi/i, baraat: /horse|baraat|carriage|dhol/i, dhol: /dhol/i, officiant: /officiant|minister|priest|pandit|pujari|imam|maulvi|rabbi|reverend|pastor|temple|mandir|masjid|mosque|church|celebrant|ceremon/i,
     singer: /sing|vocal|voice|music|band/i, liveMusic: /band|music|orchestra|ensemble|live/i, zaffe: /zaff|zeff|zafe|dabke|arab/i, mariachi: /mariachi/i, lionDance: /lion|dragon|kung fu|martial/i, gele: /gele/i, qawwali: /qawwal/i };
@@ -2120,7 +2157,7 @@
     photoBooth: 'Booth, attendant and prints', catering: 'Food, staff and service', bartender: 'Licensed bartenders per hour', videographer: 'Coverage and edited film'
   };
   TAB_VIEWS.vendors = function (ev, b) {
-    var city = ev.city.replace(/^Other (US city|city in Canada)$/, '');
+    var city = ev.city.replace(/^Other (US city|city in .+)$/, '');
     var cats = b.items.filter(function (i) { return ['venue', 'privateDining', 'tent', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'restaurantFood', 'restaurantDrinks', 'cakeFee', 'tableDecor'].indexOf(i.id) < 0; });
     var restNote = ev.setting === 'restaurant' ? '<div class="note">Your restaurant handles the food and drinks. Pick the restaurant on the Venues page; table decor is on the Style and music page.</div>' : '';
     if (!cats.length) return '<div class="stack"><h3>Vendors for this plan</h3>' + restNote + '<p class="muted">No other vendors are needed for this plan.</p></div>';
@@ -2181,10 +2218,12 @@
 
   /* Style and music: shopping board, playlist, outfits */
   /* Amazon Associates requires this exact disclosure wherever tagged links appear (US links only; Canada links carry no tag). */
-  function amazonNote() { return CFG.amazonTag && E.currency() !== 'CAD' ? 'As an Amazon Associate, Event Couture earns from qualifying purchases.' : ''; }
+  var SHOP_COUNTRY = null;   /* the plan's country, set when its pages are drawn */
+  function amazonNote() { return CFG.amazonTag && (SHOP_COUNTRY ? SHOP_COUNTRY.id === 'US' : E.currency() === 'USD') ? 'As an Amazon Associate, Event Couture earns from qualifying purchases.' : ''; }
   function shopLink(q) {
     var tag = CFG.amazonTag ? '&tag=' + encodeURIComponent(CFG.amazonTag) : '';
-    if (E.currency() === 'CAD') return { amazon: 'https://www.amazon.ca/s?k=' + encodeURIComponent(q), etsy: 'https://www.etsy.com/ca/search?q=' + encodeURIComponent(q) };
+    var sco = SHOP_COUNTRY || D.COUNTRIES.find(function (k) { return k.currency === E.currency(); }) || D.COUNTRIES[0];
+    if (sco.id !== 'US') return { amazon: 'https://www.' + sco.amazon + '/s?k=' + encodeURIComponent(q), etsy: 'https://www.etsy.com/search?q=' + encodeURIComponent(q) };   /* the Amazon tag is for the US store only */
     return { amazon: 'https://www.amazon.com/s?k=' + encodeURIComponent(q) + tag, etsy: 'https://www.etsy.com/search?q=' + encodeURIComponent(q) };
   }
   /* Get this look: every piece named in the host's words, marked in her photos, or seen in the chosen photo or look, with where to buy it or who to hire. */
@@ -2248,38 +2287,47 @@
     if (ev.kids && /birthday/.test(ev.type)) items = items.map(function (it) { return it.name === 'Votive candles (set of 12)' ? { q: color + ' party hats', name: 'Party hats (pack of 12)', each: [8, 18], qty: Math.max(1, Math.ceil(g / 12)) } : it; });
     if (ev.kids && /birthday/.test(ev.type)) items = items.map(function (it) { return it.name === 'Taper candles (set of 12)' ? { q: color + ' party plates and cups', name: 'Party plates and cups (pack of 24)', each: [10, 22], qty: Math.ceil(g / 24) } : it; });
     var decorLine = E.budget(ev, ev.tier).items.find(function (i) { return i.id === 'tableDecor'; });
-    var usd = function (n) { return (E.currency() === 'CAD' ? 'CA$' : '$') + (n % 1 ? n.toFixed(2) : n); };
+    var usd = function (n) { return E.symOf(E.currency()) + (n % 1 ? n.toFixed(2) : Number(n).toLocaleString('en-US')); };
     var shopLo = items.reduce(function (t, it) { return t + it.each[0] * it.qty; }, 0), shopHi = items.reduce(function (t, it) { return t + it.each[1] * it.qty; }, 0);
     var pl = D.PLAYLIST_SEARCH(c.music);
     var itemsAll = items.length; items = cut(items, 2, ev);
-    if (!items.length) return getLook(ev);   /* nothing left to buy: no empty heading */
-    return getLook(ev) + '<div class="stack"><h3>Table basics, with quantities</h3><p class="muted">' + (rest && decorLine ? 'Your budget includes about ' + money(decorLine.mid) + ' for table decor; these are the basics to buy with it, picked for the ' + esc(c.styleName) + ' look.' : bigHired && items.length ? 'For an event this size your decorator and rental company supply linens, candles and backdrops. These are personal touches to pick up yourself.' : 'Optional do-it-yourself picks for the ' + esc(c.styleName) + ' look. They\u2019re not counted in your budget.') + ' Links open the store, where you\u2019ll see live prices.' + (amazonNote() ? ' ' + amazonNote() + ' It costs you nothing extra.' : '') + '</p>' +
+    return getLook(ev) + (items.length ? ('<div class="stack"><h3>Table basics, with quantities</h3><p class="muted">' + (rest && decorLine ? 'Your budget includes about ' + money(decorLine.mid) + ' for table decor; these are the basics to buy with it, picked for the ' + esc(c.styleName) + ' look.' : bigHired && items.length ? 'For an event this size your decorator and rental company supply linens, candles and backdrops. These are personal touches to pick up yourself.' : 'Optional do-it-yourself picks for the ' + esc(c.styleName) + ' look. They\u2019re not counted in your budget.') + ' Links open the store, where you\u2019ll see live prices.' + (amazonNote() ? ' ' + amazonNote() + ' It costs you nothing extra.' : '') + '</p>' +
       (!items.length ? '<p class="small muted">Everything for this look is already covered by your hired vendors in the budget.</p></div>' : '<div class="shop">' + items.map(function (it, k) { var l = shopLink(it.q);
         return '<div class="prod"><div class="pimg" aria-hidden="true" style="background:linear-gradient(135deg,' + c.palette[k % c.palette.length] + ',' + c.palette[(k + 2) % c.palette.length] + ')"></div><div class="pbody"><b>' + esc(it.name) + '</b>' + (it.qty > 1 ? '<span class="small muted">' + it.qty + ' \u00d7 ' + usd(it.each[0]) + ' to ' + usd(it.each[1]) + ' each</span>' : '') + '<span class="num">' + money(it.each[0] * it.qty) + ' to ' + money(it.each[1] * it.qty) + '</span><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Shop Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a></span></div></div>'; }).join('') + '</div>' + more(ev, itemsAll, items.length, 'shopping picks') +
-      '<p class="small muted">Estimated shopping total: <b class="num">' + money(shopLo) + ' to ' + money(shopHi) + '</b>. ' + (bigHired ? '' : rest ? 'Sized to one table of ' + plural(g, 'guest') + '.' : 'Quantities are sized to ' + plural(g, 'guest') + ' and ' + plural(tables, 'table') + '.') + '</p></div>') +
+      '<p class="small muted">Estimated shopping total: <b class="num">' + money(shopLo) + ' to ' + money(shopHi) + '</b>. ' + (bigHired ? '' : rest ? 'Sized to one table of ' + plural(g, 'guest') + '.' : 'Quantities are sized to ' + plural(g, 'guest') + ' and ' + plural(tables, 'table') + '.') + '</p></div>')) : '') +   /* nothing left to buy: no empty heading */
       (rest ? '' : (function () {
-        var songs = (c.songs && c.songs.length >= 6 && !(ev.kids && /birthday/.test(ev.type)) ? c.songs.map(function (x) { var t = String(x).split(/ \u2014 | - /); return [t[0], t[1] || '']; }) : []);
-        var have = {}; songs.forEach(function (x) { have[x[0].toLowerCase()] = 1; });
-        var skey = window.EC_SONG_KEY(c.music, ev.type, ev.kids), wedMix = ev.type === 'wedding' && songs.length < 6;
-        if (wedMix) {
-          /* A wedding needs music for each part of the day: ceremony, dinner and dancing. */
-          var calm = ['string quartet classics', 'jazz brunch acoustic', 'indie acoustic sunset', 'yacht rock bossa nova', 'country folk acoustic'];
-          var party = ['afrobeats reggaeton summer', 'r&b lounge house', 'deep house chill', 'pop feel-good', 'disco funk dance', 'r&b soul classics', 'swing jazz motown'];
-          [[ev.alcohol === 'none' ? 'Ceremony and welcome hour' : 'Ceremony and cocktail hour', calm.indexOf(skey) >= 0 ? skey : 'string quartet classics', 8], ['Dinner', 'love songs soul', 8], ['Dancing', party.indexOf(skey) >= 0 ? skey : (skey === 'country folk acoustic' ? skey : 'disco funk dance'), 9]].forEach(function (sec) {
-            var n = 0; window.EC_SONGS[sec[1]].forEach(function (x) { if (n < sec[2] && !have[x[0].toLowerCase()]) { have[x[0].toLowerCase()] = 1; songs.push([x[0], x[1], n === 0 ? sec[0] : '']); n++; } });
-          });
-        }
-        window.EC_SONGS[skey].forEach(function (x) { if (songs.length < 25 && !have[x[0].toLowerCase()]) { have[x[0].toLowerCase()] = 1; songs.push(x); } });
-        songs = songs.slice(0, 25);
+        var plo = playlistOf(ev), songs = plo.songs, plName = plo.name;
         var songsAll = songs.length; songs = cut(songs, 3, ev);
         var sp = function (q) { return 'https://open.spotify.com/search/' + encodeURIComponent(q); }, am = function (q) { return 'https://music.apple.com/us/search?term=' + encodeURIComponent(q); };
-        var plName = c.playlistName || (wedMix ? 'From Aisle to Dance Floor' : window.EC_SONG_NAMES[skey]) || 'Party Playlist';
-        return '<div class="stack"><h3>Your playlist</h3><div class="panel stack"><div class="pl-head"><span class="pl-name display">' + esc(plName) + '</span><span class="muted small">' + esc(songsAll) + ' songs for ' + esc(ev.name) + (ev.name.indexOf(c.styleName) >= 0 ? '' : ', picked for the ' + esc(c.styleName) + ' look') + '. Tap a song to play it, or hand this list to your DJ.</span></div><ol class="songs">' +
+        return '<div class="stack" id="playlist"><h3>Your playlist</h3><div class="panel stack"><div class="pl-head"><span class="pl-name display">' + esc(plName) + '</span><span class="muted small">' + esc(songsAll) + ' songs for ' + esc(ev.name) + (ev.name.indexOf(c.styleName) >= 0 ? '' : ', picked for the ' + esc(c.styleName) + ' look') + '. Tap a song to play it, or hand this list to your DJ.</span></div><ol class="songs">' +
           songs.map(function (sg) { var q = sg[0] + ' ' + sg[1]; return '<li>' + (sg[2] ? '<span class="sec-h">' + esc(sg[2]) + '</span>' : '') + '<span class="grow"><b>' + esc(sg[0]) + '</b><span class="muted small"> ' + esc(sg[1]) + '</span></span><a class="link small" target="_blank" rel="noopener" href="' + sp(q) + '">Spotify</a><a class="link small" target="_blank" rel="noopener" href="' + am(q) + '">Apple Music</a></li>'; }).join('') +
           '</ol>' + (songs.length > 10 ? '<button class="btn small ghost" id="allSongs" aria-expanded="false">Show all ' + songs.length + ' songs</button>' : '') + more(ev, songsAll, songs.length, 'songs') + (preview(ev) ? '' : '<div class="row"><button class="btn small ghost" id="copySongs">Copy song list</button></div>') + '</div></div>';
       })()) +
       '<div class="stack"><h3>What to wear</h3><div class="panel stack">' + dressBlock(ev) + dots(c.palette, c.styleName + ' colors') + faceCard('look') + '</div></div>';
   };
+
+  /* The plan's playlist: a cultural wedding's own songs, the look's songs, or a ready-made mix for each part of the day. */
+  function playlistOf(ev) {
+    var c = ev.concept || {};
+    var cpl = E.culture(ev) && window.EC_CULTURE_SONGS && window.EC_CULTURE_SONGS[ev.culture];   /* a cultural wedding plays its own music first */
+    var songs = cpl ? [] : (c.songs && c.songs.length >= 6 && !(ev.kids && /birthday/.test(ev.type)) ? c.songs.map(function (x) { var t = String(x).split(/ \u2014 | - /); return [t[0], t[1] || '']; }) : []);
+    var have = {}; songs.forEach(function (x) { have[x[0].toLowerCase()] = 1; });
+    if (cpl) cpl.sections.forEach(function (sec) { sec[1].forEach(function (x, i) { if (!have[x[0].toLowerCase()]) { have[x[0].toLowerCase()] = 1; songs.push([x[0], x[1], i === 0 ? sec[0] : '']); } }); });
+    var skey = window.EC_SONG_KEY(c.music, ev.type, ev.kids), wedMix = !cpl && ev.type === 'wedding' && songs.length < 6;
+    if (cpl && songs.length < 25) { var fill = 0; window.EC_SONGS['love songs soul'].concat(window.EC_SONGS['pop feel-good']).forEach(function (x) { if (songs.length < 25 && !have[x[0].toLowerCase()]) { have[x[0].toLowerCase()] = 1; songs.push([x[0], x[1], fill++ ? '' : 'More favorites']); } }); }
+    if (wedMix) {
+    /* A wedding needs music for each part of the day: ceremony, dinner and dancing. */
+    var calm = ['string quartet classics', 'jazz brunch acoustic', 'indie acoustic sunset', 'yacht rock bossa nova', 'country folk acoustic'];
+    var party = ['afrobeats reggaeton summer', 'r&b lounge house', 'deep house chill', 'pop feel-good', 'disco funk dance', 'r&b soul classics', 'swing jazz motown'];
+    [[ev.alcohol === 'none' ? 'Ceremony and welcome hour' : 'Ceremony and cocktail hour', calm.indexOf(skey) >= 0 ? skey : 'string quartet classics', 8], ['Dinner', 'love songs soul', 8], ['Dancing', party.indexOf(skey) >= 0 ? skey : (skey === 'country folk acoustic' ? skey : 'disco funk dance'), 9]].forEach(function (sec) {
+    var n = 0; window.EC_SONGS[sec[1]].forEach(function (x) { if (n < sec[2] && !have[x[0].toLowerCase()]) { have[x[0].toLowerCase()] = 1; songs.push([x[0], x[1], n === 0 ? sec[0] : '']); n++; } });
+    });
+    }
+    window.EC_SONGS[skey].forEach(function (x) { if (songs.length < 25 && !have[x[0].toLowerCase()]) { have[x[0].toLowerCase()] = 1; songs.push(x); } });
+    songs = songs.slice(0, 25);
+    var plName = cpl ? cpl.name : c.playlistName || (wedMix ? 'From Aisle to Dance Floor' : window.EC_SONG_NAMES[skey]) || 'Party Playlist';
+    return { name: plName, songs: songs };
+  }
 
   /* Timeline: checklist and run of show */
   TAB_VIEWS.timeline = function (ev) {
@@ -2655,7 +2703,7 @@
     frame('<div class="invite"><p class="muted">Opening your invitation\u2026</p></div>', { noRibbon: true });
     apiInv(id).then(function (j) {
       var v = j.inv || {}, pay = v.pay || {}, reg = v.registry || { items: [], funds: [] };
-      if (v.cur === 'CAD') E.useCountry('Other city in Canada');
+      if (v.cur && v.cur !== 'USD') { var vco = D.COUNTRIES.find(function (k) { return k.currency === v.cur; }); if (vco) E.useCountry(vco.other); }
       var payBtns = [pay.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pay.venmo) + '">Venmo</a>' : '', pay.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pay.cashapp) + '">Cash App</a>' : '', pay.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pay.paypal) + '">PayPal</a>' : ''].join('');
       var vLines = Array.isArray(v.lines) && v.lines.length ? v.lines.slice(0, 40).map(function (l) { return { k: /^(pre|name|body|when|where|note|dress|rsvp)$/.test(l.k) ? l.k : 'body', t: String(l.t || '').slice(0, 200) }; }) : [{ k: 'pre', t: 'You\u2019re invited to' }, { k: 'name', t: v.name }, { k: 'when', t: v.when || 'Date to be announced' }, { k: 'where', t: v.where || '' }].concat(v.dress ? [{ k: 'dress', t: v.dress }] : []);
       frame('<div class="invite">' + inviteCard(vLines, v.palette, String(v.mono || '').slice(0, 7), (/^https:\/\/calendar\.google\.com\//.test(v.cal || '') ? '<div><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(v.cal) + '">Add to calendar</a></div>' : '')) +
@@ -2687,7 +2735,7 @@
   /* ---------- vendor sign-up (structured, saved as you go) ---------- */
   var VFIELDS = [
     ['Business basics', [['name', 'Business name', 'text', 1], ['email', 'Business email', 'text', 1], ['phone', 'Business phone', 'text'], ['cats', 'Categories', 'cats', 1], ['bio', 'Short description', 'area', 1], ['years', 'Years in business', 'number'], ['ig', 'Instagram handle (like @yourbusiness)', 'text'], ['site', 'Website', 'text']]],
-    ['Service area', [['cities', 'Cities you serve', 'citylist', 1], ['radius', 'Travel radius (miles, or km in Canada)', 'number', 1], ['travelFee', 'Travel fee (your currency, 0 if none)', 'number']]],
+    ['Service area', [['cities', 'Cities you serve', 'citylist', 1], ['radius', 'Travel radius (miles or km)', 'number', 1], ['travelFee', 'Travel fee (your currency, 0 if none)', 'number']]],
     ['Packages and prices', [['pkgName', 'Main package name', 'text', 1], ['pkgIncl', 'What it includes', 'area', 1], ['priceType', 'How it’s priced', 'select:Fixed price|Starting at|Per person|Per hour', 1], ['price', 'Price (your currency)', 'number', 1], ['minSpend', 'Minimum spend (your currency)', 'number'], ['peak', 'Weekend or peak-season increase (%)', 'number'], ['overtime', 'Overtime rate per hour (your currency)', 'number']]],
     ['Fees and payment terms', [['deposit', 'Deposit (% of total)', 'number', 1], ['schedule', 'When the balance is due', 'select:At booking|30 days before|14 days before|7 days before|On the day'], ['service', 'Service charge (%)', 'number'], ['tax', 'Do you charge sales tax?', 'select:Yes|No'], ['setupFee', 'Setup, delivery or cleanup fees (your currency)', 'number']]],
     ['Capacity and logistics', [['minGuests', 'Smallest event you take (guests)', 'number', 1], ['maxGuests', 'Largest event you take (guests)', 'number', 1], ['setupTime', 'Setup time needed (hours)', 'number'], ['indoor', 'Where you work', 'select:Indoors and outdoors|Indoors only|Outdoors only']]],
@@ -2804,6 +2852,7 @@
     ['What if my guest list grows?', 'Move up a size under Overview, Your pass. You pay only the difference, and your plan stays exactly as it is.', 'grow grows growing more upgrade capacity bigger places full waitlist'],
   ];
   FAQ = FAQ.concat([
+    ['Which countries does it work in?', 'Over 60, including the UK, Europe, the Middle East, India, Asia, Australia, Mexico, Latin America and Africa. Choose your country, then your city. Prices are estimated in your local currency with local tax, drive distances are in kilometres, and venues and vendors are searched in your city. Tips are only added in the US and Canada.', 'country countries international abroad worldwide dubai uae london uk europe india mexico australia jordan saudi currency'],
     ['Does it work in Canada?', 'Yes. Choose Canada, then your city. Prices are estimated in Canadian dollars with your province\u2019s GST, HST, PST or QST, drive distances are in kilometres, and venue and vendor searches stay in Canada.', 'canada canadian cad toronto vancouver montreal calgary ottawa province hst gst'],
     ['How do I get quotes from vendors?', 'Open your plan, then Budget & bookings, Vendors, and tap See options on what you need. Tap Get quotes from vendors: Event Couture vendors in your city see your date, guest count, theme and budget, never your name or contact, and reply with prices right there. Found someone on Instagram? Add their handle and message them your request in one tap.', 'quote quotes vendor request price instagram singer dj'],
     ['Can I get a refund?', 'Planning is free, so you see your whole plan before you pay. If something you paid for doesn\u2019t work, contact us and we\u2019ll make it right. Purchases made in the iPhone or Android app are refunded through Apple or Google from your purchase history.', 'refund money back cancel charged'],

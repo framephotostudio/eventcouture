@@ -49,10 +49,10 @@ const urls = [];
 for (const c of CITIES) {
   const country = E.countryOf(c.name), cityShort = c.name.split(',')[0];
   const rows = OCC.map(o => { const t = totals(o, c.name); return `<tr><td><a href="../${o.slug}/">${esc(o.name)}</a></td><td class="n">${o.guests}</td><td class="n">${money(t[0], c.name)}</td><td class="n"><b>${money(t[1], c.name)}</b></td><td class="n">${money(t[2], c.name)}</td><td><a class="small" href="../../#/start/${o.start}/${encodeURIComponent(c.name)}">Plan it</a></td></tr>`; }).join('');
-  const rate = (id, unit) => { const k = D.CATEGORIES[id], m = c.index; const r = k.perHour || k.perGuest || k.fixed; return `<tr><td>${esc(k.name.split(' (')[0])}</td><td class="n">${money(r[0] * m, c.name)} to ${money(r[1] * m, c.name)} ${unit}</td></tr>`; };
+  const rate = (id, unit) => { E.useCountry(c.name); const k = D.CATEGORIES[id], m = c.index; const r = k.perHour || k.perGuest || k.fixed; return `<tr><td>${esc(k.name.split(' (')[0])}</td><td class="n">${money(r[0] * m, c.name)} to ${money(r[1] * m, c.name)} ${unit}</td></tr>`; };
   const areas = D.AREAS[c.name] || [];
   const tax = c.taxName ? `${c.taxName} (${c.tax}%)` : c.tax ? `${c.tax}% sales tax` : 'no local sales tax';
-  const body = `<p>What it typically costs to host an event in ${esc(c.name)} in ${YEAR}: weddings, quinceañeras, birthdays, showers and more, sized to local prices${country.id === 'CA' ? ' in Canadian dollars' : ''} with ${esc(tax)}.</p>
+  const body = `<p>What it typically costs to host an event in ${esc(c.name)} in ${YEAR}: weddings, quinceañeras, birthdays, showers and more, sized to local prices${country.id === 'US' ? '' : ' in ' + country.currency}${country.tip === false ? ', no tips added' : ''} with ${esc(tax)}.</p>
 <div class="table-wrap panel"><table class="qty"><thead><tr><th>Occasion</th><th class="n">Guests</th><th class="n">Luxe for Less</th><th class="n">Signature</th><th class="n">Ultra Luxe</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
 <p class="small muted"><b>Luxe for Less</b> keeps the look with smart swaps; <b>Signature</b> has the key pieces done by pros; <b>Ultra Luxe</b> adds full service, lighting, live music and a coordinator.</p>
 <h2>Typical vendor rates in ${esc(cityShort)}</h2><div class="table-wrap panel"><table class="qty"><tbody>${rate('photographer', 'an hour')}${rate('videographer', 'an hour')}${rate('dj', 'an hour')}${rate('liveMusic', 'an hour')}${rate('catering', 'a guest')}${rate('bartender', 'an hour')}${rate('rentals', 'a guest')}${rate('cake', 'base, plus per guest')}${rate('balloons', '')}${rate('photoBooth', '')}</tbody></table></div>
@@ -85,7 +85,7 @@ ${cta(o, null, '../../')}<h2>Costs in your city</h2><div class="cols">${CITIES.m
 }
 
 /* Guides index and sitemap */
-const idx = `<p>Real numbers for planning any celebration: what it costs, where the money goes, and what to book when, for ${OCC.length} occasions and ${CITIES.length} cities in the US and Canada.</p>
+const idx = `<p>Real numbers for planning any celebration: what it costs, where the money goes, and what to book when, for ${OCC.length} occasions and ${CITIES.length} cities in ${new Set(CITIES.map(c => c.country)).size} countries.</p>
 <h2>By occasion</h2><div class="cols">${OCC.map(o => `<a href="${o.slug}/">${esc(o.name)}</a>`).join('')}</div><h2>By city</h2><div class="cols">${CITIES.map(c => `<a href="${c.slug}/">${esc(c.name)}</a>`).join('')}</div>${cta(null, null, '../')}`;
 write('plan/index.html', page({ rel: 1, title: `Event planning guides and costs (${YEAR}) | Event Couture`, h1: 'Event planning guides', desc: `What weddings, quinceañeras, birthdays, showers and more cost in ${YEAR}, city by city, with budgets, schedules and checklists.`, body: idx, canonical: `${BASE}plan/` }).replace('<nav class="small muted" aria-label="Breadcrumb"><a href="../plan/">Planning guides</a></nav>', ''));
 urls.unshift(BASE, `${BASE}plan/`);
