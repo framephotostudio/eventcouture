@@ -52,6 +52,7 @@ with sync_playwright() as p:
         package(pg, base); st=pg.inner_text('#pkgSum')
         check(n, 'Glitz N Glam Houston' in st, 'Nigerian wedding in Houston: Glitz N Glam is in the package')
         check(n, 'Reserve a table' not in pg.inner_text('#pkg'), 'no Reserve a table on a wedding venue')
+        check(n, 'Kasra' not in st, 'Persian caterers stay out of a Nigerian wedding')
         adds=pg.evaluate("[...document.querySelectorAll('#pkgSum [data-pkadd]')].map(b=>b.dataset.pkadd)")
         check(n, 'effects' in adds and 'danceFloor' in adds, 'special effects and dance floor are add-ons: '+str(adds))
         if 'effects' in adds: pg.click('#pkgSum [data-pkadd="effects"]'); pg.wait_for_timeout(2500)
@@ -61,6 +62,13 @@ with sync_playwright() as p:
         base=plan(pg, 'Blush and ivory wedding for 150', 'wedding', 'US', 'Houston, TX', 150, 'indoor'); package(pg, base)
         if pg.query_selector('#pkgSum [data-pkadd="photoBooth"]'): pg.click('#pkgSum [data-pkadd="photoBooth"]'); pg.wait_for_timeout(2500)
         st=pg.inner_text('#pkgSum'); check(n, 'Glitz N Glam' not in st and 'Flash Memories Photo Booth Co' in st, 'classic Houston wedding: Flash Memories photo booth, no Glitz N Glam')
+        # Houston Persian wedding: Kasra caters, Caspian and Garson next in See options
+        pg.goto(U+'#/start/persian-wedding/'); pg.wait_for_selector('#text'); pg.fill('#text','Ivory and gold Persian wedding'); pg.click('#next'); pg.wait_for_selector('#type')
+        pg.select_option('#country','US'); pg.wait_for_timeout(150); pg.select_option('#city','Houston, TX'); pg.fill('#guests','200'); pg.click('#setting [data-v=indoor]'); pg.click('#next')
+        pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
+        package(pg, base); st=pg.inner_text('#pkgSum')
+        check(n, 'Kasra Persian Grill' in st, 'Persian wedding in Houston: Kasra caters the package')
+        pg.screenshot(path=f'{OUT}/houston_persian_{n}.png')
         # London restaurant: only restaurant add-ons
         base=plan(pg, 'Birthday dinner for 12, black and gold', 'birthday', 'GB', 'London, UK', 12, 'restaurant'); package(pg, base)
         adds=pg.evaluate("[...document.querySelectorAll('#pkgSum [data-pkadd]')].map(b=>b.dataset.pkadd)")

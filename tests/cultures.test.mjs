@@ -26,3 +26,6 @@ for (const [k, cu] of Object.entries(D.CULTURES)) {
   for (const a of cu.add) if (!['mc'].includes(a)) assert.ok(!plain.includes(a), `${a} leaked into a plain wedding`);
 }
 console.log('cultures ok:', Object.keys(D.CULTURES).length);
+// Houston Persian caterers in her order
+{ const D = globalThis.EC_DATA; const ord = D.RECOMMENDED.filter(r => r.cats.includes('catering') && (r.cities || []).includes('Houston, TX') && (r.cultures || []).includes('persian')).sort((a, b) => b.weight - a.weight).map(r => r.name.split(' ')[0]);
+  if (ord.join() !== 'Kasra,Caspian,Garson,Zafran,Aban') { console.error('Persian caterer order wrong: ' + ord); process.exit(1); } console.log('persian caterers ok'); }
