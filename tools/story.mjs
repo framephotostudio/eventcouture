@@ -47,7 +47,9 @@ try {
       .st-foot { text-align: center; font-family: 'Bodoni Moda', Georgia, serif; color: #4A1438; font-size: 17px; }
       .st-foot b { display: block; font-family: system-ui, sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .12em; color: #8A6A2F; margin-top: 4px; }`;
     document.head.appendChild(st);
-    return { found: !!want, rows: [...document.querySelectorAll('.pkg-sum-r')].map(r => r.innerText.replace(/\s+/g, ' ')), overflow: document.querySelector('#story .pkg-sum').scrollHeight - document.querySelector('#story .pkg-sum').clientHeight };
+    const box = document.querySelector('#story .pkg-sum'), rs = document.querySelector('#story .pkg-sum-rows'); let fs = 14.5;
+    while (box.scrollHeight > box.clientHeight && fs > 10) { fs -= 0.5; rs.style.fontSize = fs + 'px'; [...rs.children].forEach(r => r.style.fontSize = fs + 'px'); }   /* every line fits on one screen */
+    return { fontSize: fs, found: !!want, rows: [...document.querySelectorAll('.pkg-sum-r')].map(r => r.innerText.replace(/\s+/g, ' ')), overflow: document.querySelector('#story .pkg-sum').scrollHeight - document.querySelector('#story .pkg-sum').clientHeight };
   }, ROW);
   console.log(JSON.stringify(info));
   fs.writeFileSync(`${OUT}/story-info.json`, JSON.stringify(info, null, 1));
