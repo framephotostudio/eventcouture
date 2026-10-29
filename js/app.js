@@ -1954,12 +1954,21 @@
     baraat: /\bdjs?\b(?!.*(horse|baraat|dhol))|banquet|ballroom/i,
     attire: /pi[ñn]ata|costume|party (city|supply|supplies)|uniform|thrift|resale/i
   };
+  var NOT_A_VENDOR = /\b(islamic|society|mosque|masjid|church|temple|mandir|synagogue|gurdwara|parish|ministr(y|ies)|community cent(er|re)|school|academy|university|college)\b/i;
+  var STAGE_CATS = ['kosha', 'mandap', 'sofreh', 'decor', 'backdrop'];
+  var NOT_STAGE = /photo|foto|video|film|portrait|headshot/i;
+  /* The state or province in a Google address ("..., Englewood, NJ 07631, USA"); a business in another state is never local. */
+  function stateOf(addr) { var m = /,\s([A-Z]{2})\s(\d{5}|[A-Z]\d[A-Z])/.exec(addr || ''); return m ? m[1] : ''; }
+  function sameState(ev, p) { var want = (ev.city || '').split(', ')[1] || '', got = stateOf(p.address); return !want || !got || want === got || /orange county/i.test(ev.city) && got === 'CA'; }
   var ADULT_FAVORS = /pi[ñn]ata|balloon|party (city|supply|supplies|store)|\btoys?\b|kids/i;
-  var PKG_PREFER = { mehndi: /henna|mehndi|mehendi|mehandi/i, baraat: /horse|baraat|carriage|dhol/i, dhol: /dhol/i, officiant: /officiant|minister|priest|pandit|pujari|imam|maulvi|rabbi|reverend|pastor|temple|mandir|masjid|mosque|church|celebrant|ceremon/i,
+  var PKG_PREFER = { kosha: /stage|kosha|decor|design|backdrop|event/i, mandap: /mandap|stage|decor|design/i, sofreh: /sofreh|aghd|decor|design/i, mehndi: /henna|mehndi|mehendi|mehandi/i, baraat: /horse|baraat|carriage|dhol/i, dhol: /dhol/i, officiant: /officiant|minister|priest|pandit|pujari|imam|maulvi|rabbi|reverend|pastor|temple|mandir|masjid|mosque|church|celebrant|ceremon/i,
     singer: /sing|vocal|voice|music|band/i, liveMusic: /band|music|orchestra|ensemble|live/i, zaffe: /zaff|zeff|zafe|dabke|arab/i, mariachi: /mariachi/i, lionDance: /lion|dragon|kung fu|martial/i, gele: /gele/i, qawwali: /qawwal/i };
   function fitsLine(ev, cat, p) {
     var n = p.name || '';
     if (PKG_REJECT[cat] && PKG_REJECT[cat].test(n)) return false;
+    if (cat !== 'officiant' && NOT_A_VENDOR.test(n)) return false;
+    if (STAGE_CATS.indexOf(cat) >= 0 && NOT_STAGE.test(n)) return false;
+    if (!sameState(ev, p)) return false;
     if (cat === 'favors' && !/kids|baby|gender/.test(ev.type) && ADULT_FAVORS.test(n)) return false;
     return true;
   }

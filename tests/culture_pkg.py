@@ -3,12 +3,13 @@ from playwright.sync_api import sync_playwright
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 import json, sys, hashlib
 U='http://localhost:8765/'; OUT=sys.argv[1] if len(sys.argv)>1 else '/tmp'; F=[]; Q=[]
-def B(name, i=0): h=hashlib.md5(name.encode()).hexdigest()[:6]; return {'id':h,'name':name,'rating':4.9-i*0.05,'reviews':300-i*20,'address':f'{i+1} Main St, Houston, TX','mapsUrl':'https://maps.google.com/?q='+h,'website':'https://example.com/'+h}
+def B(name, i=0): h=hashlib.md5(name.encode()).hexdigest()[:6]; return {'id':h,'name':name,'rating':4.9-i*0.05,'reviews':300-i*20,'address':('115 Grand Ave, Englewood, NJ 07631, USA' if 'Jersey' in name else f'{i+1} Main St, Houston, TX 77002, USA'),'mapsUrl':'https://maps.google.com/?q='+h,'website':'https://example.com/'+h}
 SPECIAL={
- 'indian wedding favors': ['Piñatas Express','Mango Party Balloon Decoration Houston','Rani Wedding Favors','Mithai Box Co','Desi Gift Studio'],
+ 'indian wedding favors': ['Islamic Society of Greater Houston','Piñatas Express','Mango Party Balloon Decoration Houston','Rani Wedding Favors','Mithai Box Co','Desi Gift Studio'],
  'hindu priest pandit wedding': ['Ashton Gardens North Houston','Pandit Sharma Wedding Priest','Houston Hindu Temple','Shastri Ceremonies'],
  'indian wedding singer': ['Desi Junction DJs - Indian Wedding DJs','GSH Event Center','Raag Live Singer'],
- 'baraat horse rental': [],
+ 'baraat horse rental': ['Jersey Baraat Horses'],
+ 'mandap decor rental': ['Foto Vibe','Mandap Creations','Royal Stage Decor','Shaadi Decor'],
  'wedding horse rental': ['Royal White Horse Baraat','Houston Carriage Co'],
  'indian wedding band': ['Sur Sangam Band'],
  'mehndi henna artist': ['Maquillage','Henna by Priya','Mehndi Magic','Artistry By Zurays'],
@@ -43,7 +44,9 @@ with sync_playwright() as p:
         fav=' '.join(cell('favors')); check(n, 'Piñatas' not in fav and 'Balloon' not in fav, 'no piñata or balloon shops for wedding favors: '+fav)
         off=' '.join(cell('officiant')); check(n, 'Ashton Gardens' not in off and 'Pandit Sharma' in off, 'officiant is a priest, never a venue: '+off)
         sg=' '.join(cell('singer')) if pg.query_selector('tr[data-pkrow="singer"]') else 'Raag'; check(n, 'DJs' not in sg and 'Event Center' not in sg, 'singer is a singer: '+sg)
-        bt=' '.join(cell('baraat')); check(n, 'Horse' in bt, 'baraat filled from the backup search: '+bt)
+        check(n, 'Islamic Society' not in fav, 'never a mosque or community group for favors')
+        md=' '.join(cell('mandap')); check(n, 'Foto Vibe' not in md, 'a photo studio is never the stage/mandap: '+md)
+        bt=' '.join(cell('baraat')); check(n, 'Jersey' not in bt, 'never a business in another state: '+bt); check(n, 'Horse' in bt, 'baraat filled from the backup search: '+bt)
         mh=cell('mehndi'); check(n, mh and mh[0] in ('Henna by Priya','Mehndi Magic'), 'henna artists come first for mehndi: '+str(mh))
         lm=cell('dhol'); check(n, len(lm)==3 and lm[0]==lm[1]==lm[2]=='Dhol Beats Houston', 'one good dhol player is shared rather than left empty: '+str(lm))
         att=[q for c,q in Q if c=='attire']; check(n, att and att[0].startswith('indian bridal wear'), 'attire searches Indian bridal wear: '+str(att[:1]))

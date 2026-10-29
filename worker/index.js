@@ -197,6 +197,8 @@ const CAT_RULES = {
 /* Vendors are businesses that provide the service, never the mall, a store or a restaurant they sit near.
    The primary type decides (Google tags a florist as a "store" too). Some categories must look like the thing itself. */
 const NEVER_VENDOR = /^(shopping_mall|department_store|tourist_attraction|clothing_store|shoe_store|jewelry_store|supermarket|grocery_store|convenience_store|gas_station|pharmacy|hotel|lodging|park|museum|church|school|university)$/;
+/* A mosque, temple or community center is never a vendor, except as the place to find an officiant. */
+const WORSHIP = /^(mosque|hindu_temple|synagogue|place_of_worship|church|buddhist_temple|community_center)$/;
 const FOOD_PLACE = /restaurant|cafe|meal_takeaway|meal_delivery|food_court|fast_food/;
 const FOOD_OK = ['catering', 'cake', 'bar', 'bartender', 'privateDining', 'restaurantFood'];
 const MUST_LOOK_LIKE = {
@@ -211,6 +213,7 @@ const MUST_LOOK_LIKE = {
 function rightKind(p, cat) {
   const prim = String(p.primaryType || ''), name = p.displayName?.text || '', types = [prim].concat(p.types || []).join(' ');
   if (NEVER_VENDOR.test(prim) && !(cat === 'attire' && /clothing_store/.test(prim))) return false;
+  if (WORSHIP.test(prim) && cat !== 'officiant') return false;
   if (FOOD_PLACE.test(prim) && !FOOD_OK.includes(cat)) return false;
   const must = MUST_LOOK_LIKE[cat]; if (must && !must.types.test(types) && !must.names.test(name)) return false;
   return true;
