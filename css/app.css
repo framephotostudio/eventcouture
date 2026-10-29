@@ -817,3 +817,8 @@ main .pkg-cmp th, main .pkg-cmp td, main .pkg-cmp b, main .pkg-cmp span { overfl
 .pkg-sum-note { display: block; font-size: .78rem; font-weight: 400; }
 .pkg-date { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
 body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inset-top, 0px)); }
+
+/* Cultural wedding cards lead with their photo */
+.culture-card { padding-top: 0; overflow: hidden; border-top: 0; }
+.culture-card .cc-img { margin: 0 -18px 4px; aspect-ratio: 3 / 2; border-radius: 0; }
+.culture-card .cc-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
