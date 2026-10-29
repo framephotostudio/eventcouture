@@ -616,6 +616,7 @@
     RECOMMENDED: [
       /* No cities: shown in every city. cultures: only for those cultural weddings. */
       { name: 'Waseem Rabih', ig: 'waseemrabih', cats: ['singer'], states: ['CA'], top: true, cultures: ['arabic'], note: 'Arabic wedding singer for zaffe entrances, weddings and live music events' },
+      { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], onlyCities: ['Houston, TX'], weight: 30, cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
       { name: 'Jabour Bakla', ig: 'jabour.bakla', cats: ['singer'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Houston\u2019s favorite Lebanese singer for weddings and celebrations' },
       { name: 'Salem Omran', ig: 'salem_omran_official', cats: ['singer'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Arabic wedding and festival singer in Houston' },
       { name: 'Tur\u00e1th Folkoholic Dance Theatre', ig: 'zaffadabketexas', cats: ['zaffe', 'dabke'], cities: ['Houston, TX'], top: true, note: 'Epic zaffa wedding entrances and dabke: Lebanese, Palestinian, Jordanian, Syrian, Iraqi and Egyptian. Texas and nationwide' },

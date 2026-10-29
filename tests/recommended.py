@@ -85,7 +85,7 @@ with sync_playwright() as p:
         hm=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="hairMakeup"] td > b')]; check(n, hm and hm[0]=='Wassim Hair Stylist', 'Wassim is the recommended hair stylist for an Arabic wedding in Houston: '+str(hm))
         dj=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="dj"] td > b')]; check(n, dj[:2]==['DJ Yamani','DJ Roy'], 'Houston Arabic wedding: DJ Yamani first, DJ Roy second: '+str(dj))
         pg.click('#pkgMore'); pg.wait_for_timeout(1200); dj=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="dj"] td > b')]; check(n, dj[:2]==['DJ Yamani','DJ Roy'] and 'DJ Mosses' not in dj, 'Houston: no DJ Mosses (California only): '+str(dj))
-        check(n, sg[:2]==['Jabour Bakla','Salem Omran'], 'Houston Arabic wedding: Jabour Bakla and Salem Omran are the singers in Packages 1 and 2: '+str(sg))
+        check(n, sg[:2]==['Chris Hawat','Jabour Bakla'], 'Houston Arabic wedding: Chris Hawat, then Jabour Bakla: '+str(sg))
         if n=='phone': pg.evaluate("document.querySelector('tr[data-pkrow=\"singer\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_singer_{n}.png')
         base=plan(pg, 'Houston, TX', '#/new/1', 'Ivory and gold wedding with white roses')
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000)
