@@ -11,6 +11,7 @@ on:
       name: { description: 'Event name', default: '' }
       guests: { description: 'Guests', default: '200' }
       pkg: { description: 'Package to choose (0 = first, 1 = second)', default: '0' }
+      story: { description: 'Make an Instagram story instead (any text = yes)', default: '' }
 permissions: { contents: write }
 jobs:
   shots:
@@ -20,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm install --no-save playwright@1 && npx playwright install --with-deps chromium
-      - run: node tools/showcase.mjs
+      - run: node tools/${{ inputs.story && 'story' || 'showcase' }}.mjs
         env: { CITY: '${{ inputs.city }}', ROW: '${{ inputs.row }}', SINGER: '${{ inputs.singer }}', START: '${{ inputs.start }}', TEXT: '${{ inputs.text }}', NAME: '${{ inputs.name }}', GUESTS: '${{ inputs.guests }}', PKG: '${{ inputs.pkg }}' }
       - uses: actions/upload-artifact@v4
         if: always()
