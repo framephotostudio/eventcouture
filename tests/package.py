@@ -68,7 +68,10 @@ with sync_playwright() as p:
         d=ev(); new_v=d['packages'][d['pkgView']]['items']; vcat=[c for c in new_v if c in ('venue','privateDining')][0]
         check(n, d['area']=='Rice Village' and new_v[vcat]!=old_v[vcat] and cities[-1].startswith('Rice Village, Houston'), 'changing the area finds a venue there')
         # remove something she doesn't need, then put it back
+        bt=lambda: pg.evaluate("id => { const e=JSON.parse(localStorage['ec.events'])[id]; return window.EC_ENGINE.budget(e, e.tier).total; }", eid)
+        b0=bt()
         xc=pg.get_attribute('[data-pkx] >> nth=-1','data-pkx'); nrows=len(pg.query_selector_all('tr[data-pkrow]')); pg.click('[data-pkx] >> nth=-1'); pg.wait_for_timeout(300)
+        check(n, bt() < b0, f'x in the compare table lowers the budget: {b0} -> {bt()}')
         check(n, len(pg.query_selector_all('tr[data-pkrow]'))==nrows-1 and xc in ev().get('exclude',[]), 'x removes an item from the package and the plan')
         pg.click('[data-pkunx="'+xc+'"]'); pg.wait_for_timeout(300); check(n, len(pg.query_selector_all('tr[data-pkrow]'))==nrows, 'Add back returns it')
         # choose package 2
@@ -86,10 +89,13 @@ with sync_playwright() as p:
         st=pg.inner_text('#pkgSum'); check(n, 'Package 2' in st and 'Estimated total' in st and pg.query_selector('[data-pksum="pdf"]') and pg.query_selector('[data-pksum="mail"]'), 'package summary shows the chosen package, total and save/email buttons')
         check(n, 'Booked' in pg.inner_text('#pkgSum') and 'Booked' in pg.inner_text('.pkg-all .pk-row >> nth=0'), 'summary and booking list show what is booked')
         pg.evaluate("document.querySelector('#pkgSum').scrollIntoView({block:'start'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/pkgsum_{n}.png', full_page=False)
-        nsum=len(pg.query_selector_all('.pkg-sum-r')); xb=pg.get_attribute('.pkg-all [data-pkx] >> nth=-1','data-pkx'); tot0=ev().get('exclude',[])
+        money=lambda: int(''.join(ch for ch in pg.inner_text('.pkg-sum-t b') if ch.isdigit()))
+        nsum=len(pg.query_selector_all('.pkg-sum-r')); xb=pg.get_attribute('.pkg-all [data-pkx] >> nth=-1','data-pkx'); t0=money()
         pg.click('.pkg-all [data-pkx] >> nth=-1'); pg.wait_for_timeout(300)
+        t1=money(); check(n, t1 < t0, f'removing an item lowers the package total: {t0} -> {t1}')
         check(n, len(pg.query_selector_all('.pkg-sum-r'))==nsum-1 and xb in ev().get('exclude',[]), 'x in the booking list removes it from the package summary and budget')
         pg.click('[data-pkunx="'+xb+'"]'); pg.wait_for_timeout(300); check(n, len(pg.query_selector_all('.pkg-sum-r'))==nsum, 'add back from the booking list')
+        check(n, money()==t0, f'adding it back restores the total: {money()} == {t0}')
         if n=='desktop':
             with pg.expect_download() as dl: pg.click('[data-pksum="pdf"]')
             pth=dl.value.path(); check(n, open(pth,'rb').read(5)==b'%PDF-' and dl.value.suggested_filename.endswith('-package.pdf'), 'package PDF downloads'); import shutil; shutil.copy(pth, f'{OUT}/package.pdf')

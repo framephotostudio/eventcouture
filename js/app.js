@@ -257,7 +257,7 @@
   var lastHash = null;
   function frame(inner, opts) {
     opts = opts || {};
-    var ribbon = CFG.preview && !CFG.app && !opts.noRibbon ? '<div class="preview-ribbon">Preview version: no real charges, and sharing works on this device only.</div>' : '';
+    var ribbon = CFG.preview && !CFG.app && !CFG.launchFree && !opts.noRibbon ? '<div class="preview-ribbon">Preview version: no real charges, and sharing works on this device only.</div>' : '';
     app.innerHTML = ribbon +
       '<header class="topbar"><a class="brand logo-mark" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.markGold) + '" alt="Event Couture" width="563" height="210"><span class="by" aria-hidden="true">by Always Luxe</span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events" title="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help" title="Help">' + ICON.help + '</a></nav></header>' +
@@ -437,7 +437,7 @@
   }
 
   function pricing() {
-    frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2><p class="muted">Planning is free: build your concepts, budget and plan at no cost. You pay once per event, only if you want to keep your plan. No subscription.</p></div>' +
+    frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2>' + (CFG.launchFree ? '<div class="note"><b>Launch offer:</b> keeping your plan is free right now. The prices below apply after our launch.</div>' : '') + '<p class="muted">Planning is free: build your concepts, budget and plan at no cost. You pay once per event, only if you want to keep your plan. No subscription.</p></div>' +
       '<section class="stack"><h3>Event Pass</h3><p class="muted">Based on how many people you invite, including plus-ones. This is what Event Couture costs, separate from your event budget.</p>' +
       '<div class="panel price-grid">' + D.PASSES.map(function (ps) { return '<div><span class="muted small">Up to ' + ps.max.toLocaleString('en-US') + ' guests</span><b class="num">$' + ps.price.toFixed(2) + '</b></div>'; }).join('') + '<div><span class="muted small">Each extra 5,000</span><b class="num">+$150</b></div></div>' +
       '<p class="small muted">Guest list grows later? You pay only the difference.</p></section>' +
@@ -905,14 +905,14 @@
   }
   function usd2(n) { return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function keepSheet(ev, why, onDone) {
-    var pass = E.passFor(ev.guests);
+    var pass = E.passFor(ev.guests), FREE = CFG.app || CFG.launchFree;
     /* In the iPhone and Android apps, keeping a plan is free until in-app purchase is connected, so no prices are shown there. */
-    sheet('<h3>' + esc(why || 'Keep your plan') + '</h3><p class="muted">' + (CFG.app ? 'Keeping ' + esc(ev.name) + ' is free in the app. Guests never pay to view, RSVP or vote.' : 'One payment for ' + esc(ev.name) + ', ' + esc(pass.label.toLowerCase()) + '. No subscription. Guests never pay to view, RSVP or vote.') + '</p>' +
-      (CFG.app ? '' : '<div class="price-big num">$' + pass.price.toFixed(2) + '</div>') +
+    sheet('<h3>' + esc(why || 'Keep your plan') + '</h3><p class="muted">' + (FREE ? 'Keeping ' + esc(ev.name) + ' is free ' + (CFG.app ? 'in the app' : 'during our launch') + '. Guests never pay to view, RSVP or vote.' : 'One payment for ' + esc(ev.name) + ', ' + esc(pass.label.toLowerCase()) + '. No subscription. Guests never pay to view, RSVP or vote.') + '</p>' +
+      (FREE ? '' : '<div class="price-big num">$' + pass.price.toFixed(2) + '</div>') +
       '<ul class="incl"><li><span>Send your invitation, collect RSVPs and save your finished plan as a PDF</span></li><li><span>Saved with every edit until <b>' + esc(accessUntil(ev)) + '</b></span></li><li><span>Guest list, RSVPs' + (ev.setting === 'restaurant' ? '' : ', seating') + ', voting' + (hasRegistry(ev) ? ' and registry' : '') + (canSplit(ev) ? ' and cost splitting' : '') + '</span></li><li><span>Checklist with due dates and your day-of schedule</span></li></ul>' +
       (SHARING ? '<p class="muted small">Your plan is saved on this ' + (CFG.app ? 'phone' : 'device') + '. Guests RSVP from your invitation link on their own phones.</p>' : CFG.app ? '<p class="muted small">Your plan is saved on this phone. Send your invitation from the Invitation page.</p>' : CFG.preview ? '<p class="muted small">Right now your plan is saved on this device. Sending your invitation to guests on their own phones turns on when accounts launch.</p>' : '') +
-      (CFG.app ? '' : '<p class="muted small">Guest list grows past ' + pass.max.toLocaleString('en-US') + '? You pay only the difference.</p>') +
-      (CFG.preview && !CFG.app ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
+      (FREE ? '' : '<p class="muted small">Guest list grows past ' + pass.max.toLocaleString('en-US') + '? You pay only the difference.</p>') +
+      (CFG.preview && !FREE ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
       '<button class="btn gold block" id="keepPay">' + (CFG.preview ? 'Keep my plan' : 'Pay ' + usd2(pass.price) + ' and keep my plan') + '</button><button class="btn ghost block" data-close>Not now</button>', function (el, close) {
       $('#keepPay', el).addEventListener('click', function () {
         ev.paid = { price: pass.price, max: pass.max, at: new Date().toISOString() };
@@ -929,7 +929,7 @@
     sheet('<h3>' + esc(item.name) + '</h3><p class="muted">' + esc(item.desc) + '</p>' +
       '<div class="sum"><div><span>Price</span><b class="num">$' + item.price.toFixed(2) + '</b></div>' + (item.credits ? '<div><span>Or with credits</span><span class="num">' + item.credits + ' credits (you have ' + w.credits + ')</span></div>' : '') + '</div>' +
       '<p class="muted small">Charged once, only when it’s delivered. Failed results never cost anything.</p>' +
-      (CFG.preview ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
+      (CFG.preview ? '<div class="note">' + (CFG.launchFree ? 'Free during our launch.' : 'Preview version: no payment is taken.') + '</div>' : '') +
       '<button class="btn gold block" id="buy">' + (CFG.preview ? 'Add it' : 'Pay ' + usd2(item.price)) + '</button>' +
       (canCredits ? '<button class="btn block" id="useCredits">Use ' + item.credits + ' credits</button>' : '') +
       '<button class="btn ghost block" data-close>Continue without this</button>', function (el, close) {
@@ -1956,7 +1956,7 @@
   var PKG_REJECT = {
     officiant: /gardens?\b|event (center|centre|hall|venue)|ballroom|banquet|\bvenue|hotel|estate|manor|reception|\bhall\b/i,
     singer: /\bdjs?\b|event (center|centre|hall)|banquet|ballroom|\bvenue|rentals?\b|tents?\b/i,
-    liveMusic: /\bdjs?\b(?!.*\bband)|event (center|centre|hall)|banquet|ballroom|\bvenue|rentals?\b|tents?\b/i,
+    liveMusic: /\bdjs?\b(?!.*\bband)|event (center|centre|hall)|banquet|ballroom|\bvenue|rentals?\b|tents?\b|zaff|zeff|dabk|folklor|dance (theat|troupe|group|company)/i,
     mehndi: /\bnails?\b|lash|brow|barber|salon\b(?!.*henna)/i,
     baraat: /\bdjs?\b(?!.*(horse|baraat|dhol))|banquet|ballroom/i,
     attire: /pi[ñn]ata|costume|party (city|supply|supplies)|uniform|thrift|resale/i
@@ -2601,7 +2601,7 @@
     if (ev && !ev.concept) ev = null;
     if (ev) E.useCountry(ev.city);
     if (!ev && SHARING && /^[a-z0-9]{6,32}$/.test(id || '')) return remoteGuestPage(id);
-    if (!ev) return frame('<div class="invite"><h2>This invitation isn’t available here yet</h2><p class="muted">' + (CFG.preview ? 'Event Couture is in preview, so invitations open only on the phone or computer where they were made. Sending invitations to guests turns on soon.' : 'The host may have made it private. Ask them for a new link.') + '</p><div><a class="btn ghost" href="#/">Explore Event Couture</a></div></div>');
+    if (!ev) return frame('<div class="invite"><h2>This invitation isn’t available here yet</h2><p class="muted">' + (CFG.preview && !SHARING ? 'Event Couture is in preview, so invitations open only on the phone or computer where they were made. Sending invitations to guests turns on soon.' : 'The host may have made it private. Ask them for a new link.') + '</p><div><a class="btn ghost" href="#/">Explore Event Couture</a></div></div>');
     var pl = ev.payLinks || {}; var split = ev.split || { people: [] }; var share = splitShare(ev);
     var payBtns = [pl.venmo ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://venmo.com/u/' + encodeURIComponent(pl.venmo) + '">Venmo</a>' : '', pl.cashapp ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://cash.app/$' + encodeURIComponent(pl.cashapp) + '">Cash App</a>' : '', pl.paypal ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://paypal.me/' + encodeURIComponent(pl.paypal) + '">PayPal</a>' : ''].join('');
     var hostView = !!events()[ev.id] || ev.sample;

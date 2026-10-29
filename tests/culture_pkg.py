@@ -11,7 +11,7 @@ SPECIAL={
  'baraat horse rental': ['Jersey Baraat Horses'],
  'mandap decor rental': ['Foto Vibe','Mandap Creations','Royal Stage Decor','Shaadi Decor'],
  'wedding horse rental': ['Royal White Horse Baraat','Houston Carriage Co'],
- 'indian wedding band': ['Sur Sangam Band'],
+ 'indian wedding band': ['Turath Folkoholic Dance Theatre Dabke & Zaffa group','Sur Sangam Band'],
  'mehndi henna artist': ['Maquillage','Henna by Priya','Mehndi Magic','Artistry By Zurays'],
 }
 def api(route):
@@ -47,6 +47,7 @@ with sync_playwright() as p:
         check(n, 'Islamic Society' not in fav, 'never a mosque or community group for favors')
         md=' '.join(cell('mandap')); check(n, 'Foto Vibe' not in md, 'a photo studio is never the stage/mandap: '+md)
         bt=' '.join(cell('baraat')); check(n, 'Jersey' not in bt, 'never a business in another state: '+bt); check(n, 'Horse' in bt, 'baraat filled from the backup search: '+bt)
+        lmb=' '.join(cell('liveMusic')); check(n, 'Zaffa' not in lmb, 'a zaffe or dabke group never fills Live music: '+lmb)
         mh=cell('mehndi'); check(n, mh and mh[0] in ('Henna by Priya','Mehndi Magic'), 'henna artists come first for mehndi: '+str(mh))
         lm=cell('dhol'); check(n, len(lm)==3 and lm[0]==lm[1]==lm[2]=='Dhol Beats Houston', 'one good dhol player is shared rather than left empty: '+str(lm))
         att=[q for c,q in Q if c=='attire']; check(n, att and att[0].startswith('indian bridal wear'), 'attire searches Indian bridal wear: '+str(att[:1]))

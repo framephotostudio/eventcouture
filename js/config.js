@@ -6,6 +6,7 @@ window.EC_CONFIG = {
   apiUrl: '',
   amazonTag: '',
   preview: true,
+  launchFree: true,   /* launch offer: keeping a plan is free on the website too, until payments are connected; set false to show prices */
   supportEmail: 'hello@eventcouture.app',
   legalName: 'Always Luxe',   /* the business name on Privacy and Terms */
   governingState: '',        /* e.g. 'Texas': the state whose laws govern the Terms */
