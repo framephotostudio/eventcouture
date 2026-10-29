@@ -33,7 +33,7 @@ with sync_playwright() as p:
         ev=lambda: pg.evaluate("id => JSON.parse(localStorage['ec.events'])[id]", eid)
         check(n, 'Venues' not in pg.inner_text('.groupbar') and pg.query_selector('a[href$="/budget"]') is not None, 'one booking page in the menu')
         pg.goto(U+base+'/budget'); pg.wait_for_selector('#pkgGo'); check(n, pg.query_selector('#pkArea') is not None and pg.query_selector('[data-pkwhen]') is not None, 'create step asks for the date and the venue area first')
-        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=15000); pg.wait_for_timeout(400)
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=15000); pg.wait_for_timeout(600)
         check(n, pg.url.endswith('/budget'), 'Create my package on the Summary starts it right away')
         rows=pg.query_selector_all('tr[data-pkrow]'); filled=pg.query_selector_all('tr[data-pkrow] td > b')
         check(n, len(rows)>=8 and len(filled)==len(rows), f'package fills venue and every vendor in one tap: {len(filled)}/{len(rows)}')
@@ -42,7 +42,9 @@ with sync_playwright() as p:
         check(n, 'Venue' in pg.inner_text('tr[data-pkrow] >> nth=0'), 'venue first')
         d=ev(); check(n, all(any(x['cat']==c and x.get('pick') for x in d['shortlist']) for c in d['packages'][0]['items']), 'package 1 picks are the front-runners')
         pg.screenshot(path=f'{OUT}/pkg1_{n}.png', full_page=True)
-        pg.click('#pkgMore'); pg.wait_for_selector('th:has-text("Package 2")', timeout=15000); pg.wait_for_timeout(300)
+        pg.evaluate("(()=>{const b=document.querySelector('#pkgMore'); b.click(); setTimeout(()=>{const c=document.querySelector('#pkgMore'); if(c) c.click();},20);})()")
+        pg.wait_for_selector('th:has-text("Package 2")', timeout=15000); pg.wait_for_timeout(1200)
+        check(n, len(ev()['packages'])==2, 'double-tapping Create package 2 makes only one package: '+str(len(ev()['packages'])))
         d=ev(); p1,p2=d['packages'][0]['items'],d['packages'][1]['items']
         check(n, all(p1[c]!=p2.get(c) for c in p1), 'package 2 has different picks for every item')
         check(n, calls[0]==first_calls, f'second package needed no new searches ({calls[0]-first_calls})')
@@ -82,11 +84,11 @@ with sync_playwright() as p:
         pg.click('.pkg-next [data-pkcopy]'); pg.wait_for_timeout(200); check(n, 'copied' in pg.inner_text('body').lower(), 'copy my message works')
         # book the venue from the Next up card
         first=pg.get_attribute('.pkg-next','data-pkrow')
-        pg.click('.pkg-next [data-pkbook]'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','4500'); pg.click('#psave'); pg.wait_for_timeout(200); pg.click('.sheet [data-close]'); pg.wait_for_timeout(400)
+        pg.click('.pkg-next [data-pkbook]'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','4500'); pg.click('#psave'); pg.wait_for_timeout(200); pg.query_selector('.sheet [data-close]') and pg.click('.sheet [data-close]'); pg.wait_for_timeout(400)
         check(n, '1 of' in pg.inner_text('.pkg-top') and pg.get_attribute('.pkg-next','data-pkrow')!=first and '2 of' in pg.inner_text('.pkg-next .eyebrow').lower(), 'after booking, the next vendor comes up')
         sk=pg.get_attribute('.pkg-next','data-pkrow'); pg.click('.pkg-next [data-pkskip]'); pg.wait_for_timeout(300)
         check(n, pg.get_attribute('.pkg-next','data-pkrow')!=sk, 'skip for now moves on')
-        st=pg.inner_text('#pkgSum'); check(n, 'Package 2' in st and 'Estimated total' in st and pg.query_selector('[data-pksum="pdf"]') and pg.query_selector('[data-pksum="mail"]'), 'package summary shows the chosen package, total and save/email buttons')
+        st=pg.inner_text('#pkgSum'); check(n, 'Package 2' in st and 'Package total' in st and pg.query_selector('[data-pksum="pdf"]') and pg.query_selector('[data-pksum="mail"]'), 'package summary shows the chosen package, total and save/email buttons')
         check(n, 'Booked' in pg.inner_text('#pkgSum') and 'Booked' in pg.inner_text('.pkg-all .pk-row >> nth=0'), 'summary and booking list show what is booked')
         pg.evaluate("document.querySelector('#pkgSum').scrollIntoView({block:'start'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/pkgsum_{n}.png', full_page=False)
         money=lambda: int(''.join(ch for ch in pg.inner_text('.pkg-sum-t b') if ch.isdigit()))
@@ -107,7 +109,7 @@ with sync_playwright() as p:
         pg.click('[data-pkuse="0"]'); pg.wait_for_timeout(300)
         for _ in range(40):
             if not pg.query_selector('.pkg-next [data-pkbook]'): break
-            pg.click('.pkg-next [data-pkbook]'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','500'); pg.click('#psave'); pg.wait_for_timeout(150); pg.click('.sheet [data-close]'); pg.wait_for_timeout(250)
+            pg.click('.pkg-next [data-pkbook]'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','500'); pg.click('#psave'); pg.wait_for_timeout(150); pg.query_selector('.sheet [data-close]') and pg.click('.sheet [data-close]'); pg.wait_for_timeout(250)
         t=pg.inner_text('#pkg'); check(n, 'Everything is booked' in t and 'Invite my guests' in t and 'Done' in pg.inner_text('.pkg-steps li.on'), 'step 4: everything booked, next is inviting guests')
         pg.evaluate("document.querySelector('#pkg').scrollIntoView({block:'start'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/pkg4_{n}.png', full_page=False)
         check(n, not e, 'no page errors '+str(e)); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')

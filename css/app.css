@@ -45,7 +45,7 @@ h3 { font-size: 1.22rem; line-height: 1.2; }
 p { margin: 0; }
 .muted { color: var(--muted); }
 .small { font-size: .875rem; }
-.num { font-variant-numeric: tabular-nums lining-nums; }
+.num { font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
 
 /* ---------- top bar ---------- */
 .topbar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent);
@@ -813,3 +813,7 @@ main .pkg-cmp th, main .pkg-cmp td, main .pkg-cmp b, main .pkg-cmp span { overfl
 .badge.rec { white-space: nowrap; font-size: .7rem; padding: 2px 6px; letter-spacing: 0; }
 .pkg-cmp .badge.rec { display: inline-block; margin: 3px 0 2px; }
 @media (max-width: 560px) { .pkg-cmp .badge.rec { font-size: .6rem; padding: 1px 5px; } }
+
+.pkg-sum-note { display: block; font-size: .78rem; font-weight: 400; }
+.pkg-date { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inset-top, 0px)); }

@@ -262,7 +262,7 @@
       '<header class="topbar"><a class="brand logo-mark" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.markGold) + '" alt="Event Couture" width="563" height="210"><span class="by" aria-hidden="true">by Always Luxe</span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events" title="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help" title="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
-      '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a>' + (CFG.app ? '' : '<a href="plan/">Planning guides</a>') + (CFG.app ? '' : '<a href="#/pricing">Pricing</a>') + '' + (CFG.app ? '' : '<a href="#/vendors">For vendors</a>') + '<a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div>' + (CFG.app ? '' : '<div class="small">iPhone and Android app coming soon</div>') + '<div class="small">Also from Always Luxe: <a href="https://facecouture.app/" target="_blank" rel="noopener">Face Couture</a></div></footer>';
+      '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a>' + (CFG.app ? '' : '<a href="plan/">Planning guides</a>') + (CFG.app ? '' : '<a href="#/pricing">Pricing</a>') + '' + (CFG.app ? '' : '<a href="#/vendors">For vendors</a>') + '<a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div>' + (CFG.supportEmail ? '<div class="small">Questions? <a href="mailto:' + esc(CFG.supportEmail) + '">' + esc(CFG.supportEmail) + '</a></div>' : '') + (CFG.app ? '' : '<div class="small">iPhone and Android app coming soon</div>') + '<div class="small">Also from Always Luxe: <a href="https://facecouture.app/" target="_blank" rel="noopener">Face Couture</a></div></footer>';
     var ld = document.getElementById('loader'); if (ld && !ld.classList.contains('done')) { ld.classList.add('done'); setTimeout(function () { if (ld.parentNode) ld.parentNode.removeChild(ld); }, 450); }
     if (location.hash !== lastHash) window.scrollTo(0, 0);
     var h2 = app.querySelector('main h1, main h2'); document.title = (h2 && location.hash.length > 2 ? h2.textContent.replace(/Rename$/, '').trim() + ' \u00b7 ' : '') + 'Event Couture by Always Luxe';
@@ -415,7 +415,7 @@
       '<div id="demoLines" class="demo-lines" hidden>' + lines + '<p class="muted small" style="margin:8px 0 0">Every line already includes tax, service charges and tips.</p></div></section>' +
       '<section id="inspo" class="stack section"><h2>What are you celebrating?</h2><p class="muted">No idea yet? Pick your occasion and tap a photo you love. Your whole plan is built around it.</p>' + inspoGallery('', 7) + '</section>' +
       '<section id="cultural" class="stack section"><h2>Cultural weddings</h2><p class="muted">Planned with the traditions, music and food that make them yours.</p><div class="culture-cards">' +
-      Object.keys(D.CULTURES).map(function (k, i) { var c = [k, D.CULTURES[k].blurb], cu = D.CULTURES[k]; return '<div class="panel culture-card"' + (i >= 6 ? ' data-cmore hidden' : '') + '><span class="inv-orn" aria-hidden="true">\u2766</span><h3>' + esc(cu.name) + '</h3><p class="small muted">' + esc(c[1]) + '</p><div class="row"><a class="btn small gold" href="#/start/' + c[0] + '-wedding/" aria-label="Plan ' + (/^[aeiou]/i.test(cu.name) ? 'an ' : 'a ') + esc(cu.name) + '">Start planning</a>' + (CFG.app ? '' : '<a class="link small" href="plan/' + c[0] + '-wedding/">What it costs</a>') + '</div></div>'; }).join('') + '</div>' + (Object.keys(D.CULTURES).length > 6 ? '<div><button class="btn ghost" id="allCult" aria-expanded="false">See all ' + Object.keys(D.CULTURES).length + ' cultural weddings</button></div>' : '') + '</section>' +
+      Object.keys(D.CULTURES).map(function (k, i) { var c = [k, D.CULTURES[k].blurb], cu = D.CULTURES[k]; return '<div class="panel culture-card"' + (i >= 6 ? ' data-cmore hidden' : '') + '><span class="inv-orn" aria-hidden="true">\u2766</span><h3>' + esc(cu.name) + '</h3><p class="small muted">' + esc(c[1]) + '</p><div class="row"><a class="btn small gold" href="#/start/' + c[0] + '-wedding/" aria-label="Plan ' + (/^[aeiou]/i.test(cu.name) ? 'an ' : 'a ') + esc(cu.name) + '">Start planning</a>' + (CFG.app ? '' : '<a class="link small" href="plan/' + guideSlug(cu.name) + '/">What it costs</a>') + '</div></div>'; }).join('') + '</div>' + (Object.keys(D.CULTURES).length > 6 ? '<div><button class="btn ghost" id="allCult" aria-expanded="false">See all ' + Object.keys(D.CULTURES).length + ' cultural weddings</button></div>' : '') + '</section>' +
       '<section id="gallery" class="stack section"><h2>Explore sample plans</h2><p class="muted">Complete plans you can open for free. Photos are AI-generated inspiration, not events we organized.</p><div class="samples home-samples">' +
       FEATURED.map(function (i) { return sampleCard(SAMPLES[i], i); }).join('') + '</div>' +
       '<div class="samples" id="moreSamples" hidden>' + SAMPLES.map(function (s, i) { return FEATURED.indexOf(i) >= 0 ? '' : sampleCard(s, i); }).join('') + '</div>' +
@@ -436,6 +436,8 @@
     $('#allSamples').addEventListener('click', function () { var m = $('#moreSamples'), open = m.hidden; m.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Show fewer' : 'See all ' + SAMPLES.length + ' sample plans'; });
   }
 
+  /* The planning-guide address for an occasion, built the same way as tools/seo.cjs builds it. */
+  function guideSlug(name) { return String(name).replace(/\u2019s/, 's').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function pricing() {
     frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2>' + (CFG.launchFree ? '<div class="note"><b>Launch offer:</b> keeping your plan is free right now. The prices below apply after our launch.</div>' : '') + '<p class="muted">Planning is free: build your concepts, budget and plan at no cost. You pay once per event, only if you want to keep your plan. No subscription.</p></div>' +
       '<section class="stack"><h3>Event Pass</h3><p class="muted">Based on how many people you invite, including plus-ones. This is what Event Couture costs, separate from your event budget.</p>' +
@@ -457,7 +459,7 @@
       }).join('') + '</div></div>' : '') +
       (all.length ? (ds.length ? '<h3>Planned</h3>' : '') + '<div class="samples">' + all.map(function (ev) {
         var pal = ev.concept ? ev.concept.palette : ['#E6DEE0', '#F2DDE1', '#F3EADB'];
-        return '<a class="sample" href="#/e/' + ev.id + (ev.concept ? '' : '/concepts') + '">' + (thumb(eventPhoto(ev)) || '<div class="thumb noimg" aria-hidden="true" style="background:linear-gradient(120deg,' + pal.slice(0, 4).join(',') + ')"></div>') + '<div class="in"><h3>' + esc(ev.name) + '</h3>' + dots(pal) + '<span class="muted small">' + esc(fmtDate(ev.date)) + ' \u00b7 ' + esc(ev.city.split(',')[0]) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</span><span class="small">' + (ev.concept ? esc(ev.concept.styleName) : 'Choose a concept') + ' ' + (isKept(ev) ? '<span class="badge ok">Kept</span>' : '<span class="badge">' + (CFG.app ? 'Not kept yet' : 'Free preview') + '</span>') + '</span></div></a>'; }).join('') + '</div>'
+        return '<a class="sample" href="#/e/' + ev.id + (ev.concept ? '' : '/concepts') + '">' + (thumb(eventPhoto(ev)) || '<div class="thumb noimg" aria-hidden="true" style="background:linear-gradient(120deg,' + pal.slice(0, 4).join(',') + ')"></div>') + '<div class="in"><h3>' + esc(ev.name) + '</h3>' + dots(pal) + '<span class="muted small">' + esc(fmtDate(ev.date)) + ' \u00b7 ' + esc(ev.city.split(',')[0]) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</span><span class="small">' + (ev.concept ? esc(ev.concept.styleName) : 'Choose a concept') + ' ' + (isKept(ev) ? '<span class="badge ok">Kept</span>' : '<span class="badge">' + (CFG.app || CFG.launchFree ? 'Not kept yet' : 'Free preview') + '</span>') + '</span></div></a>'; }).join('') + '</div>'
         : (ds.length ? '' : '<div class="panel stack"><h3>No events yet</h3><p class="muted">Start with your inspiration photos or a description. Your plan saves automatically.</p><div><a class="btn gold" href="#/new">Plan my event</a></div></div>')) + '</div>');
     $$('[data-rmd]').forEach(function (b) { b.addEventListener('click', function () { sheet('<h3>Delete this draft?</h3><p class="muted">Its photos and details will be removed.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete draft</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { removeDraft(b.dataset.rmd); close(); myEvents(); }); }); }); });
   }
@@ -644,7 +646,7 @@
       var ip = E.inspoOf(draft);
       frame('<div class="wizard stack-lg">' + prog + (ip ? '<div class="stack"><h2>Your inspiration</h2><p class="muted">Your plan starts from this photo. Add your own photos or words below for anything you want different.</p></div>' +
         '<div class="panel inspo-chosen">' + thumb({ src: INSPO_IMG + 'sm/' + ip.id + '.jpg', alt: ip.alt, ai: true }) + '<div class="stack"><b>' + esc(E.inspoName(ip, draft.type)) + '</b><span class="muted small">' + esc(ip.mood) + '</span><div class="row"><a class="btn ghost small" id="swapInspo" href="#/inspiration/' + esc(draft.type || 'all') + '/' + draft.id + '">Choose a different photo</a><button type="button" class="link small" id="noInspo">Remove</button></div></div></div>'
-        : '<div class="stack"><h2>Tell us about your event</h2><p class="muted">A few words or a photo is all it takes. You can add more later.</p></div>') +
+        : '<div class="stack"><h2>Tell us about your ' + esc(E.culture(draft) ? E.typeName(draft) : 'event') + '</h2><p class="muted">A few words or a photo is all it takes. You can add more later.</p></div>') +
         '<div class="field"><span>' + (ip ? 'Anything you\u2019d change or add? (optional)' : 'What are you celebrating?') + '</span><textarea class="input" id="text" placeholder="' + (ip ? 'Example: same look in navy and silver, 40 guests, at home, under $5,000' : 'Example: pink and gold girls’ brunch for 10, chic and girly, under $2,000') + '">' + esc(draft.inspiration.text) + '</textarea>' +
         '<div class="row"><button type="button" class="btn ghost small" id="speak" aria-pressed="false">' + MIC + '<span>Speak it</span></button><span class="muted small" id="speakHint">Talk about your colors, vibe, guests and budget.</span></div></div>' +
         '<label class="drop" id="drop"><input type="file" id="files" accept="image/*" multiple class="sr"><b>Add inspiration photos</b><span class="muted small">Tap to choose, or drop photos here</span></label>' +
@@ -744,7 +746,7 @@
         '<div class="stack"><h3 id="payLbl">Who\u2019s paying?</h3><div class="chips" id="payer" role="group" aria-labelledby="payLbl">' + [['host', 'I\u2019m hosting and paying'], ['own', 'Everyone pays their own'], ['shared', 'We\u2019re splitting the cost']].map(function (o) { return '<button type="button" class="chip" data-v="' + o[0] + '" aria-pressed="' + ((draft.payer || 'host') === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div></div>' +
         '<div class="stack"><h3>Your must-haves</h3><span class="muted small">These are protected first when the plan is fitted to your budget.' + ((draft.priorities || []).length && draft.mustsGuessed && !draft.mustsTouched ? ' We picked the highlighted ones from your description; tap to change.' : '') + '</span><div class="chips" id="musts">' + MUSTS.map(function (m) { return '<button type="button" class="chip" data-must="' + m[0] + '" aria-pressed="' + ((draft.priorities || []).indexOf(m[0]) >= 0) + '">' + esc(m[1]) + '</button>'; }).join('') + '</div></div>' +
         '</div></details>' +
-        '<div class="wiz-act"><button class="btn gold" id="next">Create my concepts</button><a class="btn ghost" href="' + W + '1/' + draft.id + '">Back</a>' + laterBtn() + '</div></div>');
+        '<div class="wiz-act"><button class="btn gold" id="next">Create my concepts</button><a class="btn ghost" id="back2" href="' + W + '1/' + draft.id + '">Back</a>' + laterBtn() + '</div></div>');
       var lastIdeas = [];
       function showNames() { lastIdeas = suggestNames(draft, $('#type').value); $('#names').innerHTML = lastIdeas.map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join(''); }
       showNames();
@@ -770,7 +772,8 @@
       $('#kids').addEventListener('change', function () { draft.kidsTouched = true; if (!draft.timeTouched) $('#time').value = defaultTime($('#type').value, this.checked); });
       /* Everything typed here is saved as you go, so a refresh never loses it. */
       var autoT; ['input', 'change', 'click'].forEach(function (evt) { $('#main').addEventListener(evt, function () { clearTimeout(autoT); autoT = setTimeout(saveNow, 150); }); });
-      function saveNow() { if (!$('#guests') || !(+$('#guests').value >= 1)) return; var typedName = $('#name').value.trim(); collect2(); if (!typedName) draft.name = ''; persist(); }
+      $('#back2').addEventListener('click', function () { clearTimeout(autoT); saveNow(); });   /* Back saves first, even on a quick tap */
+      function saveNow() { if (!draft || !$('#guests') || !(+$('#guests').value >= 1)) return; var typedName = $('#name').value.trim(); collect2(); if (!typedName) draft.name = ''; persist(); }
       window.addEventListener('pagehide', saveNow, { once: true }); window.addEventListener('beforeunload', saveNow, { once: true });
       $('#city').addEventListener('change', function () { var oth = /^Other /.test(this.value); $('#cityOtherWrap').hidden = !oth; if (oth) $('#cityOther').focus(); });
       $('#country').addEventListener('change', function () { var co = D.COUNTRIES.find(function (c) { return c.id === $('#country').value; }); draft.country = co.id; E.useCountry(co.id === 'CA' ? 'Other city in Canada' : null); var bl = $('#budgetLbl'); if (bl) bl.textContent = 'Maximum budget for the event (' + co.currency + ', optional)'; $('#city').innerHTML = cityOptions(co.id, ''); $('#cityOtherWrap').hidden = true; $('#cityOther').value = ''; $('#cityOther').placeholder = co.example; $('#cityOtherLbl').textContent = 'Your city and ' + co.region; $('#city').dispatchEvent(new Event('change')); });
@@ -792,6 +795,7 @@
       }
       $('#later').addEventListener('click', function () { collect2(); if (!$('#name').value.trim()) draft.name = ''; persist(); var nm = draft.name || 'your event'; location.hash = '#/events'; setTimeout(function () { toast('Saved ' + nm + '. Pick it up anytime from My events.'); }, 80); });
       $('#next').addEventListener('click', function () {
+        if (!draft) return;   /* a second tap after the plan was already created */
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
         if (!$('#type').value) { $('#type').focus(); return toast('Choose what you’re celebrating'); }
         if (!$('#city').value) { $('#city').focus(); return toast('Choose your city so prices match where you live'); }
@@ -968,7 +972,7 @@
     }).join('') + '</nav>';
     var lockedTab = preview(ev) && LOCKED_TABS[tab];
     var body = lockedTab ? '<div class="stack"><div class="lock-card big"><h3>' + esc(LOCKED_TABS[tab]) + '</h3><p class="muted">Keep your plan to invite guests, track RSVPs and plan together. Your concept and estimates stay exactly as they are.</p><button class="btn" data-keep>Keep my plan</button></div></div>' : (TAB_VIEWS[tab] || TAB_VIEWS.overview)(ev, b);
-    var keepBar = isKept(ev) || ev.keepNoteHidden ? '' : '<div class="keep-note small muted"><span>' + (CFG.app ? 'Planning is free.' : 'Planning is free. You pay once, ' + usd2(E.passFor(ev.guests).price) + ', only when you share your invitation or save your plan.') + '</span><button class="link small quiet" id="keepNoteX" aria-label="Hide this note">Got it</button></div>';
+    var keepBar = isKept(ev) || ev.keepNoteHidden ? '' : '<div class="keep-note small muted"><span>' + (CFG.app ? 'Planning is free.' : CFG.launchFree ? 'Planning and keeping your plan are free during our launch.' : 'Planning is free. You pay once, ' + usd2(E.passFor(ev.guests).price) + ', only when you share your invitation or save your plan.') + '</span><button class="link small quiet" id="keepNoteX" aria-label="Hide this note">Got it</button></div>';
     frame(head + keepBar + groupBar + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
     var kn = $('#keepNoteX'); if (kn) kn.addEventListener('click', function () { ev.keepNoteHidden = true; saveEvent(ev); kn.closest('.keep-note').remove(); });
     if (!ev.sample) syncQuotes(ev);
@@ -994,7 +998,7 @@
         var go = function () {
           var n = Math.round(+$('#gn', el).value); if (!(n >= 1)) return toast('Enter how many guests'); if (n > 20000) return toast('Event Couture plans events for up to 20,000 people.');
           var lim = tooBigFor(ev.setting, n); if (lim) return toast(tooBigText(ev.setting, n, lim));
-          if (ev.paid && ev.paid.max && n > ev.paid.max) { if (CFG.app) ev.paid.max = E.passFor(n).max; else return toast(plural(n, 'guest') + ' is more than your pass covers (' + ev.paid.max + '). Move up a size under Overview, Your pass first.'); }
+          if (ev.paid && ev.paid.max && n > ev.paid.max) { if (CFG.app || CFG.launchFree) ev.paid.max = E.passFor(n).max; else return toast(plural(n, 'guest') + ' is more than your pass covers (' + ev.paid.max + '). Move up a size under Overview, Your pass first.'); }
           var bf = snap(ev); ev.guests = n; ev.expected = Math.min(ev.expected || n, n); delete ev.ros; save(); close(); planView(ev, tab); undoToast(ev, bf, 'Updated for ' + plural(n, 'guest'), function () { planView(ev, tab); });
         };
         $('#ok', el).addEventListener('click', go); $('#gn', el).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
@@ -1038,10 +1042,15 @@
   /* A checklist step is done when the host ticked it, or when the plan already shows it (concept chosen, budget set, venue booked); her untick always wins. */
   function checkDone(ev, text) { var saved = ev.checklistDone && ev.checklistDone[text]; return saved === false ? false : !!(saved || (text.indexOf('Choose your concept') === 0 && ev.concept) || (text === 'Set the budget and guest count' && ev.guests && (ev.budget || ev.tier)) || (/^Book the venue|^Reserve/.test(text) && statusOf(ev, venueCat(ev)) === 'booked')); }
   function vendorCats(ev, b) { return b.items.filter(function (i) { return NOT_VENDORS.indexOf(i.id) < 0; }); }
+  /* Once she has a package, every page counts the same vendors the package does. */
+  function bookLines(ev, b) {
+    if ((ev.packages || []).length) { var ids = pkgCats(ev, b).filter(function (c) { return c.kind === 'vendor'; }).map(function (c) { return c.cat; }); return b.items.filter(function (i) { return ids.indexOf(i.id) >= 0; }); }
+    return vendorCats(ev, b);
+  }
   function planSteps(ev, b) {
     var base = ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id, rest = ev.setting === 'restaurant';
     var vc = venueCat(ev), vst = statusOf(ev, vc), saved = savedFor(ev, vc).length;
-    var vend = vendorCats(ev, b), booked = vend.filter(function (i) { return statusOf(ev, i.id) === 'booked'; }).length;
+    var vend = bookLines(ev, b), booked = vend.filter(function (i) { return statusOf(ev, i.id) === 'booked'; }).length;
     var where = ev.settingOpen ? { done: false, label: 'Decide where to host it', detail: 'Compare a restaurant, a venue, outdoors and home', href: base }
       : ev.setting === 'home' ? { done: true, label: 'Where: at home', detail: 'No venue to book' }
       : { done: vst === 'booked', label: rest ? 'Choose your restaurant' : ev.setting === 'privateRoom' ? 'Choose your private room' : 'Choose your venue', detail: vst === 'booked' ? 'Booked' : saved ? 'Front-runner: ' + pickOf(ev, vc).name + (saved > 1 ? ', ' + plural(saved, 'option') + ' to compare' : '') : 'Browse places that fit your plan, then mark the one you book', href: base + '/budget' };
@@ -1080,7 +1089,7 @@
     if (preview(ev)) return '<div class="stack"><div class="lock-card big"><h3>Your finished plan</h3><p class="muted">Everything you chose, in one place: your look, every cost, the venue and vendors you booked, the menu, what to buy, the playlist and your day-of schedule. Save it as a PDF, print it or share it with a co-host.</p><button class="btn" data-keep>Keep my plan to see it</button></div></div>';
     var c = ev.concept, ros = ev.ros || E.runOfShow(ev);
     var stTxt = function (cat) { var st = statusOf(ev, cat), ov = (ev.overrides || {})[cat]; return st === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : st === 'quote' ? (ov && ov.opt ? 'Front-runner: ' + ov.note + ', quoted ' + money(ov.amount) : (ov && ov.source === 'vendor' ? 'Published price ' : 'Price added ') + money(ov.amount) + (ov && ov.note ? ' (' + ov.note + ')' : '')) : st === 'short' ? (function () { var pk = pickOf(ev, cat), o = savedFor(ev, cat).filter(function (x) { return x !== pk; }).map(function (x) { return x.name; }); return 'Front-runner: ' + pk.name + (o.length ? ' (also considering ' + o.join(' and ') + ')' : ''); })() : 'Still to book'; };
-    var vend = [venueCat(ev)].concat(vendorCats(ev, b).map(function (i) { return i.id; })).filter(function (x, i, a) { return a.indexOf(x) === i && b.items.some(function (it) { return it.id === x; }); });
+    var vend = [venueCat(ev)].concat(bookLines(ev, b).map(function (i) { return i.id; })).filter(function (x, i, a) { return a.indexOf(x) === i && b.items.some(function (it) { return it.id === x; }); });
     var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
     var todo = E.checklist(ev).filter(function (x) { return !checkDone(ev, x.text); }).slice(0, 6);
     var pieces = lookList(ev);
@@ -1104,7 +1113,7 @@
     var b = E.budget(ev, ev.tier), c = ev.concept, ros = ev.ros || E.runOfShow(ev);
     var st = function (cat) { var s2 = statusOf(ev, cat), ov = (ev.overrides || {})[cat], pk = pickOf(ev, cat), o = savedFor(ev, cat).filter(function (x) { return x !== pk; }).map(function (x) { return x.name; });
       return s2 === 'booked' ? 'Booked' + (ov && ov.note ? ': ' + ov.note : '') : s2 === 'quote' ? (ov && ov.opt ? 'Front-runner: ' + ov.note + ', quoted ' + money(ov.amount) : (ov && ov.source === 'vendor' ? 'Published price ' : 'Price added ') + money(ov.amount) + (ov && ov.note ? ' (' + ov.note + ')' : '')) : s2 === 'short' ? 'Front-runner: ' + pk.name + (o.length ? ' (also considering ' + o.join(' and ') + ')' : '') : 'Still to book'; };
-    var vend = [venueCat(ev)].concat(vendorCats(ev, b).map(function (i) { return i.id; })).filter(function (x, i, a) { return a.indexOf(x) === i && b.items.some(function (it) { return it.id === x; }); });
+    var vend = [venueCat(ev)].concat(bookLines(ev, b).map(function (i) { return i.id; })).filter(function (x, i, a) { return a.indexOf(x) === i && b.items.some(function (it) { return it.id === x; }); });
     var skey = window.EC_SONG_KEY ? window.EC_SONG_KEY(c.music, ev.type, ev.kids) : '', plName = c.playlistName || (window.EC_SONG_NAMES && window.EC_SONG_NAMES[skey]) || 'Party Playlist';
     var todo = E.checklist(ev).filter(function (x) { return !checkDone(ev, x.text); }).slice(0, 8);
     var hex = function (h) { return /^#[0-9a-f]{3}$/i.test(h) ? '#' + h.slice(1).split('').map(function (x) { return x + x; }).join('') : h; };
@@ -1249,7 +1258,7 @@
       var n = +m[1];
       if (n < 1) return { text: 'A plan needs at least 1 guest. How many people are you inviting?' };
       if (n > 20000) return { text: 'Event Couture plans events for up to 20,000 people. Try a smaller number.' };
-      if (CFG.app && ev.paid && ev.paid.max && n > ev.paid.max) ev.paid.max = E.passFor(n).max;   /* free in the app */
+      if ((CFG.app || CFG.launchFree) && ev.paid && ev.paid.max && n > ev.paid.max) ev.paid.max = E.passFor(n).max;   /* free in the app */
       if (ev.paid && ev.paid.max && n > ev.paid.max) { var up = E.upgradeCost(ev.paid.price, n); return { text: plural(n, 'guest') + ' is more than your pass covers (' + ev.paid.max + '). Moving up costs ' + money(up.due) + '. Open Overview, Your pass to move up; your plan stays as it is.' }; }
       ev.guests = n; ev.expected = Math.min(ev.expected || n, n); changes.push('guest count is now ' + n);
     }
@@ -1377,7 +1386,7 @@
   /* Side by side: her up to three options for one category, with the facts that matter and one front-runner. */
   var PRICE_TXT = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
   function compareSheet(ev, cat, rerender, opts) {
-    var mode = opts && opts.book ? { kind: 'book', id: opts.book } : null;   /* null = the comparison; { kind: 'quote' | 'book', id } = a price form for one option */
+    var mode = opts && opts.book ? { kind: 'book', id: opts.book } : null, direct = !!mode;   /* direct: opened from the package's I booked it, so it closes when done */   /* null = the comparison; { kind: 'quote' | 'book', id } = a price form for one option */
     var priceForm = function (el, x) {
       var book = mode.kind === 'book', booked = isBooked(ev, cat, x), meal = cat === 'restaurantFood', ov = (ev.overrides || {})[cat] || {};
       var val = book ? (booked && ov.amount ? ov.amount : x.quote || '') : (x.quote || '');
@@ -1386,7 +1395,7 @@
         '<label class="field"><span>' + (book ? (meal ? 'Expected total (optional)' : 'Total you agreed to (' + E.currency() + ')') : 'Quoted total (' + E.currency() + ')') + '</span><input class="input num" type="number" min="0" inputmode="decimal" id="pamt" value="' + esc(String(val)) + '"></label>' +
         '<button class="btn gold block" id="psave">' + (book ? (booked ? 'Save' : 'Mark as booked') : 'Save quote') + '</button>' +
         (book && booked ? '<button class="btn ghost block" id="punbook">Not booked after all</button>' : '') + (!book && x.quote ? '<button class="btn ghost block" id="pclear">Remove this quote</button>' : '') +
-        '<button class="btn ghost block" id="pback">Back to comparison</button>';
+        '<button class="btn ghost block" id="pback">' + (direct ? 'Cancel' : 'Back to comparison') + '</button>';
     };
     var draw = function (el) {
       if (mode) { var mx = savedFor(ev, cat).find(function (x) { return x.id === mode.id; }); if (mx) { priceForm(el, mx); var h = el.querySelector('h3'); if (h) h.focus(); return; } mode = null; }
@@ -1413,14 +1422,14 @@
         var t = e.target.closest('button'); if (!t || lockSample(ev)) return;
         var find = function (id) { return savedFor(ev, cat).find(function (x) { return x.id === id; }); };
         var cur = mode && find(mode.id);
-        if (t.id === 'pback') { mode = null; again(); }
+        if (t.id === 'pback') { if (direct) return close(); mode = null; again(); }
         else if (t.id === 'psave' && cur) {
           var a = +$('#pamt', box).value || 0;
           if (mode.kind === 'quote') { if (!(a > 0)) return toast('Enter the quoted amount'); cur.quote = a; syncPrice(ev, cat); toast('Quote saved'); }
           else { if (!(a > 0) && cat !== 'restaurantFood') return toast('Enter the amount you agreed to'); ev.overrides = ev.overrides || {}; ev.overrides[cat] = { amount: a > 0 ? a : 0, source: 'booking', note: cur.name, opt: cur.id }; setPick(ev, cat, cur.id); toast(cur.name + ' is booked' + (a > 0 ? '. Totals updated.' : '')); }
-          saveEvent(ev); mode = null; again();
+          saveEvent(ev); if (direct && mode.kind === 'book') { t.disabled = true; return close(); } mode = null; again();
         }
-        else if (t.id === 'punbook' && cur) { delete ev.overrides[cat]; syncPrice(ev, cat); saveEvent(ev); mode = null; again(); toast('Marked as not booked'); }
+        else if (t.id === 'punbook' && cur) { delete ev.overrides[cat]; syncPrice(ev, cat); saveEvent(ev); toast('Marked as not booked'); if (direct) return close(); mode = null; again(); }
         else if (t.id === 'pclear' && cur) { delete cur.quote; syncPrice(ev, cat); saveEvent(ev); mode = null; again(); toast('Quote removed'); }
         else if (t.dataset.pickOpt) { setPick(ev, cat, t.dataset.pickOpt); syncPrice(ev, cat); saveEvent(ev); again('[data-book-opt="' + t.dataset.pickOpt.replace(/"/g, '') + '"]'); toast(find(t.dataset.pickOpt).name + ' is your front-runner'); }
         else if (t.dataset.replaceOpt) { var gone = find(t.dataset.replaceOpt), wasB = isBooked(ev, cat, gone); removeOption(ev, t.dataset.replaceOpt, cat); syncPrice(ev, cat); saveEvent(ev); close(); toast('Removed ' + gone.name + (wasB ? ' and its booking' : '') + '. Now pick a new one.'); findAnother(ev, cat); }
@@ -1522,7 +1531,7 @@
   var PRICE_SIGN = { PRICE_LEVEL_INEXPENSIVE: '$', PRICE_LEVEL_MODERATE: '$$', PRICE_LEVEL_EXPENSIVE: '$$$', PRICE_LEVEL_VERY_EXPENSIVE: '$$$$' };
   var ORDINAL = ['first', 'second', 'third'];
   var HOWTO_PKG = '<ol class="howto"><li><b>Create</b> your package: a top-rated pick for everything, in one tap</li><li><b>Change</b> anything, or make a second package to compare</li><li><b>Book</b>: contact them and tap I booked it</li></ol>';
-  var AUTO_PKG = false;
+  var AUTO_PKG = false, PKG_BUSY = false;   /* PKG_BUSY: a second tap while a package is being made is ignored */
   function AREA_LINE(ev) { return '<p class="small pkg-area">Venue area: <b>' + esc(ev.area || 'Anywhere in ' + ev.city.split(',')[0]) + '</b>' + (ev.sample ? '' : ' <button class="link small" id="pkgArea">Change area</button>') + '</p>'; }
   function packagePanel(ev, b) {
     var cats = pkgCats(ev, b), pks = ev.packages || [];
@@ -1562,7 +1571,7 @@
       }).join('');
       var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
       return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(2) + '<div class="pkg-top"><h3>Compare your packages</h3></div>' + AREA_LINE(ev) +
-        '<p class="pkg-guide">Each package has a top-rated pick for every part of your plan. Tap <b>Swap</b> on anything you don’t like, <b>×</b> to remove what you don’t need. When you’re happy, tap <b>Choose</b> on the one you like best: it becomes your <b>final package</b>, and we walk you through booking it.</p>' +
+        '<p class="pkg-guide">Each package has a top-rated pick for every part of your plan. Tap <b>Swap</b> on anything you don’t like. When you’re happy, tap <b>Choose</b> on the one you like best: it becomes your <b>final package</b>, and we walk you through booking it.</p>' +
         '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of every package and your budget, and your estimated total goes down to match. You can add it back anytime.</p>' +
         '<div class="pkg-cmp-wrap"><table class="pkg-cmp" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + '</tbody></table></div>' +
         (ex.length && !ev.sample ? '<p class="small muted">Removed: ' + ex.map(function (id) { return esc(catName(id, ev)) + ' <button class="link small" data-pkunx="' + id + '">Add back</button>'; }).join(' · ') + '</p>' : '') +
@@ -1582,7 +1591,7 @@
     /* Step 3: one vendor at a time. */
     var next = open.find(function (c) { return skipped.indexOf(c.cat) < 0; }) || open[0], x = bizOf(cp, next.cat), pos = cats.indexOf(next) + 1;
     return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(3) + '<div class="pkg-top"><h3>Your final package: Package ' + (Math.min(ev.pkgChosen || 0, pks.length - 1) + 1) + '</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div><div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' +
-      summary +
+      (ev.date || ev.dateFrom || ev.sample ? '' : '<div class="note pkg-date"><b>Set your date first</b> so each vendor can check they\u2019re free. <button class="btn small" data-pkwhen>Set your date</button></div>') +
       '<div class="note small pkg-final"><b>Next: book it.</b> Contact each one, agree on the price, then tap <b>I booked it</b>. We\u2019ll take you through them one at a time. You can save or send your package anytime, booked or not.</div>' +
       '<div class="pkg-next" data-pkrow="' + next.cat + '"><p class="eyebrow">Next up · ' + pos + ' of ' + cats.length + '</p><h3>' + esc(catName(next.cat, ev)) + '</h3>' +
         (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + (est(next.cat) ? ' · ' + est(next.cat) : '') + '</span></div>' +
@@ -1593,7 +1602,7 @@
           '<div class="row pkg-foot"><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button>' + (ev.sample ? '' : '<button class="link small quiet" data-pkx="' + next.cat + '">Don\u2019t need this? Remove it</button>') + '</div>'
         : '<p class="muted">We don’t have a top-rated pick for this yet.</p><button class="btn gold block" data-pkswap="' + next.cat + '">See options</button><div class="row pkg-foot"><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button></div>') +
         '<div class="pk-swap" data-pkswapbox="' + next.cat + '"></div></div>' +
-      all + back + '</div>';
+      summary + all + back + '</div>';
   }
   /* The chosen package as one clear summary she can save, email or forward, booked or not. */
   function pkgData(ev, b, cats, cp) {
@@ -1611,13 +1620,13 @@
     var d = pkgData(ev, b, cats, cp);
     return '<div class="pkg-sum" id="pkgSum"><div class="pkg-sum-h"><p class="eyebrow">\u2713 Your final package</p><h3>Package ' + d.n + ' \u00b7 ' + esc(ev.name) + '</h3><p class="small muted">' + esc(whenText(ev)) + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p></div>' +
       '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.rec ? ' <span class="badge rec">\u2605 Recommended</span>' : '') + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.est ? 'est. ' : '') + money(r.amt) + '</span></div>'; }).join('') + '</div>' +
-      '<div class="pkg-sum-t"><span>Estimated total' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
+      '<div class="pkg-sum-t"><span>' + (d.booked === d.rows.length ? 'Package total, all booked' : 'Package total') + '<span class="small muted pkg-sum-note">Your plan\u2019s estimate also keeps a 10% cushion for surprises.</span>' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
       '<p class="small muted">' + d.booked + ' of ' + d.rows.length + ' booked' + (d.removed.length ? ' \u00b7 Not needed: ' + d.removed.map(esc).join(', ') : '') + '</p>' +
       '<p class="small">This is your package. Save it as a PDF, email it to yourself or forward it to a co-host anytime, booked or not.</p><div class="row pkg-sum-acts"><button class="btn gold small" data-pksum="pdf">Save as PDF</button><button class="btn ghost small" data-pksum="mail">Email it</button><button class="btn ghost small" data-pksum="share">Share</button></div></div>';
   }
   function pkgSumDoc(ev) {
     var b = E.budget(ev, ev.tier), cats = pkgCats(ev, b), pks = ev.packages || [], cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], d = pkgData(ev, b, cats, cp);
-    var secs = [{ h: 'Your package: Package ' + d.n + ' (' + d.booked + ' of ' + d.rows.length + ' booked)', rows: d.rows.map(function (r) { return [r.cat, r.info + '\n' + r.status, (r.est ? 'est. ' : '') + money(r.amt)]; }), total: ['Estimated total' + (ev.budget ? ' (budget ' + money(ev.budget) + ')' : ''), money(d.total)] }];
+    var secs = [{ h: 'Your package: Package ' + d.n + ' (' + d.booked + ' of ' + d.rows.length + ' booked)', rows: d.rows.map(function (r) { return [r.cat, r.info + '\n' + r.status, (r.est ? 'est. ' : '') + money(r.amt)]; }), total: ['Package total' + (ev.budget ? ' (budget ' + money(ev.budget) + ')' : ''), money(d.total)] }];
     if (d.removed.length) secs.push({ h: 'Not needed', bullets: d.removed });
     secs.push({ h: 'Next steps', bullets: ['Contact each one to check your date and get a quote.', 'Agree on the price, then mark it booked in Event Couture.', 'Pay vendors directly. Prices are estimates until you book.'] });
     return { kicker: E.typeName(ev) + ' package', title: ev.name, palette: [], lines: [whenText(ev) + ' \u00b7 ' + whereText(ev) + ' \u00b7 ' + plural(ev.guests, 'guest')], sections: secs, foot: 'Planned with Event Couture by Always Luxe. Prices are estimates unless marked Booked. You pay vendors directly.' };
@@ -1644,9 +1653,9 @@
   }
   function bindPackage(ev, save, rerender) {
     var build = function (btn) {
-      if (lockSample(ev)) return; btn.disabled = true; var msg = $('#pkgMsg');
+      if (lockSample(ev) || PKG_BUSY) return; PKG_BUSY = true; setTimeout(function () { PKG_BUSY = false; }, 60000); btn.disabled = true; var msg = $('#pkgMsg');
       buildPackage(ev, function (d, n) { if (msg) msg.textContent = 'Finding top-rated picks\u2026 ' + d + ' of ' + n; }).then(function (k) {
-        var m = ev.packages[k].miss || []; rerender();
+        setTimeout(function () { PKG_BUSY = false; }, 450); var m = ev.packages[k].miss || []; rerender();   /* a double tap's second tap doesn't start another package */
         toast('Package ' + (k + 1) + ' is ready' + (m.length ? '. ' + plural(m.length, 'item') + ' had no top-rated match; tap See options there.' : ''));
         var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' });
       });
@@ -2239,6 +2248,7 @@
     var shopLo = items.reduce(function (t, it) { return t + it.each[0] * it.qty; }, 0), shopHi = items.reduce(function (t, it) { return t + it.each[1] * it.qty; }, 0);
     var pl = D.PLAYLIST_SEARCH(c.music);
     var itemsAll = items.length; items = cut(items, 2, ev);
+    if (!items.length) return getLook(ev);   /* nothing left to buy: no empty heading */
     return getLook(ev) + '<div class="stack"><h3>Table basics, with quantities</h3><p class="muted">' + (rest && decorLine ? 'Your budget includes about ' + money(decorLine.mid) + ' for table decor; these are the basics to buy with it, picked for the ' + esc(c.styleName) + ' look.' : bigHired && items.length ? 'For an event this size your decorator and rental company supply linens, candles and backdrops. These are personal touches to pick up yourself.' : 'Optional do-it-yourself picks for the ' + esc(c.styleName) + ' look. They\u2019re not counted in your budget.') + ' Links open the store, where you\u2019ll see live prices.' + (amazonNote() ? ' ' + amazonNote() + ' It costs you nothing extra.' : '') + '</p>' +
       (!items.length ? '<p class="small muted">Everything for this look is already covered by your hired vendors in the budget.</p></div>' : '<div class="shop">' + items.map(function (it, k) { var l = shopLink(it.q);
         return '<div class="prod"><div class="pimg" aria-hidden="true" style="background:linear-gradient(135deg,' + c.palette[k % c.palette.length] + ',' + c.palette[(k + 2) % c.palette.length] + ')"></div><div class="pbody"><b>' + esc(it.name) + '</b>' + (it.qty > 1 ? '<span class="small muted">' + it.qty + ' \u00d7 ' + usd(it.each[0]) + ' to ' + usd(it.each[1]) + ' each</span>' : '') + '<span class="num">' + money(it.each[0] * it.qty) + ' to ' + money(it.each[1] * it.qty) + '</span><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Shop Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a></span></div></div>'; }).join('') + '</div>' + more(ev, itemsAll, items.length, 'shopping picks') +
@@ -2286,7 +2296,7 @@
     var used = E.placesUsed(ev.guestsList); var cap = placesCap(ev);
     var counts = { yes: 0, invited: 0, declined: 0, waitlist: 0 }; (ev.guestsList || []).forEach(function (g) { counts[g.status] = (counts[g.status] || 0) + 1; });
     var tables = {}; (ev.guestsList || []).filter(function (g) { return g.table; }).forEach(function (g) { (tables[g.table] = tables[g.table] || []).push(g); });
-    return '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Guest list</h3><span class="num muted">' + used + ' of ' + plural(cap, 'place') + '</span></div>' +
+    return '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Guest list</h3><span class="num muted">' + (cap >= 100000 ? plural(used, 'place') + ' used' : used + ' of ' + plural(cap, 'place')) + '</span></div>' +
       '<div class="meter' + (used > cap ? ' over' : '') + '"><i style="width:' + Math.min(100, used / Math.max(1, cap) * 100) + '%"></i></div>' +
       '<div class="chips"><span class="badge ok">' + counts.yes + ' coming</span><span class="badge">' + counts.invited + ' invited</span><span class="badge">' + counts.declined + ' declined</span><span class="badge warn">' + counts.waitlist + ' waitlist</span></div>' +
       '<form id="addg" class="row"><input class="input" aria-label="Guest name" id="gn" placeholder="Guest name" style="flex:2 1 180px"><label class="field" style="flex:0 0 96px"><span class="small muted">Plus-ones</span><input class="input num" id="gp" type="number" min="0" max="10" value="0"></label><button class="btn">Add guest</button></form>' +
@@ -2315,7 +2325,7 @@
     $$('[data-rmc]').forEach(function (b) { b.addEventListener('click', function () { ev.cohosts.splice(+b.dataset.rmc, 1); save(); rerender(); }); });
   };
   /* Guest places: what the Event Pass covers once kept (moving up a size adds places), otherwise the planned guest count. */
-  function placesCap(ev) { return ev.paid && ev.paid.max ? Math.max(ev.paid.max, CFG.app ? E.passFor(ev.guests).max : 1) : ev.guests; }   /* in the app, places follow the guest count (free) */
+  function placesCap(ev) { if (ev.paid && (CFG.app || CFG.launchFree)) return 100000; return ev.paid && ev.paid.max ? ev.paid.max : ev.guests; }   /* free (app or launch): no pass limit, so nobody is waitlisted for it */   /* in the app, places follow the guest count (free) */
   function promoteWaitlist(ev, cap) {
     ev.guestsList.filter(function (g) { return g.status === 'waitlist'; }).forEach(function (g) { if (E.placesUsed(ev.guestsList) + 1 + (g.plusOnes || 0) <= cap) g.status = 'invited'; });
   }
@@ -2384,7 +2394,7 @@
     var theme = themeWords(ev);
     if (t === 'wedding') {
       if (names) { pre(host || (cu && cu.pre) || 'Together with their families'); big(names); body('request the honour of your presence'); body('at the celebration of their marriage'); }
-      else { pre('The honour of your presence is requested'); body('at the wedding celebration of'); big(ev.name); }
+      else { pre('The honour of your presence is requested'); body('at'); big(ev.name); }
     } else if (t === 'engagement') { pre(host ? host + ' invite you' : 'Please join us'); body('in celebrating the engagement of'); big(names || ev.name); }
     else if (t === 'anniversary') { pre(host ? host + ' invite you' : 'Please join us'); body('in celebrating ' + (age ? words(age) + ' years of marriage' : 'the anniversary') + ' of'); big(names || ev.name); }
     else if (t === 'quince') { pre(host || 'With the blessing of God and her parents'); big(names || ev.name); body('requests the pleasure of your company'); body('as she celebrates her quinceañera'); }
@@ -2524,10 +2534,10 @@
   TAB_VIEWS.extras = function (ev) {
     var w = wallet(); var nextPass = E.passFor((ev.paid && ev.paid.max || ev.guests) + 1);
     var mine = w.ledger.filter(function (l) { return !ev.sample && l.event === ev.name; });
-    if (!ev.sample && !isKept(ev)) return '<div class="stack"><h3>' + (CFG.app ? 'Plan details' : 'Your Event Pass') + '</h3><div class="panel stack"><p>Your plan isn\u2019t kept yet. Keep it to save every edit and share it with guests.</p>' + (CFG.app ? '<p class="muted small">Free in the app.</p>' : '<div class="price-big num">$' + E.passFor(ev.guests).price.toFixed(2) + '</div><p class="muted small">' + esc(E.passFor(ev.guests).label) + ', one time, no subscription.</p>') + '<div><button class="btn" id="keepX">Keep my plan</button></div></div></div>' +
+    if (!ev.sample && !isKept(ev)) return '<div class="stack"><h3>' + (CFG.app ? 'Plan details' : 'Your Event Pass') + '</h3><div class="panel stack"><p>Your plan isn\u2019t kept yet. Keep it to save every edit and share it with guests.</p>' + (CFG.app || CFG.launchFree ? '<p class="muted small">Free' + (CFG.app ? ' in the app' : ' during our launch') + '.</p>' : '<div class="price-big num">$' + E.passFor(ev.guests).price.toFixed(2) + '</div><p class="muted small">' + esc(E.passFor(ev.guests).label) + ', one time, no subscription.</p>') + '<div><button class="btn" id="keepX">Keep my plan</button></div></div></div>' +
       '<div class="stack"><h3>Delete this event</h3><p class="muted small">Removes the plan, guest list and photos from this device.</p><div><button class="btn small ghost" id="del" style="color:var(--bad)">Delete event</button></div></div>';
     return '<div class="stack"><h3>' + (CFG.app ? 'Plan details' : 'Your Event Pass') + '</h3><div class="panel stack"><div class="row" style="justify-content:space-between"><span>' + (ev.sample ? 'Sample plan' : esc(E.passFor(ev.paid.max || ev.guests).label)) + '</span><span class="badge ok">Active</span></div>' + (ev.sample ? '' : '<p class="small muted">Available until ' + esc(accessUntil(ev, ev.paid && ev.paid.at)) + '.</p>') +
-      (CFG.app ? '<p class="muted small">Inviting more people? Tap the guest count at the top of your plan to change it; it\u2019s free in the app.</p></div></div>' : '<p class="muted small">Inviting more people? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>') +
+      (CFG.app || CFG.launchFree ? '<p class="muted small">Inviting more people? Tap the guest count at the top of your plan to change it; it\u2019s free' + (CFG.app ? ' in the app' : ' during our launch') + '.</p></div></div>' : '<p class="muted small">Inviting more people? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>') +
       (!SELL_EXTRAS ? '' : '<div class="stack"><div class="row" style="justify-content:space-between"><h3>AI credits</h3><span class="num">' + w.credits + ' credits</span></div><p class="muted small">For extra AI work beyond what your pass includes. The exact credit cost is shown before every action, and credits never top up automatically.</p><div class="packs">' +
       D.CREDIT_PACKS.map(function (p, i) { return '<button class="tier" data-pack="' + i + '"><span class="amt num">' + p.credits + '</span><span class="muted">credits</span><b class="num">$' + p.price.toFixed(2) + '</b></button>'; }).join('') + '</div></div>' +
       '<div class="stack"><h3>Creative packages</h3><div class="list panel">' + D.PACKAGES.map(function (p, i) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + esc(p.desc) + '</div></div><span class="num">$' + p.price.toFixed(2) + '</span><button class="btn small" data-pkg="' + i + '">Choose</button></div>'; }).join('') + '</div></div>' +
@@ -2614,7 +2624,7 @@
       ((ev.registry.items || []).length || (ev.registry.funds || []).length ? '<div class="panel stack" style="text-align:left"><h3>Registry</h3><div class="list">' + ev.registry.items.map(function (it, i) { return '<div class="it"><span class="grow">' + esc(it.name) + (it.bought ? ' <span class="badge ok">Purchased</span>' : '') + '</span>' + (it.url ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(it.url) + '">View</a>' : '') + (it.bought ? '' : '<button class="btn small" data-buy="' + i + '">I bought this</button>') + '</div>'; }).join('') +
         (ev.registry.funds || []).map(function (f) { return '<div class="it"><span class="grow">' + esc(f.name) + '</span>' + (payBtns || '<span class="muted small">Ask the host how to give</span>') + '</div>'; }).join('') + '</div></div>' : '') +
       (canSplit(ev) && share ? '<div class="panel stack" style="text-align:left"><h3>Your share</h3><p>Each person’s share is <b class="num">' + money(share) + '</b>.</p><div class="row">' + (payBtns || '<span class="muted small">The host will share how to pay.</span>') + '</div><p class="muted small">Payments go straight to the host.</p></div>' : '') +
-      fcFinish(true) + '<div class="panel stack" style="text-align:left"><h3>Share your photos</h3><p class="muted small">Add your pictures from the celebration to the host\u2019s album.</p><div><label class="btn small"><input type="file" accept="image/*" multiple id="galb" class="sr">Add photos</label></div><p class="small muted" id="galbMsg" aria-live="polite"></p></div>' +
+      (ev.date && ev.date <= todayISO() ? fcFinish(true) : '') + '<div class="panel stack" style="text-align:left"><h3>Share your photos</h3><p class="muted small">Add your pictures from the celebration to the host\u2019s album.</p><div><label class="btn small"><input type="file" accept="image/*" multiple id="galb" class="sr">Add photos</label></div><p class="small muted" id="galbMsg" aria-live="polite"></p></div>' +
       guestPromo() + '</div>', { noRibbon: false });
     $('#galb').addEventListener('change', function () { if (ev.sample) return toast('This is a sample plan, so photos aren\u2019t saved'); var files = Array.prototype.slice.call(this.files);
       Promise.all(files.map(function (f) { return readPhoto(f).catch(function () { return null; }); })).then(function (ps) { ps = ps.filter(Boolean); var prevAlb = (ev.album || []).slice(); ev.album = prevAlb.concat(ps.map(function (p) { return p.src; })); if (ps.length && !saveEvent(ev)) { ev.album = prevAlb; $('#galbMsg').textContent = 'This device is out of space, so those photos weren\u2019t added. Try fewer photos.'; return; } $('#galbMsg').textContent = ps.length ? 'Thank you! ' + plural(ps.length, 'photo') + ' added to the album.' : 'Those files couldn\u2019t be added. Choose photos.'; }); });
@@ -2808,6 +2818,14 @@
     if (/^Do my guests need the app/.test(q[0])) return [q[0], 'No. Guests open your invitation link in any browser to see the details, RSVP, vote and see your gift list. Their RSVPs come into your Guests list.', q[2]];
     if (/^How do I invite guests/.test(q[0])) return [q[0], 'Keep your plan, then open Guests & invitations, Invitation. ' + (CFG.app ? 'Tap Send invitation to send it by text, email or any app.' : 'Copy your invite link and send it by text, email or social media.') + ' Guests RSVP and vote from the link on their own phones, with no app needed, and their answers come into your Guests list.', q[2]];
     if (/^Can guests add photos/.test(q[0])) return [q[0], 'Guests can send you their photos, and you add them to your album under Photos and thank-yous.', q[2]];
+    return q;
+  });
+  if (CFG.launchFree && !CFG.app) FAQ = FAQ.map(function (q) {   /* the website is free during launch: its help answers carry no prices either */
+    if (/^Is there a subscription/.test(q[0])) return [q[0], 'No. Planning and keeping your plan are free during our launch. Nothing renews automatically.', q[2]];
+    if (/^How much does it cost/.test(q[0])) return [q[0], 'Planning and keeping your plan are free during our launch. Guests never pay to view, RSVP or vote. After the launch, prices are on the Pricing page.', q[2]];
+    if (/^What if my guest list grows/.test(q[0])) return [q[0], 'Tap the guest count at the top of your plan to change it. During our launch it\u2019s free, and your plan stays exactly as it is.', q[2]];
+    if (/^How long do I keep my plan/.test(q[0])) return [q[0], 'Until 12 months after you keep it, or 30 days after your event, whichever is later. The exact date is shown when you keep it and under Overview, Your pass.', q[2]];
+    if (/^Can I get a refund/.test(q[0])) return [q[0], 'There\u2019s nothing to pay during our launch. If anything doesn\u2019t work, contact us and we\u2019ll make it right.', q[2]];
     return q;
   });
   if (CFG.app) FAQ = FAQ.map(function (q) {   /* the app is free for now, so its help answers carry no prices */

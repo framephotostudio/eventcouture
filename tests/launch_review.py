@@ -25,10 +25,11 @@ with sync_playwright() as p:
     for w in (390, 1280):
         t = str(w) + ': '; pg = b.new_page(viewport={'width': w, 'height': 860}); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
         base = plan(pg, guests=25)
-        go(pg, base + '/extras'); pg.click('#upg'); pg.click('.sheet #buy'); pg.wait_for_timeout(300)
+        go(pg, base + '/extras'); pg.wait_for_timeout(300); paid = pg.query_selector('#upg') is not None   # free during launch: no pass to move up
+        if paid: pg.click('#upg'); pg.click('.sheet #buy'); pg.wait_for_timeout(300)
         go(pg, base + '/guests'); pg.click('#bulk'); pg.fill('.sheet #names', '\n'.join('G%d' % i for i in range(30))); pg.click('.sheet #ok'); pg.wait_for_timeout(300)
         check('waitlist' not in pg.inner_text('.toast') if pg.query_selector('.toast') else True, t + '#1 upgrade added no places')
-        check('30 of 75 places' in pg.inner_text('#tab'), t + '#1 places: ' + pg.inner_text('#tab')[:80])
+        check(('30 of 75 places' in pg.inner_text('#tab')) if paid else ('30' in pg.inner_text('#tab')), t + '#1 places: ' + pg.inner_text('#tab')[:80])
         pg.select_option('[data-st] >> nth=0', 'yes'); pg.select_option('[data-st] >> nth=1', 'yes'); pg.wait_for_timeout(150); pg.click('#seat'); pg.wait_for_timeout(200)
         check('Table 1' in pg.inner_text('#tab') and 'Table 2' not in pg.inner_text('#tab'), t + '#13 seating starts at table 1')
         base2 = plan(pg, keep=False); go(pg, base2 + '/extras'); check(pg.query_selector('#del') is not None, t + '#2 no delete for unkept plan')
