@@ -679,6 +679,7 @@
       { name: 'DJ Roy', ig: 'djroy_1', cats: ['dj'], country: 'US', notCities: ['Houston, TX'], first: true, cultures: ['', 'arabic', 'moroccan', 'persian', 'indian', 'russian', 'spanish', 'mexican', 'turkish', 'fusion'], note: 'All kinds of music: Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French' },
       { name: 'Hammoudeh Alex', ig: 'hammoudeh.hamdan', cats: ['hairMakeup'], cities: ['Orange County, CA'], cultures: ['arabic', 'parties'], note: 'Hair stylist for brides and parties: styles, extensions, cuts, color and smoothing' },
       { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hairMakeup'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' },
+      { name: 'Makeup by Suzette', ig: 'makeupbysuzette', cats: ['hairMakeup'], cities: ['Houston, TX'], note: 'Celebrity makeup and hair artist and glam team, bridal glam. Houston and worldwide' },
       /* No Instagram: maps is what to search on Google Maps, and the link opens their listing there. */
       { name: 'Cafe Layal', maps: 'Cafe Layal Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Lebanese catering for weddings and engagements, Houston' },
       { name: 'Fadi\u2019s Mediterranean', maps: 'Fadi\'s Mediterranean Grill Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Mediterranean and Lebanese catering for weddings and engagements, Houston' },
