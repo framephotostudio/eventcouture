@@ -607,9 +607,9 @@
     EVENT_TYPES: EVENT_TYPES, CULTURES: CULTURES, CATEGORIES: CATEGORIES, PROFILES: PROFILES, ADJUST: ADJUST, TIERS: TIERS,
     /* Vendors Always Luxe recommends by name. They show first, marked Recommended, in these cities. */
     RECOMMENDED: [
-      { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], cities: ['Los Angeles, CA', 'Orange County, CA'], note: 'International and Arabic music for weddings and private events' },
+      { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], cities: ['Los Angeles, CA', 'Orange County, CA', 'San Diego, CA'], note: 'International and Arabic music for weddings and private events' },
       /* No cities: shown in every city. cultures: only for those cultural weddings. */
-      { name: 'Waseem Rabih', ig: 'waseemrabih', cats: ['singer'], cities: ['Los Angeles, CA', 'Orange County, CA'], cultures: ['arabic'], note: 'Arabic wedding singer for zaffe entrances, weddings and live music events' },
+      { name: 'Waseem Rabih', ig: 'waseemrabih', cats: ['singer'], cities: ['Los Angeles, CA', 'Orange County, CA', 'San Diego, CA'], cultures: ['arabic'], note: 'Arabic wedding singer for zaffe entrances, weddings and live music events' },
       { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties). */
       { name: 'DJ Yamani', ig: 'dj_yamani', cats: ['dj'], cities: ['Houston, TX'], cultures: ['arabic', ''], note: 'Arabic and American music for weddings and parties' },

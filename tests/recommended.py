@@ -24,7 +24,7 @@ with sync_playwright() as p:
     for w,h,n in [(390,844,'phone'),(1280,900,'desktop')]:
         ctx=b.new_context(viewport={'width':w,'height':h}); pg=ctx.new_page(); e=[]; pg.on('pageerror',lambda x:e.append(str(x)))
         pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
-        for city in ['Orange County, CA','Los Angeles, CA']:
+        for city in ['Orange County, CA','Los Angeles, CA','San Diego, CA']:
             base=plan(pg, city)
             pg.goto(U+base+'/budget'); pg.wait_for_selector('#musicPlan')
             if pg.get_attribute('[data-music="singer"]','aria-pressed')!='true': pg.click('[data-music="singer"]'); pg.wait_for_timeout(400)
