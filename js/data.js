@@ -614,7 +614,6 @@
     EVENT_TYPES: EVENT_TYPES, CULTURES: CULTURES, CATEGORIES: CATEGORIES, PROFILES: PROFILES, ADJUST: ADJUST, TIERS: TIERS,
     /* Vendors Always Luxe recommends by name. They show first, marked Recommended, in these cities. */
     RECOMMENDED: [
-      { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], cities: ['Los Angeles, CA', 'Orange County, CA', 'San Diego, CA'], note: 'International and Arabic music for weddings and private events' },
       /* No cities: shown in every city. cultures: only for those cultural weddings. */
       { name: 'Waseem Rabih', ig: 'waseemrabih', cats: ['singer'], states: ['CA'], top: true, cultures: ['arabic'], note: 'Arabic wedding singer for zaffe entrances, weddings and live music events' },
       { name: 'Jabour Bakla', ig: 'jabour.bakla', cats: ['singer'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Houston\u2019s favorite Lebanese singer for weddings and celebrations' },
@@ -637,9 +636,11 @@
       { name: 'Tamer Aldabouqi', ig: 'tamerdabouqi', cats: ['singer'], cultures: ['arabic'], note: 'Arabic singer with a live band for weddings and celebrations' },
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties); 'parties' = every event that isn't a wedding. */
       { name: 'DJ Yamani', ig: 'dj_yamani', cats: ['dj'], cities: ['Houston, TX'], cultures: ['arabic', ''], note: 'Arabic and American music for weddings and parties' },
-      /* DJ Roy plays Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French music: every event, and the weddings and engagements in those styles. First across the U.S.; second in Houston after DJ Yamani. */
+      /* DJ Roy plays Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French music: every event, and the weddings and engagements in those styles. First across the U.S.; second in Houston after DJ Yamani. DJ Mosses covers the same events right after him: second across the U.S., third in Houston. */
       { name: 'DJ Roy', ig: 'djroy_1', cats: ['dj'], cities: ['Houston, TX'], cultures: ['', 'arabic', 'moroccan', 'persian', 'indian', 'russian', 'spanish', 'mexican'], note: 'All kinds of music: Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French' },
+      { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], cities: ['Houston, TX'], cultures: ['', 'arabic', 'moroccan', 'persian', 'indian', 'russian', 'spanish', 'mexican'], note: 'International and Arabic music for weddings and private events' },
       { name: 'DJ Roy', ig: 'djroy_1', cats: ['dj'], country: 'US', notCities: ['Houston, TX'], first: true, cultures: ['', 'arabic', 'moroccan', 'persian', 'indian', 'russian', 'spanish', 'mexican'], note: 'All kinds of music: Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French' },
+      { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], country: 'US', notCities: ['Houston, TX'], first: true, cultures: ['', 'arabic', 'moroccan', 'persian', 'indian', 'russian', 'spanish', 'mexican'], note: 'International and Arabic music for weddings and private events' },
       { name: 'Hammoudeh Alex', ig: 'hammoudeh.hamdan', cats: ['hairMakeup'], cities: ['Orange County, CA'], cultures: ['arabic', 'parties'], note: 'Hair stylist for brides and parties: styles, extensions, cuts, color and smoothing' },
       { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hairMakeup'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' },
       { name: 'Joseph\u2019s Fashion', ig: 'josephs_fashion', cats: ['attire'], states: ['MI'], note: 'Custom suits and tuxedos for men and women: weddings, prom and personal styling. Sterling Heights, Michigan' }
