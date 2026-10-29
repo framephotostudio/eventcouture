@@ -27,7 +27,7 @@ with sync_playwright() as p:
             check(pg.is_visible('#music'), f'{vp} {cu}: music choices not shown')
             check(pg.input_value('#guests') != '120', f'{vp} {cu}: guest default not set for tradition')
             if cu == 'arabic':
-                pg.click('#music [data-music=singer]')
+                check(pg.get_attribute('#music [data-music=singer]','aria-pressed')=='true', f'{vp} arabic: singer on by default')   # the singer is chosen by default now
                 pg.screenshot(path=f'{OUT}/cultural-form-{vp}.png', full_page=False)
             pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]'); pg.click('#next')
             pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
