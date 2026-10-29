@@ -32,8 +32,15 @@ with sync_playwright() as p:
             if city.startswith('Orange'):
                 pg.evaluate("document.querySelector('tr[data-pkrow=\"dj\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_pkg_{n}.png')
         base=plan(pg, 'Houston, TX')
+        pg.goto(U+base+'/budget'); pg.wait_for_selector('#musicPlan')
+        if pg.get_attribute('[data-music="singer"]','aria-pressed')!='true': pg.click('[data-music="singer"]'); pg.wait_for_timeout(400)
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000)
-        check(n, 'DJ Mosses' not in pg.inner_text('.pkg-cmp'), 'not shown in Houston')
+        sg=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="singer"] td > b')]
+        check(n, sg and sg[0]=='Chris Hawat' and 'Recommended' in pg.inner_text('tr[data-pkrow="singer"] td >> nth=0'), 'Chris Hawat is the recommended singer for an Arabic wedding in any city: '+str(sg))
+        if n=='phone': pg.evaluate("document.querySelector('tr[data-pkrow=\"singer\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_singer_{n}.png')
+        base=plan(pg, 'Houston, TX', '#/new/1', 'Ivory and gold wedding with white roses')
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000)
+        check(n, 'DJ Mosses' not in pg.inner_text('.pkg-cmp') and 'Chris Hawat' not in pg.inner_text('.pkg-cmp'), 'neither shows for a classic Houston wedding')
         check(n, not e, 'no page errors '+str(e)); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
         ctx.close()
     b.close()

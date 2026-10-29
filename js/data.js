@@ -607,7 +607,9 @@
     EVENT_TYPES: EVENT_TYPES, CULTURES: CULTURES, CATEGORIES: CATEGORIES, PROFILES: PROFILES, ADJUST: ADJUST, TIERS: TIERS,
     /* Vendors Always Luxe recommends by name. They show first, marked Recommended, in these cities. */
     RECOMMENDED: [
-      { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], cities: ['Los Angeles, CA', 'Orange County, CA'], note: 'International and Arabic music for weddings and private events' }
+      { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], cities: ['Los Angeles, CA', 'Orange County, CA'], note: 'International and Arabic music for weddings and private events' },
+      /* No cities: shown in every city. cultures: only for those cultural weddings. */
+      { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' }
     ],
     CITIES: CITIES, COUNTRIES: COUNTRIES, PROVINCES: PROVINCES, AREAS: AREAS, STYLES: STYLES, MENUS: MENUS, DIETS: DIETS, CHECKLIST: CHECKLIST, PASSES: PASSES,
     CREDIT_PACKS: CREDIT_PACKS, PACKAGES: PACKAGES, ADDONS: ADDONS, ALLOWANCE: ALLOWANCE,
