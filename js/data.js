@@ -610,6 +610,9 @@
       { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], cities: ['Los Angeles, CA', 'Orange County, CA', 'San Diego, CA'], note: 'International and Arabic music for weddings and private events' },
       /* No cities: shown in every city. cultures: only for those cultural weddings. */
       { name: 'Waseem Rabih', ig: 'waseemrabih', cats: ['singer'], cities: ['Los Angeles, CA', 'Orange County, CA', 'San Diego, CA'], cultures: ['arabic'], note: 'Arabic wedding singer for zaffe entrances, weddings and live music events' },
+      { name: 'Jabour Bakla', ig: 'jabour.bakla', cats: ['singer'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Houston\u2019s favorite Lebanese singer for weddings and celebrations' },
+      { name: 'Salem Omran', ig: 'salem_omran_official', cats: ['singer'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Arabic wedding and festival singer in Houston' },
+      { name: 'Watan Zaffe & Dabke Group', ig: 'watanzaffegroup', cats: ['zaffe', 'dabke'], cities: ['Houston, TX'], note: 'Zaffe entrances and dabke for weddings, Houston' },
       { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties); 'parties' = every event that isn't a wedding. */
       { name: 'DJ Yamani', ig: 'dj_yamani', cats: ['dj'], cities: ['Houston, TX'], cultures: ['arabic', ''], note: 'Arabic and American music for weddings and parties' },
