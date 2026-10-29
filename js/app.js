@@ -2167,6 +2167,8 @@
   };
 
   /* Style and music: shopping board, playlist, outfits */
+  /* Amazon Associates requires this exact disclosure wherever tagged links appear (US links only; Canada links carry no tag). */
+  function amazonNote() { return CFG.amazonTag && E.currency() !== 'CAD' ? 'As an Amazon Associate, Event Couture earns from qualifying purchases.' : ''; }
   function shopLink(q) {
     var tag = CFG.amazonTag ? '&tag=' + encodeURIComponent(CFG.amazonTag) : '';
     if (E.currency() === 'CAD') return { amazon: 'https://www.amazon.ca/s?k=' + encodeURIComponent(q), etsy: 'https://www.etsy.com/ca/search?q=' + encodeURIComponent(q) };
@@ -2198,7 +2200,7 @@
         return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + esc(WHY[p.why] || '') + (p.hire ? ' \u00b7 Hire ' + esc(HIRE_WHO[p.hire] || 'a pro') : ' \u00b7 Buy it') + '</div></div><span class="acts">' +
           (l ? '<a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a>' : '<a class="btn small ghost" href="' + base + '/vendors">Find ' + esc(HIRE_WHO[p.hire] || 'a pro') + '</a>') + '</span></div>';
       }).join('') + '</div>' + more(ev, all.length, list.length, 'pieces') +
-      '<p class="small muted">Store links search for that exact piece so you can compare live prices and pick the one you like. Show your florist, baker or decorator your inspiration photo so they can match it.</p></div>';
+      '<p class="small muted">Store links search for that exact piece so you can compare live prices and pick the one you like. Show your florist, baker or decorator your inspiration photo so they can match it.' + (amazonNote() ? ' ' + amazonNote() : '') + '</p></div>';
   }
   TAB_VIEWS.style = function (ev) {
     var c = ev.concept; var st = D.STYLES.find(function (x) { return x.id === c.id; }) || {}; var color = c.shop || st.shop || String(c.styleName || c.name || 'party').toLowerCase();
@@ -2237,7 +2239,7 @@
     var shopLo = items.reduce(function (t, it) { return t + it.each[0] * it.qty; }, 0), shopHi = items.reduce(function (t, it) { return t + it.each[1] * it.qty; }, 0);
     var pl = D.PLAYLIST_SEARCH(c.music);
     var itemsAll = items.length; items = cut(items, 2, ev);
-    return getLook(ev) + '<div class="stack"><h3>Table basics, with quantities</h3><p class="muted">' + (rest && decorLine ? 'Your budget includes about ' + money(decorLine.mid) + ' for table decor; these are the basics to buy with it, picked for the ' + esc(c.styleName) + ' look.' : bigHired && items.length ? 'For an event this size your decorator and rental company supply linens, candles and backdrops. These are personal touches to pick up yourself.' : 'Optional do-it-yourself picks for the ' + esc(c.styleName) + ' look. They\u2019re not counted in your budget.') + ' Links open the store, where you\u2019ll see live prices.' + (CFG.amazonTag ? ' Some links earn Event Couture a small commission at no cost to you.' : '') + '</p>' +
+    return getLook(ev) + '<div class="stack"><h3>Table basics, with quantities</h3><p class="muted">' + (rest && decorLine ? 'Your budget includes about ' + money(decorLine.mid) + ' for table decor; these are the basics to buy with it, picked for the ' + esc(c.styleName) + ' look.' : bigHired && items.length ? 'For an event this size your decorator and rental company supply linens, candles and backdrops. These are personal touches to pick up yourself.' : 'Optional do-it-yourself picks for the ' + esc(c.styleName) + ' look. They\u2019re not counted in your budget.') + ' Links open the store, where you\u2019ll see live prices.' + (amazonNote() ? ' ' + amazonNote() + ' It costs you nothing extra.' : '') + '</p>' +
       (!items.length ? '<p class="small muted">Everything for this look is already covered by your hired vendors in the budget.</p></div>' : '<div class="shop">' + items.map(function (it, k) { var l = shopLink(it.q);
         return '<div class="prod"><div class="pimg" aria-hidden="true" style="background:linear-gradient(135deg,' + c.palette[k % c.palette.length] + ',' + c.palette[(k + 2) % c.palette.length] + ')"></div><div class="pbody"><b>' + esc(it.name) + '</b>' + (it.qty > 1 ? '<span class="small muted">' + it.qty + ' \u00d7 ' + usd(it.each[0]) + ' to ' + usd(it.each[1]) + ' each</span>' : '') + '<span class="num">' + money(it.each[0] * it.qty) + ' to ' + money(it.each[1] * it.qty) + '</span><span class="acts"><a class="btn small" target="_blank" rel="noopener" href="' + l.amazon + '">Shop Amazon</a><a class="btn small ghost" target="_blank" rel="noopener" href="' + l.etsy + '">Etsy</a></span></div></div>'; }).join('') + '</div>' + more(ev, itemsAll, items.length, 'shopping picks') +
       '<p class="small muted">Estimated shopping total: <b class="num">' + money(shopLo) + ' to ' + money(shopHi) + '</b>. ' + (bigHired ? '' : rest ? 'Sized to one table of ' + plural(g, 'guest') + '.' : 'Quantities are sized to ' + plural(g, 'guest') + ' and ' + plural(tables, 'table') + '.') + '</p></div>') +

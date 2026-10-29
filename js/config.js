@@ -4,11 +4,11 @@
    preview: true shows the preview ribbon and uses no-charge checkout. */
 window.EC_CONFIG = {
   apiUrl: '',
-  amazonTag: '',
+  amazonTag: 'eventcouture-20',
   preview: true,
   launchFree: true,   /* launch offer: keeping a plan is free on the website too, until payments are connected; set false to show prices */
   supportEmail: 'hello@eventcouture.app',
   legalName: 'Always Luxe',   /* the business name on Privacy and Terms */
   governingState: '',        /* e.g. 'Texas': the state whose laws govern the Terms */
-  version: '0.60.0'
+  version: '0.60.1'
 };

@@ -37,7 +37,7 @@
       '<li><span><b>Google Maps Platform</b> returns venues, vendors, ratings and drive times.</span></li>' +
       '<li><span><b>Google Analytics</b> counts visits and feature use, as described above. Face Couture, also from Always Luxe, uses the same Google Analytics account, so a visit to both sites can be counted together.</span></li>' +
       '<li><span><b>Cloudflare</b> runs our server; <b>GitHub Pages</b> hosts the website; <b>Google Fonts</b> provides the typefaces. Each receives standard technical data when your device connects.</span></li>' +
-      '<li><span><b>Stores you choose to visit</b> (Amazon, Etsy, Spotify, Apple Music, Venmo, Cash App, PayPal, Google Maps). Links open their sites, which have their own privacy policies. Some shopping links earn us a commission; they’re marked where they appear.</span></li>' +
+      '<li><span><b>Stores you choose to visit</b> (Amazon, Etsy, Spotify, Apple Music, Venmo, Cash App, PayPal, Google Maps). Links open their sites, which have their own privacy policies. Some shopping links earn us a commission; they’re marked where they appear. As an Amazon Associate, Event Couture earns from qualifying purchases.</span></li>' +
       '<li><span><b>Authorities</b>, when the law requires it or to protect people from harm.</span></li></ul>' +
       '<p>We do not sell personal information, share it for cross-context behavioral advertising, or use it for profiling. If ' + NAME + '’s business is ever sold or merged, this policy will continue to apply to information transferred with it.</p>' +
 
