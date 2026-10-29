@@ -341,7 +341,10 @@
   var INSPO = window.EC_INSPO || [];
   function inspoTypes() { return D.EVENT_TYPES.filter(function (t) { return INSPO.some(function (p) { return p.types.indexOf(t.id) >= 0; }); }); }
   /* "All occasions" mixes occasions so the first row isn't all weddings. */
-  var INSPO_MIX = (function () { var by = {}, order = []; INSPO.filter(function (p) { return !p.culture; }).forEach(function (p) { var k = p.types[0]; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(p); }); var out = [], more = true; for (var i = 0; more; i++) { more = false; order.forEach(function (k) { if (by[k][i]) { out.push(by[k][i]); more = true; } }); } return out; })();
+  /* The first photos on the home page: grand wedding ballrooms in four different palettes. */
+  var HOME_LEAD = ['blush-wisteria-ballroom', 'black-gold-orchid-ballroom', 'lavender-glow-ballroom', 'ivory-grand-aisle'];
+  var INSPO_MIX = (function () { var by = {}, order = []; INSPO.filter(function (p) { return !p.culture; }).forEach(function (p) { var k = p.types[0]; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(p); }); var out = [], more = true; for (var i = 0; more; i++) { more = false; order.forEach(function (k) { if (by[k][i]) { out.push(by[k][i]); more = true; } }); }
+    var lead = HOME_LEAD.map(function (id) { return out.find(function (p) { return p.id === id; }); }).filter(Boolean); return lead.concat(out.filter(function (p) { return lead.indexOf(p) < 0; })); })();
   /* A cultural wedding's own photo comes first; other cultures' photos come after the general ones. */
   function inspoFor(type) {
     var d = inspoFor_ && drafts()[inspoFor_], cu = d && d.culture;

@@ -31,6 +31,30 @@ P = [
   ['#6E1F2B', '#E8B4B8', '#F3E3D3', '#C9A86A', '#4A3A2A'], 'burgundy and blush', 'outdoor', 'evening', 'elegant',
   'Burgundy velvet, blush roses and candlelight on a hilltop terrace.',
   ['Candlelit tables on a hilltop terrace beside a dance floor', 'Burgundy, blush and ivory rose runners', 'Burgundy velvet chairs and napkins with gold accents', 'Draped pergolas and a lounge glowing at dusk']),
+ ('ivory-grand-aisle', 'ballroom1', 'Ivory Grand Aisle', ['wedding', 'engagement', 'anniversary', 'quince', 'gala'], 'ivory-ballroom',
+  ['#FBF6EC', '#EFE3CF', '#D9C4A0', '#C9A86A', '#FFFFFF'], 'ivory and gold', 'indoor', 'evening', 'elegant',
+  'A candlelit ivory aisle, white rose towers and a flower arch under crystal chandeliers.',
+  ['Grand ballroom with crystal chandeliers and ivory drapes', 'Candle-lined white aisle leading to a white flower arch', 'Towering white rose arrangements on gold stands', 'The couple walking the aisle into the reception']),
+ ('blush-champagne-ballroom', 'ballroom2', 'Blush Champagne Ballroom', ['wedding', 'engagement', 'anniversary', 'bridal-shower', 'gala'], 'blush-romance',
+  ['#F3D9D3', '#E8C3B9', '#F6EEE6', '#C9A86A', '#FFFFFF'], 'blush and champagne', 'indoor', 'evening', 'elegant',
+  'Blush and ivory roses in tall glass vases, gold chairs and a sea of candles.',
+  ['Ballroom with blush uplighting and twin crystal chandeliers', 'Champagne linens with gold-frame chairs', 'Tall blush and ivory rose centerpieces in glass vases', 'Hundreds of candles glowing as dinner is served']),
+ ('blush-wisteria-ballroom', 'ballroom3', 'Blush Wisteria Ballroom', ['wedding', 'quince', 'sweet16', 'engagement', 'bridal-shower'], 'blush-romance',
+  ['#F4C9D4', '#E9A9BB', '#FBEFF2', '#D4B48C', '#FFFFFF'], 'blush pink and ivory', 'indoor', 'evening', 'elegant',
+  'A ceiling of pink and white wisteria over a glossy dance floor.',
+  ['Ballroom with a hanging ceiling of pink and white wisteria', 'Blush linens with gold chairs around the dance floor', 'Pink rose and hydrangea centerpieces with candles', 'The first dance on a glossy floor under the flowers']),
+ ('black-gold-orchid-ballroom', 'ballroom4', 'Black and Gold Orchid Ballroom', ['wedding', 'gala', 'anniversary', 'milestone', 'engagement'], 'modern-noir',
+  ['#111111', '#2B2B2B', '#C9A86A', '#F5F2EC', '#FFFFFF'], 'black gold and white orchid', 'indoor', 'evening', 'classic',
+  'White orchids and crystal candelabras on black linens with gold chairs.',
+  ['Ballroom with dark drapes and warm candlelight', 'Black linens with gold-frame chairs', 'White orchid and hydrangea arrangements with crystal candelabras', 'A black-tie dinner glowing with tall taper candles']),
+ ('white-wisteria-crystal-ballroom', 'ballroom5', 'White Wisteria Crystal Ballroom', ['wedding', 'quince', 'gala', 'anniversary'], 'ivory-ballroom',
+  ['#FFFFFF', '#F3EFE8', '#DCD3C4', '#C9A86A', '#B9B4AC'], 'white and crystal', 'indoor', 'evening', 'elegant',
+  'A ceiling of white wisteria and crystal strands over a mirrored aisle.',
+  ['Grand ballroom with white wisteria and hanging crystals', 'Mirrored white aisle lined with candles', 'Blush and white flower arch at the front of the room', 'The grand entrance down the glowing aisle']),
+ ('lavender-glow-ballroom', 'ballroom6', 'Lavender Glow Ballroom', ['wedding', 'quince', 'sweet16', 'gala', 'anniversary'], 'royal-purple',
+  ['#B9A2D8', '#8E6FB8', '#EFE8F6', '#D9C4A0', '#FFFFFF'], 'lavender and lilac', 'indoor', 'evening', 'elegant',
+  'Lavender uplighting, lilac and white hydrangeas and clear chairs.',
+  ['Ballroom washed in lavender uplighting with crystal chandeliers', 'Silver linens with clear ghost chairs', 'Lilac, white and pink hydrangea centerpieces in tall vases', 'Candlelit tables glowing in purple light']),
  ('black-tie-ballroom', '5b552113', 'Black Tie Ballroom', ['gala', 'corporate', 'wedding', 'milestone'], 'modern-noir',
   ['#111111', '#2B2B2B', '#C9A86A', '#F5F2EC', '#FFFFFF'], 'black and gold', 'indoor', 'evening', 'classic',
   'Black drapes, gold chairs and tall white florals under chandeliers.',
@@ -267,6 +291,12 @@ PIECES = {
  'winter-wonderland': [('Hanging snowflakes', 'large white hanging snowflakes', ''), ('White flocked trees', 'white flocked christmas tree', ''), ('Silver sequin curtain', 'silver sequin backdrop curtain', ''), ('Silver and blue balloon arch', '', 'balloons'), ('Snowflake dance floor lighting', '', 'lighting'), ('Snowflake cake', '', 'cake')],
  'candy-cane-christmas': [('Giant candy cane decorations', 'giant candy cane yard decoration', ''), ('Red gingham tablecloths', 'red gingham tablecloth', ''), ('Gingerbread house kits', 'gingerbread house kit', ''), ('Red chair bows', 'red velvet chair bows', ''), ('Red, pink and white balloon arch', '', 'balloons'), ('Peppermint cake', '', 'cake')],
  'dino-discovery': [('Life-size dinosaur cutouts', 'large dinosaur cutout standee', ''), ('Dinosaur figurines', 'dinosaur figurines set', ''), ('Fossil dig kit', 'dinosaur fossil dig kit', ''), ('Dinosaur footprint decals', 'dinosaur footprint floor decals', ''), ('Floor cushions', 'outdoor floor cushions', ''), ('Sage and orange balloon arch', '', 'balloons')],
+ 'ivory-grand-aisle': [('White aisle runner', 'white wedding aisle runner', ''), ('Gold candle pillar stands', 'gold floor candle stands set', ''), ('Glass hurricane candle holders', 'glass hurricane candle holders bulk', ''), ('White rose towers', '', 'florals'), ('Flower arch', '', 'florals'), ('Chandelier uplighting', '', 'lighting')],
+ 'blush-champagne-ballroom': [('Champagne table linens', 'champagne satin tablecloth round', ''), ('Tall glass cylinder vases', 'tall glass cylinder vases bulk', ''), ('Votive candles', 'gold mercury glass votive candles', ''), ('Gold chiavari chairs', '', 'rentals'), ('Blush and ivory rose centerpieces', '', 'florals'), ('Blush uplighting', '', 'lighting')],
+ 'blush-wisteria-ballroom': [('Hanging wisteria garlands', 'pink white artificial wisteria garland', ''), ('Blush table linens', 'blush pink tablecloth round', ''), ('Floating candles', 'floating candles glass cylinder', ''), ('Wisteria ceiling install', '', 'decor'), ('Pink rose and hydrangea centerpieces', '', 'florals'), ('Dance floor', '', 'danceFloor')],
+ 'black-gold-orchid-ballroom': [('Black table linens', 'black satin tablecloth round', ''), ('Crystal candelabras', 'crystal candelabra centerpiece', ''), ('Gold charger plates', 'gold charger plates', ''), ('Taper candles', 'white taper candles bulk', ''), ('White orchid arrangements', '', 'florals'), ('Gold chiavari chairs', '', 'rentals')],
+ 'white-wisteria-crystal-ballroom': [('Hanging crystal strands', 'hanging crystal garland strands', ''), ('White wisteria garlands', 'white artificial wisteria garland', ''), ('Mirror aisle runner', 'mirror wedding aisle runner', ''), ('Pillar candles in glass', 'pillar candles glass hurricane', ''), ('Flower arch', '', 'florals'), ('Ceiling install', '', 'decor')],
+ 'lavender-glow-ballroom': [('Clear ghost chairs', '', 'rentals'), ('Silver sequin linens', 'silver sequin tablecloth round', ''), ('Tall trumpet vases', 'tall glass trumpet vases', ''), ('Lavender uplighting', '', 'lighting'), ('Lilac and white hydrangea centerpieces', '', 'florals'), ('Candles in glass', 'glass cylinder candle holders', '')],
  'superhero-city': [('City skyline backdrop', 'superhero city skyline backdrop', ''), ('Foam masks to decorate', 'kids foam superhero masks craft', ''), ('Play tunnel', 'kids play tunnel', ''), ('Bean bag toss game', 'bean bag toss game', ''), ('Red, blue and black balloon arch', '', 'balloons'), ('Superhero cake', '', 'cake')],
  'princess-castle': [('Castle backdrop', 'princess castle backdrop', ''), ('Crowns to decorate', 'kids foam crowns craft kit', ''), ('Princess dress-up costumes', 'princess dress up costumes set', ''), ('Tulle table skirt', 'pink tulle table skirt', ''), ('Pink, lilac and gold balloon towers', '', 'balloons'), ('Castle cake', '', 'cake')],
  'midnight-stars-quinceanera': [('Hanging silver stars', 'large silver hanging stars', ''), ('Silver star balloons', 'silver star foil balloons', ''), ('Royal blue velvet drapes', '', 'decor'), ('Starlit dance floor', '', 'rentals'), ('Blue velvet lounge', '', 'rentals'), ('Star cake', '', 'cake')],
@@ -282,7 +312,9 @@ seen, out = set(), []
 for (pid, f, name, types, style, pal, shop, setting, time, menu, mood, decor) in P:
     assert pid not in seen and f not in [o['_f'] for o in out], 'duplicate ' + pid
     seen.add(pid); assert pid in PIECES, 'no pieces for ' + pid
-    im = Image.open(os.path.join(SRC, f + '-image.png')).convert('RGB')
+    src = os.path.join(SRC, f + '-image.png')
+    if not os.path.exists(src): src = os.path.join(HERE, 'tools', 'inspo-src', f + '-image.png')   # her collages, cut into single photos
+    im = Image.open(src).convert('RGB')
     for size, path, q in ((1200, os.path.join(OUT, pid + '.jpg'), 74), (560, os.path.join(OUT, 'sm', pid + '.jpg'), 72)):
         c = im.copy(); c.thumbnail((size, size)); c.save(path, 'JPEG', quality=q, optimize=True, progressive=True)
     out.append({'_f': f, 'id': pid, 'name': name, 'types': types, 'style': style, 'palette': pal, 'shop': shop, 'setting': setting, 'time': time,
