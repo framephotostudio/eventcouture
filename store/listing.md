@@ -15,8 +15,8 @@ Plan a beautiful event from one photo, a few words, or just your colors.
 
 Event Couture by Always Luxe turns inspiration into a complete plan:
 - Three event concepts made for your occasion, colors and budget
-- A detailed budget with every cost, sized to your city and guest count, including tax, service charges and tips
-- Cultural weddings planned with their own traditions, music and food: Arabic, Indian, Pakistani, Persian, Mexican, Chinese, Vietnamese, Korean, Filipino, Nigerian, Moroccan, Greek, Spanish, Russian and African American
+- A detailed budget with every cost, sized to your city and guest count, including local tax and service charges
+- Cultural weddings planned with their own traditions, music and food: Arabic, Indian, Pakistani, Persian, Turkish, Mexican, Chinese, Vietnamese, Korean, Filipino, Nigerian, Moroccan, Greek, Spanish, Russian, African American and multicultural fusion, each with its own playlist
 - Venues and vendors near you, matched to your occasion and theme: build up to 3 booking packages and compare them side by side, swap anything, remove what you don't need
 - Get quotes from vendors without sharing your name or number, or message vendors you found on Instagram in one tap
 - A guided booking checklist: one vendor at a time, with the message written for you
@@ -24,7 +24,8 @@ Event Couture by Always Luxe turns inspiration into a complete plan:
 - Menu ideas, a playlist, what to buy to get the look, a checklist with due dates and a day-of schedule
 - Guest list, seating, cost splitting and thank-you notes
 - Your finished plan in one place: save it as a PDF, email it or share it
-- Works across the United States and Canada, with prices in your currency
+- Works in over 60 countries and 250 cities, from the US and Canada to the UK, Europe, the Middle East, India, Asia, Australia and Latin America, with prices in your currency
+- Reserve a table at restaurants in one tap
 
 Not sure where to start? Browse inspiration by occasion: birthdays, kids' themed birthdays, showers, weddings, quinceañeras, Sweet 16s, graduations, holiday parties, corporate events and more. Inspiration photos are AI-generated samples, clearly labeled.
 
