@@ -15,7 +15,7 @@ try {
   await pg.selectOption('#city', process.env.CITY || 'Houston, TX'); await pg.fill('#guests', process.env.GUESTS || '250');
   if (!(await pg.$('#setting [data-v=indoor][aria-pressed=true]'))) await pg.click('#setting [data-v=indoor]');
   if (process.env.SINGER) { const sg = await pg.$('[data-music="singer"]'); if (sg && (await sg.getAttribute('aria-pressed')) !== 'true') await sg.click(); }
-  if (await pg.$('#date')) await pg.fill('#date', '2027-06-12');
+  if (await pg.$('#date')) await pg.fill('#date', process.env.DATE || '2027-01-16');
   await pg.click('#next'); await pg.waitForSelector('.concept', { timeout: 120000 }); await pg.click('.concept button'); await pg.waitForSelector('.plan-head');
   const base = '#/' + pg.url().split('#/')[1].split('/').slice(0, 2).join('/');
   await pg.evaluate(([id, nm]) => { const a = JSON.parse(localStorage.getItem('ec.events')); a[id].keepNoteHidden = true; a[id].name = nm; localStorage.setItem('ec.events', JSON.stringify(a)); }, [base.split('/')[2], process.env.NAME || 'Layla & Omar’s Wedding']);
