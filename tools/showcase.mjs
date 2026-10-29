@@ -15,7 +15,7 @@ for (const [n, w, h, m] of [['phone', 430, 932, true], ['desktop', 1280, 900, fa
   if (await pg.$('#date')) await pg.fill('#date', '2027-06-12');
   await pg.click('#next'); await pg.waitForSelector('.concept', { timeout: 120000 }); await pg.click('.concept button'); await pg.waitForSelector('.plan-head');
   const base = '#/' + pg.url().split('#/')[1].split('/').slice(0, 2).join('/');
-  await pg.evaluate(id => { const a = JSON.parse(localStorage.getItem('ec.events')); a[id].keepNoteHidden = true; a[id].name = process.env.NAME || 'Layla & Omar’s Wedding'; localStorage.setItem('ec.events', JSON.stringify(a)); }, base.split('/')[2]);
+  await pg.evaluate(([id, nm]) => { const a = JSON.parse(localStorage.getItem('ec.events')); a[id].keepNoteHidden = true; a[id].name = nm; localStorage.setItem('ec.events', JSON.stringify(a)); }, [base.split('/')[2], process.env.NAME || 'Layla & Omar’s Wedding']);
   await pg.goto(U + base + '/overview'); await pg.reload(); await pg.waitForSelector('#pkgStart'); await pg.click('#pkgStart');
   await pg.waitForSelector('.pkg-cmp', { timeout: 180000 }); await pg.addStyleTag({ content: hide }); await pg.waitForTimeout(800);
   const ROW = process.env.ROW || 'dj'; const dj = await pg.$(`tr[data-pkrow="${ROW}"]`); if (dj) { await pg.evaluate(r => document.querySelector(`tr[data-pkrow="${r}"]`).scrollIntoView({ block: 'center' }), ROW); await pg.waitForTimeout(400); await pg.screenshot({ path: `${OUT}/${n}-${ROW}-row.png` }); }
