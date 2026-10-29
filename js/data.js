@@ -96,6 +96,8 @@
     elements:     { name: 'Tasting the four elements set', group: 'Style', fixed: [40, 150], flat: true, tier: 'LSU', taxable: true },
     kente:        { name: 'Kente stoles or accents for the wedding party', group: 'Look', fixed: [150, 700], flat: true, tier: 'LSU', taxable: true },
     secondLine:   { name: 'Second line brass band and parade', group: 'Music and fun', fixed: [1200, 3500], flat: true, tier: 'LSU', tip: true },
+    davul:        { name: 'Davul and zurna players (drum and pipe)', group: 'Music and fun', fixed: [600, 2200], flat: true, tier: 'LSU', tip: true },
+    kina:         { name: 'K\u0131na night: henna, red veil and trays', group: 'Look', fixed: [400, 1600], flat: true, tier: 'LSU', taxable: true },
     dakka:        { name: 'Dakka marrakchia or Andalusian band', group: 'Music and fun', fixed: [1000, 3500], flat: true, tier: 'LSU', tip: true },
     /* Restaurant, ordering from the menu: no venue, catering or rentals. Lunch and brunch cost about 20% less than dinner. */
     restaurantFood:   { name: 'Meals ordered from the menu', group: 'Food and drink', perGuest: [26, 42], tier: 'LSU', taxable: true, gratuity: true, meal: true },
@@ -283,6 +285,25 @@
       search: { liveMusic: 'greek band bouzouki', dj: 'greek wedding DJ', catering: 'greek catering', officiant: 'greek orthodox church wedding', stefana: 'stefana wedding crowns', cake: 'greek bakery', photographer: 'greek wedding photographer' },
       hint: 'greek,hellenic,orthodox,bouzouki',
       moments: [[-30, 'Guests arrive'], [0, 'Ceremony with the stefana crowns and the Dance of Isaiah'], [60, 'Cocktail hour'], [105, 'Grand entrance and dinner'], [165, 'First dance and the money dance'], [195, 'Kalamatianos circle dance'], [225, 'Cake and dancing'], ['end', 'Send-off']]
+    },
+    turkish: {
+      name: 'Turkish wedding', guests: 250, hours: 6, menu: 'turkish', blurb: 'The k\u0131na henna night, davul and zurna, the gold pinning, halay dancing and a Turkish feast.', pre: 'With the blessing of their families',
+      music: [['davul', 'Davul and zurna'], ['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['davul', 'dj'],
+      add: ['kina'],
+      labels: { catering: 'Turkish catering', dj: 'DJ (Turkish and international music)', liveMusic: 'Live band (Turkish music)', singer: 'Turkish wedding singer', cake: 'Wedding cake and Turkish sweets', officiant: 'Officiant or imam' },
+      search: { davul: 'davul zurna', dj: 'turkish wedding DJ', liveMusic: 'turkish wedding band', singer: 'turkish wedding singer', catering: 'turkish catering', cake: 'turkish bakery baklava', kina: 'henna artist', photographer: 'turkish wedding photographer' },
+      hint: 'turkish,turkey,istanbul,anatolian,kina,henna,davul,zurna,halay',
+      moments: [[-30, 'Guests arrive to Turkish coffee and lokum'], [0, 'The couple enters to davul and zurna'], [20, 'Ceremony and the shoe signing'], [45, 'First dance'], [75, 'Dinner'], [135, 'Tak\u0131 t\u00f6reni: gold pinning for the couple'], [165, 'Halay and dancing'], [225, 'Cake and sweets'], ['end', 'Send-off']]
+    },
+    fusion: {
+      name: 'Multicultural fusion wedding', guests: 200, hours: 6, menu: 'fusion', blurb: 'Two families, two traditions: blend the music, rituals and food you both love, from a dhol or zaffe entrance to mariachi and a henna night.',
+      chipsTitle: 'Music and traditions from both families', chipsNote: 'Pick everything you want to blend. Each one gets its own line in your budget and its own vendor options.',
+      music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dhol', 'Dhol player'], ['zaffe', 'Zaffe group'], ['mariachi', 'Mariachi'], ['mehndi', 'Henna night'], ['teaCeremony', 'Tea ceremony']], musicDefault: ['dj', 'liveMusic'],
+      add: [], pre: 'Together with their families',
+      labels: { catering: 'Catering with dishes from both families', dj: 'DJ (music from both cultures)', cake: 'Wedding cake and desserts from both families', mehndi: 'Henna artist for the henna night' },
+      search: { dj: 'multicultural wedding DJ', liveMusic: 'wedding band', singer: 'wedding singer', dhol: 'dhol player', zaffe: 'zaffe group wedding', mariachi: 'mariachi band', mehndi: 'henna artist', teaCeremony: 'tea ceremony wedding', catering: 'international fusion catering', photographer: 'multicultural wedding photographer' },
+      hint: 'fusion,multicultural,bicultural,interfaith,international',
+      moments: [[-30, 'Guests arrive'], [0, 'Ceremony honoring both families'], [40, 'Cocktail hour with dishes from both cultures'], [100, 'Grand entrance and dinner'], [160, 'First dance and toasts'], [190, 'Dancing to music from both cultures'], [240, 'Cake and sweets'], ['end', 'Send-off']]
     }
   };
   var TIERS = [
@@ -484,6 +505,8 @@
     soul: ['Shrimp and grits bites', 'Fried or baked chicken', 'Mac and cheese', 'Collard greens and candied yams', 'Red velvet cake and peach cobbler', 'Sweet tea and lemonade'],
     spanish: ['Tapas: croquetas, tortilla espa\u00f1ola, gambas al ajillo', 'Jam\u00f3n ib\u00e9rico carved to order', 'Paella', 'Solomillo or sea bass', 'Turr\u00f3n, crema catalana and wedding cake', 'Fresh juices and Spanish hot chocolate'],
     russian: ['Zakuski: blini with caviar, herring under a fur coat, pickles', 'Olivier salad', 'Pelmeni and pirozhki', 'Beef stroganoff or shashlik', 'Medovik and napoleon cake', 'Mors (berry drink) and tea'],
+    turkish: ['Meze: ezme, haydari, hummus and sigara b\u00f6re\u011fi', 'Mercimek lentil soup', 'Adana and shish kebab with pilav', 'Lamb with smoky eggplant (h\u00fcnkar be\u011fendi)', 'Baklava, k\u00fcnefe and Turkish delight', 'Turkish tea, coffee and ayran'],
+    fusion: ['Appetizers from both families', 'A signature dish from each culture', 'Shared mains served family style', 'Breads, rice and sides from both kitchens', 'Wedding cake plus sweets from both cultures', 'A drink or tea tradition from each family'],
     moroccan: ['Moroccan salads and briouats', 'Chicken or seafood pastilla', 'Lamb tagine with prunes and almonds', 'Mechoui and couscous', 'Moroccan pastries: cornes de gazelle, chebakia', 'Mint tea'],
     sweet: ['Finger sandwiches', 'Fruit skewers', 'Mini quiches', 'Macaron tower', 'Cake pops', 'Pink lemonade'],
     party: ['Loaded slider bar', 'Wings and dips', 'Taco station', 'Veggie crudités', 'Cupcake tower', 'Glitter cocktail and mocktail']
@@ -529,6 +552,12 @@
     { w: 28, t: 'Book the tamada first: the night runs around them', cu: 'russian' },
     { w: 4, t: 'Order the karavai and plan the bride ransom games', cu: 'russian' },
     { w: 32, t: 'Book the negafa and choose the outfits and the amariya', cu: 'moroccan' },
+    { w: 20, t: 'Book the davul and zurna players', cu: 'turkish' },
+    { w: 10, t: 'Plan the k\u0131na night: henna, red veil and trays', cu: 'turkish' },
+    { w: 6, t: 'Ask family to prepare gold for the tak\u0131 t\u00f6reni', cu: 'turkish' },
+    { w: 30, t: 'Choose the traditions from each family to include', cu: 'fusion' },
+    { w: 16, t: 'Give the DJ a playlist from both cultures', cu: 'fusion' },
+    { w: 12, t: 'Plan a menu with dishes from both families', cu: 'fusion' },
     { w: 20, t: 'Book the dakka or Andalusian band', cu: 'moroccan' },
     { w: 8, t: 'Plan the henna night', cu: 'moroccan' },
     { w: 12, t: 'Choose your koumbaro or koumbara and the stefana', cu: 'greek' },
@@ -643,11 +672,11 @@
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties); 'parties' = every event that isn't a wedding. */
       { name: 'DJ Yamani', ig: 'dj_yamani', cats: ['dj'], cities: ['Houston, TX'], cultures: ['arabic', ''], note: 'Arabic and American music for weddings and parties' },
       /* DJ Roy plays Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French music: every event, and the weddings and engagements in those styles. First across the U.S.; second in Houston after DJ Yamani. DJ Mosses is California only (his choice for now), and the main DJ there for every event. */
-      { name: 'DJ Roy', ig: 'djroy_1', cats: ['dj'], cities: ['Houston, TX'], cultures: ['', 'arabic', 'moroccan', 'persian', 'indian', 'russian', 'spanish', 'mexican'], note: 'All kinds of music: Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French' },
+      { name: 'DJ Roy', ig: 'djroy_1', cats: ['dj'], cities: ['Houston, TX'], cultures: ['', 'arabic', 'moroccan', 'persian', 'indian', 'russian', 'spanish', 'mexican', 'turkish', 'fusion'], note: 'All kinds of music: Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French' },
       { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], states: ['CA'], first: true, note: 'International and Arabic music for weddings and private events' },
-      { name: 'DJ Burak', ig: 'realdjburak', cats: ['dj'], cities: ['Los Angeles, CA'], first: true, cultures: ['persian', 'mexican', 'spanish'], types: ['quince'], note: 'Turkish, Persian and Latin hits for weddings and parties, Los Angeles' },
+      { name: 'DJ Burak', ig: 'realdjburak', cats: ['dj'], cities: ['Los Angeles, CA'], first: true, cultures: ['persian', 'mexican', 'spanish', 'turkish'], types: ['quince'], note: 'Turkish, Persian and Latin hits for weddings and parties, Los Angeles' },
       { name: 'DJ L\u2019Rythm', ig: 'djlrythm', cats: ['dj', 'lighting'], cities: ['Los Angeles, CA', 'Orange County, CA'], weight: 105, cultures: ['arabic', ''], note: 'Female Arabic DJ, plus lighting, sound, sparks and stage effects rentals. Orange County and LA' },
-      { name: 'DJ Roy', ig: 'djroy_1', cats: ['dj'], country: 'US', notCities: ['Houston, TX'], first: true, cultures: ['', 'arabic', 'moroccan', 'persian', 'indian', 'russian', 'spanish', 'mexican'], note: 'All kinds of music: Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French' },
+      { name: 'DJ Roy', ig: 'djroy_1', cats: ['dj'], country: 'US', notCities: ['Houston, TX'], first: true, cultures: ['', 'arabic', 'moroccan', 'persian', 'indian', 'russian', 'spanish', 'mexican', 'turkish', 'fusion'], note: 'All kinds of music: Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French' },
       { name: 'Hammoudeh Alex', ig: 'hammoudeh.hamdan', cats: ['hairMakeup'], cities: ['Orange County, CA'], cultures: ['arabic', 'parties'], note: 'Hair stylist for brides and parties: styles, extensions, cuts, color and smoothing' },
       { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hairMakeup'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' },
       /* No Instagram: maps is what to search on Google Maps, and the link opens their listing there. */

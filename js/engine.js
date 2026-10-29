@@ -49,7 +49,7 @@
     if (ev.type === 'engagement' && cu.engagement) return ENGAGED[ev.culture] || (ENGAGED[ev.culture] = Object.assign({}, cu, cu.engagement, { labels: Object.assign({}, cu.labels || {}, cu.engagement.labels || {}) }));
     return null;
   }
-  var MUSIC_CATS = ['dj', 'liveMusic', 'singer', 'zaffe', 'dhol', 'dabke', 'qawwali', 'mariachi', 'lionDance', 'flamenco', 'dakka', 'gospel', 'secondLine'];
+  var MUSIC_CATS = ['dj', 'liveMusic', 'singer', 'zaffe', 'dhol', 'dabke', 'qawwali', 'mariachi', 'lionDance', 'flamenco', 'dakka', 'gospel', 'secondLine', 'davul'];
   function musicOf(ev) { var cu = culture(ev); if (!cu) return []; var ok = cu.music.map(function (m) { return m[0]; }); var m = (Array.isArray(ev.music) ? ev.music : cu.musicDefault).filter(function (x) { return ok.indexOf(x) >= 0; }); return m; }
   function typeName(ev) { var cu = culture(ev); return cu ? cu.name : typeOf(ev && ev.type).name; }
   function categoriesFor(ev) {

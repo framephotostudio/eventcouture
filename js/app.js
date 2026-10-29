@@ -556,6 +556,8 @@
     if (/\b(nigerian|naija|yoruba|igbo|aso ebi|aso-ebi|gele)\b/.test(text)) return 'nigerian';
     if (/\b(greek|stefana|koumbaro|bouzouki)\b/.test(text)) return 'greek';
     if (/\b(moroccan|morocco|negafa|takchita|amariya|amaria)\b/.test(text)) return 'moroccan';
+    if (/\b(turkish|turkey|istanbul|kina night|davul|zurna|halay)\b/.test(text)) return 'turkish';
+    if (/\b(fusion|multicultural|multi-cultural|bicultural|interfaith|two cultures)\b/.test(text)) return 'fusion';
     if (/african american|black love|jump(ing)? the broom|\blibation\b|\bkente\b|second line|four elements/.test(text)) return 'africanamerican';
     if (/\b(spanish|spain|espa\u00f1ola|flamenco)\b/.test(text)) return 'spanish';
     if (/\b(russian|ukrainian|tamada|karavai)\b/.test(text)) return 'russian';
