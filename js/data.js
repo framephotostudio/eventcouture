@@ -148,7 +148,14 @@
       labels: { liveMusic: 'Live band (Arabic music)', singer: 'Arabic wedding singer', officiant: 'Officiant (sheikh or priest)', catering: 'Middle Eastern catering', cake: 'Wedding cake and Arabic sweets', dj: 'DJ (Arabic and international music)' },
       search: { liveMusic: 'arabic wedding band', singer: 'arabic wedding singer', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern mediterranean catering', cake: 'arabic sweets bakery', officiant: 'sheikh imam or priest wedding officiant' },
       hint: 'arabic,arab,lebanese,middle eastern,mediterranean,zaffe,zaffa,kosha',
-      moments: [[-30, 'Guests arrive and are seated'], [0, 'Zaffe: drums and dancers lead the couple in'], [20, 'The couple takes their seats at the kosha'], [40, 'First dance'], [60, 'Dinner'], [120, 'Dabke and dancing'], [180, 'Cake cutting and sweets'], ['end', 'Send-off']]
+      moments: [[-30, 'Guests arrive and are seated'], [0, 'Zaffe: drums and dancers lead the couple in'], [20, 'The couple takes their seats at the kosha'], [40, 'First dance'], [60, 'Dinner'], [120, 'Dabke and dancing'], [180, 'Cake cutting and sweets'], ['end', 'Send-off']],
+      /* The same traditions for the engagement party (khutbe or katb el kitab). */
+      engagement: {
+        name: 'Arabic engagement party', guests: 150, hours: 5, blurb: 'Khutbe or katb el kitab, a zaffe entrance, the ring exchange, an Arabic singer and dabke.', pre: 'With the blessing of God and their families',
+        musicDefault: ['zaffe', 'singer', 'dj'],
+        labels: { singer: 'Arabic singer', officiant: 'Sheikh or priest (if katb el kitab)', cake: 'Engagement cake and Arabic sweets' },
+        moments: [[-30, 'Guests arrive and are seated'], [0, 'Zaffe: drums and dancers lead the couple in'], [20, 'The couple takes their seats at the kosha'], [30, 'Katb el kitab or the families\u2019 blessing'], [50, 'Ring exchange'], [70, 'Dinner'], [130, 'Arabic singer, dabke and dancing'], [190, 'Cake cutting and sweets'], ['end', 'Send-off']]
+      }
     },
     indian: {
       name: 'Indian wedding', guests: 300, hours: 7, menu: 'indian', blurb: 'Baraat with dhol, the mandap, mehndi artist, Bollywood DJ and a full Indian menu.', pre: 'With the blessings of their families',
@@ -609,11 +616,22 @@
     RECOMMENDED: [
       { name: 'DJ Mosses', ig: 'dj_mosses_music', cats: ['dj'], cities: ['Los Angeles, CA', 'Orange County, CA', 'San Diego, CA'], note: 'International and Arabic music for weddings and private events' },
       /* No cities: shown in every city. cultures: only for those cultural weddings. */
-      { name: 'Waseem Rabih', ig: 'waseemrabih', cats: ['singer'], cities: ['Los Angeles, CA', 'Orange County, CA', 'San Diego, CA'], cultures: ['arabic'], note: 'Arabic wedding singer for zaffe entrances, weddings and live music events' },
+      { name: 'Waseem Rabih', ig: 'waseemrabih', cats: ['singer'], states: ['CA'], top: true, cultures: ['arabic'], note: 'Arabic wedding singer for zaffe entrances, weddings and live music events' },
       { name: 'Jabour Bakla', ig: 'jabour.bakla', cats: ['singer'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Houston\u2019s favorite Lebanese singer for weddings and celebrations' },
       { name: 'Salem Omran', ig: 'salem_omran_official', cats: ['singer'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Arabic wedding and festival singer in Houston' },
       { name: 'Watan Zaffe & Dabke Group', ig: 'watanzaffegroup', cats: ['zaffe', 'dabke'], cities: ['Houston, TX'], note: 'Zaffe entrances and dabke for weddings, Houston' },
+      /* top: first among the others for the same place. No cities, states or country: every US and Canadian city (they say they travel worldwide). states: every city in those states. country: everywhere in that country. notTop: in those cities they're never in the first 3 picks, only further down the list. */
+      { name: 'Zaffet Joseph', ig: 'zaffetjosephentertainment', cats: ['zaffe', 'dabke'], states: ['MI'], note: 'Michigan\u2019s first and original zaffa group: drummers, violin and DJ. Available worldwide' },
+      { name: 'Zaffet El Ezz', ig: 'zaffetelezz', cats: ['zaffe', 'dabke'], states: ['CA'], note: 'Zaffe beyond traditions: weddings, engagements and parties. California based, travels nationwide' },
+      { name: 'Zaffet Al-Afrah', ig: 'zaffet_al_afrah', cats: ['zaffe', 'dabke'], notTop: ['Houston, TX'], note: 'Zaffe, dabke and drummers for weddings. Detroit based, travels nationwide' },
+      { name: 'Zaffet Joseph', ig: 'zaffetjosephentertainment', cats: ['zaffe', 'dabke'], notTop: ['Houston, TX'], note: 'Michigan\u2019s first and original zaffa group: drummers, violin and DJ. Available worldwide' },
+      { name: 'Royal Zaffe Group', ig: 'royal_zaffe_group', cats: ['zaffe', 'dabke'], country: 'US', notTop: ['Houston, TX'], note: 'Traditional Middle Eastern zaffe grand entrance by professional musicians, across the U.S.' },
+      { name: 'Jamal Kassab', ig: 'jamalkassabofficial', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and parties across California' },
+      { name: 'Salem Mawla', ig: 'salem_mawla', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and parties across California' },
+      { name: 'Ronnie Altahan', ig: 'ronnie.altahan', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and parties across California' },
+      { name: 'Farah Ibrahim', ig: 'farah_ibrahim_official', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Arab star singer for weddings, engagements and parties across California' },
       { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
+      { name: 'Tamer Aldabouqi', ig: 'tamerdabouqi', cats: ['singer'], cultures: ['arabic'], note: 'Arabic singer with a live band for weddings and celebrations' },
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties); 'parties' = every event that isn't a wedding. */
       { name: 'DJ Yamani', ig: 'dj_yamani', cats: ['dj'], cities: ['Houston, TX'], cultures: ['arabic', ''], note: 'Arabic and American music for weddings and parties' },
       { name: 'Hammoudeh Alex', ig: 'hammoudeh.hamdan', cats: ['hairMakeup'], cities: ['Orange County, CA'], cultures: ['arabic', 'parties'], note: 'Hair stylist for brides and parties: styles, extensions, cuts, color and smoothing' },

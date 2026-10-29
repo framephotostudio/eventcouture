@@ -16,6 +16,7 @@ def cfg(route):
 def check(n, ok, what): print(n, 'OK  ' if ok else 'FAIL', what); (None if ok else F.append(n+' '+what))
 def plan(pg, city, start='#/start/arabic-wedding/', text='Ivory and gold wedding with a grand zaffe entrance'):
     pg.goto(U+start); pg.wait_for_selector('#text'); pg.fill('#text', text); pg.click('#next'); pg.wait_for_selector('#type')
+    if city.endswith((', ON',', BC',', QC',', AB')): pg.select_option('#country','CA'); pg.wait_for_timeout(200)
     pg.select_option('#city', city); pg.fill('#guests','200'); pg.click('#setting [data-v=indoor]'); pg.click('#next')
     pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
     return '#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
@@ -31,12 +32,32 @@ with sync_playwright() as p:
             pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
             dj=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="dj"] td > b')]; cellt=pg.inner_text('tr[data-pkrow="dj"] td >> nth=0')
             sg=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="singer"] td > b')]
-            check(n, sg[:2]==['Waseem Rabih','Chris Hawat'], city+': Waseem Rabih is the singer in Package 1, Chris Hawat in Package 2: '+str(sg))
+            check(n, sg[:2]==['Waseem Rabih','Jamal Kassab'], city+': Waseem Rabih (city) then Jamal Kassab (all California): '+str(sg))
+            zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]
+            check(n, zf[:2]==['Zaffet El Ezz','Zaffet Al-Afrah'], city+': California zaffe first, then the worldwide one: '+str(zf[:2]))
             hm=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="hairMakeup"] td > b')]
             check(n, (hm[:1]==['Hammoudeh Alex']) == city.startswith('Orange'), city+': Hammoudeh Alex is the hair stylist only in Orange County: '+str(hm[:1]))
             check(n, dj and dj[0]=='DJ Mosses' and 'Recommended' in cellt and dj.count('DJ Mosses')==1, city+': DJ Mosses is the DJ in Package 1, marked Recommended: '+str(dj))
             if city.startswith('Orange'):
                 pg.evaluate("document.querySelector('tr[data-pkrow=\"dj\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_pkg_{n}.png')
+        base=plan(pg, 'Detroit, MI')
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
+        zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]; check(n, zf[:2]==['Zaffet Joseph','Zaffet Al-Afrah'], 'Detroit: Zaffet Joseph first, then Zaffet Al-Afrah: '+str(zf[:2]))
+        base=plan(pg, 'Toronto, ON')
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
+        zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]; check(n, 'Zaffet Al-Afrah' in zf and 'Zaffet Joseph' in zf and 'Royal Zaffe Group' not in zf, 'Toronto: the worldwide groups show, the U.S.-only one does not: '+str(zf))
+        base=plan(pg, 'Orange County, CA', '#/start/arabic-engagement/', 'Ivory and gold engagement with a zaffe entrance')
+        ev=pg.evaluate("id => JSON.parse(localStorage['ec.events'])[id]", base.split('/')[2])
+        check(n, ev['type']=='engagement' and ev.get('culture')=='arabic', 'Arabic engagement party is created: '+str((ev['type'],ev.get('culture'))))
+        pg.goto(U+base+'/budget'); pg.wait_for_selector('#cultureSel'); check(n, pg.input_value('#cultureSel')=='arabic' and 'Engagement tradition' in pg.inner_text('#musicPlan'), 'engagement has its own tradition menu')
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
+        sg=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="singer"] td > b')]; zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]
+        check(n, sg[:2]==['Waseem Rabih','Jamal Kassab'] and zf[:1]==['Zaffet El Ezz'], 'Arabic engagement in Orange County gets the Arabic singers and zaffe: '+str(sg[:2])+str(zf[:1]))
+        if n=='phone': pg.evaluate("document.querySelector('tr[data-pkrow=\"singer\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/arabic_engagement_{n}.png')
+        pg.goto(U+base+'/timeline'); pg.wait_for_timeout(600); check(n, 'Ring exchange' in pg.inner_text('#tab'), 'engagement schedule has the ring exchange')
+        base=plan(pg, 'Chicago, IL')
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
+        zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]; check(n, zf[:2]==['Zaffet Al-Afrah','Zaffet Joseph'], 'Chicago Arabic wedding: the worldwide zaffe groups: '+str(zf[:2]))
         base=plan(pg, 'Orange County, CA', '#/new/1', 'Ivory and gold wedding with white roses')
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000)
         check(n, 'Hammoudeh' not in pg.inner_text('.pkg-cmp'), 'Orange County classic wedding: no Hammoudeh')
@@ -49,7 +70,7 @@ with sync_playwright() as p:
         if pg.get_attribute('[data-music="singer"]','aria-pressed')!='true': pg.click('[data-music="singer"]'); pg.wait_for_timeout(400)
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
         sg=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="singer"] td > b')]
-        zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]; check(n, zf[:1]==['Watan Zaffe & Dabke Group'], 'Houston Arabic wedding: Watan is the zaffe group: '+str(zf[:1]))
+        zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]; check(n, not ({'Zaffet Al-Afrah','Zaffet El Ezz','Royal Zaffe Group','Zaffet Joseph'} & set(zf[:3])), 'Houston: no travelling zaffe group in the first picks: '+str(zf)); check(n, zf[:1]==['Watan Zaffe & Dabke Group'], 'Houston Arabic wedding: Watan is the zaffe group: '+str(zf[:1]))
         hm=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="hairMakeup"] td > b')]; check(n, hm and hm[0]=='Wassim Hair Stylist', 'Wassim is the recommended hair stylist for an Arabic wedding in Houston: '+str(hm))
         dj=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="dj"] td > b')]; check(n, dj and dj[0]=='DJ Yamani', 'DJ Yamani is the recommended DJ for an Arabic wedding in Houston: '+str(dj))
         check(n, sg[:2]==['Jabour Bakla','Salem Omran'], 'Houston Arabic wedding: Jabour Bakla and Salem Omran are the singers in Packages 1 and 2: '+str(sg))
