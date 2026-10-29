@@ -1,6 +1,7 @@
 # Fixes from the worldwide review, plus Houston recommendations: python3 tests/review_fixes.py <folder>
 from playwright.sync_api import sync_playwright
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
+from _extras import extras, groups, add_extra  # noqa
 import json, sys, hashlib
 U='http://localhost:8765/'; OUT=sys.argv[1] if len(sys.argv)>1 else '/tmp'; F=[]
 def api(route):
@@ -31,10 +32,10 @@ with sync_playwright() as p:
         pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
         # add-on chips add a line at a home party
         base=plan(pg, 'Sage and cream baby shower at home for 30', 'baby-shower', 'CA', 'Toronto, ON', 30, 'home'); package(pg, base)
-        rows0=len(pg.query_selector_all('.pkg-sum-r')); adds=pg.evaluate("[...document.querySelectorAll('#pkgSum [data-pkadd]')].map(b=>b.dataset.pkadd)")
+        rows0=len(pg.query_selector_all('.pkg-sum-r')); adds=extras(pg)
         pk='videographer' if 'videographer' in adds else (adds[0] if adds else None)
-        if pk: pg.click(f'#pkgSum [data-pkadd="{pk}"]'); pg.wait_for_timeout(2500)
-        check(n, pk and len(pg.query_selector_all('.pkg-sum-r'))==rows0+1 and not pg.query_selector(f'#pkgSum [data-pkadd="{pk}"]'), 'Toronto home shower: + '+str(pk)+' adds a line')
+        if pk: add_extra(pg, pk); pg.wait_for_timeout(2500)
+        check(n, pk and len(pg.query_selector_all('.pkg-sum-r'))==rows0+1 and pk not in extras(pg), 'Toronto home shower: + '+str(pk)+' adds a line')
         check(n, 'Reserve a table' not in pg.inner_text('#pkg'), 'no Reserve a table at a home party')
         # engagement name said once
         base=plan(pg, 'Minimal white engagement party for 60', 'engagement', 'JP', 'Tokyo, Japan', 60, 'indoor'); hd=pg.inner_text('.plan-head')
@@ -53,14 +54,14 @@ with sync_playwright() as p:
         check(n, 'Glitz N Glam Houston' in st, 'Nigerian wedding in Houston: Glitz N Glam is in the package')
         check(n, 'Reserve a table' not in pg.inner_text('#pkg'), 'no Reserve a table on a wedding venue')
         check(n, 'Kasra' not in st, 'Persian caterers stay out of a Nigerian wedding')
-        adds=pg.evaluate("[...document.querySelectorAll('#pkgSum [data-pkadd]')].map(b=>b.dataset.pkadd)")
+        adds=extras(pg)
         check(n, 'effects' in adds and 'danceFloor' in adds, 'special effects and dance floor are add-ons: '+str(adds))
-        if 'effects' in adds: pg.click('#pkgSum [data-pkadd="effects"]'); pg.wait_for_timeout(2500)
+        if 'effects' in adds: add_extra(pg, 'effects'); pg.wait_for_timeout(2500)
         st=pg.inner_text('#pkgSum'); check(n, 'Special effects' in st and 'Flash Memories Photo Booth Co' in st, 'special effects line picks Flash Memories')
         pg.screenshot(path=f'{OUT}/houston_nigerian_{n}.png', full_page=False)
         # a classic Houston wedding does not get Glitz N Glam, but gets Flash Memories for the photo booth
         base=plan(pg, 'Blush and ivory wedding for 150', 'wedding', 'US', 'Houston, TX', 150, 'indoor'); package(pg, base)
-        if pg.query_selector('#pkgSum [data-pkadd="photoBooth"]'): pg.click('#pkgSum [data-pkadd="photoBooth"]'); pg.wait_for_timeout(2500)
+        if 'photoBooth' in extras(pg): add_extra(pg, 'photoBooth'); pg.wait_for_timeout(2500)
         st=pg.inner_text('#pkgSum'); check(n, 'Glitz N Glam' not in st and 'Flash Memories Photo Booth Co' in st, 'classic Houston wedding: Flash Memories photo booth, no Glitz N Glam')
         # Houston Persian wedding: Kasra caters, Caspian and Garson next in See options
         pg.goto(U+'#/start/persian-wedding/'); pg.wait_for_selector('#text'); pg.fill('#text','Ivory and gold Persian wedding'); pg.click('#next'); pg.wait_for_selector('#type')
@@ -71,7 +72,7 @@ with sync_playwright() as p:
         pg.screenshot(path=f'{OUT}/houston_persian_{n}.png')
         # London restaurant: only restaurant add-ons
         base=plan(pg, 'Birthday dinner for 12, black and gold', 'birthday', 'GB', 'London, UK', 12, 'restaurant'); package(pg, base)
-        adds=pg.evaluate("[...document.querySelectorAll('#pkgSum [data-pkadd]')].map(b=>b.dataset.pkadd)")
+        adds=extras(pg)
         check(n, 'dj' not in adds and 'balloons' not in adds and 'photoBooth' not in adds and len(adds)<=7, 'restaurant add-ons are restaurant-appropriate: '+str(adds))
         # Kuwait: refresh before choosing a city keeps the country
         pg.goto(U+'#/new/1'); pg.fill('#text','Gold party'); pg.click('#next'); pg.wait_for_selector('#type'); pg.select_option('#country','KW'); pg.wait_for_timeout(150); pg.fill('#budget','5000'); pg.wait_for_timeout(300)

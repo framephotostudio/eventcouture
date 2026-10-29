@@ -828,6 +828,8 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 
 .pkg-pl { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; background: var(--champagne-soft, #F6EBD3); }
 .pkg-pl > span[aria-hidden] { font-size: 1.3rem; color: var(--plum, #4A1438); }
+.pkg-adds-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line, #E5DCCB); border-radius: 14px; }
+.pkg-adds-row .btn { flex: none; }
 .pkg-adds { display: grid; gap: 6px; }
 .pkg-adds .chips { margin-top: 2px; }
 .pkg-add-g { margin: 6px 0 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }

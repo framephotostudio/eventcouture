@@ -1,6 +1,7 @@
 # Countries worldwide, cultural photo first, Reserve a table: python3 tests/world.py <folder>
 from playwright.sync_api import sync_playwright
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
+from _extras import extras, groups, add_extra  # noqa
 import json, sys, hashlib
 U='http://localhost:8765/'; OUT=sys.argv[1] if len(sys.argv)>1 else '/tmp'; F=[]; Q=[]
 def api(route):
@@ -42,9 +43,9 @@ with sync_playwright() as p:
         # playlist and add-ons in the package
         pg.goto(U+base+'/budget'); pg.wait_for_selector('[data-pkuse="0"]'); pg.click('[data-pkuse="0"]'); pg.wait_for_selector('#pkgSum'); st=pg.inner_text('#pkgSum')
         check(n, 'Playlist: Arabian Nights Wedding' in st, 'package shows the Arabic playlist')
-        adds=pg.evaluate("[...document.querySelectorAll('#pkgSum [data-pkadd]')].map(b=>b.dataset.pkadd)")
+        adds=extras(pg)
         rows0=len(pg.query_selector_all('.pkg-sum-r')); pk=adds[0] if adds else None
-        if pk: pg.click(f'#pkgSum [data-pkadd="{pk}"]'); pg.wait_for_timeout(1500)
+        if pk: add_extra(pg, pk); pg.wait_for_timeout(1500)
         check(n, pk and len(pg.query_selector_all('.pkg-sum-r'))==rows0+1, 'adding an add-on puts a new line in the package: '+str(pk))
         pg.click('#pkgSum [data-goto="playlist"]'); pg.wait_for_selector('#playlist'); pg.wait_for_timeout(600)
         pl=pg.inner_text('#playlist'); check(n, 'zaffe and grand entrance' in pl.lower() and 'Ala Dalouna' in pl, 'See the songs opens the Arabic playlist')

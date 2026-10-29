@@ -2,6 +2,7 @@
 # python3 tests/addons.py <folder>
 from playwright.sync_api import sync_playwright
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
+from _extras import extras, groups, add_extra  # noqa
 import json, sys, hashlib
 U='http://localhost:8765/'; OUT=sys.argv[1] if len(sys.argv)>1 else '/tmp'; F=[]; Q=[]
 def api(route):
@@ -22,7 +23,7 @@ def plan(pg, text, typ, guests, setting, kids=False):
     base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
     pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=40000)
     pg.goto(U+base+'/budget'); pg.wait_for_selector('[data-pkuse="0"]'); pg.click('[data-pkuse="0"]'); pg.wait_for_selector('#pkgSum')
-    return base, pg.evaluate("[...document.querySelectorAll('#pkgSum [data-pkadd]')].map(b=>b.dataset.pkadd)")
+    return base, extras(pg)
 CASES=[
  ('Pink and gold unicorn party for my daughter, 20 kids', 'kids-birthday', 20, 'home', True, ['characterVisit','bounceHouse','gameTruck','magician','balloonTwister','facePainter','craftStation','pettingZoo','popcornCart','chocolateFountain'], ['livePainter','effects','coffeeBar','hairMakeup','danceFloor']),
  ('Ivory and gold wedding for 150', 'wedding', 150, 'indoor', False, ['chocolateFountain','livePainter','effects','danceFloor','coffeeBar','booth360','flowerWall'], ['bounceHouse','popcornCart','caricature','balloons','facePainter','characterVisit','magician','gameTruck']),
@@ -40,19 +41,21 @@ with sync_playwright() as p:
             check(n, all(x in adds for x in want), f'{typ}: offers {want} (got {adds})')
             check(n, not any(x in adds for x in never), f'{typ}: never offers {[x for x in never if x in adds]}')
             if typ=='wedding':
-                gl=pg.evaluate("[...document.querySelectorAll('#pkgSum .pkg-add-g')].map(x=>x.textContent)")
+                gl=groups(pg)
                 check(n, gl[:2]==['Food and treats','Photos and memories'], 'add-ons are grouped: '+str(gl))
-                pg.wait_for_timeout(2800); pg.locator('#pkgSum .pkg-adds').screenshot(path=f'{OUT}/addons_wedding_{n}.png')
-                Q.clear(); rows0=len(pg.query_selector_all('.pkg-sum-r')); pg.click('#pkgSum [data-pkadd="chocolateFountain"]'); pg.wait_for_timeout(2500)
+                check(n, not pg.query_selector('#pkgSum [data-pkadd]') and pg.query_selector('#pkgSum [data-pkextras]'), 'the package shows one Add extras button, not the whole list')
+                pg.locator('#pkgSum .pkg-adds-row').scroll_into_view_if_needed(); pg.wait_for_timeout(2800); pg.screenshot(path=f'{OUT}/addons_pkg_{n}.png')
+                pg.wait_for_timeout(2800); pg.click('#pkgSum [data-pkextras]'); pg.wait_for_selector('.sheet'); pg.wait_for_timeout(300); pg.locator('.sheet').screenshot(path=f'{OUT}/addons_wedding_{n}.png'); pg.click('.sheet [data-close]'); pg.wait_for_timeout(300)
+                Q.clear(); rows0=len(pg.query_selector_all('.pkg-sum-r')); add_extra(pg, 'chocolateFountain'); pg.wait_for_timeout(2500)
                 st=pg.inner_text('#pkgSum'); qs=[q['query'] for q in Q]
                 check(n, len(pg.query_selector_all('.pkg-sum-r'))==rows0+1 and 'Chocolate fountain' in st and ' Co A' in st, 'chocolate fountain line with a business that offers it')
                 check(n, qs and 'chocolate fountain rental' in qs[0], 'searches "chocolate fountain rental": '+str(qs[:2]))
                 pg.goto(U+base+'/budget'); pg.wait_for_timeout(500); check(n, 'Chocolate fountain' in pg.inner_text('#tab'), 'chocolate fountain is priced in the budget')
             if typ=='kids-birthday':
-                gl=pg.evaluate("[...document.querySelectorAll('#pkgSum .pkg-add-g')].map(x=>x.textContent)"); check(n, gl[:1]==['Kids\u2019 fun'], 'kids add-ons come first: '+str(gl[:2]))
-                Q.clear(); pg.click('#pkgSum [data-pkadd="characterVisit"]'); pg.wait_for_timeout(2500); qs=[q['query'] for q in Q]
+                gl=groups(pg); check(n, gl[:1]==['Kids\u2019 fun'], 'kids add-ons come first: '+str(gl[:2]))
+                Q.clear(); add_extra(pg, 'characterVisit'); pg.wait_for_timeout(2500); qs=[q['query'] for q in Q]
                 check(n, qs and 'unicorn party entertainment' in qs[0] and 'Character visit' in pg.inner_text('#pkgSum'), 'unicorn party finds unicorn characters: '+str(qs[:1]))
-                pg.wait_for_timeout(2800); pg.locator('#pkgSum .pkg-adds').screenshot(path=f'{OUT}/addons_kids_{n}.png')
+                pg.wait_for_timeout(2800); pg.click('#pkgSum [data-pkextras]'); pg.wait_for_selector('.sheet'); pg.wait_for_timeout(300); pg.locator('.sheet').screenshot(path=f'{OUT}/addons_kids_{n}.png'); pg.click('.sheet [data-close]')
         check(n, not e, 'no page errors '+str(e[:2])); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
         ctx.close()
     b.close()

@@ -1675,16 +1675,28 @@
   /* The playlist and optional add-ons, right in the package. */
   /* Add-ons she can put in her package, grouped, and only the ones that suit this occasion and setting. */
   var ADD_LABEL = { characterVisit: 'Character visit', gameTruck: 'Game truck or games', magician: 'Magician or bubble show', craftStation: 'Craft or slime station', pettingZoo: 'Petting zoo or pony rides', dessertBar: 'Dessert bar', iceCreamCart: 'Ice cream cart', coffeeBar: 'Coffee bar', popcornCart: 'Popcorn and cotton candy', livePainter: 'Live painter', flowerWall: 'Flower wall', lighting: 'Uplighting', invitations: 'Printed invitations', coordinator: 'Day-of coordinator', bounceHouse: 'Bounce house', favors: 'Favors', balloons: 'Balloons', hairMakeup: 'Hair and makeup', florals: 'Florals', decor: 'Decor' };
+  var ADDING = {};   /* an extra being added: a double tap adds it once */
   function addOnsFor(ev, have) {
     var rest = ev.setting === 'restaurant' || ev.setting === 'privateRoom';
     var fits = function (it) { return D.CATEGORIES[it.id] && have.indexOf(it.id) < 0 && (it.kids ? (ev.type === 'kids-birthday' || ev.kids && /birthday/.test(ev.type || '')) && !rest && (!it.settings || it.settings.indexOf(ev.setting) >= 0) : rest ? D.PKG_ADDONS_RESTAURANT.indexOf(it.id) >= 0 : (!it.only || it.only.indexOf(ev.type) >= 0) && (!it.not || it.not.indexOf(ev.type) < 0) && (!it.settings || it.settings.indexOf(ev.setting) >= 0)) ; };
     return D.PKG_ADDONS.map(function (g) { return { group: g.group, items: g.items.filter(fits).map(function (it) { return it.id; }) }; }).filter(function (g) { return g.items.length; });
   }
+  function addLabel(id, ev) { return ADD_LABEL[id] || catName(id, ev).replace(/ \(.*\)$/, ''); }
+  function addTeaser(groups, ev) { var all = [].concat.apply([], groups.map(function (g) { return g.items; })), pick = all.filter(function (id) { return ['chocolateFountain', 'photoBooth', 'effects', 'characterVisit', 'bounceHouse', 'dessertBar', 'coffeeBar', 'booth360', 'livePainter', 'videographer'].indexOf(id) >= 0; }).slice(0, 3); if (pick.length < 3) pick = pick.concat(all.filter(function (id) { return pick.indexOf(id) < 0; }).slice(0, 3 - pick.length)); return pick.map(function (id) { return addLabel(id, ev); }).join(', ') + (all.length > pick.length ? ' and more' : ''); }
+  /* All the extras, grouped, in one pop-up: the package itself stays clean. */
+  function extrasSheet(ev, b, onPick) {
+    var groups = addOnsFor(ev, b.items.map(function (i) { return i.id; }));
+    sheet('<h3>Add extras</h3><p class="muted small">Optional extras for your ' + esc(E.culture(ev) ? E.typeName(ev).replace(/ (Wedding|Engagement)/, function (m) { return m.toLowerCase(); }) : E.lc(E.typeName(ev))) + '. Each one adds a line, a price and top-rated local businesses that offer it.</p>' +
+      groups.map(function (g) { return '<p class="pkg-add-g small muted">' + esc(g.group) + '</p><div class="chips">' + g.items.map(function (id) { return '<button type="button" class="chip" data-pkadd="' + id + '">+ ' + esc(addLabel(id, ev)) + '</button>'; }).join('') + '</div>'; }).join('') +
+      '<button class="btn ghost block" data-close style="margin-top:14px">Close</button>', function (el, close) {
+      $$('[data-pkadd]', el).forEach(function (bt) { bt.addEventListener('click', function () { close(); onPick(bt.dataset.pkadd); }); });
+    });
+  }
   function pkgExtras(ev, b) {
     var pl = ev.setting === 'restaurant' ? null : playlistOf(ev), have = b.items.map(function (i) { return i.id; });
     var groups = ev.sample ? [] : addOnsFor(ev, have);
     return (pl ? '<div class="pkg-pl"><span aria-hidden="true">\u266b</span><span class="grow"><b>Playlist: ' + esc(pl.name) + '</b><span class="small muted"> \u00b7 ' + pl.songs.length + ' songs, part of your package</span></span><a class="btn small ghost" href="#/e/' + esc(ev.id) + '/style" data-goto="playlist">See the songs</a></div>' : '') +
-      (groups.length ? '<div class="pkg-adds"><b class="small">Add to your package</b><span class="small muted"> Optional extras for your ' + esc(E.culture(ev) ? E.typeName(ev).replace(/ (Wedding|Engagement)/, function (m) { return m.toLowerCase(); }) : E.lc(E.typeName(ev))) + '. Each one adds a line, a price and top-rated local businesses that offer it.</span>' + groups.map(function (g) { return '<p class="pkg-add-g small muted">' + esc(g.group) + '</p><div class="chips">' + g.items.map(function (id) { return '<button type="button" class="chip" data-pkadd="' + id + '">+ ' + esc(ADD_LABEL[id] || catName(id, ev).replace(/ \(.*\)$/, '')) + '</button>'; }).join('') + '</div>'; }).join('') + '</div>' : '');
+      (groups.length ? '<div class="pkg-adds-row"><span class="grow"><b class="small">Want extras?</b><span class="small muted"> ' + esc(addTeaser(groups, ev)) + '</span></span><button type="button" class="btn small ghost" data-pkextras>+ Add extras</button></div>' : '');
   }
   function pkgSumDoc(ev) {
     var b = E.budget(ev, ev.tier), cats = pkgCats(ev, b), pks = ev.packages || [], cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], d = pkgData(ev, b, cats, cp);
@@ -1762,16 +1774,17 @@
       save(); rerender(); toast('Package removed');
     }); });
     $$('[data-goto]').forEach(function (a) { a.addEventListener('click', function () { var id = a.dataset.goto; setTimeout(function () { var el = document.getElementById(id); if (el) el.scrollIntoView({ block: 'start' }); }, 350); }); });
-    $$('[data-pkadd]').forEach(function (bt) { bt.addEventListener('click', function () {
-      if (lockSample(ev) || bt.disabled) return; var cat = bt.dataset.pkadd; bt.disabled = true;
+    var addExtra = function (cat) {
+      if (lockSample(ev) || ADDING[cat]) return; ADDING[cat] = 1;
       ev.exclude = (ev.exclude || []).filter(function (x) { return x !== cat; }); ev.include = (ev.include || []).filter(function (x) { return x !== cat; }).concat([cat]); save();
       var c = pkgCats(ev, E.budget(ev, ev.tier)).find(function (x) { return x.cat === cat; });
       toast(catName(cat, ev) + ' added. Finding top-rated picks\u2026');
       (c ? pkgSearch(ev, c) : Promise.resolve([])).then(function (list) {
         (ev.packages || []).forEach(function (pk, k) { var taken = ev.packages.map(function (q) { return q.items[cat]; }); var p = list.find(function (x) { return taken.indexOf(x.id) < 0; }) || list[0]; if (p) putInPackage(ev, k, cat, p); });
-        save(); rerender(); toast(catName(cat, ev) + ' is in your package');
-      }).catch(function () { save(); rerender(); toast(catName(cat, ev) + ' added. Tap Find one to choose a business.'); });
-    }); });
+        delete ADDING[cat]; save(); rerender(); toast(catName(cat, ev) + ' is in your package');
+      }).catch(function () { delete ADDING[cat]; save(); rerender(); toast(catName(cat, ev) + ' added. Tap Find one to choose a business.'); });
+    };
+    $$('[data-pkextras]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; extrasSheet(ev, E.budget(ev, ev.tier), addExtra); }); });
     $$('[data-pksum]').forEach(function (bt) { bt.addEventListener('click', function () { var k = bt.dataset.pksum; if (ev.sample || isKept(ev)) return pkgSumAction(ev, k); keepSheet(ev, 'Keep your plan to save or share your package', function () { rerender(); pkgSumAction(ev, k); }); }); });
     $$('[data-pkskip]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; ev.pkgSkipped = (ev.pkgSkipped || []).filter(function (c) { return c !== bt.dataset.pkskip; }).concat([bt.dataset.pkskip]); save(); rerender(); }); });
     $$('[data-pkcopy]').forEach(function (bt) { bt.addEventListener('click', function () { copyText(vendorAsk(ev, bt.dataset.pkcopy), 'Your message'); }); });
