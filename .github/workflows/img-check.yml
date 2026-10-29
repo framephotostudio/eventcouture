@@ -1,0 +1,18 @@
+name: Image check
+# Loads the live site on desktop and phone and lists any picture that fails to load. Results go to the showcase-out branch.
+on: { workflow_dispatch: {} }
+permissions: { contents: write }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --no-save playwright@1 && npx playwright install --with-deps chromium
+      - run: node tools/imgcheck.mjs
+      - name: Save
+        if: always()
+        run: |
+          git config user.name "Event Couture build"; git config user.email "build@facecouture.app"
+          git checkout --orphan showcase-out && git rm -rq --cached . && git add showcase && git commit -qm "Image check" && git push -f origin HEAD:showcase-out
