@@ -1653,9 +1653,9 @@
   }
   function bindPackage(ev, save, rerender) {
     var build = function (btn) {
-      if (lockSample(ev) || PKG_BUSY) return; PKG_BUSY = true; setTimeout(function () { PKG_BUSY = false; }, 900); btn.disabled = true; var msg = $('#pkgMsg');
+      if (lockSample(ev) || PKG_BUSY) return; PKG_BUSY = true; setTimeout(function () { PKG_BUSY = false; }, 60000); btn.disabled = true; var msg = $('#pkgMsg');
       buildPackage(ev, function (d, n) { if (msg) msg.textContent = 'Finding top-rated picks\u2026 ' + d + ' of ' + n; }).then(function (k) {
-        var m = ev.packages[k].miss || []; rerender();
+        setTimeout(function () { PKG_BUSY = false; }, 450); var m = ev.packages[k].miss || []; rerender();   /* a double tap's second tap doesn't start another package */
         toast('Package ' + (k + 1) + ' is ready' + (m.length ? '. ' + plural(m.length, 'item') + ' had no top-rated match; tap See options there.' : ''));
         var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' });
       });
@@ -2294,7 +2294,7 @@
     var used = E.placesUsed(ev.guestsList); var cap = placesCap(ev);
     var counts = { yes: 0, invited: 0, declined: 0, waitlist: 0 }; (ev.guestsList || []).forEach(function (g) { counts[g.status] = (counts[g.status] || 0) + 1; });
     var tables = {}; (ev.guestsList || []).filter(function (g) { return g.table; }).forEach(function (g) { (tables[g.table] = tables[g.table] || []).push(g); });
-    return '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Guest list</h3><span class="num muted">' + used + ' of ' + plural(cap, 'place') + '</span></div>' +
+    return '<div class="stack"><div class="row" style="justify-content:space-between"><h3>Guest list</h3><span class="num muted">' + (cap >= 100000 ? plural(used, 'place') + ' used' : used + ' of ' + plural(cap, 'place')) + '</span></div>' +
       '<div class="meter' + (used > cap ? ' over' : '') + '"><i style="width:' + Math.min(100, used / Math.max(1, cap) * 100) + '%"></i></div>' +
       '<div class="chips"><span class="badge ok">' + counts.yes + ' coming</span><span class="badge">' + counts.invited + ' invited</span><span class="badge">' + counts.declined + ' declined</span><span class="badge warn">' + counts.waitlist + ' waitlist</span></div>' +
       '<form id="addg" class="row"><input class="input" aria-label="Guest name" id="gn" placeholder="Guest name" style="flex:2 1 180px"><label class="field" style="flex:0 0 96px"><span class="small muted">Plus-ones</span><input class="input num" id="gp" type="number" min="0" max="10" value="0"></label><button class="btn">Add guest</button></form>' +
@@ -2323,7 +2323,7 @@
     $$('[data-rmc]').forEach(function (b) { b.addEventListener('click', function () { ev.cohosts.splice(+b.dataset.rmc, 1); save(); rerender(); }); });
   };
   /* Guest places: what the Event Pass covers once kept (moving up a size adds places), otherwise the planned guest count. */
-  function placesCap(ev) { return ev.paid && ev.paid.max ? Math.max(ev.paid.max, CFG.app || CFG.launchFree ? E.passFor(ev.guests).max : 1) : ev.guests; }   /* in the app, places follow the guest count (free) */
+  function placesCap(ev) { if (ev.paid && (CFG.app || CFG.launchFree)) return 100000; return ev.paid && ev.paid.max ? ev.paid.max : ev.guests; }   /* free (app or launch): no pass limit, so nobody is waitlisted for it */   /* in the app, places follow the guest count (free) */
   function promoteWaitlist(ev, cap) {
     ev.guestsList.filter(function (g) { return g.status === 'waitlist'; }).forEach(function (g) { if (E.placesUsed(ev.guestsList) + 1 + (g.plusOnes || 0) <= cap) g.status = 'invited'; });
   }

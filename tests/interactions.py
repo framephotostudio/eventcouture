@@ -72,10 +72,13 @@ with sync_playwright() as p:
         if d: d.click(); pg.wait_for_timeout(250); nt = pg.input_value('.sheet #note'); check('Dear Aunt' in nt and 'champagne flutes' in nt, n + ': thank-you note wrong: ' + nt[:80]); pg.click('.sheet [data-close]')
         else: check(False, n + ': no thank-you note button')
         # move up a size
-        go(base + '/extras'); pg.click('#upg'); pg.wait_for_timeout(250)
-        bb = pg.query_selector('.sheet .btn.gold, .sheet #buy')
-        if bb: bb.click(); pg.wait_for_timeout(300)
-        check('76 to 150' in pg.inner_text('#tab') or '76' in pg.inner_text('#tab'), n + ': pass did not move up: ' + pg.inner_text('#tab')[:200])
+        go(base + '/extras'); pg.wait_for_timeout(300)
+        if pg.query_selector('#upg'):   # paid passes; during the free launch there is nothing to move up
+            pg.click('#upg'); pg.wait_for_timeout(250)
+            bb = pg.query_selector('.sheet .btn.gold, .sheet #buy')
+            if bb: bb.click(); pg.wait_for_timeout(300)
+            check('76 to 150' in pg.inner_text('#tab') or '76' in pg.inner_text('#tab'), n + ': pass did not move up: ' + pg.inner_text('#tab')[:200])
+        else: check('free during our launch' in pg.inner_text('#tab'), n + ': launch: pass says free: ' + pg.inner_text('#tab')[:200])
         # change concept and see three new ones
         go(base); pg.click('text=Change concept'); pg.wait_for_selector('.concept'); first = pg.inner_text('.concept h3 >> nth=0') if pg.query_selector('.concept h3') else ''
         if pg.query_selector('#more'):

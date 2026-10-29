@@ -35,7 +35,7 @@ with sync_playwright() as p:
         pg.select_option('#city','Houston, TX'); pg.fill('#guests','300'); pg.click('#setting [data-v=indoor]'); pg.click('#next')
         pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
         base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
-        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000)
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.wait_for_timeout(600)
         for _ in range(2): pg.click('#pkgMore'); pg.wait_for_timeout(1500)
         pg.wait_for_function("document.querySelectorAll('.pkg-cmp thead th.pk-colh').length>=3")
         cell=lambda cat: [x.inner_text() for x in pg.query_selector_all(f'tr[data-pkrow="{cat}"] td > b')]
