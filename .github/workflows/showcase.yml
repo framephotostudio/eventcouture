@@ -1,0 +1,20 @@
+name: Showcase screenshots
+# Screenshots of a real package on the live site (live Google results), for showing a vendor how they appear.
+on:
+  workflow_dispatch:
+    inputs:
+      city: { description: 'City', default: 'Orange County, CA' }
+permissions: { contents: read }
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --no-save playwright@1 && npx playwright install --with-deps chromium
+      - run: node tools/showcase.mjs
+        env: { CITY: '${{ inputs.city }}' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: showcase, path: showcase }

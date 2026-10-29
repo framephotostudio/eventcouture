@@ -1595,7 +1595,7 @@
       var x = bizOf(c.cat), it = b.items.find(function (i) { return i.id === c.cat; }), bk = statusOf(ev, c.cat) === 'booked', ov = (ev.overrides || {})[c.cat];
       var amt = ov && ov.amount > 0 ? ov.amount : it ? it.mid : 0; tot += amt;
       var info = x ? [x.name + (hotelClass(x.name) ? ' (' + hotelClass(x.name) + ')' : ''), x.address ? x.address.split(',').slice(0, 2).join(',') : '', siteOf(x) ? String(siteOf(x)).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : (x.phone || '')].filter(Boolean).join('\n') : 'Still to choose';
-      return { cat: catName(c.cat, ev), name: x ? x.name : '', info: info, status: bk ? 'Booked' : 'Not booked yet', amt: amt, est: !(ov && ov.amount > 0) };
+      return { cat: catName(c.cat, ev), name: x ? x.name : '', rec: !!(x && x.rec), info: info, status: bk ? 'Booked' : 'Not booked yet', amt: amt, est: !(ov && ov.amount > 0) };
     });
     var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; }).map(function (id) { return catName(id, ev); });
     return { rows: rows, total: tot, removed: ex, n: Math.min(ev.pkgChosen || 0, (ev.packages || []).length - 1) + 1, booked: rows.filter(function (r) { return r.status === 'Booked'; }).length };
@@ -1603,7 +1603,7 @@
   function pkgSummaryCard(ev, b, cats, cp) {
     var d = pkgData(ev, b, cats, cp);
     return '<div class="pkg-sum" id="pkgSum"><div class="pkg-sum-h"><p class="eyebrow">\u2713 Your final package</p><h3>Package ' + d.n + ' \u00b7 ' + esc(ev.name) + '</h3><p class="small muted">' + esc(whenText(ev)) + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p></div>' +
-      '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.est ? 'est. ' : '') + money(r.amt) + '</span></div>'; }).join('') + '</div>' +
+      '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.rec ? ' <span class="badge rec">\u2605 Recommended</span>' : '') + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.est ? 'est. ' : '') + money(r.amt) + '</span></div>'; }).join('') + '</div>' +
       '<div class="pkg-sum-t"><span>Estimated total' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
       '<p class="small muted">' + d.booked + ' of ' + d.rows.length + ' booked' + (d.removed.length ? ' \u00b7 Not needed: ' + d.removed.map(esc).join(', ') : '') + '</p>' +
       '<p class="small">This is your package. Save it as a PDF, email it to yourself or forward it to a co-host anytime, booked or not.</p><div class="row pkg-sum-acts"><button class="btn gold small" data-pksum="pdf">Save as PDF</button><button class="btn ghost small" data-pksum="mail">Email it</button><button class="btn ghost small" data-pksum="share">Share</button></div></div>';
