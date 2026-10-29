@@ -35,6 +35,10 @@ try {
   const info = await pg.evaluate(([row, rmv, names]) => {
     const sum = document.querySelector('#pkgSum');
     const rows = [...sum.querySelectorAll('.pkg-sum-r')], want = rows.find(r => r.querySelector('.badge.rec') && new RegExp(row, 'i').test(r.querySelector('.pkg-sum-c').textContent));
+    /* essentials, then music and entertainment, then the rest; the featured vendor on top */
+    const FIRST = ['venue', 'private dining', 'catering', 'cake', 'florals', 'decor', 'kosha'], MUSIC = ['wedding singer', 'singer', 'dj', 'zaffe', 'dabke', 'live music'];
+    const rk = r => { const c = r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase(), f = FIRST.findIndex(x => c.startsWith(x)), m = MUSIC.findIndex(x => c.startsWith(x)); return f >= 0 ? f : m >= 0 ? 100 + m : 1000; };
+    const box0 = rows[0] && rows[0].parentNode; rows.map((r, i) => [rk(r) * 1000 + i, r]).sort((a, b) => a[0] - b[0]).forEach(x => box0.appendChild(x[1]));
     if (want) { want.parentNode.prepend(want); want.classList.add('story-star'); }
     (rmv || []).forEach(name => rows.filter(r => r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase() === name.toLowerCase()).forEach(r => r.remove()));
     Object.entries(names || {}).forEach(([cat, nm]) => rows.filter(r => r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase() === cat.toLowerCase()).forEach(r => { r.querySelector('.pkg-sum-n b').textContent = nm; const bd = r.querySelector('.badge.rec'); if (bd) bd.remove(); }));

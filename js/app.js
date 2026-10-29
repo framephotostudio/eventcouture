@@ -1511,11 +1511,15 @@
   /* Budget: every line labeled; add your own prices */
   /* ---------- Book everything in one place: a package with a top-rated venue and every vendor, in one tap ---------- */
   var PKG_SKIP = ['venue', 'privateDining', 'tent', 'restrooms', 'generator', 'permits', 'insurance', 'parking', 'restaurantFood', 'restaurantDrinks', 'cakeFee', 'tableDecor'];
+  var PKG_FIRST = ['venue', 'privateDining', 'restaurantFood', 'catering', 'cake', 'florals', 'decor', 'kosha', 'mandap', 'sofreh'];
+  var PKG_MUSIC = ['singer', 'dj', 'zaffe', 'dabke', 'liveMusic', 'dhol', 'mariachi', 'davul', 'dakka', 'flamenco', 'qawwali', 'lionDance', 'gospel', 'secondLine', 'mc'];
   function pkgCats(ev, b) {
     var lvl = venueLevel(ev, b), vc = venueCat(ev), out = [];
     if (ev.setting !== 'home' && !ev.settingOpen && b.items.some(function (i) { return i.id === vc; })) { var vt = themeVenue(ev, venueTypesFor(ev)); if (vt) out.push({ cat: vc, kind: 'venue', type: vt, q: venueQuery(vt, ev, b), lvl: lvl }); }
     b.items.forEach(function (i) { if (PKG_SKIP.indexOf(i.id) < 0 && NO_SEARCH.indexOf(i.id) < 0) out.push({ cat: i.id, kind: 'vendor', q: vendorQuery(ev, i, lvl), lvl: lvl }); });
-    return out;
+    /* The essentials first, then the music and entertainment (singer, DJ, zaffe), then everything else. */
+    var rank = function (c, i) { var m = PKG_FIRST.indexOf(c.cat), p = PKG_MUSIC.indexOf(c.cat); return (m >= 0 ? m : p >= 0 ? 100 + p : 1000) * 1000 + i; };
+    return out.map(function (c, i) { return [rank(c, i), c]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
   }
   /* The kind of venue that suits the look: chandeliers and velvet mean a ballroom, greenery a garden, a skyline a rooftop. */
   var VENUE_CUES = [[/ballroom|chandelier|velvet|crystal|grand|gilded|royal|black tie|old hollywood/, /ballroom|banquet|mansion/i], [/garden|greenery|botanical|floral arch|outdoor|pergola|vine/, /garden|estate|lawn|patio|cafe/i],

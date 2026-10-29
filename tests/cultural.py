@@ -16,7 +16,7 @@ with sync_playwright() as p:
     b = p.chromium.launch()
     for vp, size in [('phone', {'width': 390, 'height': 844}), ('desk', {'width': 1280, 'height': 900})]:
         for cu, label, text, must in [
-            ('arabic', 'Arabic wedding', 'elegant ivory and gold wedding with a big entrance', ['Zaffe group', 'Live band (Arabic music)', 'DJ (Arabic and international music)', 'Kosha']),
+            ('arabic', 'Arabic wedding', 'elegant ivory and gold wedding with a big entrance', ['Zaffe and dabke group', 'Live band (Arabic music)', 'DJ (Arabic and international music)', 'Kosha']),
             ('indian', 'Indian wedding', 'colorful wedding with marigolds', ['Dhol player', 'Mandap', 'Mehndi', 'Pandit']),
             ('persian', 'Persian wedding', 'romantic white and gold wedding', ['Sofreh aghd', 'Aghd officiant', 'Live band (Persian music)'])]:
             qs.clear(); errs = []

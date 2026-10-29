@@ -88,7 +88,7 @@
     generator:    { name: 'Generator', group: 'Outdoor', fixed: [300, 900], tier: 'SU', outdoor: true },
     permits:      { name: 'Permits', group: 'Outdoor', fixed: [50, 450], tier: 'LSU', outdoor: true },
     /* Cultural weddings: traditions with their own vendors. "flat" prices don't grow with the guest count. */
-    zaffe:        { name: 'Zaffe group (drums, dancers and the grand entrance)', group: 'Music and fun', fixed: [900, 2800], flat: true, tier: 'LSU', tip: true },
+    zaffe:        { name: 'Zaffe and dabke group (drums, dancers and the grand entrance)', group: 'Music and fun', fixed: [900, 2800], flat: true, tier: 'LSU', tip: true },
     singer:       { name: 'Wedding singer', group: 'Music and fun', fixed: [900, 3500], flat: true, tier: 'LSU', tip: true },
     dabke:        { name: 'Dabke dance troupe', group: 'Music and fun', fixed: [600, 1800], flat: true, tier: 'U', tip: true },
     kosha:        { name: 'Kosha (the couple\u2019s stage and seating)', group: 'Style', fixed: [900, 4000], flat: true, tier: 'LSU', taxable: true },
@@ -166,7 +166,7 @@
   var CULTURES = {
     arabic: {
       name: 'Arabic wedding', guests: 250, hours: 6, menu: 'arabic', blurb: 'Zaffe entrance, live band and singer, the kosha, dabke and a mezze-to-knafeh menu.', pre: 'With the blessing of God and their families',
-      music: [['zaffe', 'Zaffe group'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dj', 'DJ'], ['dabke', 'Dabke troupe']], musicDefault: ['zaffe', 'liveMusic', 'dj', 'singer'],
+      music: [['zaffe', 'Zaffe and dabke group'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dj', 'DJ'], ['dabke', 'Dabke troupe']], musicDefault: ['zaffe', 'liveMusic', 'dj', 'singer'],
       add: ['kosha'],
       labels: { liveMusic: 'Live band (Arabic music)', singer: 'Arabic wedding singer', officiant: 'Officiant (sheikh or priest)', catering: 'Middle Eastern catering', cake: 'Wedding cake and Arabic sweets', dj: 'DJ (Arabic and international music)' },
       search: { liveMusic: 'arabic wedding band', singer: 'arabic wedding singer', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern mediterranean catering', officiant: 'sheikh imam or priest wedding officiant' },
@@ -319,7 +319,7 @@
     fusion: {
       name: 'Multicultural fusion wedding', guests: 200, hours: 6, menu: 'fusion', blurb: 'Two families, two traditions: blend the music, rituals and food you both love, from a dhol or zaffe entrance to mariachi and a henna night.',
       chipsTitle: 'Music and traditions from both families', chipsNote: 'Pick everything you want to blend. Each one gets its own line in your budget and its own vendor options.',
-      music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dhol', 'Dhol player'], ['zaffe', 'Zaffe group'], ['mariachi', 'Mariachi'], ['mehndi', 'Henna night'], ['teaCeremony', 'Tea ceremony']], musicDefault: ['dj', 'liveMusic', 'singer'],
+      music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dhol', 'Dhol player'], ['zaffe', 'Zaffe and dabke group'], ['mariachi', 'Mariachi'], ['mehndi', 'Henna night'], ['teaCeremony', 'Tea ceremony']], musicDefault: ['dj', 'liveMusic', 'singer'],
       add: [], pre: 'Together with their families',
       labels: { catering: 'Catering with dishes from both families', dj: 'DJ (music from both cultures)', cake: 'Wedding cake and desserts from both families', mehndi: 'Henna artist for the henna night' },
       search: { dj: 'multicultural wedding DJ', liveMusic: 'wedding band', singer: 'wedding singer', dhol: 'dhol player', zaffe: 'zaffe group wedding', mariachi: 'mariachi band', mehndi: 'henna artist', teaCeremony: 'tea ceremony wedding', catering: 'international fusion catering', photographer: 'multicultural wedding photographer' },
