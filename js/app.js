@@ -550,6 +550,15 @@
     return { brunch: '11:00', 'baby-shower': '13:00', 'bridal-shower': '13:00', 'gender-reveal': '14:00', graduation: '15:00', wedding: '17:00', other: '18:00' }[type] || '19:00';
   }
   /* Cultural weddings: which tradition the type menu or the description points to, and the music the host picks. */
+  /* A cultural wedding starts from its own photo: choosing one selects that photo (her own uploaded photos always stay in charge); going back to classic drops it. */
+  function matchCultureInspo(d) {
+    var ins = d.inspiration || (d.inspiration = { photos: [], links: [], text: '' }), cur = ins.inspo || '';
+    if ((ins.photos || []).length) return false;
+    var id = d.culture ? 'culture-' + d.culture : '';
+    if (id && cur !== id && (window.EC_INSPO || []).some(function (q) { return q.id === id; })) { ins.inspo = id; return true; }
+    if (!id && /^culture-/.test(cur)) { delete ins.inspo; return true; }
+    return false;
+  }
   function selCulture() { var o = $('#type') && $('#type').selectedOptions[0]; return (o && o.dataset.culture) || ''; }
   function guessCulture(text) {
     text = (text || '').toLowerCase();
@@ -589,7 +598,12 @@
   function bindCulture(ev, save, rerender) {
     var sel = $('#cultureSel'); if (!sel) return;
     sel.addEventListener('change', function () {
-      if (lockSample(ev)) return; var bf = snap(ev); ev.culture = sel.value || ''; ev.music = null; delete ev.ros; save(); rerender();
+      if (lockSample(ev)) return; var bf = snap(ev); ev.culture = sel.value || ''; ev.music = null; delete ev.ros;
+      if (matchCultureInspo(ev) && ev.concept) {   /* the look follows the tradition: its own photo, colors and decor */
+        var ip = E.inspoOf(ev), back = !ip && (ev.concepts || []).find(function (c) { return !/^culture-/.test(c.inspo || ''); });
+        if (ip || back || /^culture-/.test(ev.concept.inspo || '')) { ev.concept = ip ? E.inspoConcept(ev, ip) : back || Object.assign({}, ev.concept, { inspo: undefined, img: undefined }); if (ev.nameAuto) ev.name = ev.concept.name; }
+      }
+      save(); rerender();
       undoToast(ev, bf, 'Now planned as ' + (ev.culture ? (/^[aeiou]/i.test(E.typeName(ev)) ? 'an ' : 'a ') + E.typeName(ev) : ev.type === 'engagement' ? 'a classic engagement party' : 'a classic wedding'), rerender);
     });
   }
@@ -805,6 +819,7 @@
         var ab = $('#alcohol [aria-pressed="true"]'); draft.alcohol = ab ? ab.dataset.v : defaultAlcohol(draft.type, draft.inspiration && draft.inspiration.text);
         var pb = $('#payer [aria-pressed="true"]'); draft.payer = pb ? pb.dataset.v : 'host';
         if ($('#area')) draft.area = readArea($('#area'), $('#areaOther'));
+        matchCultureInspo(draft);
       }
       $('#later').addEventListener('click', function () { collect2(); if (!$('#name').value.trim()) draft.name = ''; persist(); var nm = draft.name || 'your event'; location.hash = '#/events'; setTimeout(function () { toast('Saved ' + nm + '. Pick it up anytime from My events.'); }, 80); });
       $('#next').addEventListener('click', function () {
@@ -1297,7 +1312,7 @@
     if (city && city.name !== ev.city) { ev.city = city.name; changes.push('city is now ' + city.name); }
     Object.keys(D.CATEGORIES).forEach(function (id) {
       var name = E.lc(D.CATEGORIES[id].name).split(' (')[0];
-      var short = { photographer: 'photographer', videographer: 'videographer', dj: 'dj', photoBooth: 'photo booth', effects: 'special effects', danceFloor: 'dance floor', liveMusic: 'live music', florals: 'flowers', balloons: 'balloons', lighting: 'lighting', coordinator: 'coordinator', hairMakeup: 'makeup', favors: 'favors', transport: 'transportation', bar: 'bar', cake: 'cake', mc: 'mc', security: 'security', kids: 'kids', entertainment: 'entertainment' }[id] || name;
+      var short = { photographer: 'photographer', videographer: 'videographer', dj: 'dj', photoBooth: 'photo booth', effects: 'special effects', danceFloor: 'dance floor', chocolateFountain: 'chocolate fountain', dessertBar: 'dessert bar', iceCreamCart: 'ice cream cart', coffeeBar: 'coffee bar', foodTruck: 'food truck', popcornCart: 'popcorn cart', booth360: '360 booth', livePainter: 'live painter', caricature: 'caricature artist', flowerWall: 'flower wall', bounceHouse: 'bounce house', facePainter: 'face painter', characterVisit: 'party character', gameTruck: 'game truck', magician: 'magician', balloonTwister: 'balloon twister', craftStation: 'craft station', pettingZoo: 'petting zoo', liveMusic: 'live music', florals: 'flowers', balloons: 'balloons', lighting: 'lighting', coordinator: 'coordinator', hairMakeup: 'makeup', favors: 'favors', transport: 'transportation', bar: 'bar', cake: 'cake', mc: 'mc', security: 'security', kids: 'kids', entertainment: 'entertainment' }[id] || name;
       var re = new RegExp('\\b(skip|remove|no|drop|without)\\b[^.]*\\b' + short.replace(/ /g, '\\s') + '\\b');
       var add = new RegExp('\\b(add|include|want|with)\\b[^.]*\\b' + short.replace(/ /g, '\\s') + '\\b');
       var hitRe = parts.some(function (pt) { return re.test(pt); }), hitAdd = parts.some(function (pt) { return add.test(pt); });
@@ -1653,14 +1668,18 @@
       '<p class="small">This is your package. Save it as a PDF, email it to yourself or forward it to a co-host anytime, booked or not.</p><div class="row pkg-sum-acts"><button class="btn gold small" data-pksum="pdf">Save as PDF</button><button class="btn ghost small" data-pksum="mail">Email it</button><button class="btn ghost small" data-pksum="share">Share</button></div></div>';
   }
   /* The playlist and optional add-ons, right in the package. */
-  var ADD_ONS = ['photographer', 'videographer', 'dj', 'liveMusic', 'hairMakeup', 'florals', 'decor', 'cake', 'lighting', 'photoBooth', 'effects', 'danceFloor', 'transport', 'coordinator', 'favors', 'invitations', 'balloons'];
-  /* A restaurant handles the room, food and drinks: only what you'd bring to a restaurant table. */
-  var REST_ADD_ONS = ['photographer', 'videographer', 'florals', 'cake', 'favors', 'invitations', 'transport'];
+  /* Add-ons she can put in her package, grouped, and only the ones that suit this occasion and setting. */
+  var ADD_LABEL = { characterVisit: 'Character visit', gameTruck: 'Game truck or games', magician: 'Magician or bubble show', craftStation: 'Craft or slime station', pettingZoo: 'Petting zoo or pony rides', dessertBar: 'Dessert bar', iceCreamCart: 'Ice cream cart', coffeeBar: 'Coffee bar', popcornCart: 'Popcorn and cotton candy', livePainter: 'Live painter', flowerWall: 'Flower wall', lighting: 'Uplighting', invitations: 'Printed invitations', coordinator: 'Day-of coordinator', bounceHouse: 'Bounce house', favors: 'Favors', balloons: 'Balloons', hairMakeup: 'Hair and makeup', florals: 'Florals', decor: 'Decor' };
+  function addOnsFor(ev, have) {
+    var rest = ev.setting === 'restaurant' || ev.setting === 'privateRoom';
+    var fits = function (it) { return D.CATEGORIES[it.id] && have.indexOf(it.id) < 0 && (it.kids ? (ev.type === 'kids-birthday' || ev.kids && /birthday/.test(ev.type || '')) && !rest && (!it.settings || it.settings.indexOf(ev.setting) >= 0) : rest ? D.PKG_ADDONS_RESTAURANT.indexOf(it.id) >= 0 : (!it.only || it.only.indexOf(ev.type) >= 0) && (!it.not || it.not.indexOf(ev.type) < 0) && (!it.settings || it.settings.indexOf(ev.setting) >= 0)) ; };
+    return D.PKG_ADDONS.map(function (g) { return { group: g.group, items: g.items.filter(fits).map(function (it) { return it.id; }) }; }).filter(function (g) { return g.items.length; });
+  }
   function pkgExtras(ev, b) {
     var pl = ev.setting === 'restaurant' ? null : playlistOf(ev), have = b.items.map(function (i) { return i.id; });
-    var adds = ev.sample ? [] : (ev.setting === 'restaurant' || ev.setting === 'privateRoom' ? REST_ADD_ONS : ADD_ONS).filter(function (id) { return D.CATEGORIES[id] && have.indexOf(id) < 0 && !(id === 'balloons' && /wedding|gala|engagement|anniversary/.test(ev.type)); });
+    var groups = ev.sample ? [] : addOnsFor(ev, have);
     return (pl ? '<div class="pkg-pl"><span aria-hidden="true">\u266b</span><span class="grow"><b>Playlist: ' + esc(pl.name) + '</b><span class="small muted"> \u00b7 ' + pl.songs.length + ' songs, part of your package</span></span><a class="btn small ghost" href="#/e/' + esc(ev.id) + '/style" data-goto="playlist">See the songs</a></div>' : '') +
-      (adds.length ? '<div class="pkg-adds"><b class="small">Add to your package</b><span class="small muted"> Optional. Each one adds a line, a price and top-rated picks.</span><div class="chips">' + adds.map(function (id) { return '<button type="button" class="chip" data-pkadd="' + id + '">+ ' + esc(catName(id, ev)) + '</button>'; }).join('') + '</div></div>' : '');
+      (groups.length ? '<div class="pkg-adds"><b class="small">Add to your package</b><span class="small muted"> Optional extras for your ' + esc(E.lc(E.typeName(ev))) + '. Each one adds a line, a price and top-rated local businesses that offer it.</span>' + groups.map(function (g) { return '<p class="pkg-add-g small muted">' + esc(g.group) + '</p><div class="chips">' + g.items.map(function (id) { return '<button type="button" class="chip" data-pkadd="' + id + '">+ ' + esc(ADD_LABEL[id] || catName(id, ev).replace(/ \(.*\)$/, '')) + '</button>'; }).join('') + '</div>'; }).join('') + '</div>' : '');
   }
   function pkgSumDoc(ev) {
     var b = E.budget(ev, ev.tier), cats = pkgCats(ev, b), pks = ev.packages || [], cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], d = pkgData(ev, b, cats, cp);
@@ -1986,6 +2005,7 @@
   var BY_THEME = ['decor', 'balloons', 'kids', 'entertainment'];
   function occasionHint(ev) { var hc = E.culture(ev); if (hc) return hc.hint; return { wedding: 'wedding,bridal', quince: 'quince,quincea\u00f1era,xv', 'kids-birthday': 'kids,party', 'baby-shower': 'baby,shower', 'bridal-shower': 'bridal,wedding', corporate: 'corporate,event' }[ev.type] || ''; }
   function vendorQuery(ev, i, lvl) {
+    if (i.id === 'characterVisit') { var THEMES = [[/princess|frozen|elsa|cinderella|belle|rapunzel|ariel/i, 'princess party characters'], [/super ?hero|spider|batman|marvel|avengers/i, 'superhero party characters'], [/mermaid/i, 'mermaid party entertainment'], [/unicorn/i, 'unicorn party entertainment'], [/pirate/i, 'pirate party entertainment'], [/dino/i, 'dinosaur party entertainment'], [/fairy/i, 'fairy party entertainment']]; var th = null; [(ev.inspiration && ev.inspiration.text) || '', ev.name || '', (ev.concept && ev.concept.name) || ''].some(function (said) { th = THEMES.find(function (t) { return t[0].test(said); }); return th; }); return th ? th[1] : 'kids party character entertainment'; }   /* her own words first, then the look's name */   /* her theme's characters */
     var vcu = E.culture(ev); if (vcu && vcu.search[i.id]) return vcu.search[i.id];
     var cw = vcu && cultureWord(ev); if (cw && CULTURE_CATS[i.id]) return cw + CULTURE_CATS[i.id];
     var vs = ev.alcohol === 'none' && i.id === 'bar' ? 'mocktail bar service' : ev.alcohol === 'none' && i.id === 'bartender' ? 'mocktail bartender service' : VENDOR_SEARCH[i.id];
@@ -2007,7 +2027,7 @@
   var CULTURE_CATS = { attire: ' bridal wear boutique', favors: ' wedding favors', decor: ' wedding decor', hairMakeup: ' bridal makeup artist', photographer: ' wedding photographer', videographer: ' wedding videographer', catering: ' catering', dj: ' wedding DJ', liveMusic: ' wedding band', singer: ' wedding singer', officiant: ' wedding officiant', invitations: ' wedding invitations', florals: ' wedding florist' };
   function cultureWord(ev) { return ev.culture && ev.culture !== 'africanamerican' && D.CULTURES[ev.culture] ? D.CULTURES[ev.culture].name.replace(/ wedding$/i, '').toLowerCase() : ''; }
   /* When the first search comes back short, these searches fill the gaps, so no line is left empty. */
-  var PKG_FALLBACK = { baraat: ['wedding horse rental', 'dhol player'], dhol: ['dhol player', 'indian wedding DJ'], liveMusic: ['live wedding band', 'live band for events'], singer: ['wedding singer', 'live wedding band'],
+  var PKG_FALLBACK = { characterVisit: ['princess party characters', 'superhero party characters', 'kids party entertainment'], gameTruck: ['video game truck', 'kids party games entertainment'], magician: ['magician for kids', 'bubble show'], balloonTwister: ['balloon artist kids party'], craftStation: ['kids craft party', 'slime party'], pettingZoo: ['petting zoo', 'pony rides'], chocolateFountain: ['chocolate fountain catering', 'dessert catering'], dessertBar: ['dessert table catering', 'candy buffet'], iceCreamCart: ['gelato catering', 'ice cream truck'], coffeeBar: ['coffee cart catering', 'espresso catering'], foodTruck: ['food truck'], popcornCart: ['cotton candy machine rental', 'concession rentals'], booth360: ['360 booth', 'photo booth rental'], livePainter: ['live wedding painter', 'event painter'], caricature: ['caricature artist'], flowerWall: ['flower wall rental', 'event backdrop rental'], bounceHouse: ['party inflatables rental'], facePainter: ['face painting'], effects: ['cold spark machine rental', 'dancing on a cloud'], danceFloor: ['dance floor rental', 'LED dance floor rental'], baraat: ['wedding horse rental', 'dhol player'], dhol: ['dhol player', 'indian wedding DJ'], liveMusic: ['live wedding band', 'live band for events'], singer: ['wedding singer', 'live wedding band'],
     cake: ['wedding cake bakery'], mehndi: ['henna artist', 'mehndi artist'], mandap: ['indian wedding decor', 'wedding stage decor'], kosha: ['wedding stage decor'], sofreh: ['persian wedding decor'], officiant: ['wedding officiant'],
     attire: ['bridal boutique'], favors: ['wedding favors'], zaffe: ['zaffe', 'arabic wedding entertainment'], dabke: ['dabke dance group'], qawwali: ['qawwali'], mariachi: ['mariachi band'], lionDance: ['lion dance'],
     teaCeremony: ['tea ceremony wedding'], giftTrays: ['wedding gift trays'], gele: ['gele tying'], flamenco: ['flamenco dancers'], gospel: ['gospel choir', 'gospel singer'], secondLine: ['brass band'] };
@@ -2027,7 +2047,7 @@
   function stateOf(addr) { var m = /,\s([A-Z]{2})\s(\d{5}|[A-Z]\d[A-Z])/.exec(addr || ''); return m ? m[1] : ''; }
   function sameState(ev, p) { if (['US', 'CA'].indexOf(E.countryOf(ev.city).id) < 0) return true; var want = (ev.city || '').split(', ')[1] || '', got = stateOf(p.address); return !want || !got || want === got || /orange county/i.test(ev.city) && got === 'CA'; }
   var ADULT_FAVORS = /pi[ñn]ata|balloon|party (city|supply|supplies|store)|\btoys?\b|kids/i;
-  var PKG_PREFER = { kosha: /stage|kosha|decor|design|backdrop|event/i, mandap: /mandap|stage|decor|design/i, sofreh: /sofreh|aghd|decor|design/i, mehndi: /henna|mehndi|mehendi|mehandi/i, baraat: /horse|baraat|carriage|dhol/i, dhol: /dhol/i, officiant: /officiant|minister|priest|pandit|pujari|imam|maulvi|rabbi|reverend|pastor|temple|mandir|masjid|mosque|church|celebrant|ceremon/i,
+  var PKG_PREFER = { characterVisit: /princess|character|hero|party|entertain|fairy|mascot/i, gameTruck: /game|truck|play/i, magician: /magic|bubble|illusion/i, balloonTwister: /balloon/i, craftStation: /craft|slime|art|diy/i, pettingZoo: /zoo|pony|farm|animal/i, chocolateFountain: /fountain|chocolate|dessert|cater/i, dessertBar: /dessert|candy|sweet|treat|cater/i, iceCreamCart: /ice cream|gelato|cream|frozen/i, coffeeBar: /coffee|espresso|barista|latte|brew/i, foodTruck: /truck|food|grill|taco|kitchen/i, popcornCart: /popcorn|cotton candy|concession|rental/i, booth360: /360|booth|photo/i, livePainter: /paint|art|canvas/i, caricature: /caricatur|artist|draw/i, flowerWall: /flower|floral|wall|backdrop/i, bounceHouse: /bounce|inflat|jump|rental/i, facePainter: /face|paint/i, effects: /spark|fog|cloud|effect|fx|sound|light/i, danceFloor: /floor|dance|rental|led/i, kosha: /stage|kosha|decor|design|backdrop|event/i, mandap: /mandap|stage|decor|design/i, sofreh: /sofreh|aghd|decor|design/i, mehndi: /henna|mehndi|mehendi|mehandi/i, baraat: /horse|baraat|carriage|dhol/i, dhol: /dhol/i, officiant: /officiant|minister|priest|pandit|pujari|imam|maulvi|rabbi|reverend|pastor|temple|mandir|masjid|mosque|church|celebrant|ceremon/i,
     singer: /sing|vocal|voice|music|band/i, liveMusic: /band|music|orchestra|ensemble|live/i, zaffe: /zaff|zeff|zafe|dabke|arab/i, mariachi: /mariachi/i, lionDance: /lion|dragon|kung fu|martial/i, gele: /gele/i, qawwali: /qawwal/i };
   function fitsLine(ev, cat, p) {
     var n = p.name || '';
@@ -2074,7 +2094,7 @@
     }).catch(function () {});
   }
   function vendorAsk(ev, cat) {
-    var need = E.lc(catName(cat, ev)).replace(/ \(.*\)$/, ''); if (['dj', 'mc', 'singer', 'zaffe', 'dabke', 'dhol', 'photographer', 'videographer', 'officiant', 'coordinator', 'bartender', 'photoBooth', 'mehndi', 'kosha', 'mandap'].indexOf(cat) >= 0) need = (/^[aeiou]/i.test(need) ? 'an ' : 'a ') + need;
+    var need = E.lc(catName(cat, ev)).replace(/ \(.*\)$/, ''); if (['dj', 'mc', 'singer', 'zaffe', 'dabke', 'dhol', 'photographer', 'videographer', 'officiant', 'coordinator', 'bartender', 'photoBooth', 'chocolateFountain', 'dessertBar', 'coffeeBar', 'foodTruck', 'booth360', 'livePainter', 'caricature', 'flowerWall', 'bounceHouse', 'facePainter', 'characterVisit', 'gameTruck', 'magician', 'balloonTwister', 'craftStation', 'pettingZoo', 'mehndi', 'kosha', 'mandap'].indexOf(cat) >= 0) need = (/^[aeiou]/i.test(need) ? 'an ' : 'a ') + need;
     var b = E.budget(ev, ev.tier || 'S'), line = b.items.find(function (i) { return i.id === cat; });
     var theme = themeWords(ev);
     var tn = ev.type === 'other' ? 'celebration' : E.typeName(ev);
@@ -2155,7 +2175,10 @@
     decor: 'event decor rentals centerpieces backdrops', florals: 'florist', cake: 'custom cake bakery', photographer: 'event photographer',
     videographer: 'event videographer', dj: 'event DJ', liveMusic: 'live band for events', balloons: 'balloon decor installations', lighting: 'event lighting rental',
     rentals: 'party rentals tables chairs linens', catering: 'catering company', bartender: 'mobile bartending service', bar: 'mobile bar service',
-    hairMakeup: 'hair and makeup artist', photoBooth: 'photo booth rental', effects: 'cold spark machine rental and dancing on a cloud', danceFloor: 'custom dance floor rental', entertainment: 'event entertainment', kids: 'kids party entertainment', mc: 'event MC host',
+    hairMakeup: 'hair and makeup artist', photoBooth: 'photo booth rental', effects: 'cold spark machine rental and dancing on a cloud', danceFloor: 'custom dance floor rental',
+    chocolateFountain: 'chocolate fountain rental', dessertBar: 'candy buffet and dessert table', iceCreamCart: 'ice cream cart catering', coffeeBar: 'mobile espresso coffee bar', foodTruck: 'food truck catering for events',
+    popcornCart: 'popcorn and cotton candy machine rental', booth360: '360 photo booth rental', livePainter: 'live event painter', caricature: 'caricature artist for events', flowerWall: 'flower wall backdrop rental',
+    bounceHouse: 'bounce house rental', facePainter: 'face painter for kids parties', characterVisit: 'kids party character entertainment', gameTruck: 'game truck party', magician: 'kids party magician', balloonTwister: 'balloon twister for kids parties', craftStation: 'kids party craft station', pettingZoo: 'mobile petting zoo pony rides', entertainment: 'event entertainment', kids: 'kids party entertainment', mc: 'event MC host',
     transport: 'luxury transportation limo', security: 'event security', coordinator: 'day-of event coordinator', cleanup: 'event setup and cleanup crew',
     officiant: 'wedding officiant', favors: 'custom party favors', invitations: 'custom invitations stationery', attire: 'formal wear boutique'
   };
@@ -2163,7 +2186,10 @@
     decor: 'Centerpieces, backdrop, linens styling and setup', florals: 'Centerpieces, bouquets and installations', cake: 'Custom cake sized to your guest count',
     photographer: 'Coverage hours, edited gallery', dj: 'Music, sound system and announcements', balloons: 'Garland or arch with install',
     lighting: 'Uplighting and setup', rentals: 'Tables, chairs, linens, tableware, delivery', hairMakeup: 'On-site styling for the guest of honor',
-    photoBooth: 'Booth, attendant and prints', effects: 'Cold sparks or low fog for the first dance and grand entrance', danceFloor: 'Floor, custom wrap, delivery and install', catering: 'Food, staff and service', bartender: 'Licensed bartenders per hour', videographer: 'Coverage and edited film'
+    photoBooth: 'Booth, attendant and prints', effects: 'Cold sparks or low fog for the first dance and grand entrance', danceFloor: 'Floor, custom wrap, delivery and install',
+    chocolateFountain: 'Fountain, chocolate, dippers and an attendant', dessertBar: 'Styled table, sweets, jars and setup', iceCreamCart: 'Cart, server and flavors for your guest count', coffeeBar: 'Barista, espresso drinks and setup',
+    foodTruck: 'Truck, menu and service for your guests', popcornCart: 'Machines, supplies and an attendant', booth360: 'Platform, attendant and shareable videos', livePainter: 'A painting of your event, finished on the day',
+    caricature: 'Quick drawings guests take home', flowerWall: 'Backdrop delivered and set up for photos', bounceHouse: 'Inflatable, delivery and setup', facePainter: 'Face painting for the kids', characterVisit: 'A costumed character for songs, photos and games', gameTruck: 'Video game truck or a host running party games', magician: 'A show for the kids, about 45 minutes', balloonTwister: 'Balloon animals and swords for every kid', craftStation: 'Supplies and a host for a hands-on craft', pettingZoo: 'Animals, handlers and setup', catering: 'Food, staff and service', bartender: 'Licensed bartenders per hour', videographer: 'Coverage and edited film'
   };
   TAB_VIEWS.vendors = function (ev, b) {
     var city = ev.city.replace(/^Other (US city|city in .+)$/, '');
@@ -2236,7 +2262,7 @@
     return { amazon: 'https://www.amazon.com/s?k=' + encodeURIComponent(q) + tag, etsy: 'https://www.etsy.com/search?q=' + encodeURIComponent(q) };
   }
   /* Get this look: every piece named in the host's words, marked in her photos, or seen in the chosen photo or look, with where to buy it or who to hire. */
-  var HIRE_WHO = { florals: 'a florist', cake: 'a baker', balloons: 'a balloon artist', decor: 'a decorator', rentals: 'a rental company', lighting: 'a lighting company', catering: 'a caterer', kids: 'a kids entertainer', liveMusic: 'a band', photoBooth: 'a photo booth company', effects: 'a special effects company', danceFloor: 'a dance floor rental company' };
+  var HIRE_WHO = { florals: 'a florist', cake: 'a baker', balloons: 'a balloon artist', decor: 'a decorator', rentals: 'a rental company', lighting: 'a lighting company', catering: 'a caterer', kids: 'a kids entertainer', liveMusic: 'a band', photoBooth: 'a photo booth company', effects: 'a special effects company', danceFloor: 'a dance floor rental company', chocolateFountain: 'a chocolate fountain company', dessertBar: 'a dessert bar company', iceCreamCart: 'an ice cream cart', coffeeBar: 'a coffee bar company', foodTruck: 'a food truck', popcornCart: 'a concessions rental company', booth360: 'a 360 booth company', livePainter: 'a live painter', caricature: 'a caricature artist', flowerWall: 'a flower wall rental', bounceHouse: 'a bounce house rental', facePainter: 'a face painter', characterVisit: 'a party character company', gameTruck: 'a game truck', magician: 'a magician', balloonTwister: 'a balloon twister', craftStation: 'a craft party host', pettingZoo: 'a petting zoo' };
   var WHY = { asked: 'You asked for this', loved: 'You marked this in your photo', photo: 'In the inspiration photo', ai: 'In your inspiration', look: 'Part of this look' };
   function lookList(ev) {
     var rest = ev.setting === 'restaurant' || ev.setting === 'privateRoom';

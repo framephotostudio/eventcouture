@@ -830,3 +830,4 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .pkg-pl > span[aria-hidden] { font-size: 1.3rem; color: var(--plum, #4A1438); }
 .pkg-adds { display: grid; gap: 6px; }
 .pkg-adds .chips { margin-top: 2px; }
+.pkg-add-g { margin: 6px 0 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
