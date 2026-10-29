@@ -581,8 +581,11 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 .topbar .icon-btn { width: 28px !important; height: 28px !important; background: transparent; border: .75px solid rgba(214, 190, 140, .75); color: #EAD5A4; }
 .topbar .icon-btn:hover { background: rgba(214, 190, 140, .12); }
 .topbar .icon-btn svg { width: 15px; height: 15px; stroke-width: 1.4; }
-@media (min-width: 700px) { .topbar { height: calc(env(safe-area-inset-top, 0px) + 63px); } .brand.logo-mark { grid-auto-flow: column; align-items: center; gap: 22px; } .brand.logo-mark img { height: 61px; } .brand.logo-mark .by { font-size: 26px; letter-spacing: .26em; margin: 8px 0 0 !important; } }
-@media (min-width: 1100px) { .brand.logo-mark img { height: 62px; } .brand.logo-mark .by { font-size: 30px; letter-spacing: .3em; } }
+/* Desktop: the gold script logo drawn wider (same height), with by Always Luxe beside it, filling the plum band */
+.brand.logo-mark .wordmark { display: none; }
+@media (min-width: 700px) { .topbar { height: calc(env(safe-area-inset-top, 0px) + 63px); } .brand.logo-mark { grid-auto-flow: column; align-items: center; gap: 24px; }
+  .brand.logo-mark img { height: 61px; width: 224px; aspect-ratio: auto; object-fit: fill; } .brand.logo-mark .by { font-size: 26px; letter-spacing: .26em; margin: 8px 0 0 !important; } }
+@media (min-width: 1100px) { .brand.logo-mark img { height: 62px; width: 236px; } .brand.logo-mark .by { font-size: 30px; letter-spacing: .3em; } }
 @media (max-width: 360px) { .brand.logo-mark img { height: 44px; } .brand.logo-mark .by { font-size: 10.5px; letter-spacing: .12em; } .topbar { gap: 4px; padding-left: 8px; padding-right: 8px; } }
 
 /* Your plan, step by step */
@@ -837,9 +840,3 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .pkg-more { gap: 10px; }
 .pkg-more h3 { margin: 0; }
 .pkg-more .pkg-pl, .pkg-more .pkg-adds-row { margin: 0; }
-
-/* Footer: the full gold Event Couture logo, large, on the plum band */
-footer.site .foot-logo { display: grid; justify-items: center; gap: 4px; text-decoration: none; margin: 4px auto 14px; }
-footer.site .foot-logo img { display: block; margin: 0; width: min(78vw, 420px); height: auto; aspect-ratio: 563 / 210; border: 0; border-radius: 0; box-shadow: none; background: none; filter: drop-shadow(0 1px 1px rgba(20, 4, 12, .35)); }
-footer.site .foot-logo .by { font-family: var(--display); font-weight: 600; font-size: clamp(16px, 4.2vw, 22px); letter-spacing: .2em; line-height: 1;
-  background: linear-gradient(180deg, #F3E3BE 0%, #D9BC84 55%, #EAD5A4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
