@@ -6,9 +6,9 @@
 **Category:** Lifestyle (secondary: Productivity)
 **Age rating:** 4+ / Everyone
 **Price:** Free (no in-app purchases in version 1.0; a paid Event Pass can come later through Apple and Google in-app purchase)
-**Support URL:** https://facecouture.app/eventcouture/#/help
-**Privacy Policy URL:** https://facecouture.app/eventcouture/#/privacy
-**Marketing URL:** https://facecouture.app/eventcouture/
+**Support URL:** https://eventcouture.app/#/help
+**Privacy Policy URL:** https://eventcouture.app/#/privacy
+**Marketing URL:** https://eventcouture.app/
 
 ## Description
 Plan a beautiful event from one photo, a few words, or just your colors.

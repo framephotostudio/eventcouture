@@ -2,7 +2,7 @@
   "name": "event-couture-app",
   "version": "1.0.0",
   "private": true,
-  "description": "Event Couture: Party Planner by Always Luxe - iPhone and Android apps built from the facecouture.app/eventcouture site",
+  "description": "Event Couture: Party Planner by Always Luxe - iPhone and Android apps built from the eventcouture.app site",
   "scripts": {
     "build:web": "node scripts/build-web.mjs",
     "sync": "npm run build:web && npx cap sync"

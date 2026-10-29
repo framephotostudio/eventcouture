@@ -9,7 +9,7 @@ let cfg = fs.readFileSync(path.join(SITE, 'js/config.js'), 'utf8');
 const api = process.env.EC_API_URL || 'https://event-couture-api.facecouture.workers.dev';
 cfg = cfg.replace(/apiUrl:\s*'[^']*'/, "apiUrl: '" + api + "'");
 if (!/apiUrl: 'https/.test(cfg)) throw new Error('apiUrl not set in app config');
-cfg += "\nwindow.EC_CONFIG.siteUrl = 'https://facecouture.app/eventcouture/';\nwindow.EC_CONFIG.app = true;\nwindow.EC_CONFIG.appVersion = " + JSON.stringify(process.env.APP_VERSION || '1.0.0') + ";\n";
+cfg += "\nwindow.EC_CONFIG.siteUrl = 'https://eventcouture.app/';\nwindow.EC_CONFIG.app = true;\nwindow.EC_CONFIG.appVersion = " + JSON.stringify(process.env.APP_VERSION || '1.0.0') + ";\n";
 fs.writeFileSync(path.join(OUT, 'js/config.js'), cfg);
 let html = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8');
 // fonts are bundled into the app so it looks right offline
