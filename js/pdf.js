@@ -7,8 +7,11 @@
   var SPECIAL = { 0x20AC: 0x80, 0x201A: 0x82, 0x201E: 0x84, 0x2026: 0x85, 0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x2122: 0x99 };
   /* text to WinAnsi codes; anything the standard fonts can't draw (emoji, stars) is dropped */
   function one(c) { if (c === 9 || c === 10) return 32; if ((c >= 32 && c < 127) || (c >= 160 && c <= 255)) return c; return SPECIAL[c] || 0; }
+  /* currency signs the standard fonts can't draw become their codes, so no price loses its currency */
+  var CUR_CODE = { '\u20b9': 'INR', '\u20a9': 'KRW', '\u20ba': 'TRY', '\u20a6': 'NGN', '\u20b1': 'PHP', '\u09f3': 'BDT', '\u20aa': 'ILS', '\u0e3f': 'THB', 'GH\u20b5': 'GHS' };
+  var CUR_SIGN = /GH\u20b5|[\u20b9\u20a9\u20ba\u20a6\u20b1\u09f3\u20aa\u0e3f]/g;
   function codes(s) {
-    var src = String(s == null ? '' : s).replace(/\u2605\s?/g, '').replace(/\u2192/g, '->'), out = [];
+    var src = String(s == null ? '' : s).replace(/\u2605\s?/g, '').replace(/\u2192/g, '->').replace(CUR_SIGN, function (m) { return CUR_CODE[m] + ' '; }), out = [];
     Array.from(src).forEach(function (ch) {
       var c = one(ch.codePointAt(0));
       if (!c && ch.normalize) { var base = ch.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); if (base.length === 1) c = one(base.charCodeAt(0)); }   /* e.g. Vietnamese letters keep their base letter */

@@ -23,8 +23,9 @@
     return D.CITIES.find(function (c) { return c.name === 'Other US city'; });
   }
   function countryOf(city) { return D.COUNTRIES.find(function (c) { return c.id === cityOf(city).country; }) || D.COUNTRIES[0]; }
-  var CUR = 'USD';
-  function useCountry(cityOrNull) { CUR = cityOrNull ? countryOf(cityOrNull).currency : 'USD'; return CUR; }
+  var CUR = 'USD', CUR_SYM = '$';
+  /* The symbol comes from the plan's own country: US dollars are "US$" in Argentina or Lebanon, where "$" means the local money. */
+  function useCountry(cityOrNull) { var co = cityOrNull ? countryOf(cityOrNull) : null; CUR = co ? co.currency : 'USD'; CUR_SYM = co ? co.sym : '$'; return CUR; }
   function currency() { return CUR; }
   function isOtherCity(c) { return !c || /^Other /.test(c.name); }
 
@@ -86,6 +87,7 @@
     if (ev.setting === 'outdoor' && /\b(park|backyard|beach|yard|lake)\b/.test(said)) list = list.filter(function (c) { return c !== 'venue'; });   /* a park or backyard needs a permit, not a rental */
     var cu = culture(ev);
     if (cu) list = list.filter(function (c) { return MUSIC_CATS.indexOf(c) < 0 || (ev.priorities || []).indexOf(c) >= 0 && musicOf(ev).indexOf(c) >= 0; }).concat(musicOf(ev), cu.add);
+    list = list.concat((ev.include || []).filter(function (c) { return D.CATEGORIES[c]; }));   /* an add-on she chose is always a line */
     var seen = {};
     return list.filter(function (c) { if (seen[c] || (ev.exclude || []).indexOf(c) >= 0) return false; seen[c] = 1; return true; });
   }
@@ -162,7 +164,7 @@
   /* Made for your budget: one plan that lands at the host's number, protecting must-haves. */
   var FIT_TIER = { id: 'F', name: 'Your budget plan', mult: 1, blurb: 'One plan built to your exact budget, with your must-haves protected.' };
   /* Never auto-dropped: venue, food, security and insurance (venues often require the last two). They can be trimmed, not removed. */
-  var OPTIONAL = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'cleanup', 'hairMakeup', 'florals', 'balloons'];
+  var OPTIONAL = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'cleanup', 'hairMakeup', 'florals', 'balloons', 'effects', 'danceFloor'];
   /* Lowercase a category name for a sentence, keeping DJ, MC and LED as they are. */
   function lc(name) { return String(name).toLowerCase().replace(/\b(dj|mc|led)\b/g, function (m) { return m.toUpperCase(); }); }
   function listJoin(a) { return a.length < 2 || a.some(function (x) { return / and /.test(x); }) ? a.join(', ') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
@@ -266,12 +268,12 @@
     if (ev.setting === 'restaurant') {
       var kind = { L: 'a stylish casual restaurant', S: 'an upscale restaurant', U: 'a fine-dining restaurant' }[b.tier.id];
       var meal = b.items.filter(function (i) { return i.id === 'restaurantFood' || i.id === 'restaurantDrinks'; }).reduce(function (s, i) { return s + i.mid; }, 0);
-      pros.push('Plans for ' + kind + ': food and drinks about ' + money(meal / Math.max(1, ev.guests || 1)) + ' per person with tax and tip');
+      pros.push('Plans for ' + kind + ': food and drinks about ' + money(meal / Math.max(1, ev.guests || 1)) + ' per person with tax and ' + (countryOf(ev.city || '').tip !== false ? 'tip' : 'service'));
       pros.push('No venue, rentals, setup or cleanup');
       if (has('photographer')) pros.push('A photographer for the first two hours');
       cons.push('Decor is limited to the table; ask the restaurant what is allowed');
       if (b.tier.id === 'U') cons.push('Fine dining books up early for groups');
-      else cons.push('Large groups may get a set menu or automatic tip');
+      else cons.push('Large groups may get a set menu or an automatic service charge');
       if (ev.budget && b.total > ev.budget) cons.unshift('About ' + money(b.total - ev.budget) + ' over your budget');
       else if (ev.budget) pros.unshift('Fits your budget with ' + money(ev.budget - b.total) + ' to spare');
       return { pros: pros, cons: cons };
@@ -304,7 +306,7 @@
   function guardian(ev, b) {
     if (!ev.budget || b.total <= ev.budget) return { over: 0, swaps: [] };
     var over = b.total - ev.budget;
-    var optional = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'security', 'photographer', 'dj', 'attire', 'hairMakeup', 'balloons', 'florals'];
+    var optional = ['videographer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'security', 'photographer', 'dj', 'attire', 'hairMakeup', 'balloons', 'florals', 'effects', 'danceFloor'];
     var pri = ev.priorities || [];
     var swaps = b.items.filter(function (i) { return optional.indexOf(i.id) >= 0 && pri.indexOf(i.id) < 0 && !(ev.type === 'wedding' && /photographer|attire/.test(i.id)); })
       .sort(function (a, b2) { return b2.mid - a.mid; })
@@ -366,7 +368,7 @@
       { item: 'Wine', qty: Math.ceil(drinks * 0.4 / 5), unit: 'bottles', note: 'If 40% of drinks are wine; 5 glasses per bottle' },
       { item: 'Beer', qty: Math.ceil(drinks * (ev.alcohol === 'wine' ? 0.45 : 0.25)), unit: 'bottles or cans', note: ev.alcohol === 'wine' ? 'About 45% of drinks' : 'About 25% of drinks; the rest are cocktails and soft drinks' },
       { item: 'Champagne for a toast', qty: Math.ceil(g / 6), unit: 'bottles', note: '6 toast pours per bottle' }]).concat([
-      { item: 'Ice', qty: Math.ceil(g * 1.5), unit: 'lb', note: '1.5 lb per guest; double it outdoors in summer' },
+      (countryOf(ev.city || '').id === 'US' ? { item: 'Ice', qty: Math.ceil(g * 1.5), unit: 'lb', note: '1.5 lb per guest; double it outdoors in summer' } : { item: 'Ice', qty: Math.ceil(g * 0.7), unit: 'kg', note: '0.7 kg per guest; double it outdoors in summer' }),
       { item: 'Appetizers', qty: g * (ev.mealServed === false ? 10 : 4), unit: 'pieces', note: ev.mealServed === false ? 'No full meal: 10 pieces per guest' : '4 pieces per guest before a meal' },
       { item: 'Cake or dessert', qty: Math.ceil(g * 1.1), unit: 'servings', note: '10% extra' },
       { item: 'Plates', qty: Math.ceil(g * 3 * 1.1), unit: 'plates', note: 'Appetizer, dinner and dessert, plus 10%' },
@@ -576,6 +578,7 @@
     var own = TYPE_TITLE[ev.type] || '', ownL = own.toLowerCase();
     var out = name.replace(OCCASION_WORDS, function (w) { var l = w.toLowerCase(); if (!own || ownL.indexOf(l) >= 0 || l.indexOf(ownL) >= 0 || (ev.type === 'gala' && /gala|fundraiser/.test(l)) || (/birthday|milestone|sweet16|kids-birthday/.test(ev.type) && l === 'birthday')) return w; return own; });
     if (/^(wedding|engagement|gala|anniversary|quince)$/.test(ev.type) && own) out = out.replace(/\bparty\b/gi, own);   /* formal occasions are never called a party */
+    own.split(/\s+/).forEach(function (w) { if (w) out = out.replace(new RegExp('\\b(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')(\\s+\\1\\b)+', 'gi'), '$1'); });   /* "Engagement" + "Engagement Party" is said once */
     return out.replace(new RegExp('(' + (own || 'x').replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')(\\s+\\1)+', 'i'), '$1');
   }
   /* For a look without its own photo: the closest labeled AI inspiration photo for this occasion (colors and style), never one already shown. */
@@ -718,9 +721,11 @@
     return out;
   }
 
-  function symOf(cur) { var co = (D.COUNTRIES || []).find(function (k) { return k.currency === cur; }); return co ? co.sym : '$'; }
-  function money(n) { return symOf(CUR) + Math.round(n).toLocaleString('en-US'); }
-  function moneyIn(n, city) { return countryOf(city).sym + Math.round(n).toLocaleString('en-US'); }
+  function symOf(cur) { if (cur === CUR) return CUR_SYM; var co = (D.COUNTRIES || []).find(function (k) { return k.currency === cur; }); return co ? co.sym : '$'; }
+  /* Estimates in the millions read as estimates (VND 478,200,000, not VND 478,159,705); rupees use lakh grouping (12,48,000). */
+  function fmt(n, cur) { n = Math.round(n); if (Math.abs(n) >= 1e6) { var p = Math.pow(10, Math.floor(Math.log10(Math.abs(n))) - 3); n = Math.round(n / p) * p; } return n.toLocaleString(cur === 'INR' ? 'en-IN' : 'en-US'); }
+  function money(n) { return symOf(CUR) + fmt(n, CUR); }
+  function moneyIn(n, city) { var co = countryOf(city); return co.sym + fmt(n, co.currency); }
 
   root.EC_ENGINE = {
     forOccasion: forOccasion,
