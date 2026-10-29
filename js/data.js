@@ -698,12 +698,12 @@
       { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hairMakeup'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' },
       { name: 'Makeup by Suzette', ig: 'makeupbysuzette', cats: ['hairMakeup'], cities: ['Houston, TX'], note: 'Celebrity makeup and hair artist and glam team, bridal glam. Houston and worldwide' },
       /* No Instagram: maps is what to search on Google Maps, and the link opens their listing there. */
-      /* Houston Persian weddings: Kasra first, then Caspian, then Garson; Zafran and Aban after them. */
+      /* Houston Persian weddings: Kasra first, then Aban, Caspian, Garson and Zafran. */
       { name: 'Kasra Persian Grill', maps: 'Kasra Persian Grill Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 60, note: 'Persian grill and catering: kabobs, rice and stews for weddings and parties' },
       { name: 'Caspian', maps: 'Caspian Persian restaurant Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 55, note: 'Persian cuisine and catering, Houston' },
       { name: 'Garson', maps: 'Garson Persian restaurant Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 50, note: 'Persian and Mediterranean restaurant with catering, Houston' },
       { name: 'Zafran', maps: 'Zafran Persian Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 45, note: 'Persian cuisine and catering, Houston' },
-      { name: 'Aban Restaurant', maps: 'Aban Persian restaurant Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 44, note: 'Persian restaurant and catering, Houston' },
+      { name: 'Aban Restaurant', maps: 'Aban Persian restaurant Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 58, note: 'Persian restaurant and catering, Houston' },
       { name: 'Cafe Layal', ig: 'cafelayal_richmond', cats: ['catering'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Mediterranean restaurant, lounge and catering for weddings and engagements, Houston area' },
       { name: 'Fadi\u2019s Mediterranean', ig: 'fadiscuisine', cats: ['catering'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Family-owned Lebanese and Mediterranean since 1996: catering and event space, 100% halal' },
       { name: 'Joseph\u2019s Fashion', ig: 'josephs_fashion', cats: ['attire'], states: ['MI'], note: 'Custom suits and tuxedos for men and women: weddings, prom and personal styling. Sterling Heights, Michigan' }
