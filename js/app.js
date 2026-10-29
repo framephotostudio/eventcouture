@@ -1681,7 +1681,7 @@
     var pl = ev.setting === 'restaurant' ? null : playlistOf(ev), have = b.items.map(function (i) { return i.id; });
     var groups = ev.sample ? [] : addOnsFor(ev, have);
     return (pl ? '<div class="pkg-pl"><span aria-hidden="true">\u266b</span><span class="grow"><b>Playlist: ' + esc(pl.name) + '</b><span class="small muted"> \u00b7 ' + pl.songs.length + ' songs, part of your package</span></span><a class="btn small ghost" href="#/e/' + esc(ev.id) + '/style" data-goto="playlist">See the songs</a></div>' : '') +
-      (groups.length ? '<div class="pkg-adds"><b class="small">Add to your package</b><span class="small muted"> Optional extras for your ' + esc(E.lc(E.typeName(ev))) + '. Each one adds a line, a price and top-rated local businesses that offer it.</span>' + groups.map(function (g) { return '<p class="pkg-add-g small muted">' + esc(g.group) + '</p><div class="chips">' + g.items.map(function (id) { return '<button type="button" class="chip" data-pkadd="' + id + '">+ ' + esc(ADD_LABEL[id] || catName(id, ev).replace(/ \(.*\)$/, '')) + '</button>'; }).join('') + '</div>'; }).join('') + '</div>' : '');
+      (groups.length ? '<div class="pkg-adds"><b class="small">Add to your package</b><span class="small muted"> Optional extras for your ' + esc(E.culture(ev) ? E.typeName(ev).replace(/ (Wedding|Engagement)/, function (m) { return m.toLowerCase(); }) : E.lc(E.typeName(ev))) + '. Each one adds a line, a price and top-rated local businesses that offer it.</span>' + groups.map(function (g) { return '<p class="pkg-add-g small muted">' + esc(g.group) + '</p><div class="chips">' + g.items.map(function (id) { return '<button type="button" class="chip" data-pkadd="' + id + '">+ ' + esc(ADD_LABEL[id] || catName(id, ev).replace(/ \(.*\)$/, '')) + '</button>'; }).join('') + '</div>'; }).join('') + '</div>' : '');
   }
   function pkgSumDoc(ev) {
     var b = E.budget(ev, ev.tier), cats = pkgCats(ev, b), pks = ev.packages || [], cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], d = pkgData(ev, b, cats, cp);
@@ -2044,7 +2044,9 @@
     liveMusic: /\bdjs?\b(?!.*\bband)|event (center|centre|hall)|banquet|ballroom|\bvenue|rentals?\b|tents?\b|zaff|zeff|dabk|folklor|dance (theat|troupe|group|company)/i,
     mehndi: /\bnails?\b|lash|brow|barber|salon\b(?!.*henna)/i,
     baraat: /\bdjs?\b(?!.*(horse|baraat|dhol))|banquet|ballroom/i,
-    attire: /pi[ñn]ata|costume|party (city|supply|supplies)|uniform|thrift|resale/i
+    attire: /pi[ñn]ata|costume|party (city|supply|supplies)|uniform|thrift|resale/i,
+    favors: /hanbok|bridal|boutique|dress|gown|tailor|alteration|salon|art (supply|supplies|materials)|blick|michaels|hobby lobby|office/i,
+    cleanup: /cater|bakery|restaurant|florist|carpet|maid|house ?keeping|home cleaning|janitorial/i
   };
   var NOT_A_VENDOR = /\b(islamic|society|mosque|masjid|church|temple|mandir|synagogue|gurdwara|parish|ministr(y|ies)|community cent(er|re)|school|academy|university|college)\b/i;
   var STAGE_CATS = ['kosha', 'mandap', 'sofreh', 'decor', 'backdrop'];
