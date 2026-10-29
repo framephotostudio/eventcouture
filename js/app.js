@@ -1631,7 +1631,7 @@
         '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of every package and your budget, and your estimated total goes down to match. You can add it back anytime.</p>' +
         '<div class="pkg-cmp-wrap"><table class="pkg-cmp" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + '</tbody></table></div>' +
         (ex.length && !ev.sample ? '<p class="small muted">Removed: ' + ex.map(function (id) { return esc(catName(id, ev)) + ' <button class="link small" data-pkunx="' + id + '">Add back</button>'; }).join(' · ') + '</p>' : '') +
-        pkgExtras(ev, b) + '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
+        '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
     }
     var cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], skipped = ev.pkgSkipped || [];
     var open = cats.filter(function (c) { return statusOf(ev, c.cat) !== 'booked'; });
@@ -1680,7 +1680,6 @@
     return '<div class="pkg-sum" id="pkgSum"><div class="pkg-sum-h"><p class="eyebrow">\u2713 Your final package</p><h3>Package ' + d.n + ' \u00b7 ' + esc(ev.name) + '</h3><p class="small muted">' + esc(whenText(ev)) + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p></div>' +
       '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.rec ? ' <span class="badge rec">\u2605 Recommended</span>' : '') + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.ask ? '<span class="muted">Price on request</span>' : (r.est ? 'est. ' : '') + money(r.amt)) + '</span></div>'; }).join('') + '</div>' +
       '<div class="pkg-sum-t"><span>' + (d.booked === d.rows.length ? 'Package total, all booked' : 'Package total') + '<span class="small muted pkg-sum-note">Your plan\u2019s estimate also keeps a 10% cushion for surprises.</span>' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
-      pkgExtras(ev, b) +
       '<p class="small muted">' + d.booked + ' of ' + d.rows.length + ' booked' + (d.removed.length ? ' \u00b7 Not needed: ' + d.removed.map(esc).join(', ') : '') + '</p>' +
       '<p class="small">This is your package. Save it as a PDF, email it to yourself or forward it to a co-host anytime, booked or not.</p><div class="row pkg-sum-acts"><button class="btn gold small" data-pksum="pdf">Save as PDF</button><button class="btn ghost small" data-pksum="mail">Email it</button><button class="btn ghost small" data-pksum="share">Share</button></div></div>';
   }
@@ -1704,6 +1703,8 @@
       $$('[data-pkadd]', el).forEach(function (bt) { bt.addEventListener('click', function () { close(); onPick(bt.dataset.pkadd); }); });
     });
   }
+  /* Music and extras sit in their own small panel under the package, so the package stays clean. */
+  function pkgMore(ev, b) { if (!(ev.packages || []).length) return ''; var inner = pkgExtras(ev, b); return inner ? '<div class="panel stack pkg-more"><h3>Make it yours</h3>' + inner + '</div>' : ''; }
   function pkgExtras(ev, b) {
     var pl = ev.setting === 'restaurant' ? null : playlistOf(ev), have = b.items.map(function (i) { return i.id; });
     var groups = ev.sample ? [] : addOnsFor(ev, have);
@@ -1825,7 +1826,7 @@
   TAB_VIEWS.budget = function (ev, b) {
     var groups = {}; cut(b.items, 3, ev).forEach(function (i) { (groups[i.group] = groups[i.group] || []).push(i); });
     var excluded = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
-    return (hasTradition(ev) ? '<div class="stack" id="musicPlan">' + cultureRow(ev) + musicChips(ev) + '</div>' : E.culture(ev) ? '<div class="stack" id="musicPlan">' + musicChips(ev) + '</div>' : '') + (AI.live ? packagePanel(ev, b) : '') + '<div class="stack"><div class="row" style="justify-content:space-between"><h3>' + (b.tier.id === 'F' ? 'Your budget plan' : esc(b.tier.name) + ' budget') + '</h3><div class="seg" id="tierseg">' + (ev.budget ? [{ id: 'F', name: 'My budget' }] : []).concat(D.TIERS).map(function (t) { return '<button data-tier="' + t.id + '" aria-pressed="' + (t.id === ev.tier) + '">' + t.name + '</button>'; }).join('') + '</div></div>' +
+    return (hasTradition(ev) ? '<div class="stack" id="musicPlan">' + cultureRow(ev) + musicChips(ev) + '</div>' : E.culture(ev) ? '<div class="stack" id="musicPlan">' + musicChips(ev) + '</div>' : '') + (AI.live ? packagePanel(ev, b) + pkgMore(ev, b) : '') + '<div class="stack"><div class="row" style="justify-content:space-between"><h3>' + (b.tier.id === 'F' ? 'Your budget plan' : esc(b.tier.name) + ' budget') + '</h3><div class="seg" id="tierseg">' + (ev.budget ? [{ id: 'F', name: 'My budget' }] : []).concat(D.TIERS).map(function (t) { return '<button data-tier="' + t.id + '" aria-pressed="' + (t.id === ev.tier) + '">' + t.name + '</button>'; }).join('') + '</div></div>' +
       (ev.payer === 'own' ? (function () { var rest = ev.setting === 'restaurant' || ev.setting === 'privateRoom';
         /* at a restaurant guests pay their own bill; anywhere else they chip in for food and drinks */
         var own = b.items.filter(function (i) { return rest ? (i.id === 'restaurantFood' || i.id === 'restaurantDrinks' || i.id === 'privateDining') : ['catering', 'bar', 'bartender'].indexOf(i.id) >= 0; }).reduce(function (t, i) { return t + i.mid; }, 0); return own ? '<div class="note">Everyone pays their own ' + (rest ? 'meal and drinks' : 'share of the food and drinks') + ': about <b>' + money(own / Math.max(1, ev.expected || ev.guests)) + ' a person</b>' + (rest ? ', with tax and tip' : ', with tax and service') + '. You cover the rest (cake, decor and the 10% cushion), about <b>' + money(Math.max(0, b.total - own)) + '</b>. The total below is still the full cost of the event.</div>' : ''; })() : '') +

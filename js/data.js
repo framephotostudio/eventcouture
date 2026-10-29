@@ -169,7 +169,7 @@
       music: [['zaffe', 'Zaffe group'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dj', 'DJ'], ['dabke', 'Dabke troupe']], musicDefault: ['zaffe', 'liveMusic', 'dj', 'singer'],
       add: ['kosha'],
       labels: { liveMusic: 'Live band (Arabic music)', singer: 'Arabic wedding singer', officiant: 'Officiant (sheikh or priest)', catering: 'Middle Eastern catering', cake: 'Wedding cake and Arabic sweets', dj: 'DJ (Arabic and international music)' },
-      search: { liveMusic: 'arabic wedding band', singer: 'arabic wedding singer', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern mediterranean catering', cake: 'arabic sweets bakery', officiant: 'sheikh imam or priest wedding officiant' },
+      search: { liveMusic: 'arabic wedding band', singer: 'arabic wedding singer', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern mediterranean catering', officiant: 'sheikh imam or priest wedding officiant' },
       hint: 'arabic,arab,lebanese,middle eastern,mediterranean,zaffe,zaffa,kosha',
       moments: [[-30, 'Guests arrive and are seated'], [0, 'Zaffe: drums and dancers lead the couple in'], [20, 'The couple takes their seats at the kosha'], [40, 'First dance'], [60, 'Dinner'], [120, 'Dabke and dancing'], [180, 'Cake cutting and sweets'], ['end', 'Send-off']],
       /* The same traditions for the engagement party (khutbe or katb el kitab). */
@@ -185,7 +185,7 @@
       music: [['dhol', 'Dhol player'], ['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dhol', 'dj', 'singer'],
       add: ['mandap', 'mehndi', 'baraat'],
       labels: { officiant: 'Pandit (priest) for the ceremony', catering: 'Indian catering', dj: 'DJ (Bollywood and bhangra)', liveMusic: 'Live band (Indian music)', singer: 'Wedding singer (Indian music)', cake: 'Wedding cake and mithai' },
-      search: { dhol: 'dhol player', dj: 'indian wedding DJ', liveMusic: 'indian wedding band', singer: 'indian wedding singer', mandap: 'mandap decor rental', mehndi: 'mehndi henna artist', baraat: 'baraat horse rental', catering: 'indian wedding catering', officiant: 'hindu priest pandit wedding', cake: 'indian sweets mithai', photographer: 'indian wedding photographer', hairMakeup: 'indian bridal makeup artist', decor: 'indian wedding decor' },
+      search: { dhol: 'dhol player', dj: 'indian wedding DJ', liveMusic: 'indian wedding band', singer: 'indian wedding singer', mandap: 'mandap decor rental', mehndi: 'mehndi henna artist', baraat: 'baraat horse rental', catering: 'indian wedding catering', officiant: 'hindu priest pandit wedding', photographer: 'indian wedding photographer', hairMakeup: 'indian bridal makeup artist', decor: 'indian wedding decor' },
       hint: 'indian,desi,south asian,bollywood,punjabi,dhol,mandap,mehndi,henna',
       moments: [[-60, 'Baraat: the groom arrives with dhol and dancing'], [-15, 'Milni: the families greet each other'], [0, 'Ceremony at the mandap'], [90, 'Cocktail hour and appetizers'], [150, 'Grand entrance and dinner'], [210, 'Speeches and first dance'], [240, 'Dancing'], ['end', 'Vidaai: the send-off']]
     },
@@ -194,7 +194,7 @@
       music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj', 'liveMusic', 'singer'],
       add: ['sofreh'],
       labels: { officiant: 'Aghd officiant', catering: 'Persian catering', dj: 'DJ (Persian and international music)', liveMusic: 'Live band (Persian music)', singer: 'Persian wedding singer', cake: 'Wedding cake and Persian sweets' },
-      search: { dj: 'persian wedding DJ', liveMusic: 'persian wedding band', singer: 'persian wedding singer', sofreh: 'sofreh aghd', catering: 'persian catering', officiant: 'persian aghd officiant', cake: 'persian bakery sweets' },
+      search: { dj: 'persian wedding DJ', liveMusic: 'persian wedding band', singer: 'persian wedding singer', sofreh: 'sofreh aghd', catering: 'persian catering', officiant: 'persian aghd officiant' },
       hint: 'persian,iranian,sofreh,aghd',
       moments: [[-30, 'Guests arrive'], [0, 'Aghd ceremony at the sofreh'], [45, 'Sugar rubbed over a cloth held above the couple, and blessings'], [75, 'Grand entrance'], [90, 'Dinner'], [150, 'Knife dance and cake cutting'], [180, 'Dancing'], ['end', 'Send-off']]
     },
@@ -203,7 +203,7 @@
       music: [['dhol', 'Dhol player'], ['dj', 'DJ'], ['qawwali', 'Qawwali group'], ['singer', 'Singer'], ['liveMusic', 'Live band']], musicDefault: ['dhol', 'dj', 'singer'],
       add: ['kosha', 'mehndi'], pre: 'With the blessings of their families',
       labels: { kosha: 'Stage and seating for the couple', officiant: 'Imam or maulvi for the nikah', catering: 'Pakistani catering', dj: 'DJ (Punjabi, Bollywood and pop)', cake: 'Wedding cake and mithai', mehndi: 'Mehndi (henna) artist for the bride and family' },
-      search: { dhol: 'dhol player', dj: 'pakistani wedding DJ', qawwali: 'qawwali group', singer: 'pakistani wedding singer', kosha: 'pakistani wedding stage decor', mehndi: 'mehndi henna artist', catering: 'pakistani catering', officiant: 'imam nikah officiant', cake: 'pakistani sweets mithai', photographer: 'pakistani wedding photographer', hairMakeup: 'pakistani bridal makeup artist', decor: 'pakistani wedding decor' },
+      search: { dhol: 'dhol player', dj: 'pakistani wedding DJ', qawwali: 'qawwali group', singer: 'pakistani wedding singer', kosha: 'pakistani wedding stage decor', mehndi: 'mehndi henna artist', catering: 'pakistani catering', officiant: 'imam nikah officiant', photographer: 'pakistani wedding photographer', hairMakeup: 'pakistani bridal makeup artist', decor: 'pakistani wedding decor' },
       hint: 'pakistani,desi,south asian,nikah,mehndi,dhol,halal',
       moments: [[-60, 'Baraat: the groom and his family arrive with dhol'], [0, 'Nikah ceremony'], [45, 'The couple takes the stage'], [75, 'Dinner'], [150, 'Photos with family and friends'], [180, 'Music and dancing'], ['end', 'Rukhsati: the bride\u2019s send-off']]
     },
@@ -212,7 +212,7 @@
       music: [['mariachi', 'Mariachi'], ['liveMusic', 'Banda or live band'], ['dj', 'DJ'], ['singer', 'Singer']], musicDefault: ['mariachi', 'dj', 'singer'],
       add: ['lazo'], pre: 'Together with their families and padrinos',
       labels: { officiant: 'Priest or officiant', catering: 'Mexican catering', liveMusic: 'Banda or live band', dj: 'DJ (Latin and pop)', cake: 'Wedding cake and Mexican sweets' },
-      search: { mariachi: 'mariachi band', liveMusic: 'banda musical para bodas', dj: 'latin wedding DJ', catering: 'mexican catering', officiant: 'catholic wedding priest', cake: 'mexican bakery wedding cake', lazo: 'wedding lazo arras', photographer: 'latino wedding photographer' },
+      search: { mariachi: 'mariachi band', liveMusic: 'banda musical para bodas', dj: 'latin wedding DJ', catering: 'mexican catering', officiant: 'catholic wedding priest', lazo: 'wedding lazo arras', photographer: 'latino wedding photographer' },
       hint: 'mexican,latino,latina,hispanic,boda,mariachi,taqueria',
       moments: [[-30, 'Guests arrive'], [0, 'Ceremony with the lazo and arras'], [45, 'Cocktail hour with mariachi'], [105, 'Grand entrance and dinner'], [165, 'First dance and the money dance'], [195, 'La v\u00edbora de la mar'], [225, 'Cake and dancing'], ['end', 'Send-off']]
     },
@@ -221,7 +221,7 @@
       music: [['dj', 'DJ'], ['singer', 'Singer'], ['liveMusic', 'Live band'], ['lionDance', 'Lion dance troupe']], musicDefault: ['dj', 'lionDance', 'singer'],
       add: ['teaCeremony'], pre: 'Together with their families',
       labels: { catering: 'Chinese banquet (8 to 10 courses)', cake: 'Wedding cake and Chinese desserts', decor: 'Red and gold decor with double happiness' },
-      search: { lionDance: 'lion dance troupe', dj: 'chinese wedding DJ', liveMusic: 'wedding band', catering: 'chinese banquet restaurant', teaCeremony: 'chinese tea ceremony set', cake: 'chinese bakery', photographer: 'chinese wedding photographer', decor: 'chinese wedding decor', hairMakeup: 'asian bridal makeup artist' },
+      search: { lionDance: 'lion dance troupe', dj: 'chinese wedding DJ', liveMusic: 'wedding band', catering: 'chinese banquet restaurant', teaCeremony: 'chinese tea ceremony set', photographer: 'chinese wedding photographer', decor: 'chinese wedding decor', hairMakeup: 'asian bridal makeup artist' },
       hint: 'chinese,cantonese,mandarin,banquet,dim sum,tea ceremony',
       moments: [[-90, 'Tea ceremony with both families'], [-15, 'Guests arrive; red envelopes go in the box'], [0, 'Lion dance welcome'], [30, 'Grand entrance'], [45, 'Banquet begins, course by course'], [120, 'Toasts and table visits'], [150, 'Outfit change into a qipao'], [180, 'Cake and dancing'], ['end', 'Send-off']]
     },
@@ -239,7 +239,7 @@
       music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj', 'singer'],
       add: ['pyebaek'], pre: 'Together with their families',
       labels: { catering: 'Korean catering', cake: 'Wedding cake and rice cakes (tteok)' },
-      search: { dj: 'korean wedding DJ', pyebaek: 'pyebaek ceremony hanbok rental', catering: 'korean catering', cake: 'korean bakery', photographer: 'korean wedding photographer', hairMakeup: 'korean bridal makeup artist' },
+      search: { dj: 'korean wedding DJ', pyebaek: 'pyebaek ceremony hanbok rental', catering: 'korean catering', photographer: 'korean wedding photographer', hairMakeup: 'korean bridal makeup artist' },
       hint: 'korean,hanbok,pyebaek,kbbq',
       moments: [[-30, 'Guests arrive'], [0, 'Ceremony'], [40, 'Pyebaek in hanbok with the families'], [90, 'Grand entrance and dinner'], [150, 'Toasts and first dance'], [180, 'Cake and dancing'], ['end', 'Send-off']]
     },
@@ -248,7 +248,7 @@
       music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj', 'singer'],
       add: ['sponsors'], pre: 'Together with their families and principal sponsors',
       labels: { catering: 'Filipino catering (with lechon)', cake: 'Wedding cake and Filipino desserts', officiant: 'Priest or officiant' },
-      search: { dj: 'filipino wedding DJ', singer: 'filipino wedding singer', catering: 'filipino catering lechon', cake: 'filipino bakery ube cake', photographer: 'filipino wedding photographer', officiant: 'catholic wedding priest' },
+      search: { dj: 'filipino wedding DJ', singer: 'filipino wedding singer', catering: 'filipino catering lechon', photographer: 'filipino wedding photographer', officiant: 'catholic wedding priest' },
       hint: 'filipino,pinoy,lechon,ninong,ninang',
       moments: [[-30, 'Guests arrive'], [0, 'Ceremony with the veil, cord and coins'], [60, 'Cocktail hour'], [105, 'Grand entrance and dinner'], [165, 'First dance and the money dance'], [195, 'Cake and dancing'], ['end', 'Send-off']]
     },
@@ -267,7 +267,7 @@
       music: [['dj', 'DJ'], ['singer', 'Singer'], ['liveMusic', 'Live band'], ['gospel', 'Gospel choir or soloist'], ['broom', 'Jumping the broom'], ['libation', 'Libation ceremony'], ['elements', 'Tasting the four elements'], ['kente', 'Kente accents'], ['secondLine', 'Second line']], musicDefault: ['dj', 'singer'],
       add: [], pre: 'Together with their families',
       labels: { catering: 'Catering (soul food or Southern)', dj: 'DJ (R&B, hip-hop and line dances)', cake: 'Wedding cake (red velvet, pound cake) and desserts' },
-      search: { gospel: 'gospel choir for weddings', dj: 'wedding DJ r&b hip hop', liveMusic: 'wedding band r&b soul', catering: 'soul food catering', secondLine: 'second line brass band', kente: 'kente stole', broom: 'jumping the broom wedding broom', cake: 'wedding cake bakery', photographer: 'wedding photographer', hairMakeup: 'bridal hair and makeup artist for black women' },
+      search: { gospel: 'gospel choir for weddings', dj: 'wedding DJ r&b hip hop', liveMusic: 'wedding band r&b soul', catering: 'soul food catering', secondLine: 'second line brass band', kente: 'kente stole', broom: 'jumping the broom wedding broom', photographer: 'wedding photographer', hairMakeup: 'bridal hair and makeup artist for black women' },
       hint: 'black,african american,soul,gospel',
       moments: [[-30, 'Guests arrive'], [-5, 'Libation ceremony honoring the ancestors', 'libation'], [0, 'Ceremony'], [20, 'Tasting the four elements', 'elements'], [35, 'Jumping the broom', 'broom'], [60, 'Cocktail hour'], [105, 'Grand entrance and dinner'], [165, 'First dance and toasts'], [195, 'Line dances: the Electric Slide, the Cupid Shuffle and the Wobble'], [225, 'Cake and dancing'], ['end', 'Second line send-off', 'secondLine'], ['end', 'Send-off']]
     },
@@ -276,7 +276,7 @@
       music: [['dj', 'DJ'], ['flamenco', 'Flamenco or rumba'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj', 'flamenco', 'singer'],
       add: ['lazo', 'jamon'], pre: 'Together with their families and padrinos',
       labels: { lazo: 'Arras (13 coins) and padrinos gifts', catering: 'Spanish catering', favors: 'Detalles (small gifts for every guest)', cake: 'Wedding cake and Spanish sweets', officiant: 'Priest or officiant' },
-      search: { flamenco: 'flamenco rumba group', dj: 'spanish wedding DJ', catering: 'spanish catering tapas', jamon: 'jamon carver cortador', cake: 'spanish bakery', photographer: 'wedding photographer' },
+      search: { flamenco: 'flamenco rumba group', dj: 'spanish wedding DJ', catering: 'spanish catering tapas', jamon: 'jamon carver cortador', photographer: 'wedding photographer' },
       hint: 'spanish,spain,espanol,tapas,flamenco,paella',
       moments: [[-30, 'Guests arrive'], [0, 'Ceremony with the arras and padrinos'], [60, 'C\u00f3ctel with the jam\u00f3n carver'], [120, 'Grand entrance and dinner'], [210, 'Detalles for the guests and the tie is cut and \u201csold\u201d'], [240, 'First dance and dancing'], ['end', 'Send-off']]
     },
@@ -285,7 +285,7 @@
       music: [['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['dj', 'singer'],
       add: ['mc', 'karavai'], pre: 'Together with their families',
       labels: { mc: 'Tamada (toastmaster and host)', catering: 'Russian and Eastern European catering', singer: 'Wedding singer (Russian and English)', cake: 'Wedding cake and Russian desserts' },
-      search: { mc: 'russian wedding tamada host', dj: 'russian wedding DJ', singer: 'russian wedding singer', catering: 'russian restaurant banquet', karavai: 'russian bakery karavai', cake: 'russian bakery', photographer: 'russian wedding photographer' },
+      search: { mc: 'russian wedding tamada host', dj: 'russian wedding DJ', singer: 'russian wedding singer', catering: 'russian restaurant banquet', karavai: 'russian bakery karavai', photographer: 'russian wedding photographer' },
       hint: 'russian,ukrainian,slavic,tamada,banquet',
       moments: [[-150, 'The bride ransom games at her home'], [0, 'Guests arrive'], [20, 'Bread-and-salt welcome with the karavai'], [40, 'The tamada opens the feast with zakuski'], [90, 'Toasts and \u201cGorko!\u201d'], [150, 'Hot dishes, games and dancing'], [240, 'Cake'], ['end', 'Send-off']]
     },
@@ -294,7 +294,7 @@
       music: [['dakka', 'Dakka or Andalusian band'], ['dj', 'DJ'], ['singer', 'Singer']], musicDefault: ['dakka', 'dj', 'singer'],
       add: ['negafa', 'teaCeremony', 'mehndi'], pre: 'With the blessing of God and their families',
       labels: { teaCeremony: 'Moroccan mint tea service', mehndi: 'Henna artist for the henna night', catering: 'Moroccan catering', officiant: 'Imam or officiant', cake: 'Wedding cake and Moroccan pastries', kosha: 'Stage for the couple' },
-      search: { dakka: 'dakka marrakchia band', dj: 'moroccan wedding DJ', singer: 'moroccan wedding singer', negafa: 'negafa moroccan wedding', catering: 'moroccan catering', teaCeremony: 'moroccan tea service', mehndi: 'henna artist', cake: 'moroccan pastries', photographer: 'moroccan wedding photographer' },
+      search: { dakka: 'dakka marrakchia band', dj: 'moroccan wedding DJ', singer: 'moroccan wedding singer', negafa: 'negafa moroccan wedding', catering: 'moroccan catering', teaCeremony: 'moroccan tea service', mehndi: 'henna artist', photographer: 'moroccan wedding photographer' },
       hint: 'moroccan,maghreb,arab,negafa,takchita,kaftan,amariya',
       moments: [[-30, 'Guests arrive to mint tea and pastries'], [0, 'The couple enters on the amariya to dakka drums'], [45, 'First outfit and photos'], [90, 'Dinner: pastilla, tagine and mechoui'], [150, 'Outfit changes and dancing'], [240, 'Cake and the final outfit'], ['end', 'Send-off']]
     },
@@ -303,7 +303,7 @@
       music: [['liveMusic', 'Greek band (bouzouki)'], ['dj', 'DJ'], ['singer', 'Singer']], musicDefault: ['liveMusic', 'dj', 'singer'],
       add: ['stefana'], pre: 'With the blessing of God and their families',
       labels: { officiant: 'Greek Orthodox priest', catering: 'Greek catering', liveMusic: 'Greek band (bouzouki)', cake: 'Wedding cake and Greek sweets' },
-      search: { liveMusic: 'greek band bouzouki', dj: 'greek wedding DJ', catering: 'greek catering', officiant: 'greek orthodox church wedding', stefana: 'stefana wedding crowns', cake: 'greek bakery', photographer: 'greek wedding photographer' },
+      search: { liveMusic: 'greek band bouzouki', dj: 'greek wedding DJ', catering: 'greek catering', officiant: 'greek orthodox church wedding', stefana: 'stefana wedding crowns', photographer: 'greek wedding photographer' },
       hint: 'greek,hellenic,orthodox,bouzouki',
       moments: [[-30, 'Guests arrive'], [0, 'Ceremony with the stefana crowns and the Dance of Isaiah'], [60, 'Cocktail hour'], [105, 'Grand entrance and dinner'], [165, 'First dance and the money dance'], [195, 'Kalamatianos circle dance'], [225, 'Cake and dancing'], ['end', 'Send-off']]
     },
@@ -312,7 +312,7 @@
       music: [['davul', 'Davul and zurna'], ['dj', 'DJ'], ['liveMusic', 'Live band'], ['singer', 'Singer']], musicDefault: ['davul', 'dj', 'singer'],
       add: ['kina'],
       labels: { catering: 'Turkish catering', dj: 'DJ (Turkish and international music)', liveMusic: 'Live band (Turkish music)', singer: 'Turkish wedding singer', cake: 'Wedding cake and Turkish sweets', officiant: 'Officiant or imam' },
-      search: { davul: 'davul zurna', dj: 'turkish wedding DJ', liveMusic: 'turkish wedding band', singer: 'turkish wedding singer', catering: 'turkish catering', cake: 'turkish bakery baklava', kina: 'henna artist', photographer: 'turkish wedding photographer' },
+      search: { davul: 'davul zurna', dj: 'turkish wedding DJ', liveMusic: 'turkish wedding band', singer: 'turkish wedding singer', catering: 'turkish catering', kina: 'henna artist', photographer: 'turkish wedding photographer' },
       hint: 'turkish,turkey,istanbul,anatolian,kina,henna,davul,zurna,halay',
       moments: [[-30, 'Guests arrive to Turkish coffee and lokum'], [0, 'The couple enters to davul and zurna'], [20, 'Ceremony and the shoe signing'], [45, 'First dance'], [75, 'Dinner'], [135, 'Tak\u0131 t\u00f6reni: gold pinning for the couple'], [165, 'Halay and dancing'], [225, 'Cake and sweets'], ['end', 'Send-off']]
     },

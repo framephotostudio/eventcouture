@@ -42,12 +42,12 @@ with sync_playwright() as p:
         check(n, not shop or all('amazon.ae' in x and 'tag=' not in x for x in shop), 'Dubai shopping links go to amazon.ae with no US tag: '+str(shop[:1]))
         # playlist and add-ons in the package
         pg.goto(U+base+'/budget'); pg.wait_for_selector('[data-pkuse="0"]'); pg.click('[data-pkuse="0"]'); pg.wait_for_selector('#pkgSum'); st=pg.inner_text('#pkgSum')
-        check(n, 'Playlist: Arabian Nights Wedding' in st, 'package shows the Arabic playlist')
+        check(n, 'Playlist: Arabian Nights Wedding' in pg.inner_text('.pkg-more'), 'package shows the Arabic playlist')
         adds=extras(pg)
         rows0=len(pg.query_selector_all('.pkg-sum-r')); pk=adds[0] if adds else None
         if pk: add_extra(pg, pk); pg.wait_for_timeout(1500)
         check(n, pk and len(pg.query_selector_all('.pkg-sum-r'))==rows0+1, 'adding an add-on puts a new line in the package: '+str(pk))
-        pg.click('#pkgSum [data-goto="playlist"]'); pg.wait_for_selector('#playlist'); pg.wait_for_timeout(600)
+        pg.click('.pkg-more [data-goto="playlist"]'); pg.wait_for_selector('#playlist'); pg.wait_for_timeout(600)
         pl=pg.inner_text('#playlist'); check(n, 'zaffe and grand entrance' in pl.lower() and 'Ala Dalouna' in pl, 'See the songs opens the Arabic playlist')
         pg.screenshot(path=f'{OUT}/playlist_{n}.png')
         # 3. Restaurant dinner in London: Reserve a table

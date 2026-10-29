@@ -833,3 +833,7 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .pkg-adds { display: grid; gap: 6px; }
 .pkg-adds .chips { margin-top: 2px; }
 .pkg-add-g { margin: 6px 0 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+
+.pkg-more { gap: 10px; }
+.pkg-more h3 { margin: 0; }
+.pkg-more .pkg-pl, .pkg-more .pkg-adds-row { margin: 0; }

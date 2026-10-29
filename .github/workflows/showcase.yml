@@ -12,6 +12,9 @@ on:
       guests: { description: 'Guests', default: '200' }
       pkg: { description: 'Package to choose (0 = first, 1 = second)', default: '0' }
       story: { description: 'Make an Instagram story instead (any text = yes)', default: '' }
+      pick: { description: 'Story: swap lines, e.g. venue=post oak;florals=!delivery', default: '' }
+      remove: { description: 'Story: lines to leave out, e.g. Live music,Bartender', default: '' }
+      names: { description: 'Story: set a line by name, e.g. Cake and desserts=Three Brothers Bakery', default: '' }
 permissions: { contents: write }
 jobs:
   shots:
@@ -22,7 +25,7 @@ jobs:
         with: { node-version: 22 }
       - run: npm install --no-save playwright@1 && npx playwright install --with-deps chromium
       - run: node tools/${{ inputs.story && 'story' || 'showcase' }}.mjs
-        env: { CITY: '${{ inputs.city }}', ROW: '${{ inputs.row }}', SINGER: '${{ inputs.singer }}', START: '${{ inputs.start }}', TEXT: '${{ inputs.text }}', NAME: '${{ inputs.name }}', GUESTS: '${{ inputs.guests }}', PKG: '${{ inputs.pkg }}' }
+        env: { CITY: '${{ inputs.city }}', ROW: '${{ inputs.row }}', SINGER: '${{ inputs.singer }}', START: '${{ inputs.start }}', TEXT: '${{ inputs.text }}', NAME: '${{ inputs.name }}', GUESTS: '${{ inputs.guests }}', PKG: '${{ inputs.pkg }}', PICK: '${{ inputs.pick }}', REMOVE: '${{ inputs.remove }}', NAMES: '${{ inputs.names }}' }
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: showcase, path: showcase }

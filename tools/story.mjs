@@ -21,11 +21,23 @@ try {
   await pg.evaluate(([id, nm]) => { const a = JSON.parse(localStorage.getItem('ec.events')); a[id].keepNoteHidden = true; a[id].name = nm; localStorage.setItem('ec.events', JSON.stringify(a)); }, [base.split('/')[2], process.env.NAME || 'Layla & Omar’s Wedding']);
   await pg.goto(U + base + '/overview'); await pg.reload(); await pg.waitForSelector('#pkgStart'); await pg.click('#pkgStart');
   await pg.waitForSelector('.pkg-cmp', { timeout: 180000 }); await pg.waitForTimeout(800);
+  // PICK: "venue=post oak;cake=three brothers;florals=!delivery" swaps a line to a matching business from the app's own options (! = any name without that word).
+  for (const rule of (process.env.PICK || '').split(';').map(x => x.trim()).filter(Boolean)) {
+    const [cat, want] = rule.split('='); const sw = await pg.$(`[data-pkswap="${cat}"][data-pk="0"]`); if (!sw) { console.log('no swap for', cat); continue; }
+    await sw.click(); await pg.waitForSelector(`[data-pkswapbox="${cat}"] .curated, [data-pkswapbox="${cat}"] p.muted:not(:has(+ *))`, { timeout: 60000 }).catch(() => {}); await pg.waitForTimeout(1500);
+    const ok = await pg.evaluate(([cat, want]) => { const neg = want.startsWith('!'), w = (neg ? want.slice(1) : want).toLowerCase();
+      const it = [...document.querySelectorAll(`[data-pkswapbox="${cat}"] .it`)].find(x => { const n = x.querySelector('b').textContent.toLowerCase(); return neg ? n.indexOf(w) < 0 : n.indexOf(w) >= 0; });
+      if (!it) return false; it.querySelector('[data-pkpick]').click(); return it.querySelector('b').textContent; }, [cat, want]);
+    console.log('pick', cat, want, '->', ok); await pg.waitForTimeout(1200);
+  }
   await pg.click('[data-pkuse="0"]'); await pg.waitForSelector('#pkgSum'); await pg.waitForTimeout(3500);
-  const info = await pg.evaluate((row) => {
+  const rmvList = (process.env.REMOVE || '').split(',').map(x => x.trim()).filter(Boolean), nameMap = Object.fromEntries((process.env.NAMES || '').split(';').map(x => x.split('=').map(y => y.trim())).filter(x => x[0] && x[1]));
+  const info = await pg.evaluate(([row, rmv, names]) => {
     const sum = document.querySelector('#pkgSum');
     const rows = [...sum.querySelectorAll('.pkg-sum-r')], want = rows.find(r => r.querySelector('.badge.rec') && new RegExp(row, 'i').test(r.querySelector('.pkg-sum-c').textContent));
     if (want) { want.parentNode.prepend(want); want.classList.add('story-star'); }
+    (rmv || []).forEach(name => rows.filter(r => r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase() === name.toLowerCase()).forEach(r => r.remove()));
+    Object.entries(names || {}).forEach(([cat, nm]) => rows.filter(r => r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase() === cat.toLowerCase()).forEach(r => { r.querySelector('.pkg-sum-n b').textContent = nm; const bd = r.querySelector('.badge.rec'); if (bd) bd.remove(); }));
     sum.querySelectorAll('.pkg-sum-a, .pkg-sum-t, .pkg-adds-row, .pkg-adds, .pkg-pl, .pkg-sum-acts, .badge.ok').forEach(x => x.remove());
     [...sum.children].forEach(c => { if (c.tagName === 'P') c.remove(); });
     rows.filter(r => !r.querySelector('.pkg-sum-n b') || /Still to choose/.test(r.textContent)).forEach(r => r.remove());
@@ -50,7 +62,7 @@ try {
     const box = document.querySelector('#story .pkg-sum'), rs = document.querySelector('#story .pkg-sum-rows'); let fs = 14.5;
     while (box.scrollHeight > box.clientHeight && fs > 10) { fs -= 0.5; rs.style.fontSize = fs + 'px'; [...rs.children].forEach(r => r.style.fontSize = fs + 'px'); }   /* every line fits on one screen */
     return { fontSize: fs, found: !!want, rows: [...document.querySelectorAll('.pkg-sum-r')].map(r => r.innerText.replace(/\s+/g, ' ')), overflow: document.querySelector('#story .pkg-sum').scrollHeight - document.querySelector('#story .pkg-sum').clientHeight };
-  }, ROW);
+  }, [ROW, rmvList, nameMap]);
   console.log(JSON.stringify(info));
   fs.writeFileSync(`${OUT}/story-info.json`, JSON.stringify(info, null, 1));
   await pg.screenshot({ path: `${OUT}/story.png` });

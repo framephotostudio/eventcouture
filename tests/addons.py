@@ -43,9 +43,9 @@ with sync_playwright() as p:
             if typ=='wedding':
                 gl=groups(pg)
                 check(n, gl[:2]==['Food and treats','Photos and memories'], 'add-ons are grouped: '+str(gl))
-                check(n, not pg.query_selector('#pkgSum [data-pkadd]') and pg.query_selector('#pkgSum [data-pkextras]'), 'the package shows one Add extras button, not the whole list')
-                pg.locator('#pkgSum .pkg-adds-row').scroll_into_view_if_needed(); pg.wait_for_timeout(2800); pg.screenshot(path=f'{OUT}/addons_pkg_{n}.png')
-                pg.wait_for_timeout(2800); pg.click('#pkgSum [data-pkextras]'); pg.wait_for_selector('.sheet'); pg.wait_for_timeout(300); pg.locator('.sheet').screenshot(path=f'{OUT}/addons_wedding_{n}.png'); pg.click('.sheet [data-close]'); pg.wait_for_timeout(300)
+                check(n, not pg.query_selector('#pkgSum [data-pkadd]') and pg.query_selector('.pkg-more [data-pkextras]'), 'the package shows one Add extras button, not the whole list')
+                pg.locator('.pkg-more .pkg-adds-row').scroll_into_view_if_needed(); pg.wait_for_timeout(2800); pg.screenshot(path=f'{OUT}/addons_pkg_{n}.png')
+                pg.wait_for_timeout(2800); pg.click('.pkg-more [data-pkextras]'); pg.wait_for_selector('.sheet'); pg.wait_for_timeout(300); pg.locator('.sheet').screenshot(path=f'{OUT}/addons_wedding_{n}.png'); pg.click('.sheet [data-close]'); pg.wait_for_timeout(300)
                 Q.clear(); rows0=len(pg.query_selector_all('.pkg-sum-r')); add_extra(pg, 'chocolateFountain'); pg.wait_for_timeout(2500)
                 st=pg.inner_text('#pkgSum'); qs=[q['query'] for q in Q]
                 check(n, len(pg.query_selector_all('.pkg-sum-r'))==rows0+1 and 'Chocolate fountain' in st and ' Co A' in st, 'chocolate fountain line with a business that offers it')
@@ -55,7 +55,7 @@ with sync_playwright() as p:
                 gl=groups(pg); check(n, gl[:1]==['Kids\u2019 fun'], 'kids add-ons come first: '+str(gl[:2]))
                 Q.clear(); add_extra(pg, 'characterVisit'); pg.wait_for_timeout(2500); qs=[q['query'] for q in Q]
                 check(n, qs and 'unicorn party entertainment' in qs[0] and 'Character visit' in pg.inner_text('#pkgSum'), 'unicorn party finds unicorn characters: '+str(qs[:1]))
-                pg.wait_for_timeout(2800); pg.click('#pkgSum [data-pkextras]'); pg.wait_for_selector('.sheet'); pg.wait_for_timeout(300); pg.locator('.sheet').screenshot(path=f'{OUT}/addons_kids_{n}.png'); pg.click('.sheet [data-close]')
+                pg.wait_for_timeout(2800); pg.click('.pkg-more [data-pkextras]'); pg.wait_for_selector('.sheet'); pg.wait_for_timeout(300); pg.locator('.sheet').screenshot(path=f'{OUT}/addons_kids_{n}.png'); pg.click('.sheet [data-close]')
         check(n, not e, 'no page errors '+str(e[:2])); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
         ctx.close()
     b.close()
