@@ -6,7 +6,7 @@ const fs = require('fs'), path = require('path');
 global.window = global;
 require('../js/data.js'); require('../js/engine.js');
 const D = global.EC_DATA, E = global.EC_ENGINE;
-const OUT = process.argv[2] || '_site', BASE = 'https://facecouture.app/eventcouture/', YEAR = new Date().getFullYear();
+const OUT = process.argv[2] || '_site', BASE = 'https://eventcouture.app/', YEAR = new Date().getFullYear();
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const slug = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 

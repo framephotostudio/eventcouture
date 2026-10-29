@@ -1,7 +1,7 @@
 # Event Couture by Always Luxe: developer handoff
 
 **Version 0.21 · October 24, 2026**
-**Live site:** https://facecouture.app/eventcouture/
+**Live site:** https://eventcouture.app/ (old address facecouture.app/eventcouture redirects here)
 **Code:** https://github.com/framephotostudio/eventcouture (public; every push to `main` deploys automatically)
 **Server:** https://event-couture-api.facecouture.workers.dev (status at `/api/status`)
 
@@ -61,7 +61,7 @@ Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $
   3. Creates the KV store once.
   4. Deploys the Worker and sets its secrets.
   5. Writes the Worker URL into `js/config.js`.
-  6. Publishes the site to GitHub Pages (custom domain facecouture.app, path `/eventcouture`).
+  6. Publishes the site to GitHub Pages (custom domain eventcouture.app).
 - **Repository secrets** (already saved): `GEMINI_KEY`, `GOOGLE_MAPS_KEY`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`. Never put keys in code or chat.
 - **Payments:** the site stays in preview mode (`preview: true` in `js/config.js`). "Keep my plan" records the pass on the device with no charge until real checkout is built.
 

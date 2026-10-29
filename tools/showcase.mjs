@@ -1,7 +1,7 @@
 // Screenshots of a real package on the live site, to show a vendor how they appear. Run by .github/workflows/showcase.yml.
 // Uses live Google results (about 20 searches). No customer data or photos.
 import { chromium } from 'playwright'; import fs from 'node:fs';
-const U = process.env.SITE || 'https://facecouture.app/eventcouture/', CITY = process.env.CITY || 'Orange County, CA', OUT = 'showcase';
+const U = process.env.SITE || 'https://eventcouture.app/', CITY = process.env.CITY || 'Orange County, CA', OUT = 'showcase';
 fs.mkdirSync(OUT, { recursive: true });
 const hide = '.toast,.preview-ribbon,.keep-note{display:none!important}';
 const b = await chromium.launch();
