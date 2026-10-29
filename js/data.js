@@ -634,6 +634,7 @@
       { name: 'Danny Ashkar', ig: 'danyachkar', cats: ['singer'], states: ['CA'], cultures: ['arabic'], note: 'Lebanese singer for weddings, engagements and parties across California' },
       { name: 'Chris Hawat', ig: 'chrishawat', cats: ['singer'], cultures: ['arabic'], note: 'Lebanese and Arabic singer for weddings and celebrations' },
       { name: 'Tamer Aldabouqi', ig: 'tamerdabouqi', cats: ['singer'], cultures: ['arabic'], note: 'Arabic singer with a live band for weddings and celebrations' },
+      { name: 'Wissam Wahhab', ig: 'wissam_wahhab_official', cats: ['singer'], country: 'US', cultures: ['arabic'], note: 'Arabic singer for weddings, engagements and celebrations' },
       /* cultures '' = every event that isn't a cultural wedding (birthdays, showers, classic weddings, parties); 'parties' = every event that isn't a wedding. */
       { name: 'DJ Yamani', ig: 'dj_yamani', cats: ['dj'], cities: ['Houston, TX'], cultures: ['arabic', ''], note: 'Arabic and American music for weddings and parties' },
       /* DJ Roy plays Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French music: every event, and the weddings and engagements in those styles. First across the U.S.; second in Houston after DJ Yamani. DJ Mosses covers the same events right after him: second across the U.S., third in Houston. */
