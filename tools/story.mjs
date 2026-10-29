@@ -35,6 +35,7 @@ try {
   const info = await pg.evaluate(([row, rmv, names]) => {
     const sum = document.querySelector('#pkgSum');
     const rows = [...sum.querySelectorAll('.pkg-sum-r')], want = rows.find(r => r.querySelector('.badge.rec') && new RegExp(row, 'i').test(r.querySelector('.pkg-sum-c').textContent));
+    rows.forEach(r => { const c = r.querySelector('.pkg-sum-c'); if (/^Zaffe group/.test(c.textContent)) c.textContent = 'Zaffe and dabke group'; });
     /* essentials, then music and entertainment, then the rest; the featured vendor on top */
     const FIRST = ['venue', 'private dining', 'catering', 'cake', 'florals', 'decor', 'kosha'], MUSIC = ['wedding singer', 'singer', 'dj', 'zaffe', 'dabke', 'live music'];
     const rk = r => { const c = r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase(), f = FIRST.findIndex(x => c.startsWith(x)), m = MUSIC.findIndex(x => c.startsWith(x)); return f >= 0 ? f : m >= 0 ? 100 + m : 1000; };
