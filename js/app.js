@@ -1605,11 +1605,11 @@
     var k = Math.min(ev.pkgView || 0, pks.length - 1), pk = pks[k];
     var bizOf = function (pkx, cat) { var id = pkx.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };
     var line = function (x) { return (x.rec ? '<span class="badge rec">\u2605 Recommended</span> ' : '') + hotelBadge(x.name).replace(/^ /, '') + [x.rec && /^ig:/.test(x.id) ? '@' + esc(String(x.id).slice(3)) : '',x.rating ? '★ ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' · '); };
-    var est = function (cat) { var it = b.items.find(function (i) { return i.id === cat; }); return it ? 'est. ' + money(it.mid) : ''; };
+    var est = function (cat, x) { if (x && onRequest(ev, cat, x)) return 'Price on request'; var it = b.items.find(function (i) { return i.id === cat; }); return it ? 'est. ' + money(it.mid) : ''; };
     var links = function (x, cat) { return (cat && isRestaurantPick(ev, cat, x) ? '<a class="btn small gold" target="_blank" rel="noopener" href="' + esc(reserveLink(ev, x)) + '">Reserve a table</a>' : '') + (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">' + (/^ig:/.test(x.id) ? 'Instagram' : /^rec:/.test(x.id) ? 'Map' : 'Website') + '</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : ''); };
     var row = function (c, pkx, mode) {
       var x = bizOf(pkx, c.cat), bk = x && isBooked(ev, c.cat, x);
-      return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + (mode === 'book' && !bk && !ev.sample ? '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don\u2019t need it">\u00d7</button>' : '') + '<span class="num muted small">' + est(c.cat) + '</span></div>' +
+      return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + (mode === 'book' && !bk && !ev.sample ? '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don\u2019t need it">\u00d7</button>' : '') + '<span class="num muted small">' + est(c.cat, x) + '</span></div>' +
         (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + '</span></div>' +
           '<div class="pk-acts">' + links(x, c.cat) + (ev.sample ? '' : (bk || mode === 'book' ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Change</button>') + (mode === 'book' ? '<button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked ✓' : 'I booked it') + '</button>' : '')) + '</div>'
         : '<p class="small muted">No top-rated match came back yet. ' + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '">See options</button> \u00b7 ' + mapsBtn(ev, c.cat, c.q)) + '</p>') +
@@ -1621,7 +1621,7 @@
       var head = '<tr><th class="pk-corner"><span class="small muted">' + plural(cats.length, 'item') + '</span></th>' + pks.map(function (x, i) { return '<th class="pk-colh"><span class="pk-coln">Package ' + (i + 1) + '</span>' + (ev.sample ? '' : '<button class="btn small gold" data-pkuse="' + i + '">Choose</button>' + (pks.length > 1 ? '<button class="link small quiet" data-pkdel="' + i + '">Remove</button>' : '')) + '</th>'; }).join('') +
         (pks.length < 3 && !ev.sample ? '<th class="pk-colh pk-addcol"><button class="btn small ghost" id="pkgMore">+ Create package ' + (pks.length + 1) + '</button><span class="small muted">Different picks to compare</span></th>' : '') + '</tr>';
       var rowsH = cats.map(function (c) {
-        return '<tr data-pkrow="' + c.cat + '"><th scope="row"><div class="pk-rh"><b>' + esc(catName(c.cat, ev)) + '</b>' + (ev.sample ? '' : '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don’t need it">×</button>') + '</div><span class="small muted num">' + est(c.cat) + '</span></th>' +
+        return '<tr data-pkrow="' + c.cat + '"><th scope="row"><div class="pk-rh"><b>' + esc(catName(c.cat, ev)) + '</b>' + (ev.sample ? '' : '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don’t need it">×</button>') + '</div><span class="small muted num">' + (pks.some(function (q) { return onRequest(ev, c.cat, bizOf(q, c.cat)); }) ? 'Price on request' : est(c.cat)) + '</span></th>' +
           pks.map(function (x, i) { var biz = bizOf(x, c.cat); return '<td>' + (biz ? '<b>' + esc(biz.name) + '</b><span class="small muted">' + line(biz) + '</span><div class="pk-cell-acts">' + (siteOf(biz) ? '<a class="link small" target="_blank" rel="noopener" href="' + esc(siteOf(biz)) + '">' + (/^ig:/.test(biz.id) ? 'Instagram' : /^rec:/.test(biz.id) ? 'Map' : 'Website') + '</a>' : '') + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Swap</button>') + '</div>' : '<span class="small muted">No match yet</span><br>' + mapsBtn(ev, c.cat, c.q) + '<br>' + (ev.sample ? '' : ' <button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Find one</button>')) + '</td>'; }).join('') +
           (pks.length < 3 && !ev.sample ? '<td class="pk-addcol"></td>' : '') + '</tr><tr class="pk-swaprow"><td colspan="' + ncol + '"><div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></td></tr>';
       }).join('');
@@ -1650,7 +1650,7 @@
       (ev.date || ev.dateFrom || ev.sample ? '' : '<div class="note pkg-date"><b>Set your date first</b> so each vendor can check they\u2019re free. <button class="btn small" data-pkwhen>Set your date</button></div>') +
       '<div class="note small pkg-final"><b>Next: book it.</b> Contact each one, agree on the price, then tap <b>I booked it</b>. We\u2019ll take you through them one at a time. You can save or send your package anytime, booked or not.</div>' +
       '<div class="pkg-next" data-pkrow="' + next.cat + '"><p class="eyebrow">Next up · ' + pos + ' of ' + cats.length + '</p><h3>' + esc(catName(next.cat, ev)) + '</h3>' +
-        (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + (est(next.cat) ? ' · ' + est(next.cat) : '') + '</span></div>' +
+        (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + (est(next.cat, x) ? ' · ' + est(next.cat, x) : '') + '</span></div>' +
           '<ol class="howto"><li><b>Contact them</b> to check your date and ask for a quote.<div class="row" style="margin-top:6px">' + links(x, next.cat) + '</div></li>' +
           '<li><b>Send your details.</b> We wrote the message for you.<div class="row" style="margin-top:6px"><button class="btn small ghost" data-pkcopy="' + next.cat + '">Copy my message</button></div></li>' +
           '<li><b>Booked?</b> Tap below and add the price you agreed on.</li></ol>' +
@@ -1661,13 +1661,16 @@
       summary + all + back + '</div>';
   }
   /* The chosen package as one clear summary she can save, email or forward, booked or not. */
+  /* Recommended performers set their own prices: we never show our estimate next to their name. */
+  var PERFORMERS = ['dj', 'singer', 'zaffe', 'liveMusic', 'dabke', 'dhol', 'mariachi', 'mc', 'qawwali', 'davul', 'dakka', 'flamenco', 'gospel', 'lionDance', 'secondLine'];
+  function onRequest(ev, cat, x) { var ov = (ev.overrides || {})[cat]; return !!(x && x.rec && PERFORMERS.indexOf(cat) >= 0 && !(ov && ov.amount > 0)); }
   function pkgData(ev, b, cats, cp) {
     var bizOf = function (cat) { var id = cp.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };
     var tot = 0, rows = cats.map(function (c) {
       var x = bizOf(c.cat), it = b.items.find(function (i) { return i.id === c.cat; }), bk = statusOf(ev, c.cat) === 'booked', ov = (ev.overrides || {})[c.cat];
       var amt = ov && ov.amount > 0 ? ov.amount : it ? it.mid : 0; tot += amt;
       var info = x ? [x.name + (hotelClass(x.name) ? ' (' + hotelClass(x.name) + ')' : ''), x.address ? x.address.split(',').slice(0, 2).join(',') : '', siteOf(x) ? String(siteOf(x)).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : (x.phone || '')].filter(Boolean).join('\n') : 'Still to choose';
-      return { cat: catName(c.cat, ev), name: x ? x.name : '', rec: !!(x && x.rec), info: info, status: bk ? 'Booked' : 'Not booked yet', amt: amt, est: !(ov && ov.amount > 0) };
+      return { cat: catName(c.cat, ev), name: x ? x.name : '', rec: !!(x && x.rec), info: info, status: bk ? 'Booked' : 'Not booked yet', amt: amt, est: !(ov && ov.amount > 0), ask: onRequest(ev, c.cat, x) };
     });
     var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; }).map(function (id) { return catName(id, ev); });
     return { rows: rows, total: tot, removed: ex, n: Math.min(ev.pkgChosen || 0, (ev.packages || []).length - 1) + 1, booked: rows.filter(function (r) { return r.status === 'Booked'; }).length };
@@ -1675,7 +1678,7 @@
   function pkgSummaryCard(ev, b, cats, cp) {
     var d = pkgData(ev, b, cats, cp);
     return '<div class="pkg-sum" id="pkgSum"><div class="pkg-sum-h"><p class="eyebrow">\u2713 Your final package</p><h3>Package ' + d.n + ' \u00b7 ' + esc(ev.name) + '</h3><p class="small muted">' + esc(whenText(ev)) + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p></div>' +
-      '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.rec ? ' <span class="badge rec">\u2605 Recommended</span>' : '') + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.est ? 'est. ' : '') + money(r.amt) + '</span></div>'; }).join('') + '</div>' +
+      '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.rec ? ' <span class="badge rec">\u2605 Recommended</span>' : '') + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.ask ? '<span class="muted">Price on request</span>' : (r.est ? 'est. ' : '') + money(r.amt)) + '</span></div>'; }).join('') + '</div>' +
       '<div class="pkg-sum-t"><span>' + (d.booked === d.rows.length ? 'Package total, all booked' : 'Package total') + '<span class="small muted pkg-sum-note">Your plan\u2019s estimate also keeps a 10% cushion for surprises.</span>' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
       pkgExtras(ev, b) +
       '<p class="small muted">' + d.booked + ' of ' + d.rows.length + ' booked' + (d.removed.length ? ' \u00b7 Not needed: ' + d.removed.map(esc).join(', ') : '') + '</p>' +
@@ -1709,7 +1712,7 @@
   }
   function pkgSumDoc(ev) {
     var b = E.budget(ev, ev.tier), cats = pkgCats(ev, b), pks = ev.packages || [], cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], d = pkgData(ev, b, cats, cp);
-    var secs = [{ h: 'Your package: Package ' + d.n + ' (' + d.booked + ' of ' + d.rows.length + ' booked)', rows: d.rows.map(function (r) { return [r.cat, r.info + '\n' + r.status, (r.est ? 'est. ' : '') + money(r.amt)]; }), total: ['Package total' + (ev.budget ? ' (budget ' + money(ev.budget) + ')' : ''), money(d.total)] }];
+    var secs = [{ h: 'Your package: Package ' + d.n + ' (' + d.booked + ' of ' + d.rows.length + ' booked)', rows: d.rows.map(function (r) { return [r.cat, r.info + '\n' + r.status, r.ask ? 'Price on request' : (r.est ? 'est. ' : '') + money(r.amt)]; }), total: ['Package total' + (ev.budget ? ' (budget ' + money(ev.budget) + ')' : ''), money(d.total)] }];
     if (d.removed.length) secs.push({ h: 'Not needed', bullets: d.removed });
     if (ev.setting !== 'restaurant') { var pl = playlistOf(ev); secs.push({ h: 'Playlist: ' + pl.name, bullets: pl.songs.map(function (x) { return x[0] + (x[1] ? ' \u2014 ' + x[1] : ''); }) }); }
     secs.push({ h: 'Next steps', bullets: ['Contact each one to check your date and get a quote.', 'Agree on the price, then mark it booked in Event Couture.', 'Pay vendors directly. Prices are estimates until you book.'] });
