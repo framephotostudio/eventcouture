@@ -6,7 +6,8 @@ fs.mkdirSync(OUT, { recursive: true });
 const hide = '.toast,.preview-ribbon,.keep-note{display:none!important}';
 const b = await chromium.launch();
 for (const [n, w, h, m] of [['phone', 430, 932, true], ['desktop', 1280, 900, false]]) {
-  const ctx = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: m ? 3 : 2, isMobile: m, hasTouch: m }); const pg = await ctx.newPage();
+  let pg0; try {
+  const ctx = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: m ? 3 : 2, isMobile: m, hasTouch: m }); const pg = await ctx.newPage(); pg0 = pg;
   await pg.goto(U + '#/start/' + (process.env.START || 'arabic-wedding') + '/'); await pg.waitForSelector('#text'); await pg.fill('#text', process.env.TEXT || 'Ivory and gold wedding with candlelight, white roses and a grand zaffe entrance'); await pg.click('#next');
   await pg.waitForSelector('#type'); await pg.evaluate(() => document.querySelectorAll('details.more').forEach(d => d.open = true));
   await pg.selectOption('#city', CITY); await pg.fill('#guests', process.env.GUESTS || '200'); await pg.click('#setting [data-v=indoor]');
@@ -24,5 +25,6 @@ for (const [n, w, h, m] of [['phone', 430, 932, true], ['desktop', 1280, 900, fa
   await (await pg.$('#pkgSum')).screenshot({ path: `${OUT}/${n}-final-package.png` });
   console.log(n, 'done', await pg.innerText('#pkgSum'));
   await ctx.close();
+  } catch (e) { fs.writeFileSync(`${OUT}/${n}-error.txt`, String(e && e.stack || e)); if (pg0) await pg0.screenshot({ path: `${OUT}/${n}-error.png`, fullPage: true }).catch(() => {}); }
 }
 await b.close();
