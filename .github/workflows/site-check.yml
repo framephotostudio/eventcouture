@@ -1,0 +1,30 @@
+name: Site check
+# Checks the live address answers (new domain, www, old address forwards) and saves phone and desktop screenshots of the home page.
+on: { workflow_dispatch: {} }
+permissions: { contents: write }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Addresses
+        run: |
+          for u in http://eventcouture.app/ https://eventcouture.app/ https://www.eventcouture.app/ https://facecouture.app/eventcouture/ https://eventcouture.app/sitemap.xml; do
+            printf '%s -> ' "$u"; curl -sS -o /dev/null -L --max-time 20 -w '%{http_code} %{url_effective}\n' "$u" || echo failed
+          done
+      - run: npm install --no-save playwright@1 && npx playwright install --with-deps chromium
+      - name: Screenshots
+        run: |
+          mkdir -p showcase && node -e "
+          const { chromium } = require('playwright');
+          (async () => { const b = await chromium.launch();
+            for (const [n, w, h, m] of [['phone', 430, 932, true], ['desktop', 1280, 900, false]]) {
+              const p = await (await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: m, ignoreHTTPSErrors: true })).newPage();
+              for (const u of ['https://eventcouture.app/', 'http://eventcouture.app/']) { try { await p.goto(u, { timeout: 30000 }); break; } catch (e) { console.log(u, e.message.split('\n')[0]); } }
+              await p.waitForTimeout(2500); console.log(n, p.url(), await p.title()); await p.screenshot({ path: 'showcase/' + n + '-home.png' }); }
+            await b.close(); })();"
+      - name: Save to the showcase branch
+        if: always()
+        run: |
+          git config user.name "Event Couture build"; git config user.email "build@facecouture.app"
+          git checkout --orphan showcase-out && git rm -rq --cached . && git add showcase && git commit -qm "Site check" && git push -f origin HEAD:showcase-out
