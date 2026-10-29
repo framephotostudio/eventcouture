@@ -45,7 +45,7 @@ with sync_playwright() as p:
         pg.click(bar+' [data-compare]'); pg.wait_for_selector('.cmp')
         names=[x.inner_text() for x in pg.query_selector_all('.cmp-row:first-child .cmp-c b')]
         check(n, names==['Gilded Florals','Petal and Stem Studio','Maison Fleur'], 'compare shows the three: '+str(names))
-        check(n, '$$$' in pg.inner_text('.cmp') and '★ 4.9' in pg.inner_text('.cmp'), 'price level and rating shown')
+        check(n, 'Upscale' in pg.inner_text('.cmp') and '★ 4.9' in pg.inner_text('.cmp'), 'price level and rating shown')
         pg.wait_for_timeout(500); pg.screenshot(path=f'{OUT}/opt_compare_{n}.png')
         pg.click('[data-pick-opt] >> nth=0'); pg.wait_for_timeout(200)
         check(n, 'Front-runner' in pg.inner_text('.cmp-row:first-child .cmp-c >> nth=1'), 'star moves to Petal and Stem')
