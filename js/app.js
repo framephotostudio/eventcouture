@@ -1467,8 +1467,21 @@
     return best;
   }
   /* Only the venue follows her area; vendors travel to her, so they're searched across the whole city. */
-  function pkgSearch(ev, c) { return findPlaces(ev, c.kind === 'venue' ? { query: c.q, level: c.lvl, city: (ev.area ? ev.area + ', ' : '') + ev.city } : { query: c.q, level: c.lvl, kind: 'vendor', cat: c.cat, hint: occasionHint(ev), city: ev.city }); }
-  function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '' }; }
+  /* Vendors Always Luxe recommends for this city and line, shaped like a search result. */
+  function recFor(ev, cat) {
+    return (D.RECOMMENDED || []).filter(function (r) { return r.cats.indexOf(cat) >= 0 && r.cities.indexOf(ev.city) >= 0; })
+      .map(function (r) { return { id: 'ig:' + r.ig, name: r.name, website: 'https://instagram.com/' + r.ig, rec: true, note: r.note, ig: r.ig }; });
+  }
+  function pkgSearch(ev, c) {
+    if (c.kind === 'venue') return findPlaces(ev, { query: c.q, level: c.lvl, city: (ev.area ? ev.area + ', ' : '') + ev.city });
+    var ask = function (q) { return findPlaces(ev, { query: q, level: c.lvl, kind: 'vendor', cat: c.cat, hint: occasionHint(ev), city: ev.city }).catch(function () { return []; }); };
+    var backups = (PKG_FALLBACK[c.cat] || []).concat([VENDOR_SEARCH[c.cat] || '']).filter(function (q, i, a) { return q && q !== c.q && a.indexOf(q) === i; }), got = [];
+    var add = function (list) { var seen = got.map(function (x) { return x.id; }); got = got.concat(rankLine(ev, c.cat, list).filter(function (x) { return seen.indexOf(x.id) < 0; })); };
+    var more = function () { if (got.length >= 3 || !backups.length) return got; return ask(backups.shift()).then(function (l) { add(l); return more(); }); };
+    got = recFor(ev, c.cat);
+    return ask(c.q).then(function (l) { add(l); return more(); });
+  }
+  function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rec: p.rec || undefined, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '' }; }
   function usedIn(ev, cat, id, except) { return (ev.packages || []).some(function (pk, k) { return k !== except && pk.items[cat] === id; }); }
   function putInPackage(ev, k, cat, p) {
     var pk = ev.packages[k], old = pk.items[cat], mine = savedFor(ev, cat);
@@ -1492,7 +1505,7 @@
       if (bk && k === 0) { ev.packages[k].items[c.cat] = bk.id; done++; if (onStep) onStep(done, cats.length); return Promise.resolve(); }   /* what she already booked stays */
       return pkgSearch(ev, c).then(function (list) {
         var taken = ev.packages.map(function (pk) { return pk.items[c.cat]; });
-        var p = list.find(function (x) { return taken.indexOf(x.id) < 0; });
+        var p = list.find(function (x) { return taken.indexOf(x.id) < 0; }) || list[0];   /* fewer good businesses than packages: share the best one rather than leave it empty */
         if (!p || !putInPackage(ev, k, c.cat, p)) miss.push(c.cat);
       }).catch(function () { miss.push(c.cat); }).then(function () { done++; if (onStep) onStep(done, cats.length); });
     };
@@ -1519,9 +1532,9 @@
     }
     var k = Math.min(ev.pkgView || 0, pks.length - 1), pk = pks[k];
     var bizOf = function (pkx, cat) { var id = pkx.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };
-    var line = function (x) { return hotelBadge(x.name).replace(/^ /, '') + [x.rating ? '★ ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' · '); };
+    var line = function (x) { return (x.rec ? '<span class="badge rec">\u2605 Recommended</span> ' : '') + hotelBadge(x.name).replace(/^ /, '') + [x.rec ? '@' + esc(String(x.id).slice(3)) : '',x.rating ? '★ ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' · '); };
     var est = function (cat) { var it = b.items.find(function (i) { return i.id === cat; }); return it ? 'est. ' + money(it.mid) : ''; };
-    var links = function (x) { return (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">Website</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : ''); };
+    var links = function (x) { return (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">' + (/^ig:/.test(x.id) ? 'Instagram' : 'Website') + '</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : ''); };
     var row = function (c, pkx, mode) {
       var x = bizOf(pkx, c.cat), bk = x && isBooked(ev, c.cat, x);
       return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + (mode === 'book' && !bk && !ev.sample ? '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don\u2019t need it">\u00d7</button>' : '') + '<span class="num muted small">' + est(c.cat) + '</span></div>' +
@@ -1537,7 +1550,7 @@
         (pks.length < 3 && !ev.sample ? '<th class="pk-colh pk-addcol"><button class="btn small ghost" id="pkgMore">+ Create package ' + (pks.length + 1) + '</button><span class="small muted">Different picks to compare</span></th>' : '') + '</tr>';
       var rowsH = cats.map(function (c) {
         return '<tr data-pkrow="' + c.cat + '"><th scope="row"><div class="pk-rh"><b>' + esc(catName(c.cat, ev)) + '</b>' + (ev.sample ? '' : '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don’t need it">×</button>') + '</div><span class="small muted num">' + est(c.cat) + '</span></th>' +
-          pks.map(function (x, i) { var biz = bizOf(x, c.cat); return '<td>' + (biz ? '<b>' + esc(biz.name) + '</b><span class="small muted">' + line(biz) + '</span><div class="pk-cell-acts">' + (siteOf(biz) ? '<a class="link small" target="_blank" rel="noopener" href="' + esc(siteOf(biz)) + '">Website</a>' : '') + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Swap</button>') + '</div>' : '<span class="small muted">No match yet</span>' + (ev.sample ? '' : ' <button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Find one</button>')) + '</td>'; }).join('') +
+          pks.map(function (x, i) { var biz = bizOf(x, c.cat); return '<td>' + (biz ? '<b>' + esc(biz.name) + '</b><span class="small muted">' + line(biz) + '</span><div class="pk-cell-acts">' + (siteOf(biz) ? '<a class="link small" target="_blank" rel="noopener" href="' + esc(siteOf(biz)) + '">' + (/^ig:/.test(biz.id) ? 'Instagram' : 'Website') + '</a>' : '') + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Swap</button>') + '</div>' : '<span class="small muted">No match yet</span>' + (ev.sample ? '' : ' <button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Find one</button>')) + '</td>'; }).join('') +
           (pks.length < 3 && !ev.sample ? '<td class="pk-addcol"></td>' : '') + '</tr><tr class="pk-swaprow"><td colspan="' + ncol + '"><div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></td></tr>';
       }).join('');
       var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
@@ -1854,7 +1867,7 @@
   /* Place searches are remembered on the plan for a week, so results come back instantly and nothing is paid for twice. */
   function HOWTO(kind) { return '<ol class="howto" aria-label="How to choose"><li><b>See</b> real, top-rated ' + (kind === 'venue' ? 'places' : 'businesses') + ' near you</li><li><b>Save</b> up to 3 you like</li><li><b>Compare</b> them, then mark the one you book</li></ol>'; }
   function findPlaces(ev, body) {
-    var key = JSON.stringify(['v3', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
+    var key = JSON.stringify(['v4', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
     if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(hit.places);
     var sendBody = Object.assign({}, body); if (E.countryOf(ev.city).id === 'CA' && !/canada/i.test(sendBody.city || '')) sendBody.city = (sendBody.city || '') + ', Canada';   /* London, ON is not London, England */
     return fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sendBody) })
@@ -1907,7 +1920,8 @@
   var BY_THEME = ['decor', 'balloons', 'kids', 'entertainment'];
   function occasionHint(ev) { var hc = E.culture(ev); if (hc) return hc.hint; return { wedding: 'wedding,bridal', quince: 'quince,quincea\u00f1era,xv', 'kids-birthday': 'kids,party', 'baby-shower': 'baby,shower', 'bridal-shower': 'bridal,wedding', corporate: 'corporate,event' }[ev.type] || ''; }
   function vendorQuery(ev, i, lvl) {
-    var vcu = E.culture(ev); if (vcu && vcu.search[i.id]) return ((ev.type === 'kids-birthday' ? '' : LEVEL_WORD[lvl] + ' ') + vcu.search[i.id]).replace('luxury five-star', 'luxury').trim();
+    var vcu = E.culture(ev); if (vcu && vcu.search[i.id]) return vcu.search[i.id];
+    var cw = vcu && cultureWord(ev); if (cw && CULTURE_CATS[i.id]) return cw + CULTURE_CATS[i.id];
     var vs = ev.alcohol === 'none' && i.id === 'bar' ? 'mocktail bar service' : ev.alcohol === 'none' && i.id === 'bartender' ? 'mocktail bartender service' : VENDOR_SEARCH[i.id];
     var base = (vs || i.name.split(' (')[0]), occ = OCCASION_WORD[ev.type] || '';
     if (BY_OCCASION.indexOf(i.id) >= 0 && occ) {
@@ -1922,6 +1936,37 @@
     var theme = themeWords(ev);
     if ((BY_THEME.indexOf(i.id) >= 0 || (kidsy && i.id === 'cake')) && theme && base.indexOf(theme) < 0) base = theme + ' ' + base;
     return ((ev.type === 'kids-birthday' ? '' : LEVEL_WORD[lvl] + ' ') + base).replace('luxury five-star', 'luxury').replace(/\s+/g, ' ').trim();
+  }
+  /* A cultural wedding searches its own way for the things that differ by culture: Indian bridal wear, not a formalwear store. */
+  var CULTURE_CATS = { attire: ' bridal wear boutique', favors: ' wedding favors', decor: ' wedding decor', hairMakeup: ' bridal makeup artist', photographer: ' wedding photographer', videographer: ' wedding videographer', catering: ' catering', dj: ' wedding DJ', liveMusic: ' wedding band', singer: ' wedding singer', officiant: ' wedding officiant', invitations: ' wedding invitations', florals: ' wedding florist' };
+  function cultureWord(ev) { return ev.culture && ev.culture !== 'africanamerican' && D.CULTURES[ev.culture] ? D.CULTURES[ev.culture].name.replace(/ wedding$/i, '').toLowerCase() : ''; }
+  /* When the first search comes back short, these searches fill the gaps, so no line is left empty. */
+  var PKG_FALLBACK = { baraat: ['wedding horse rental', 'dhol player'], dhol: ['dhol player', 'indian wedding DJ'], liveMusic: ['live wedding band', 'live band for events'], singer: ['wedding singer', 'live wedding band'],
+    cake: ['wedding cake bakery'], mehndi: ['henna artist', 'mehndi artist'], mandap: ['indian wedding decor', 'wedding stage decor'], kosha: ['wedding stage decor'], sofreh: ['persian wedding decor'], officiant: ['wedding officiant'],
+    attire: ['bridal boutique'], favors: ['wedding favors'], zaffe: ['zaffe', 'arabic wedding entertainment'], dabke: ['dabke dance group'], qawwali: ['qawwali'], mariachi: ['mariachi band'], lionDance: ['lion dance'],
+    teaCeremony: ['tea ceremony wedding'], giftTrays: ['wedding gift trays'], gele: ['gele tying'], flamenco: ['flamenco dancers'], gospel: ['gospel choir', 'gospel singer'], secondLine: ['brass band'] };
+  /* Businesses that are the wrong kind for the line, by name: a venue is not an officiant, a DJ company is not a singer. */
+  var PKG_REJECT = {
+    officiant: /gardens?\b|event (center|centre|hall|venue)|ballroom|banquet|\bvenue|hotel|estate|manor|reception|\bhall\b/i,
+    singer: /\bdjs?\b|event (center|centre|hall)|banquet|ballroom|\bvenue|rentals?\b|tents?\b/i,
+    liveMusic: /\bdjs?\b(?!.*\bband)|event (center|centre|hall)|banquet|ballroom|\bvenue|rentals?\b|tents?\b/i,
+    mehndi: /\bnails?\b|lash|brow|barber|salon\b(?!.*henna)/i,
+    baraat: /\bdjs?\b(?!.*(horse|baraat|dhol))|banquet|ballroom/i,
+    attire: /pi[ñn]ata|costume|party (city|supply|supplies)|uniform|thrift|resale/i
+  };
+  var ADULT_FAVORS = /pi[ñn]ata|balloon|party (city|supply|supplies|store)|\btoys?\b|kids/i;
+  var PKG_PREFER = { mehndi: /henna|mehndi|mehendi|mehandi/i, baraat: /horse|baraat|carriage|dhol/i, dhol: /dhol/i, officiant: /officiant|minister|priest|pandit|pujari|imam|maulvi|rabbi|reverend|pastor|temple|mandir|masjid|mosque|church|celebrant|ceremon/i,
+    singer: /sing|vocal|voice|music|band/i, liveMusic: /band|music|orchestra|ensemble|live/i, zaffe: /zaff|zeff|zafe|dabke|arab/i, mariachi: /mariachi/i, lionDance: /lion|dragon|kung fu|martial/i, gele: /gele/i, qawwali: /qawwal/i };
+  function fitsLine(ev, cat, p) {
+    var n = p.name || '';
+    if (PKG_REJECT[cat] && PKG_REJECT[cat].test(n)) return false;
+    if (cat === 'favors' && !/kids|baby|gender/.test(ev.type) && ADULT_FAVORS.test(n)) return false;
+    return true;
+  }
+  function rankLine(ev, cat, list) {
+    var pref = PKG_PREFER[cat], hc = E.culture(ev), words = hc && hc.hint ? new RegExp('\\b(' + hc.hint.split(',').map(function (w) { return w.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).filter(Boolean).join('|') + ')', 'i') : null;
+    var score = function (p) { return (pref && pref.test(p.name || '') ? 2 : 0) + (words && words.test(p.name || '') ? 1 : 0); };
+    return list.filter(function (p) { return fitsLine(ev, cat, p); }).map(function (p, i) { return { p: p, s: score(p), i: i }; }).sort(function (a, b) { return b.s - a.s || a.i - b.i; }).map(function (x) { return x.p; });
   }
   /* The theme in plain search words: a motif for kids' parties (unicorn, princess), otherwise the look's two main colors. */
   var KID_MOTIF = /\b(unicorn|princess|space|rainbow|mermaid|dinosaur|safari|superhero|fairy|pirate|carnival|jungle|under the sea|butterfly|construction|cowboy)\b/i;
@@ -1967,7 +2012,9 @@
         return '<div class="it"><div class="grow"><b>' + esc(r.card.name) + '</b>' + (r.price ? ' <span class="num">' + money(r.price) + '</span>' : '') + '<div class="small">' + esc(r.msg) + '</div><div class="small muted">' + [r.card.phone, r.email].filter(Boolean).map(esc).join(' \u00b7 ') + '</div></div><span class="acts">' + saveBtn(ev, p, cat) + (r.card.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://ig.me/m/' + esc(r.card.ig) + '">Message</a>' : r.email ? '<a class="btn small ghost" href="mailto:' + esc(r.email) + '">Email</a>' : '') + '</span></div>'; }).join('') : '<span class="muted small">Your request is out. Event Couture vendors in ' + esc(ev.city.split(',')[0]) + ' reply here, usually within a day or two.</span>') + '</div>'
       : '<div class="stack"><button class="btn small" data-getq="' + esc(cat) + '">Get quotes from vendors</button><span class="muted small">Free. Vendors see your date, city, guest count, theme and budget for this, never your name or contact details.</span></div>';
     var ig = (ev.shortlist || []).filter(function (x) { return x.cat === cat && /^ig:/.test(x.id); });
-    return '<div class="panel stack" style="margin-top:10px">' + quotes +
+    var recs = recFor(ev, cat);
+    var recH = recs.length ? '<div class="stack rec-box"><p class="eyebrow">\u2605 Recommended by Event Couture</p>' + recs.map(function (r) { var saved = savedFor(ev, cat).some(function (x) { return x.id === r.id; }); return '<div class="it"><div class="grow"><b>' + esc(r.name) + '</b> <span class="badge rec">Recommended</span><div class="small muted">' + esc(r.note) + ' \u00b7 @' + esc(r.ig) + '</div></div><span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(r.website) + '">Instagram</a>' + (ev.sample ? '' : saved ? '<button class="btn small" data-igmsg="' + esc(r.ig) + '">Message</button>' : '<button class="btn small" data-recadd="' + esc(r.ig) + '">Save</button>') + '</span></div>'; }).join('') + '</div>' : '';
+    return '<div class="panel stack" style="margin-top:10px">' + recH + quotes +
       '<div class="stack"><b>Found someone on Instagram?</b><span class="muted small">Add them to your options, then message them your request in one tap.</span><div class="row"><input class="input" data-ighandle placeholder="@their.instagram" aria-label="Instagram handle" style="flex:1;min-width:150px" autocapitalize="off" autocorrect="off"><button class="btn small ghost" data-igadd>Add</button></div>' +
       ig.map(function (x) { var h = x.id.slice(3); return '<div class="row small"><b>@' + esc(h) + '</b><button class="btn small" data-igmsg="' + esc(h) + '">Message @' + esc(h) + '</button></div>'; }).join('') + '</div></div>';
   }
@@ -1976,6 +2023,8 @@
     var redraw = function () { el.innerHTML = marketBlock(ev, cat); };
     el.addEventListener('click', function (e) {
       if (e.target.closest('[data-getq]')) { if (lockSample(ev)) return; return askQuotes(ev, cat, redraw); }
+      var ra = e.target.closest('[data-recadd]');
+      if (ra) { if (lockSample(ev)) return; if (savedFor(ev, cat).length >= MAX_OPTIONS) return toast('Remove one of your 3 saved ' + E.lc(catName(cat, ev)) + ' options first.'); var rp = recFor(ev, cat).find(function (r) { return r.ig === ra.dataset.recadd; }); if (rp) { addOption(ev, asOption(rp, cat)); saveEvent(ev); redraw(); toast(rp.name + ' saved to your options'); } return; }
       if (e.target.closest('[data-igadd]')) {
         if (lockSample(ev)) return;
         var h = String($('[data-ighandle]', el).value || '').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/[/?#].*$/, '');

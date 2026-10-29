@@ -215,6 +215,16 @@ function rightKind(p, cat) {
   const must = MUST_LOOK_LIKE[cat]; if (must && !must.types.test(types) && !must.names.test(name)) return false;
   return true;
 }
+/* Keep results in the city's own area: Google sometimes adds a business from another city (a Dallas DJ for Houston).
+   The middle of all results marks the city; anything more than 70 km from it is dropped. */
+function kmBetween(a, b) { const R = 6371, d = x => x * Math.PI / 180, dl = d(b.latitude - a.latitude), dn = d(b.longitude - a.longitude); const h = Math.sin(dl / 2) ** 2 + Math.cos(d(a.latitude)) * Math.cos(d(b.latitude)) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); }
+function nearCity(list, km = 70) {
+  const pts = list.filter(p => p.location && isFinite(p.location.latitude) && isFinite(p.location.longitude));
+  if (pts.length < 3) return list;
+  const mid = a => { const s = a.slice().sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+  const c = { latitude: mid(pts.map(p => p.location.latitude)), longitude: mid(pts.map(p => p.location.longitude)) };
+  return list.filter(p => !p.location || kmBetween(c, p.location) <= km);
+}
 async function places(env, query, city, level = 'S', vendor = false, cat = '', hint = '') {
   const rule = CAT_RULES[cat], hintRe = hint ? new RegExp('\\b(' + hint.split(/[,|]/).map(w => w.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean).join('|') + ')', 'i') : null;
   const L = vendor ? { minRating: 4.5, minReviews: 15, priceLevels: [] } : (LEVEL[level] || LEVEL.S);
@@ -224,7 +234,7 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
     const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': env.GOOGLE_MAPS_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions,places.businessStatus,places.types,places.primaryType' },
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions,places.businessStatus,places.types,places.primaryType,places.location' },
       body: JSON.stringify(body)
     });
     if (!r.ok) throw new Error('places');
@@ -233,6 +243,7 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
   let raw = await search(!vendor);
   // venues like ballrooms and estates often have no price level; fill in from an unpriced search, still rating-filtered
   if (!vendor && raw.length < 5) { const more = await search(false); const seen = new Set(raw.map(p => p.id)); raw = raw.concat(more.filter(p => !seen.has(p.id) && !(p.priceLevel === 'PRICE_LEVEL_INEXPENSIVE' || p.priceLevel === 'PRICE_LEVEL_FREE'))); }
+  raw = nearCity(raw);
   return raw
     .filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY' && p.businessStatus !== 'CLOSED_TEMPORARILY')
     .filter(p => !BUDGET_CHAINS.test(p.displayName?.text || '') && (level === 'L' || !MID_CHAINS.test(p.displayName?.text || '')))

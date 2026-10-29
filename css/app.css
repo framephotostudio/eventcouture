@@ -808,3 +808,8 @@ main .pkg-cmp th, main .pkg-cmp td, main .pkg-cmp b, main .pkg-cmp span { overfl
 @media (max-width: 560px) { .pkg-sum-r { grid-template-columns: 1fr 7.5em; } .pkg-sum-n { grid-column: 1 / -1; order: 3; margin-top: -4px; } }
 .culture-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .culture-row select { flex: 1; min-width: 200px; }
+.badge.rec { background: #F6EBD3; color: #6B4A12; border-color: #C9A86A; }
+.rec-box { border: 1px solid var(--gold, #C9A86A); border-radius: 12px; padding: 12px; background: linear-gradient(180deg, rgba(201,168,106,.10), transparent); }
+.badge.rec { white-space: nowrap; font-size: .7rem; padding: 2px 6px; letter-spacing: 0; }
+.pkg-cmp .badge.rec { display: inline-block; margin: 3px 0 2px; }
+@media (max-width: 560px) { .pkg-cmp .badge.rec { font-size: .6rem; padding: 1px 5px; } }
