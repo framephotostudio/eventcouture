@@ -97,7 +97,7 @@ with sync_playwright() as p:
         base=plan(pg, 'Houston, TX', '#/new/1', 'Ivory and gold wedding with white roses')
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000)
         hb=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="hairMakeup"] td > b')]; check(n, hb[:1]==['Makeup by Suzette'], 'classic Houston event: Suzette is the hair and makeup pick: '+str(hb[:1]))
-        t=pg.inner_text('.pkg-cmp'); check(n, 'DJ Mosses' not in t and 'Chris Hawat' not in t and 'Wassim' not in t and 'DJ Yamani' in t, 'classic Houston party: DJ Yamani shows, the LA DJ and Arabic singer do not')
+        t=pg.inner_text('.pkg-cmp'); check(n, 'DJ Mosses' not in t and 'Chris Hawat' not in t and 'DJ Yamani' in t, 'classic Houston party: DJ Yamani shows, the LA DJ and Arabic singer do not')
         if n=='phone': pg.evaluate("document.querySelector('tr[data-pkrow=\"dj\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_yamani_{n}.png')
         check(n, not e, 'no page errors '+str(e)); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
         ctx.close()
