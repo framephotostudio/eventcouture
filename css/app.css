@@ -840,3 +840,31 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .pkg-more { gap: 10px; }
 .pkg-more h3 { margin: 0; }
 .pkg-more .pkg-pl, .pkg-more .pkg-adds-row { margin: 0; }
+
+/* Invitation, made over */
+.invite-card { position: relative; border-radius: 22px !important; }
+.invite-card .swatch { display: none; }
+.invite-card .inv-photo { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
+.invite-card .inv-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.invite-card .inv-photo::after { content: ''; position: absolute; inset: auto 0 0 0; height: 38%; background: linear-gradient(to bottom, rgba(255,255,255,0), var(--surface, #fff)); }
+.invite-card .inv-ai { position: absolute; right: 10px; top: 10px; z-index: 1; font-size: .68rem; background: rgba(20, 10, 18, .6); color: #fff; padding: 3px 9px; border-radius: 999px; letter-spacing: .02em; }
+.invite-card.has-photo .in { margin-top: -26px; position: relative; z-index: 1; }
+.invite-card .inv-frame { background: linear-gradient(180deg, color-mix(in srgb, var(--inv-tint) 16%, var(--surface, #fff)), var(--surface, #fff) 65%); }
+.invite-card .inv-ribbon { display: flex; height: 8px; }
+.invite-card .inv-ribbon i { flex: 1; }
+/* formal: double gold rule and a deeper monogram */
+.inv-k-formal .inv-frame { border-width: 1.5px; outline-offset: -9px; padding-top: 44px; }
+.inv-k-formal .inv-name { letter-spacing: .01em; }
+/* kids: rounded, bright and confetti-dotted in the party's own colors */
+.inv-k-kids .inv-frame { border: 3px dashed var(--inv-a); outline: 0; border-radius: 22px; overflow: hidden; }
+.inv-k-kids .inv-confetti { position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image: radial-gradient(circle, var(--inv-a) 0 4px, transparent 5px), radial-gradient(circle, var(--inv-b) 0 3px, transparent 4px), radial-gradient(circle, var(--inv-c) 0 3.5px, transparent 4.5px);
+  background-size: 120px 90px, 90px 130px, 150px 110px; background-position: 10px 14px, 60px 40px, 30px 70px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0 10%, transparent 22% 80%, #000 92%); mask-image: linear-gradient(to bottom, #000 0 10%, transparent 22% 80%, #000 92%); }
+.inv-k-kids .inv-frame > *:not(.inv-confetti) { position: relative; }
+.inv-k-kids .inv-pre { font-style: normal; font-family: var(--body, inherit); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: .9rem; color: color-mix(in srgb, var(--inv-accent) 80%, #000); }
+.inv-k-kids .inv-name { color: color-mix(in srgb, var(--inv-a) 55%, #3a1030); }
+.inv-k-kids .inv-orn { color: var(--inv-b); font-size: 1.8rem; }
+/* parties: festive accent on the name */
+.inv-k-party .inv-name { color: var(--ink); }
+.inv-k-party .inv-pre { color: color-mix(in srgb, var(--inv-accent) 80%, #000); }
