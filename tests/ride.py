@@ -28,6 +28,7 @@ with sync_playwright() as p:
         Q.clear(); pg.click('.pkg-cmp [data-pkaddnow=transport]'); pg.wait_for_timeout(2500)
         qs=[q['query'] for q in Q]; t=pg.inner_text('.pkg-cmp')
         check(n, 'Luxury transportation' in t and not pg.query_selector('[data-pkaddnow]'), 'adds a Luxury transportation line, and the prompt goes away')
+        rows=pg.evaluate("[...document.querySelectorAll('.pkg-cmp tbody tr[data-pkrow]')].map(r=>r.dataset.pkrow)"); check(n, rows and rows[-1]=='transport', 'transportation is the very last line: '+str(rows[-3:]))
         check(n, qs and 'limousine' in qs[0], 'searches limousine and chauffeur services: '+str(qs[:1]))
         base=plan(pg, 'Unicorn party for my daughter', 'kids-birthday')
         check(n, pg.query_selector('[data-pkaddnow]') is None, 'kids birthday: no limo prompt')
@@ -35,3 +36,4 @@ with sync_playwright() as p:
         ctx.close()
     b.close()
 print('FAILURES:', F or 'none')
+# (see also: transportation, when in the package, is the very last line)

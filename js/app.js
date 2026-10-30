@@ -1528,7 +1528,7 @@
     if (ev.setting !== 'home' && !ev.settingOpen && b.items.some(function (i) { return i.id === vc; })) { var vt = themeVenue(ev, venueTypesFor(ev)); if (vt) out.push({ cat: vc, kind: 'venue', type: vt, q: venueQuery(vt, ev, b), lvl: lvl }); }
     b.items.forEach(function (i) { if (PKG_SKIP.indexOf(i.id) < 0 && NO_SEARCH.indexOf(i.id) < 0) out.push({ cat: i.id, kind: 'vendor', q: vendorQuery(ev, i, lvl), lvl: lvl }); });
     /* The essentials first, then the music and entertainment (singer, DJ, zaffe), then everything else. */
-    var rank = function (c, i) { var m = PKG_FIRST.indexOf(c.cat), p = PKG_MUSIC.indexOf(c.cat); return (m >= 0 ? m : p >= 0 ? 100 + p : 1000) * 1000 + i; };
+    var rank = function (c, i) { var m = PKG_FIRST.indexOf(c.cat), p = PKG_MUSIC.indexOf(c.cat); return (c.cat === 'transport' ? 5000 : m >= 0 ? m : p >= 0 ? 100 + p : 1000) * 1000 + i; };   /* transportation is always the last, optional line */
     return out.map(function (c, i) { return [rank(c, i), c]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
   }
   /* The kind of venue that suits the look: chandeliers and velvet mean a ballroom, greenery a garden, a skyline a rooftop. */
