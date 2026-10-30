@@ -31,7 +31,7 @@ with sync_playwright() as p:
         rows=pg.evaluate("[...document.querySelectorAll('.pkg-cmp tbody tr[data-pkrow]')].map(r=>r.dataset.pkrow)"); check(n, rows and rows[-1]=='transport', 'transportation is the very last line: '+str(rows[-3:]))
         check(n, qs and 'limousine' in qs[0], 'searches limousine and chauffeur services: '+str(qs[:1]))
         base=plan(pg, 'Unicorn party for my daughter', 'kids-birthday')
-        check(n, pg.query_selector('[data-pkaddnow]') is None, 'kids birthday: no limo prompt')
+        check(n, pg.query_selector('[data-pkaddnow]') is not None, 'kids birthday: the limo option is there too')
         check(n, not e, 'no page errors '+str(e[:2])); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
         ctx.close()
     b.close()

@@ -1709,7 +1709,7 @@
   }
   /* At the end of every package: an easy way to add a limo or car service, when it isn't in the package yet and suits the occasion. */
   function rideRow(ev, b, inTable, ncol) {
-    if (ev.sample || ev.type === 'kids-birthday' || b.items.some(function (i) { return i.id === 'transport'; })) return '';
+    if (ev.sample || b.items.some(function (i) { return i.id === 'transport'; })) return '';
     var txt = '<b>Luxury transportation</b><span class="small muted"> Arrive in a limo, Rolls-Royce or party bus. Not in your package yet.</span>';
     var btn = '<button type="button" class="btn small ghost" data-pkaddnow="transport">+ Add a limo or car service</button>';
     return inTable ? '<tr class="pk-ride"><td colspan="' + ncol + '"><div class="pk-ride-in"><span class="grow">' + txt + '</span>' + btn + '</div></td></tr>' : '<div class="pk-ride-in pkg-ride"><span class="grow">' + txt + '</span>' + btn + '</div>';
