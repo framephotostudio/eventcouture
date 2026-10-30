@@ -878,3 +878,8 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .qs-tile::after { content: ''; position: absolute; inset: 40% 0 0 0; background: linear-gradient(to bottom, rgba(30, 8, 22, 0), rgba(30, 8, 22, .78)); }
 .qs-tile span { position: absolute; left: 12px; right: 12px; bottom: 10px; z-index: 1; color: #fff; font-family: var(--display); font-size: 1.15rem; line-height: 1.15; }
 .qs-tile:focus-visible { outline: 2px solid var(--champagne); outline-offset: 2px; }
+
+/* Add a limo or car service, at the end of the package */
+.pk-ride-in { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; margin: 6px 0 2px; border: 1px dashed var(--champagne, #C9A86A); border-radius: 12px; background: color-mix(in srgb, var(--champagne, #C9A86A) 7%, transparent); }
+.pk-ride-in .grow { flex: 1 1 220px; display: grid; gap: 2px; }
+.pk-ride td { padding-top: 10px !important; }

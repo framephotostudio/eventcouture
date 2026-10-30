@@ -1643,7 +1643,7 @@
       return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(2) + '<div class="pkg-top"><h3>Compare your packages</h3></div>' + AREA_LINE(ev) +
         '<p class="pkg-guide">Each package has a top-rated pick for every part of your plan. Tap <b>Swap</b> on anything you don’t like. When you’re happy, tap <b>Choose</b> on the one you like best: it becomes your <b>final package</b>, and we walk you through booking it.</p>' +
         '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of every package and your budget, and your estimated total goes down to match. You can add it back anytime.</p>' +
-        '<div class="pkg-cmp-wrap"><table class="pkg-cmp" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + '</tbody></table></div>' +
+        '<div class="pkg-cmp-wrap"><table class="pkg-cmp" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + rideRow(ev, b, true, ncol) + '</tbody></table></div>' +
         (ex.length && !ev.sample ? '<p class="small muted">Removed: ' + ex.map(function (id) { return esc(catName(id, ev)) + ' <button class="link small" data-pkunx="' + id + '">Add back</button>'; }).join(' · ') + '</p>' : '') +
         '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
     }
@@ -1693,6 +1693,7 @@
     var d = pkgData(ev, b, cats, cp);
     return '<div class="pkg-sum" id="pkgSum"><div class="pkg-sum-h"><p class="eyebrow">\u2713 Your final package</p><h3>Package ' + d.n + ' \u00b7 ' + esc(ev.name) + '</h3><p class="small muted">' + esc(whenText(ev)) + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p></div>' +
       '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.rec ? ' <span class="badge rec">\u2605 Recommended</span>' : '') + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.ask ? '<span class="muted">Price on request</span>' : (r.est ? 'est. ' : '') + money(r.amt)) + '</span></div>'; }).join('') + '</div>' +
+      rideRow(ev, b, false) +
       '<div class="pkg-sum-t"><span>' + (d.booked === d.rows.length ? 'Package total, all booked' : 'Package total') + '<span class="small muted pkg-sum-note">Your plan\u2019s estimate also keeps a 10% cushion for surprises.</span>' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
       '<p class="small muted">' + d.booked + ' of ' + d.rows.length + ' booked' + (d.removed.length ? ' \u00b7 Not needed: ' + d.removed.map(esc).join(', ') : '') + '</p>' +
       '<p class="small">This is your package. Save it as a PDF, email it to yourself or forward it to a co-host anytime, booked or not.</p><div class="row pkg-sum-acts"><button class="btn gold small" data-pksum="pdf">Save as PDF</button><button class="btn ghost small" data-pksum="mail">Email it</button><button class="btn ghost small" data-pksum="share">Share</button></div></div>';
@@ -1705,6 +1706,13 @@
     var rest = ev.setting === 'restaurant' || ev.setting === 'privateRoom';
     var fits = function (it) { return D.CATEGORIES[it.id] && have.indexOf(it.id) < 0 && (it.kids ? (ev.type === 'kids-birthday' || ev.kids && /birthday/.test(ev.type || '')) && !rest && (!it.settings || it.settings.indexOf(ev.setting) >= 0) : rest ? D.PKG_ADDONS_RESTAURANT.indexOf(it.id) >= 0 : (!it.only || it.only.indexOf(ev.type) >= 0) && (!it.not || it.not.indexOf(ev.type) < 0) && (!it.settings || it.settings.indexOf(ev.setting) >= 0)) ; };
     return D.PKG_ADDONS.map(function (g) { return { group: g.group, items: g.items.filter(fits).map(function (it) { return it.id; }) }; }).filter(function (g) { return g.items.length; });
+  }
+  /* At the end of every package: an easy way to add a limo or car service, when it isn't in the package yet and suits the occasion. */
+  function rideRow(ev, b, inTable, ncol) {
+    if (ev.sample || ev.type === 'kids-birthday' || b.items.some(function (i) { return i.id === 'transport'; })) return '';
+    var txt = '<b>Luxury transportation</b><span class="small muted"> Arrive in a limo, Rolls-Royce or party bus. Not in your package yet.</span>';
+    var btn = '<button type="button" class="btn small ghost" data-pkaddnow="transport">+ Add a limo or car service</button>';
+    return inTable ? '<tr class="pk-ride"><td colspan="' + ncol + '"><div class="pk-ride-in"><span class="grow">' + txt + '</span>' + btn + '</div></td></tr>' : '<div class="pk-ride-in pkg-ride"><span class="grow">' + txt + '</span>' + btn + '</div>';
   }
   function addLabel(id, ev) { return ADD_LABEL[id] || catName(id, ev).replace(/ \(.*\)$/, ''); }
   function addTeaser(groups, ev) { var all = [].concat.apply([], groups.map(function (g) { return g.items; })), pick = all.filter(function (id) { return ['chocolateFountain', 'photoBooth', 'effects', 'characterVisit', 'bounceHouse', 'dessertBar', 'coffeeBar', 'booth360', 'livePainter', 'videographer'].indexOf(id) >= 0; }).slice(0, 3); if (pick.length < 3) pick = pick.concat(all.filter(function (id) { return pick.indexOf(id) < 0; }).slice(0, 3 - pick.length)); return pick.map(function (id) { return addLabel(id, ev); }).join(', ') + (all.length > pick.length ? ' and more' : ''); }
@@ -1811,6 +1819,7 @@
         delete ADDING[cat]; save(); rerender(); toast(catName(cat, ev) + ' is in your package');
       }).catch(function () { delete ADDING[cat]; save(); rerender(); toast(catName(cat, ev) + ' added. Tap Find one to choose a business.'); });
     };
+    $$('[data-pkaddnow]').forEach(function (bt) { bt.addEventListener('click', function () { if (bt.disabled) return; bt.disabled = true; addExtra(bt.dataset.pkaddnow); }); });
     $$('[data-pkextras]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; extrasSheet(ev, E.budget(ev, ev.tier), addExtra); }); });
     $$('[data-pksum]').forEach(function (bt) { bt.addEventListener('click', function () { var k = bt.dataset.pksum; if (ev.sample || isKept(ev)) return pkgSumAction(ev, k); keepSheet(ev, 'Keep your plan to save or share your package', function () { rerender(); pkgSumAction(ev, k); }); }); });
     $$('[data-pkskip]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; ev.pkgSkipped = (ev.pkgSkipped || []).filter(function (c) { return c !== bt.dataset.pkskip; }).concat([bt.dataset.pkskip]); save(); rerender(); }); });
