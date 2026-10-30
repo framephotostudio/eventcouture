@@ -1883,7 +1883,7 @@
       types = (daytime ? ['Upscale brunch or lunch spot', 'Hotel brunch or afternoon tea', 'Garden cafe or patio'] : ['Private dining room', 'Steakhouse or chophouse', 'Rooftop restaurant'].concat(ev.type === 'bachelorette' ? ['Cocktail lounge or speakeasy'] : [])).concat(types).filter(function (v, i, a) { return a.indexOf(v) === i; });
       if (ev.setting === 'privateRoom') types = types.filter(function (v) { return !/trendy dinner/i.test(v); });
     }
-    if ((ev.kids && /birthday/.test(ev.type)) || /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|kids'? party/i.test((ev.inspiration && ev.inspiration.text) || '')) { types = types.filter(function (v) { return !/lounge|wine bar|speakeasy|steakhouse/i.test(v); }); if (ev.setting === 'indoor') types.unshift('Kids party venue or play space'); }
+    if ((ev.kids && /birthday/.test(ev.type)) || /\b([1-9]|1[0-2])(st|nd|rd|th)\b.*birthday|kids'? party/i.test((ev.inspiration && ev.inspiration.text) || '')) { types = types.filter(function (v) { return !/lounge|wine bar|speakeasy|steakhouse/i.test(v); }); if (ev.setting === 'indoor') types.unshift('Kids party venue or play space'); if (ev.setting === 'restaurant' || ev.setting === 'privateRoom') types = ['Family-friendly restaurant for kids parties', 'Pizza or party restaurant with a party room'].concat(types.filter(function (v) { return !/brunch|tea|bistro|rooftop|steak|dinner|private dining/i.test(v); })); }   /* a child's party: family places, never bars or brunch spots */
     if (ev.alcohol === 'none') types = types.filter(function (v) { return !/wine bar|lounge|speakeasy/i.test(v); });   /* no bars for an alcohol-free event */
     if (ev.setting === 'outdoor' && /\b(park|picnic)\b/i.test((ev.inspiration && ev.inspiration.text) || '')) types = ['Park pavilion or picnic area'].concat(types.filter(function (v) { return v !== 'Park pavilion or picnic area'; }));
     return types;
@@ -1944,7 +1944,7 @@
     'Garden venue': 'garden event venue', 'Tea room or bistro': 'tea room', 'Community or clubhouse room': 'clubhouse event room', 'Rooftop lounge': 'rooftop lounge private events',
     'Restaurant buyout': 'restaurant private events buyout', 'Banquet hall': 'banquet hall', 'Museum or gallery': 'museum event venue', 'Historic mansion': 'historic mansion event venue',
     'Estate or garden venue': 'estate wedding venue', 'Vineyard or barn': 'vineyard wedding venue', 'Rooftop with skyline views': 'rooftop event venue skyline view',
-    'Upscale brunch or lunch spot': 'brunch restaurant', 'Park pavilion or picnic area': 'park pavilion rental', 'Event lawn or estate grounds': 'outdoor event lawn venue', 'Rooftop terrace': 'rooftop terrace event space', 'Beach or waterfront venue': 'waterfront event venue', 'Kids party venue or play space': 'kids party venue', 'Hotel brunch or afternoon tea': 'hotel brunch afternoon tea', 'Garden cafe or patio': 'garden cafe patio restaurant', 'Cocktail lounge or speakeasy': 'cocktail lounge private room', 'Steakhouse or chophouse': 'steakhouse', 'Wine bar or bistro': 'wine bar bistro', 'Trendy dinner spot with a large table': 'trendy restaurant large groups'
+    'Upscale brunch or lunch spot': 'brunch restaurant', 'Park pavilion or picnic area': 'park pavilion rental', 'Event lawn or estate grounds': 'outdoor event lawn venue', 'Rooftop terrace': 'rooftop terrace event space', 'Beach or waterfront venue': 'waterfront event venue', 'Kids party venue or play space': 'kids party venue', 'Family-friendly restaurant for kids parties': 'family friendly restaurant for kids birthday parties', 'Pizza or party restaurant with a party room': 'kids birthday party restaurant with party room', 'Hotel brunch or afternoon tea': 'hotel brunch afternoon tea', 'Garden cafe or patio': 'garden cafe patio restaurant', 'Cocktail lounge or speakeasy': 'cocktail lounge private room', 'Steakhouse or chophouse': 'steakhouse', 'Wine bar or bistro': 'wine bar bistro', 'Trendy dinner spot with a large table': 'trendy restaurant large groups'
   };
   var LEVEL_WORD = { L: 'stylish highly rated', S: 'upscale', U: 'luxury five-star', F: 'upscale' };
   function venueLevel(ev, b) { var t = (b && b.tier && b.tier.id) || ev.tier || 'S'; if (t === 'F') { var pp = (b && b.total || 0) / Math.max(1, ev.guests || 1); t = pp > 250 ? 'U' : pp < 70 ? 'L' : 'S'; } return t; }
@@ -1978,6 +1978,8 @@
       'Rooftop terrace': ['open air with a view', 'weather and capacity limits'],
       'Beach or waterfront venue': ['breezy and unforgettable photos', 'wind, permits and a rain plan'],
       'Kids party venue or play space': ['activities and staff for children', 'set time slots and package menus'],
+      'Family-friendly restaurant for kids parties': ['kids menu and room to be loud', 'book a table or party room early'],
+      'Pizza or party restaurant with a party room': ['party room and kid-friendly food', 'set packages and time slots'],
       'Hotel brunch or afternoon tea': ['elegant and calm for daytime', 'set menus and seatings'],
       'Garden cafe or patio': ['bright and pretty for photos', 'weather on the patio'],
       'Cocktail lounge or speakeasy': ['moody and intimate for the night', 'smaller space, 21 and over']
@@ -1990,12 +1992,16 @@
   function mapsSearch(ev, cat, q) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((q || VENDOR_SEARCH[cat] || catName(cat, ev)).replace(/^(upscale|luxury|affordable|budget-friendly) /i, '') + ' near ' + (ev.city || '').replace(/^Other (US city|city in )/, '')); }
   function mapsBtn(ev, cat, q, cls) { return '<a class="' + (cls || 'link small') + '" target="_blank" rel="noopener" href="' + esc(mapsSearch(ev, cat, q)) + '">Search on Google Maps</a>'; }
   var LIVE_RESTING = false;   /* the month's free searches are used up */
+  /* A child's party never gets a bar, lounge or nightclub. */
+  function kidsParty(ev) { return !!(ev && (ev.type === 'kids-birthday' || ev.kids && /birthday/.test(ev.type || ''))); }
+  var ADULT_PLACE = /\b(bar|pub|tavern|lounge|brewery|brewing|taproom|saloon|cocktail|speakeasy|wine|winery|club|hookah|cigar|ice house|beer)\b/i;
+  function kidsOk(ev, list) { return kidsParty(ev) ? list.filter(function (p) { return !p.bar && !ADULT_PLACE.test(p.name || ''); }) : list; }
   function findPlaces(ev, body) {
     var key = JSON.stringify(['v4', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
-    if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(hit.places);
+    if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(kidsOk(ev, hit.places));
     var sendBody = Object.assign({}, body); var sco = E.countryOf(ev.city); if (sco.id === 'CA' && !/canada/i.test(sendBody.city || '')) sendBody.city = (sendBody.city || '') + ', Canada'; else if (sco.id !== 'US' && sco.id !== 'CA' && (sendBody.city || '').toLowerCase().indexOf(sco.name.toLowerCase()) < 0 && (sendBody.city || '').indexOf(sco.short) < 0) sendBody.city = (sendBody.city || '') + ', ' + sco.name;   /* London, ON is not London, England */
     return fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sendBody) })
-      .then(function (r) { return r.json().then(function (j) { if (!r.ok) { if (j.code === 'limit') LIVE_RESTING = true; throw new Error(j.error); } return j.places || []; }); })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) { if (j.code === 'limit') LIVE_RESTING = true; throw new Error(j.error); } return kidsOk(ev, j.places || []); }); })
       .then(function (list) { if (!ev.sample) { c[key] = { at: Date.now(), places: list }; var ks = Object.keys(c).sort(function (a, b) { return c[b].at - c[a].at; }); ks.slice(30).forEach(function (k) { delete c[k]; }); saveEvent(ev); } return list; });
   }
   TAB_BIND.places = function (ev, save, rerender) {

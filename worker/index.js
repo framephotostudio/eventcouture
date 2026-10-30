@@ -280,7 +280,7 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
     .sort((a, b) => b.score - a.score).map(x => x.p)
     .slice(0, 8)
     .map(p => ({ id: p.id, name: p.displayName?.text, address: p.formattedAddress, rating: p.rating, reviews: p.userRatingCount,
-      priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, hours: p.regularOpeningHours?.weekdayDescriptions || [], restaurant: /restaurant|steak|bistro|brasserie|grill|dining/.test(String(p.primaryType || '')), source: 'Google' }));
+      priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, hours: p.regularOpeningHours?.weekdayDescriptions || [], restaurant: /restaurant|steak|bistro|brasserie|grill|dining/.test(String(p.primaryType || '')), bar: /\b(bar|night_club|pub|wine_bar|cocktail_bar|brewery|liquor_store)\b/.test([p.primaryType || ''].concat(p.types || []).join(' ')), source: 'Google' }));
 }
 
 /* ---------- drive times (Routes API) ---------- */
