@@ -1676,7 +1676,7 @@
   }
   /* The chosen package as one clear summary she can save, email or forward, booked or not. */
   /* Recommended performers set their own prices: we never show our estimate next to their name. */
-  var PERFORMERS = ['dj', 'singer', 'zaffe', 'liveMusic', 'dabke', 'dhol', 'mariachi', 'mc', 'qawwali', 'davul', 'dakka', 'flamenco', 'gospel', 'lionDance', 'secondLine'];
+  var PERFORMERS = ['transport', 'dj', 'singer', 'zaffe', 'liveMusic', 'dabke', 'dhol', 'mariachi', 'mc', 'qawwali', 'davul', 'dakka', 'flamenco', 'gospel', 'lionDance', 'secondLine'];
   function onRequest(ev, cat, x) { var ov = (ev.overrides || {})[cat]; return !!(x && x.rec && PERFORMERS.indexOf(cat) >= 0 && !(ov && ov.amount > 0)); }
   function pkgData(ev, b, cats, cp) {
     var bizOf = function (cat) { var id = cp.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };

@@ -30,6 +30,13 @@ with sync_playwright() as p:
         check(n, 'Luxury transportation' in t and not pg.query_selector('[data-pkaddnow]'), 'adds a Luxury transportation line, and the prompt goes away')
         rows=pg.evaluate("[...document.querySelectorAll('.pkg-cmp tbody tr[data-pkrow]')].map(r=>r.dataset.pkrow)"); check(n, rows and rows[-1]=='transport', 'transportation is the very last line: '+str(rows[-3:]))
         check(n, qs and 'limousine' in qs[0], 'searches limousine and chauffeur services: '+str(qs[:1]))
+        # Los Angeles: Fady Youssef is the first pick for transportation
+        pg.goto(U+'#/new/1'); pg.fill('#text', 'Ivory wedding'); pg.click('#next'); pg.wait_for_selector('#type'); pg.select_option('#type', 'wedding'); pg.select_option('#city','Los Angeles, CA'); pg.click('#setting [data-v=indoor]'); pg.click('#next')
+        pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); lb='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
+        pg.goto(U+lb+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=40000)
+        if pg.query_selector('.pkg-cmp [data-pkaddnow=transport]'): pg.click('.pkg-cmp [data-pkaddnow=transport]'); pg.wait_for_timeout(2500)
+        tr=pg.evaluate("(()=>{const r=document.querySelector('tr[data-pkrow=transport]');return r?r.innerText:''})()")
+        check(n, 'Fady Youssef' in tr and 'Recommended' in tr, 'Los Angeles: Fady Youssef is the transportation pick: '+tr[:80].replace('\n',' '))
         base=plan(pg, 'Unicorn party for my daughter', 'kids-birthday')
         check(n, pg.query_selector('[data-pkaddnow]') is not None, 'kids birthday: the limo option is there too')
         check(n, not e, 'no page errors '+str(e[:2])); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')
