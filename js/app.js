@@ -298,7 +298,7 @@
     if (p[0] !== 'inspiration') inspoFor_ = null;   /* only the "choose a different photo" page swaps a photo on an existing draft */
     try {
       if (!p.length) return home();
-      if (p[0] === 'start') { var sd = newDraft(), st = decodeURIComponent(p[1] || ''), sc = decodeURIComponent(p[2] || ''); var cuk = Object.keys(D.CULTURES).find(function (k) { return st === k + '-wedding' || st === k + '-engagement' && D.CULTURES[k].engagement; }); if (cuk) { sd.type = /-engagement$/.test(st) ? 'engagement' : 'wedding'; sd.culture = cuk; if ((window.EC_INSPO || []).some(function (q) { return q.id === 'culture-' + cuk; })) { sd.inspiration.inspo = 'culture-' + cuk; sd.typeChosen = true; } } else if (D.EVENT_TYPES.some(function (t) { return t.id === st; })) sd.type = st; if (sd.type) { var tt = E.typeOf(sd.type); sd.guests = sd.expected = cuk ? E.culture(sd).guests : tt.defaultGuests; sd.hours = cuk ? E.culture(sd).hours : tt.hours; sd.typeChosen = true; } if (D.CITIES.some(function (c) { return c.name === sc; })) { sd.city = sc; sd.country = E.countryOf(sc).id; } T('guide_start', { event_type: sd.type || 'none', city: sd.city || 'none' }); saveDraft(sd); location.replace('#/new/1/' + sd.id); return; }
+      if (p[0] === 'start') { var sd = newDraft(), st = decodeURIComponent(p[1] || ''), sc = decodeURIComponent(p[2] || ''); var cuk = Object.keys(D.CULTURES).find(function (k) { return st === k + '-wedding' || st === k + '-engagement' && D.CULTURES[k].engagement; }); if (cuk) { sd.type = /-engagement$/.test(st) ? 'engagement' : 'wedding'; sd.culture = cuk; if ((window.EC_INSPO || []).some(function (q) { return q.id === 'culture-' + cuk; })) { sd.inspiration.inspo = 'culture-' + cuk; sd.typeChosen = true; } } else if (D.EVENT_TYPES.some(function (t) { return t.id === st; })) sd.type = st; if (sd.type) { var tt = E.typeOf(sd.type); sd.guests = sd.expected = cuk ? E.culture(sd).guests : tt.defaultGuests; sd.hours = cuk ? E.culture(sd).hours : tt.hours; sd.typeChosen = true; } if (D.CITIES.some(function (c) { return c.name === sc; })) { sd.city = sc; sd.country = E.countryOf(sc).id; } var sp = decodeURIComponent(p[3] || ''), spp = sp && (window.EC_INSPO || []).find(function (q) { return q.id === sp; }); if (spp && sd.type && !cuk) { sd.inspiration.inspo = spp.id; T('quick_start', { event_type: sd.type }); }   /* one-tap start: the plan begins from this photo */ T('guide_start', { event_type: sd.type || 'none', city: sd.city || 'none' }); saveDraft(sd); location.replace('#/new/1/' + sd.id); return; }
       if (p[0] === 'new') return wizard(+(p[1] || 1), p[2]);
       if (p[0] === 'events') return myEvents();
       if (p[0] === 'inspiration') return inspirationPage(p[1] && p[1] !== 'all' ? decodeURIComponent(p[1]) : '', p[2]);
@@ -403,6 +403,15 @@
     bindInspo(0, function (t) { history.replaceState(null, '', '#/inspiration/' + (t || 'all') + (inspoFor_ ? '/' + inspoFor_ : '')); });
   }
 
+  /* Start in one tap: the most common occasions, each with its own photo; the plan begins from that look. */
+  var QUICK = [['wedding', 'Wedding', 'blush-wisteria-ballroom'], ['kids-birthday', 'Kids\u2019 birthday', 'unicorn-dreamland'], ['birthday', 'Birthday', 'bougainvillea-fiesta'], ['baby-shower', 'Baby shower', 'lavender-garden-shower'],
+    ['bridal-shower', 'Bridal shower', 'sage-pergola-luncheon'], ['engagement', 'Engagement', 'black-gold-orchid-ballroom'], ['quince', 'Quincea\u00f1era', 'royal-red-quinceanera'], ['graduation', 'Graduation', 'emerald-garden-graduation']];
+  function quickStart() {
+    var have = function (id) { return (window.EC_INSPO || []).some(function (p) { return p.id === id; }); };
+    return '<section class="quick-start section" aria-labelledby="qsH"><h2 id="qsH">Start in one tap</h2><p class="muted">Pick what you\u2019re celebrating. We start your plan from a look you can change anytime.</p><div class="qs-grid">' +
+      QUICK.filter(function (q) { return have(q[2]); }).map(function (q) { return '<a class="qs-tile" href="#/start/' + q[0] + '/-/' + q[2] + '"><img src="' + esc(srcOf(INSPO_IMG + 'sm/' + q[2] + '.jpg')) + '" alt="" loading="lazy"><span>' + esc(q[1]) + '</span></a>'; }).join('') +
+      '</div><p class="small muted">Photos are AI-generated inspiration.</p></section>';
+  }
   function home() {
     var demoEv = { type: 'wedding', guests: 150, city: 'Houston, TX' };
     var demo = E.budget(demoEv, 'S');
@@ -421,6 +430,7 @@
       '<img src="' + srcOf(HERO_IMG) + '" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
       tags.map(function (t) { return '<button class="hot' + (t[2] > 65 ? ' r' : t[2] < 30 ? ' l' : '') + '" style="left:' + t[2] + '%;top:' + t[3] + '%" aria-expanded="false" aria-label="' + esc(t[0]) + ', ' + money(t[1]) + '"><span class="dot" aria-hidden="true"></span><span class="lbl" aria-hidden="true"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span></button>'; }).join('') +
       '</div><figcaption>AI-generated sample concept. Tap a dot to see what that piece costs.</figcaption></figure></section>' +
+      quickStart() +
       '<section class="demo panel"><div class="demo-head"><div><span class="small muted">Example plan</span><h3>Blush and gold wedding</h3><span class="small muted">Houston, TX · 150 guests · Signature version</span></div>' +
       '<div class="demo-total"><span class="small muted">Estimated event budget</span><span class="display num">' + money(demo.total) + '</span></div></div>' +
       '<button class="link small" id="showBudget" aria-expanded="false" aria-controls="demoLines">See example budget</button>' +
