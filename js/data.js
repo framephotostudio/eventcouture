@@ -76,7 +76,7 @@
     attire:       { name: 'Attire', group: 'Look', fixed: [150, 600], tier: 'LSU', taxable: true },
     invitations:  { name: 'Printed invitations and postage', group: 'Paper', perGuest: [2.5, 7], tier: 'U', taxable: true },
     favors:       { name: 'Favors and welcome bags', group: 'Paper', perGuest: [3, 10], tier: 'SU', taxable: true },
-    transport:    { name: 'Transportation', group: 'Logistics', fixed: [400, 1600], tier: 'U' },
+    transport:    { name: 'Luxury transportation (limo, Rolls-Royce or party bus)', group: 'Logistics', fixed: [400, 1600], tier: 'U' },
     officiant:    { name: 'Officiant', group: 'Logistics', fixed: [300, 800], tier: 'LSU' },
     security:     { name: 'Security', group: 'Logistics', perHour: [40, 70], tier: 'U', staffPer: 100 },
     coordinator:  { name: 'Day-of coordinator', group: 'Logistics', fixed: [600, 2500], tier: 'U' },
@@ -408,7 +408,7 @@
       { id: 'danceFloor', only: ['wedding', 'engagement', 'anniversary', 'quince', 'sweet16', 'gala', 'milestone', 'birthday', 'graduation', 'corporate', 'holiday', 'christmas'] } ] },
     { group: 'Services', items: [
       { id: 'hairMakeup', not: ['dinner', 'holiday', 'christmas', 'corporate', 'other', 'kids-birthday', 'retirement'] },
-      { id: 'transport' }, { id: 'coordinator' }, { id: 'favors' }, { id: 'invitations' } ] }
+      { id: 'transport', not: ['kids-birthday'] }, { id: 'coordinator' }, { id: 'favors' }, { id: 'invitations' } ] }
   ];
   /* At a restaurant: only what you'd bring to the table. */
   var PKG_ADDONS_RESTAURANT = ['photographer', 'videographer', 'florals', 'cake', 'favors', 'invitations', 'transport'];
