@@ -121,6 +121,7 @@
     lo *= mult; hi *= mult;
     var mealNote = '', label = c.name, cu = culture(ev);
     if (cu && cu.labels[catId]) label = cu.labels[catId];
+    if (cu && cu.scale && cu.scale[catId]) { lo *= cu.scale[catId]; hi *= cu.scale[catId]; }   /* e.g. an Arabic singer arrives with a full band */
     if (catId === 'tableDecor' && ev.kids && /birthday/.test(ev.type || '')) label = 'Table decor (small centerpiece, confetti, party favors)';   /* no candles at a child's party */
     /* Drinks follow the host's alcohol choice: none = soft drinks and mocktails, wine = beer and wine only */
     if (catId === 'bar' || catId === 'restaurantDrinks') {

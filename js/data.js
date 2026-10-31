@@ -67,7 +67,7 @@
     balloonTwister: { name: 'Balloon twister', group: 'Music and fun', fixed: [150, 350], flat: true, tier: 'U', tip: true },
     craftStation: { name: 'Craft or slime station', group: 'Music and fun', fixed: [150, 450], tier: 'U' },
     pettingZoo:   { name: 'Petting zoo or pony rides', group: 'Music and fun', fixed: [300, 800], flat: true, tier: 'U' },
-    dj:           { name: 'DJ', group: 'Music and fun', perHour: [100, 200], tier: 'SU', tip: true },
+    dj:           { name: 'DJ', group: 'Music and fun', perHour: [100, 473.4], tier: 'SU', tip: true },
     liveMusic:    { name: 'Live music', group: 'Music and fun', perHour: [300, 900], tier: 'U', tip: true },
     mc:           { name: 'MC or host', group: 'Music and fun', fixed: [300, 900], tier: 'U', tip: true },
     entertainment:{ name: 'Entertainment or activity', group: 'Music and fun', fixed: [200, 900], tier: 'U' },
@@ -88,7 +88,7 @@
     generator:    { name: 'Generator', group: 'Outdoor', fixed: [300, 900], tier: 'SU', outdoor: true },
     permits:      { name: 'Permits', group: 'Outdoor', fixed: [50, 450], tier: 'LSU', outdoor: true },
     /* Cultural weddings: traditions with their own vendors. "flat" prices don't grow with the guest count. */
-    zaffe:        { name: 'Zaffe and dabke group (drums, dancers and the grand entrance)', group: 'Music and fun', fixed: [900, 2800], flat: true, tier: 'LSU', tip: true },
+    zaffe:        { name: 'Zaffe and dabke group (drums, dancers and the grand entrance)', group: 'Music and fun', fixed: [945, 2839], flat: true, tier: 'LSU', tip: true },
     singer:       { name: 'Wedding singer', group: 'Music and fun', fixed: [900, 3500], flat: true, tier: 'LSU', tip: true },
     dabke:        { name: 'Dabke dance troupe', group: 'Music and fun', fixed: [600, 1800], flat: true, tier: 'U', tip: true },
     kosha:        { name: 'Kosha (the couple\u2019s stage and seating)', group: 'Style', fixed: [900, 4000], flat: true, tier: 'LSU', taxable: true },
@@ -166,17 +166,18 @@
   var CULTURES = {
     arabic: {
       name: 'Arabic wedding', guests: 250, hours: 6, menu: 'arabic', blurb: 'Zaffe entrance, live band and singer, the kosha, dabke and a mezze-to-knafeh menu.', pre: 'With the blessing of God and their families',
-      music: [['zaffe', 'Zaffe and dabke group'], ['liveMusic', 'Live band'], ['singer', 'Singer'], ['dj', 'DJ']], musicDefault: ['zaffe', 'liveMusic', 'dj', 'singer'],
+      music: [['zaffe', 'Zaffe and dabke group'], ['singer', 'Singer with live band'], ['dj', 'DJ']], musicDefault: ['zaffe', 'singer', 'dj'],   /* an Arabic singer comes with their own band: one line, one booking */
+      scale: { singer: 2.5 },   /* a singer with a full band costs more than a solo singer */
       add: ['kosha'],
-      labels: { liveMusic: 'Live band (Arabic music)', singer: 'Arabic wedding singer', officiant: 'Officiant (sheikh or priest)', catering: 'Middle Eastern catering', cake: 'Wedding cake and Arabic sweets', dj: 'DJ (Arabic and international music)' },
-      search: { liveMusic: 'arabic wedding band', singer: 'arabic wedding singer', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern mediterranean catering', officiant: 'sheikh imam or priest wedding officiant' },
+      labels: { singer: 'Arabic singer with live band', officiant: 'Officiant (sheikh or priest)', catering: 'Middle Eastern catering', cake: 'Wedding cake and Arabic sweets', dj: 'DJ (Arabic and international music)' },
+      search: { singer: 'arabic wedding singer and band', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern mediterranean catering', officiant: 'sheikh imam or priest wedding officiant' },
       hint: 'arabic,arab,lebanese,middle eastern,mediterranean,zaffe,zaffa,kosha',
       moments: [[-30, 'Guests arrive and are seated'], [0, 'Zaffe: drums and dancers lead the couple in'], [20, 'The couple takes their seats at the kosha'], [40, 'First dance'], [60, 'Dinner'], [120, 'Dabke and dancing'], [180, 'Cake cutting and sweets'], ['end', 'Send-off']],
       /* The same traditions for the engagement party (khutbe or katb el kitab). */
       engagement: {
         name: 'Arabic engagement party', guests: 150, hours: 5, blurb: 'Khutbe or katb el kitab, a zaffe entrance, the ring exchange, an Arabic singer and dabke.', pre: 'With the blessing of God and their families',
         musicDefault: ['zaffe', 'singer', 'dj'],
-        labels: { singer: 'Arabic singer', officiant: 'Sheikh or priest (if katb el kitab)', cake: 'Engagement cake and Arabic sweets' },
+        labels: { singer: 'Arabic singer with live band', officiant: 'Sheikh or priest (if katb el kitab)', cake: 'Engagement cake and Arabic sweets' },
         moments: [[-30, 'Guests arrive and are seated'], [0, 'Zaffe: drums and dancers lead the couple in'], [20, 'The couple takes their seats at the kosha'], [30, 'Katb el kitab or the families\u2019 blessing'], [50, 'Ring exchange'], [70, 'Dinner'], [130, 'Arabic singer, dabke and dancing'], [190, 'Cake cutting and sweets'], ['end', 'Send-off']]
       }
     },

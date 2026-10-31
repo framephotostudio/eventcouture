@@ -961,3 +961,7 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .cq-pre { white-space: pre-wrap; font: .86rem/1.5 var(--body); background: var(--tint, #f6f1ea); padding: 12px; border-radius: var(--r-sm); margin: 0; overflow-wrap: anywhere; }
 .cq-from s { font-family: var(--body); font-size: .85rem; color: var(--muted); font-weight: 400; margin-right: 4px; }
 .cq-rec.top { background: var(--champagne); color: var(--ink); }
+/* Alcohol on/off: on step 2 and at the top of every plan */
+.wiz-checks { gap: 10px 22px; flex-wrap: wrap; }
+.alc-tgl { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--ink); min-height: 32px; }
+.alc-tgl input, .wiz-checks input { width: 18px; height: 18px; accent-color: var(--ink); }

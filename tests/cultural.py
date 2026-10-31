@@ -16,7 +16,7 @@ with sync_playwright() as p:
     b = p.chromium.launch()
     for vp, size in [('phone', {'width': 390, 'height': 844}), ('desk', {'width': 1280, 'height': 900})]:
         for cu, label, text, must in [
-            ('arabic', 'Arabic wedding', 'elegant ivory and gold wedding with a big entrance', ['Zaffe and dabke group', 'Live band (Arabic music)', 'DJ (Arabic and international music)', 'Kosha']),
+            ('arabic', 'Arabic wedding', 'elegant ivory and gold wedding with a big entrance', ['Zaffe and dabke group', 'Arabic singer with live band', 'DJ (Arabic and international music)', 'Kosha']),
             ('indian', 'Indian wedding', 'colorful wedding with marigolds', ['Dhol player', 'Mandap', 'Mehndi', 'Pandit']),
             ('persian', 'Persian wedding', 'romantic white and gold wedding', ['Sofreh aghd', 'Aghd officiant', 'Live band (Persian music)'])]:
             qs.clear(); errs = []
@@ -38,7 +38,7 @@ with sync_playwright() as p:
             body = pg.inner_text('main')
             for m in must: check(m in body, f'{vp} {cu}: budget missing "{m}"')
             if cu == 'arabic':
-                check('Arabic wedding singer' in body, f'{vp} arabic: singer picked on form but not in budget')
+                check('Arabic singer with live band' in body and 'Live band (Arabic' not in body, f'{vp} arabic: one line for the singer and their band')
                 pg.screenshot(path=f'{OUT}/cultural-budget-{vp}.png', full_page=False)
                 pg.click('#musicPlan [data-music=dj]'); pg.wait_for_timeout(500)
                 check('DJ (Arabic' not in pg.inner_text('main'), f'{vp} arabic: removing DJ on budget page did not remove the line')
@@ -47,7 +47,7 @@ with sync_playwright() as p:
             if pg.is_visible('#pkgGo'):
                 pg.click('#pkgGo'); pg.wait_for_timeout(2500)
                 ql = ' | '.join(q for c, q, h in qs)
-                if cu == 'arabic': check('zaffe' in ql and 'arabic wedding band' in ql, f'{vp} arabic: searches {ql}')
+                if cu == 'arabic': check('zaffe' in ql and 'arabic wedding singer and band' in ql, f'{vp} arabic: searches {ql}')
                 if cu == 'indian': check('dhol player' in ql and 'mandap' in ql, f'{vp} indian: searches {ql}')
                 if cu == 'persian': check('sofreh' in ql, f'{vp} persian: searches {ql}')
                 if vp == 'desk': print(cu, 'searches:', ql)
