@@ -490,7 +490,7 @@ async function market(env, action, body, ip, json) {
 
 /* Always Luxe Concierge Booking: one request per checkout. The private code in its link lets only Demah
    (from the Stripe payment) and the client open it. Kept a year; no card details ever pass through here. */
-const CQ_TIERS = { essentials: 1, signature: 1, full: 1 };
+const CQ_TIERS = { essentials: 1, signature: 1, full: 1, allin: 1 };
 async function conciergeNew(env, b) {
   const t = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u000b-\u001f]/g, '').slice(0, n).trim();
   if (!CQ_TIERS[b.tier]) return { error: 'Choose a booking package.' };

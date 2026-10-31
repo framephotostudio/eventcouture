@@ -16,3 +16,5 @@ assert.equal((await call('/api/concierge/new', Object.assign({}, good, { email: 
 r = await call('/api/concierge/new', Object.assign({}, good, { summary: 'x'.repeat(20000), name: 'A'.repeat(500) }));
 const big = (await call('/api/concierge/' + r.body.ref, null, 'GET')).body.request; assert.ok(big.summary.length <= 8000 && big.name.length <= 80, 'long text is cut');
 console.log('concierge worker tests passed');
+assert.equal((await call('/api/concierge/new', Object.assign({}, good, { tier: 'allin', price: 2499 }))).status, 200, 'All-Inclusive is a real package');
+console.log('all-inclusive accepted');

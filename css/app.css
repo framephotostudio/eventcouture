@@ -960,3 +960,4 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .cq-sent { background: var(--surface); }
 .cq-pre { white-space: pre-wrap; font: .86rem/1.5 var(--body); background: var(--tint, #f6f1ea); padding: 12px; border-radius: var(--r-sm); margin: 0; overflow-wrap: anywhere; }
 .cq-from s { font-family: var(--body); font-size: .85rem; color: var(--muted); font-weight: 400; margin-right: 4px; }
+.cq-rec.top { background: var(--champagne); color: var(--ink); }

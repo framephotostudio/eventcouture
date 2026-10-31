@@ -14,11 +14,11 @@ def api(route):
         route.fulfill(status=200, content_type='application/json', body=json.dumps({'request':dict(SAVED[-1], ref='abc123abc123abc123abc123', at=1793440000000)}), headers=h)
     elif u.endswith('/api/status'): route.fulfill(status=200, content_type='application/json', body='{"ai":true,"places":true}', headers=h)
     else: route.fulfill(status=500, body='{}', headers=h)
-LINKS="concierge: { links: { essentials: 'https://buy.stripe.com/test_ess', signature: 'https://buy.stripe.com/test_sig', full: 'https://buy.stripe.com/test_full' }, call: 'https://calendly.com/alwaysluxe/15min', founding: true }"
+LINKS="concierge: { links: { essentials: 'https://buy.stripe.com/test_ess', signature: 'https://buy.stripe.com/test_sig', full: 'https://buy.stripe.com/test_full', allin: 'https://buy.stripe.com/test_allin' }, call: 'https://calendly.com/alwaysluxe/15min', founding: true }"
 def cfg(links):
     def f(route):
         r=route.fetch(); t=r.text().replace("apiUrl: ''","apiUrl: 'http://api.test'")
-        if links: t=t.replace("concierge: { links: { essentials: '', signature: '', full: '' }, call: '', founding: true }", LINKS)
+        if links: t=t.replace("concierge: { links: { essentials: '', signature: '', full: '', allin: '' }, call: '', founding: true }", LINKS)
         route.fulfill(response=r, body=t)
     return f
 def stripe(route): PAID.append(route.request.url); route.fulfill(status=200, content_type='text/html', body='<h1>Stripe test checkout</h1>')
@@ -52,6 +52,7 @@ with sync_playwright() as p:
         pg.click('[data-cq]'); pg.wait_for_selector('.sheet .cq-tiers'); st=pg.inner_text('.sheet')
         check(n, pg.get_attribute('[data-cqt=full]','aria-checked')=='true' and 'Best for your plan' in pg.inner_text('[data-cqt=full]'), 'a wedding gets Full Concierge recommended')
         check(n, '$1,299' in st and '$599' in st and '$249' in st and 'Founding client price' in st, 'founding prices shown with the regular ones')
+        check(n, '$2,499' in st and 'Couture All-Inclusive' in st and 'Most complete' in st and 'invitations' in pg.inner_text('[data-cqt=allin]'), 'the premium All-Inclusive package is offered')
         check(n, pg.is_disabled('[data-cqt=essentials]'), 'Essentials is off for a package with more than 5 vendors')
         check(n, pg.query_selector('#cqCall') is not None, 'free 15-minute call option')
         pg.wait_for_timeout(300); pg.locator('.sheet').screenshot(path=f'{OUT}/concierge_sheet_{n}.png')
