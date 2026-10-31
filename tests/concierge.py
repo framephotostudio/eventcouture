@@ -47,7 +47,7 @@ with sync_playwright() as p:
         check(n, not pg.query_selector('.cq-card'), 'not offered outside the US')
         # a Houston wedding: the offer, Full Concierge recommended, founding prices
         base=plan(pg, 'Blush and ivory wedding for 150', 'wedding', 'US', 'Houston, TX', 150, 'indoor')
-        card=pg.inner_text('.cq-card'); check(n, 'Have Always Luxe book it for you' in card and '$1,299' in card and 'Full Concierge' in card, 'offer card shows the package that fits: '+card.replace('\n',' ')[:120])
+        card=pg.inner_text('.cq-card'); check(n, 'Have Event Couture book it for you' in card and '$1,299' in card and 'Full Concierge' in card, 'offer card shows the package that fits: '+card.replace('\n',' ')[:120])
         pg.locator('.cq-card').scroll_into_view_if_needed(); pg.wait_for_timeout(300); pg.screenshot(path=f'{OUT}/concierge_card_{n}.png')
         pg.click('[data-cq]'); pg.wait_for_selector('.sheet .cq-tiers'); st=pg.inner_text('.sheet')
         check(n, pg.get_attribute('[data-cqt=full]','aria-checked')=='true' and 'Best for your plan' in pg.inner_text('[data-cqt=full]'), 'a wedding gets Full Concierge recommended')
@@ -61,9 +61,9 @@ with sync_playwright() as p:
         q=SAVED[-1]; check(n, q['tier']=='full' and q['price']==1299 and 'PACKAGE' in q['summary'] and 'Venue' in q['summary'] and q['city']=='Houston, TX', 'request saved with the package: '+q['summary'][:80].replace('\n',' | '))
         check(n, 'client_reference_id=abc123abc123abc123abc123' in PAID[-1] and 'prefilled_email=sara%40example.com' in PAID[-1] and 'test_full' in PAID[-1], 'checkout opens the Full Concierge link with the request code: '+PAID[-1])
         # back from Stripe
-        pg.goto(U+'#/booked'); pg.wait_for_timeout(500); check(n, 'booked with Always Luxe' in pg.inner_text('main') and 'Sara' in pg.inner_text('main'), 'thank-you page after payment')
+        pg.goto(U+'#/booked'); pg.wait_for_timeout(500); check(n, 'booked with Event Couture' in pg.inner_text('main') and 'Sara' in pg.inner_text('main'), 'thank-you page after payment')
         pg.screenshot(path=f'{OUT}/concierge_thanks_{n}.png')
-        pg.goto(U+base+'/budget'); pg.wait_for_selector('.cq-card'); check(n, 'booked with Always Luxe' in pg.inner_text('.cq-card'), 'the plan shows she is booked')
+        pg.goto(U+base+'/budget'); pg.wait_for_selector('.cq-card'); check(n, 'booked with Event Couture' in pg.inner_text('.cq-card'), 'the plan shows she is booked')
         # Demah opens the request from the Stripe payment
         pg.goto(U+'#/cq/abc123abc123abc123abc123'); pg.wait_for_selector('.cq-pre'); t=pg.inner_text('main')
         check(n, '713-555-0199' in t and 'Full Concierge' in t and 'Venue' in t, 'request page shows contact and package'); pg.screenshot(path=f'{OUT}/concierge_request_{n}.png')
