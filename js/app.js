@@ -306,6 +306,8 @@
       if (p[0] === 'e' && p[2] === 'concepts') return conceptsView(p[1]);
       if (p[0] === 'e') { var ev = getEvent(p[1]); if (!ev) return frame('<div class="stack"><h2>This plan isn\u2019t here</h2><p class="muted">It may have been deleted, or it was made on another device.</p><div><a class="btn" href="#/events">Go to My events</a></div></div>'); return planView(ev, p[2] || 'overview'); }
       if (p[0] === 'g') return guestPage(p[1]);
+      if (p[0] === 'booked') return cqThanks();
+      if (p[0] === 'cq' && p[1]) return cqRequest(p[1]);
       if (p[0] === 'vendors' && p[1] === 'requests') { if (CFG.app) { location.replace('#/'); return; } return vendorRequests(); }
       if (p[0] === 'vendors') { if (CFG.app) { location.replace('#/'); return; } return vendorJoin(); }
       if (p[0] === 'v' && p[1]) return vendorProfile(p[1]);
@@ -1670,6 +1672,7 @@
     var next = open.find(function (c) { return skipped.indexOf(c.cat) < 0; }) || open[0], x = bizOf(cp, next.cat), pos = cats.indexOf(next) + 1;
     return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(3) + '<div class="pkg-top"><h3>Your final package: Package ' + (Math.min(ev.pkgChosen || 0, pks.length - 1) + 1) + (pkVenue(ev, cp) ? ' \u00b7 ' + esc(pkVenue(ev, cp)) : '') + '</h3><span class="small muted num">' + bookedN + ' of ' + cats.length + ' booked</span></div><div class="meter"><i style="width:' + Math.round(bookedN / cats.length * 100) + '%"></i></div>' +
       (ev.date || ev.dateFrom || ev.sample ? '<div class="note small pkg-final"><b>Next: book it.</b> Contact each one, agree on the price, then tap <b>I booked it</b>. We\u2019ll take you through them one at a time.</div>' : '<div class="note small pkg-final pkg-date"><span><b>Next: book it.</b> Set your date first so each vendor can check they\u2019re free.</span> <button class="btn small" data-pkwhen>Set your date</button></div>') +
+      conciergeCard(ev, cats) +
       '<div class="pkg-next" data-pkrow="' + next.cat + '"><p class="eyebrow">Next up · ' + pos + ' of ' + cats.length + '</p><h3>' + esc(catName(next.cat, ev)) + '</h3>' +
         (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + (est(next.cat, x) ? ' · ' + est(next.cat, x) : '') + '</span></div>' +
           '<ol class="howto"><li><b>Contact them</b> to check your date and ask for a quote.<div class="row" style="margin-top:6px">' + links(x, next.cat) + '</div></li>' +
@@ -1680,6 +1683,80 @@
         : '<p class="muted">We don’t have a top-rated pick for this yet.</p><button class="btn gold block" data-pkswap="' + next.cat + '">See options</button>' + mapsBtn(ev, next.cat, next.q, 'btn ghost block') + '<div class="row pkg-foot"><button class="link small quiet" data-pkskip="' + next.cat + '">Skip for now</button></div>') +
         '<div class="pk-swap" data-pkswapbox="' + next.cat + '"></div></div>' +
       summary + (more ? '</div>' + more + '<!--more--><div class="panel stack pkg pkg-list">' : '') + all + back + '</div>';
+  }
+  /* ---------- Always Luxe Concierge Booking: Demah books the package for a flat fee. Clients pay vendors directly. ---------- */
+  var CQ_TIERS = [
+    { id: 'essentials', name: 'Essentials', max: 5, price: 349, founding: 249, what: 'Your venue and up to 4 vendors', fit: 'Birthdays, showers and small parties' },
+    { id: 'signature', name: 'Signature', max: 10, price: 899, founding: 599, what: 'Up to 10 vendors', fit: 'Engagements, quincea\u00f1eras, galas and big parties' },
+    { id: 'full', name: 'Full Concierge', max: 99, price: 1800, founding: 1299, from: true, what: 'Every vendor in your package', fit: 'Weddings and cultural weddings' }
+  ];
+  function cqCfg() { return CFG.concierge || {}; }
+  function cqOn(ev) { var c = cqCfg(), l = c.links || {}; return !ev.sample && !!CFG.apiUrl && E.countryOf(ev.city || '').id === 'US' && CQ_TIERS.some(function (t) { return l[t.id]; }); }
+  function cqPrice(t) { return cqCfg().founding !== false ? t.founding : t.price; }
+  function cqBest(ev, n) { if (ev.type === 'wedding' || ev.culture) return CQ_TIERS[2]; return CQ_TIERS.find(function (t) { return n <= t.max; }) || CQ_TIERS[2]; }
+  function conciergeCard(ev, cats) {
+    if (!cqOn(ev)) return '';
+    var cq = ev.concierge;
+    var best = cqBest(ev, cats.length);
+    if (cq && cq.ref) return '<div class="cq-card cq-sent"><div class="grow"><p class="eyebrow">Always Luxe Concierge</p><b>' + (cq.paid ? 'You\u2019re booked with Always Luxe' : 'Your ' + esc(cq.tierName) + ' request is saved') + '</b><p class="small muted">' + (cq.paid ? 'Demah will call you within 1 business day to start booking your vendors.' : 'Finish your payment to reserve your spot. Demah calls you within 1 business day after.') + '</p></div>' + (cq.paid ? '' : '<button class="btn small gold" data-cqpay>Finish payment</button>') + '</div>';
+    return '<div class="cq-card"><div class="grow"><p class="eyebrow">Rather not make ' + cats.length + ' calls?</p><b>Have Always Luxe book it for you</b><p class="small muted">Demah, founder of Always Luxe, personally contacts, negotiates and books every vendor in your package. You pay each vendor directly.</p></div><div class="cq-from"><span class="small muted">' + esc(best.name) + (cqCfg().founding !== false ? ' \u00b7 founding price' : '') + '</span><b class="num">' + (cqCfg().founding !== false ? '<s>$' + best.price.toLocaleString('en-US') + (best.from ? '+' : '') + '</s> ' : '') + '$' + cqPrice(best).toLocaleString('en-US') + '</b><button class="btn small gold" data-cq>See options</button></div></div>';
+  }
+  function cqSummary(ev) {
+    var b = E.budget(ev, ev.tier), cats = pkgCats(ev, b), pks = ev.packages || [], cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], d = pkgData(ev, b, cats, cp);
+    return [E.typeName(ev) + ': ' + ev.name, whenText(ev) + ' \u00b7 ' + ev.city + ' \u00b7 ' + plural(ev.guests, 'guest') + ' \u00b7 ' + settingName(ev), 'Look: ' + (ev.concept.styleName || '') + ' \u00b7 Spending level: ' + tierName(ev.tier) + (ev.budget ? ' \u00b7 Budget ' + money(ev.budget) : ''), '',
+      'PACKAGE (' + d.rows.length + ' vendors, ' + d.booked + ' booked)'].concat(d.rows.map(function (r) { return '- ' + r.cat + ': ' + (r.info || 'Still to choose').replace(/\n/g, ', ') + ' | ' + (r.ask ? 'price on request' : (r.est ? 'est. ' : '') + money(r.amt)) + ' | ' + r.status; }))
+      .concat(d.removed.length ? ['', 'Not needed: ' + d.removed.join(', ')] : []).join('\n').slice(0, 7800);
+  }
+  function cqPay(ev) {
+    var c = cqCfg(), cq = ev.concierge || {}, link = (c.links || {})[cq.tier];
+    if (!link) return toast('Payments for this option open soon.');
+    var u = link + (link.indexOf('?') < 0 ? '?' : '&') + 'client_reference_id=' + encodeURIComponent(cq.ref) + (cq.email ? '&prefilled_email=' + encodeURIComponent(cq.email) : '');
+    T('concierge_checkout', { tier: cq.tier, event_type: ev.type });
+    if (window.ECNative && window.ECNative.openUrl) return window.ECNative.openUrl(u);
+    location.href = u;
+  }
+  function conciergeSheet(ev, rerender) {
+    var b = E.budget(ev, ev.tier), n = pkgCats(ev, b).length, best = cqBest(ev, n), fnd = cqCfg().founding !== false, links = cqCfg().links || {};
+    sheet('<h3>Always Luxe books it for you</h3><p class="muted small">You choose. Demah calls you within 1 business day, then contacts, negotiates and books each vendor and marks them Booked in your plan. Vendors send you their own contracts, and you pay them directly.</p>' +
+      (fnd ? '<p class="cq-badge">Founding client price \u00b7 first 10 clients \u00b7 in exchange for a review and event photos</p>' : '') +
+      '<div class="cq-tiers" role="radiogroup" aria-label="Choose a booking package">' + CQ_TIERS.map(function (t) { var off = n > t.max || !links[t.id]; return '<button type="button" class="cq-tier' + (t === best ? ' best' : '') + '" role="radio" aria-checked="' + (t === best) + '" data-cqt="' + t.id + '"' + (off ? ' disabled' : '') + '>' + (t === best ? '<span class="cq-rec">Best for your plan</span>' : '') + '<b>' + esc(t.name) + '</b><span class="cq-price num">' + (fnd ? '<s>$' + t.price.toLocaleString('en-US') + (t.from ? '+' : '') + '</s> ' : '') + '$' + cqPrice(t).toLocaleString('en-US') + '</span><span class="small">' + esc(t.what) + '</span><span class="small muted">' + (n > t.max ? 'Your package has ' + n + ' vendors' : esc(t.fit)) + '</span></button>'; }).join('') + '</div>' +
+      '<div class="grid2"><label class="field"><span>Your name</span><input class="input" id="cqName" autocomplete="name" maxlength="80" value="' + esc((ev.concierge || {}).name || '') + '"></label><label class="field"><span>Phone</span><input class="input" id="cqPhone" type="tel" autocomplete="tel" maxlength="30" value="' + esc((ev.concierge || {}).phone || '') + '"></label><label class="field"><span>Email</span><input class="input" id="cqEmail" type="email" autocomplete="email" maxlength="120" value="' + esc((ev.concierge || {}).email || '') + '"></label><label class="field"><span>Best time to call</span><select class="input" id="cqWhen"><option>Morning</option><option>Afternoon</option><option>Evening</option></select></label></div>' +
+      '<button class="btn gold block" id="cqGo">Continue to secure payment</button>' + (cqCfg().call ? '<a class="btn ghost block" target="_blank" rel="noopener" href="' + esc(cqCfg().call) + '" id="cqCall">Prefer to talk first? Book a free 15-minute call</a>' : '') +
+      '<p class="small muted">Card payment by Stripe. Your booking fee covers Demah\u2019s time to contact and book your vendors; vendor prices are separate and paid to them. Full refund before work starts. <a href="#/terms">Terms</a></p><button class="btn ghost block" data-close>Not now</button>', function (el, close) {
+      var pick = best.id;
+      $$('[data-cqt]', el).forEach(function (bt) { bt.addEventListener('click', function () { pick = bt.dataset.cqt; $$('[data-cqt]', el).forEach(function (x) { x.setAttribute('aria-checked', x === bt); }); }); });
+      var go = $('#cqGo', el);
+      go.addEventListener('click', function () {
+        var nm = $('#cqName', el).value.trim(), ph = $('#cqPhone', el).value.trim(), em = $('#cqEmail', el).value.trim();
+        if (!nm) { $('#cqName', el).focus(); return toast('Enter your name'); }
+        if ((ph.match(/\d/g) || []).length < 10) { $('#cqPhone', el).focus(); return toast('Enter a phone number so Demah can call you'); }
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { $('#cqEmail', el).focus(); return toast('Enter a valid email'); }
+        var t = CQ_TIERS.find(function (x) { return x.id === pick; }); if (!t || n > t.max) return toast('Choose a package that fits your ' + n + ' vendors');
+        go.disabled = true; go.textContent = 'Saving your request\u2026';
+        fetch(CFG.apiUrl + '/api/concierge/new', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tier: t.id, tierName: t.name, price: cqPrice(t), founding: cqCfg().founding !== false, name: nm, phone: ph, email: em, when: $('#cqWhen', el).value, type: E.typeName(ev), date: ev.date || '', city: ev.city, guests: ev.guests, vendors: n, summary: cqSummary(ev) }) })
+          .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j.ref) throw new Error(j.error || 'Couldn\u2019t save your request. Try again.'); return j; }); })
+          .then(function (j) { ev.concierge = { ref: j.ref, tier: t.id, tierName: t.name, price: cqPrice(t), name: nm, phone: ph, email: em, at: new Date().toISOString() }; saveEvent(ev); T('concierge_request', { tier: t.id, event_type: ev.type }); close(); rerender(); cqPay(ev); })
+          .catch(function (e) { go.disabled = false; go.textContent = 'Continue to secure payment'; toast(e.message || 'Couldn\u2019t save your request. Try again.'); });
+      });
+    });
+  }
+  /* Back from Stripe: the payment went through, so the latest saved request is marked paid. */
+  function cqThanks() {
+    var ev = Object.values(events()).filter(function (e) { return e && e.concierge && e.concierge.ref; }).sort(function (a, b) { return (b.concierge.at || '').localeCompare(a.concierge.at || ''); })[0];
+    if (ev && !ev.concierge.paid) { ev.concierge.paid = true; ev.concierge.paidAt = new Date().toISOString(); saveEvent(ev); T('concierge_paid', { tier: ev.concierge.tier, event_type: ev.type }); }
+    frame('<div class="wizard stack-lg" style="text-align:center;justify-items:center"><img src="img/brand/ec-mark-128.png" alt="" width="64" height="64"><h2>You\u2019re booked with Always Luxe</h2><p class="muted">Thank you' + (ev ? ', ' + esc(String(ev.concierge.name || '').split(' ')[0]) : '') + '. Demah will call you within 1 business day to confirm your details and start booking your vendors. A receipt is on its way to your email.</p>' + (ev ? '<a class="btn primary" href="#/e/' + esc(ev.id) + '/budget">Back to my plan</a>' : '<a class="btn primary" href="#/events">My events</a>') + '</div>');
+  }
+  /* Demah's view of one request: the link (with its private code) comes from the Stripe payment. */
+  function cqRequest(ref) {
+    frame('<div class="wizard stack"><h2>Booking request</h2><p class="muted" id="cqLoad">Loading\u2026</p><div id="cqBox"></div></div>');
+    if (!CFG.apiUrl || !/^[a-z0-9]{16,40}$/.test(ref)) { $('#cqLoad').textContent = 'This request isn\u2019t available.'; return; }
+    fetch(CFG.apiUrl + '/api/concierge/' + ref).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || 'Not found'); return j; }); }).then(function (j) {
+      var q = j.request; $('#cqLoad').remove();
+      $('#cqBox').innerHTML = '<div class="panel stack"><div class="row" style="justify-content:space-between"><b>' + esc(q.tierName) + ' \u00b7 $' + esc(q.price) + (q.founding ? ' (founding price)' : '') + '</b><span class="small muted">' + esc(new Date(q.at).toLocaleString('en-US')) + '</span></div>' +
+        '<p><b>' + esc(q.name) + '</b><br><a href="tel:' + esc(q.phone) + '">' + esc(q.phone) + '</a> \u00b7 <a href="mailto:' + esc(q.email) + '">' + esc(q.email) + '</a><br><span class="small muted">Best time to call: ' + esc(q.when) + '</span></p>' +
+        '<pre class="cq-pre">' + esc(q.summary) + '</pre><button class="btn small ghost" id="cqCopy">Copy details</button></div>';
+      $('#cqCopy').addEventListener('click', function () { copyText(q.name + ', ' + q.phone + ', ' + q.email + '\n' + q.summary, 'The request'); });
+    }).catch(function (e) { $('#cqLoad').textContent = e.message === 'Not found' ? 'This request isn\u2019t available.' : e.message; });
   }
   /* The chosen package as one clear summary she can save, email or forward, booked or not. */
   /* Recommended performers set their own prices: we never show our estimate next to their name. */
@@ -1831,6 +1908,8 @@
     $$('[data-pkextras]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; extrasSheet(ev, E.budget(ev, ev.tier), addExtra); }); });
     $$('[data-pksum]').forEach(function (bt) { bt.addEventListener('click', function () { var k = bt.dataset.pksum; if (ev.sample || isKept(ev)) return pkgSumAction(ev, k); keepSheet(ev, 'Keep your plan to save or share your package', function () { rerender(); pkgSumAction(ev, k); }); }); });
     $$('[data-pkskip]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; ev.pkgSkipped = (ev.pkgSkipped || []).filter(function (c) { return c !== bt.dataset.pkskip; }).concat([bt.dataset.pkskip]); save(); rerender(); }); });
+    $$('[data-cq]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; T('concierge_open', { event_type: ev.type }); conciergeSheet(ev, rerender); }); });
+    $$('[data-cqpay]').forEach(function (bt) { bt.addEventListener('click', function () { cqPay(ev); }); });
     $$('[data-pkcopy]').forEach(function (bt) { bt.addEventListener('click', function () { copyText(vendorAsk(ev, bt.dataset.pkcopy), 'Your message'); }); });
     $$('[data-pkback]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; ev.pkgConfirmed = false; ev.pkgView = ev.pkgChosen || 0; save(); rerender(); }); });
     $$('[data-pkbook]').forEach(function (bt) { bt.addEventListener('click', function () { var cat = bt.dataset.pkbook, pk = ev.packages[Math.min((ev.pkgConfirmed ? ev.pkgChosen : ev.pkgView) || 0, ev.packages.length - 1)]; compareSheet(ev, cat, rerender, { book: pk.items[cat] }); }); });

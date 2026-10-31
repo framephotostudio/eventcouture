@@ -37,6 +37,8 @@ export default {
       if (req.method === 'GET' && url.pathname === '/api/vendors') return await vendorSearch(env, url, json);
       const vp = url.pathname.match(/^\/api\/vendor\/([a-z0-9]{8,16})$/);
       if (req.method === 'GET' && vp) return await vendorProfile(env, vp[1], json);
+      const cqg = url.pathname.match(/^\/api\/concierge\/([a-z0-9]{16,40})$/);
+      if (req.method === 'GET' && cqg) { if (!env.EC_KV) return json({ error: 'Not found' }, 404); let r = await env.EC_KV.get('cq:' + cqg[1], 'json'); if (typeof r === 'string') r = JSON.parse(r); return r ? json({ request: r }) : json({ error: 'Not found' }, 404); }
       if (url.pathname === '/api/status') {
         return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env) });
       }
@@ -45,6 +47,7 @@ export default {
       if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown'))) return json({ error: 'You\u2019ve made a lot of requests. Please wait a few minutes and try again. Nothing was charged.' }, 429);
       if (+(req.headers.get('content-length') || 0) > 12e6) return json({ error: 'Those photos are too large. Try fewer or smaller photos.' }, 413);
       const body = await req.json().catch(() => ({}));
+      if (url.pathname === '/api/concierge/new') { if (!env.EC_KV) return json({ error: 'Booking requests are not connected yet.' }, 503); const cr = await conciergeNew(env, body); return cr.error ? json(cr, 400) : json(cr); }
       const mk = url.pathname.match(/^\/api\/(vendor\/save|vendor\/report|req\/new|req\/list|req\/reply|req\/inbox|req\/delete)$/);
       if (mk) { if (!env.EC_KV) return json({ error: 'Vendor listings are not connected yet.' }, 503); return await market(env, mk[1], body, req.headers.get('cf-connecting-ip') || 'unknown', json); }
       if (url.pathname === '/api/concepts') {
@@ -483,4 +486,20 @@ async function market(env, action, body, ip, json) {
     return json(action === 'req/delete' ? { ok: true } : { replies: out });
   }
   return json({ error: 'Not found' }, 404);
+}
+
+/* Always Luxe Concierge Booking: one request per checkout. The private code in its link lets only Demah
+   (from the Stripe payment) and the client open it. Kept a year; no card details ever pass through here. */
+const CQ_TIERS = { essentials: 1, signature: 1, full: 1 };
+async function conciergeNew(env, b) {
+  const t = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u000b-\u001f]/g, '').slice(0, n).trim();
+  if (!CQ_TIERS[b.tier]) return { error: 'Choose a booking package.' };
+  const a = new Uint8Array(12); crypto.getRandomValues(a);
+  const ref = Array.from(a, x => x.toString(16).padStart(2, '0')).join('');
+  const rec = { ref, tier: b.tier, tierName: t(b.tierName, 40), price: Math.max(0, Math.min(100000, +b.price || 0)), founding: !!b.founding,
+    name: t(b.name, 80), phone: t(b.phone, 30), email: t(b.email, 120), when: t(b.when, 20), type: t(b.type, 60), date: t(b.date, 10),
+    city: t(b.city, 80), guests: Math.max(0, Math.min(100000, +b.guests || 0)), vendors: Math.max(0, Math.min(99, +b.vendors || 0)), summary: t(b.summary, 8000), at: Date.now() };
+  if (!rec.name || !rec.phone || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rec.email)) return { error: 'Add your name, phone and email.' };
+  await env.EC_KV.put('cq:' + ref, JSON.stringify(rec), { expirationTtl: 60 * 60 * 24 * 366 });
+  return { ref };
 }

@@ -10,5 +10,8 @@ window.EC_CONFIG = {
   supportEmail: 'hello@eventcouture.app',
   legalName: 'Always Luxe',   /* the business name on Privacy and Terms */
   governingState: 'Texas',   /* e.g. 'Texas': the state whose laws govern the Terms */
+  /* Always Luxe Concierge Booking (US plans): paste each Stripe Payment Link. The offer stays hidden until at least one is set.
+     call: a free 15-minute call booking link (for example Calendly). founding: true shows the founding client prices. */
+  concierge: { links: { essentials: '', signature: '', full: '' }, call: '', founding: true },
   version: '0.64.0'
 };

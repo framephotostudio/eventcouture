@@ -1,0 +1,18 @@
+// Concierge booking requests on the server: node tests/worker_concierge.test.mjs
+import assert from 'assert';
+const src = await import('../worker/index.js');
+const store = new Map();
+const env = { EC_KV: { get: async k => store.has(k) ? store.get(k) : null, put: async (k, v) => { store.set(k, v); }, delete: async k => { store.delete(k); } }, ALLOWED_ORIGINS: 'https://x' };
+const call = async (path, body, method = 'POST') => { const r = await src.default.fetch(new Request('https://w' + path, method === 'GET' ? { headers: { origin: 'https://x' } } : { method, headers: { origin: 'https://x', 'content-type': 'application/json', 'cf-connecting-ip': '1.2.3.4' }, body: JSON.stringify(body) }), env); return { status: r.status, body: await r.json() }; };
+const good = { tier: 'signature', tierName: 'Signature', price: 599, founding: true, name: 'Sara Q', phone: '713-555-0199', email: 'sara@example.com', when: 'Evening', type: 'Quinceañera', date: '2027-03-06', city: 'Houston, TX', guests: 180, vendors: 9, summary: 'PACKAGE (9 vendors)\n- Venue: Grand Hall' };
+let r = await call('/api/concierge/new', good);
+assert.equal(r.status, 200); assert.match(r.body.ref, /^[a-f0-9]{24}$/);
+const ref = r.body.ref;
+r = await call('/api/concierge/' + ref, null, 'GET');
+assert.equal(r.status, 200); assert.equal(r.body.request.name, 'Sara Q'); assert.equal(r.body.request.price, 599); assert.ok(r.body.request.summary.includes('Grand Hall'));
+assert.equal((await call('/api/concierge/' + 'a'.repeat(24), null, 'GET')).status, 404, 'unknown code');
+assert.equal((await call('/api/concierge/new', Object.assign({}, good, { tier: 'free' }))).status, 400, 'only real packages');
+assert.equal((await call('/api/concierge/new', Object.assign({}, good, { email: 'nope' }))).status, 400, 'needs contact details');
+r = await call('/api/concierge/new', Object.assign({}, good, { summary: 'x'.repeat(20000), name: 'A'.repeat(500) }));
+const big = (await call('/api/concierge/' + r.body.ref, null, 'GET')).body.request; assert.ok(big.summary.length <= 8000 && big.name.length <= 80, 'long text is cut');
+console.log('concierge worker tests passed');
