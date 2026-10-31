@@ -80,7 +80,7 @@ with sync_playwright() as p:
             check('76 to 150' in pg.inner_text('#tab') or '76' in pg.inner_text('#tab'), n + ': pass did not move up: ' + pg.inner_text('#tab')[:200])
         else: check('free during our launch' in pg.inner_text('#tab'), n + ': launch: pass says free: ' + pg.inner_text('#tab')[:200])
         # change concept and see three new ones
-        go(base); pg.click('text=Change concept'); pg.wait_for_selector('.concept'); first = pg.inner_text('.concept h3 >> nth=0') if pg.query_selector('.concept h3') else ''
+        go(base); pg.click('text=Change look'); pg.wait_for_selector('.concept'); first = pg.inner_text('.concept h3 >> nth=0') if pg.query_selector('.concept h3') else ''
         if pg.query_selector('#more'):
             pg.click('#more'); pg.wait_for_timeout(800)
             names = [x.inner_text() for x in pg.query_selector_all('.concept h3')]

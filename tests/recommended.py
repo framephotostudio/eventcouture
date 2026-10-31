@@ -50,7 +50,7 @@ with sync_playwright() as p:
         base=plan(pg, 'Orange County, CA', '#/start/arabic-engagement/', 'Ivory and gold engagement with a zaffe entrance')
         ev=pg.evaluate("id => JSON.parse(localStorage['ec.events'])[id]", base.split('/')[2])
         check(n, ev['type']=='engagement' and ev.get('culture')=='arabic', 'Arabic engagement party is created: '+str((ev['type'],ev.get('culture'))))
-        pg.goto(U+base+'/budget'); pg.wait_for_selector('#cultureSel'); check(n, pg.input_value('#cultureSel')=='arabic' and 'Engagement tradition' in pg.inner_text('#musicPlan'), 'engagement has its own tradition menu')
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#cultureSel'); check(n, pg.input_value('#cultureSel')=='arabic' and 'Engagement tradition' in pg.inner_text('#tab'), 'engagement has its own tradition menu')
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.wait_for_timeout(600); pg.click('#pkgMore'); pg.wait_for_timeout(1200)
         sg=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="singer"] td > b')]; zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]
         check(n, sg[:2]==['Waseem Rabih','Jamal Kassab'] and zf[:1]==['Zaffet El Ezz'], 'Arabic engagement in Orange County gets the Arabic singers and zaffe: '+str(sg[:2])+str(zf[:1]))

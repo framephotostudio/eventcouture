@@ -23,7 +23,7 @@ with sync_playwright() as p:
         pg.route('**/*.workers.dev/**', lambda r: r.abort())
         pg.goto(U); pg.wait_for_timeout(700)
         ev = lambda: [list(x) for x in pg.evaluate("(window.dataLayer||[]).map(a => Array.from(a)).filter(a => a[0]==='event')")]
-        pg.click('[data-scroll=inspo]'); pg.click('#ifilter [data-t=graduation]'); pg.click('[data-inspo=emerald-garden-graduation]'); pg.click('.sheet #useInspo'); pg.wait_for_selector('.inspo-chosen')
+        pg.click('#inspo a[href="#/inspiration"]'); pg.wait_for_selector('#ifilter'); pg.click('#ifilter [data-t=graduation]'); pg.click('[data-inspo=emerald-garden-graduation]'); pg.click('.sheet #useInspo'); pg.wait_for_selector('.inspo-chosen')
         pg.fill('#text', 'secret garden for grandma'); pg.click('#next'); pg.wait_for_selector('#type')
         pg.select_option('#city', 'Houston, TX'); pg.fill('#budget', '6000'); pg.fill('#name', 'Maya'); pg.click('#next'); pg.wait_for_selector('.concept h3'); pg.wait_for_timeout(400)
         pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)

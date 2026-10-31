@@ -893,3 +893,50 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 @media (max-width: 699px) { .toast { bottom: auto !important; top: calc(64px + env(safe-area-inset-top, 0px)); } }
 .culture-row select.input { max-width: 340px; }
 .quick-start h2 { margin-bottom: 4px; } .quick-start > p.muted { margin: 0 0 14px; } .quick-start > p.small { margin-top: 10px; }
+/* Tucked away: the full budget breakdown, opened on tap */
+.budget-more { padding: 0; }
+.budget-more > summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; min-height: 52px; }
+.budget-more > summary::-webkit-details-marker, .pkg-all > summary::-webkit-details-marker { display: none; }
+.budget-more > summary::after, .pkg-all > summary::after { content: ''; width: 9px; height: 9px; border-right: 1.5px solid var(--champagne); border-bottom: 1.5px solid var(--champagne); transform: rotate(45deg); flex: none; margin: -4px 4px 0 auto; transition: transform .2s; }
+.budget-more[open] > summary::after, .pkg-all[open] > summary::after { transform: rotate(-135deg); margin-top: 4px; }
+.budget-more[open] > summary { border-bottom: 1px solid var(--line); }
+.budget-more > .stack { padding: 16px 18px 18px; }
+.pkg-all > summary { list-style: none; justify-content: space-between; gap: 12px; }
+.pkg-final.pkg-date { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+/* One package: full width, no empty column; a clear way to make a second one to compare */
+.pkg-cmp.one { min-width: 0; }
+@media (min-width: 641px) { .pkg-cmp.one td { min-width: 0; width: 64%; } }
+.pkg-cmp.one td { min-width: 0; }
+.pkg-cmp .pk-colv { display: block; margin: 2px 0 6px; overflow-wrap: anywhere; }
+.pkg-one-more { display: flex; gap: 10px 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 14px; border: 1px dashed var(--champagne); border-radius: var(--r-sm); }
+.ps-more > summary, .plan-settings > summary { cursor: pointer; color: var(--ink); font-weight: 500; padding: 6px 0; min-height: 40px; display: flex; align-items: center; }
+.ps-more[open] > summary { margin-bottom: 8px; }
+.plan-settings { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
+.plan-settings .row { gap: 10px; flex-wrap: wrap; }
+/* Home: How it works sits right under the hero, compact */
+.how-top { gap: 12px; }
+.how-top .steps-line li::before { font-size: 1.5rem; }
+.how-top .steps-line h3 { margin: 0; font-size: 1.05rem; }
+.how-top .steps-line p { margin: 0; font-size: .9rem; }
+@media (max-width: 699px) { .how-top .steps-line { grid-template-columns: 1fr 1fr; gap: 14px 16px; } .how-top .steps-line p { font-size: .84rem; } }
+.qs-foot { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; margin-top: 14px; }
+#gallery .demo { margin-top: 4px; }
+/* Vendor sign-up: sections and category groups open on tap; cities by country with a search */
+.vsec { padding: 0; border: 1px solid var(--line); }
+.vsec > summary, .vcat > summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.vsec > summary { padding: 16px 18px; min-height: 56px; }
+.vsec > summary .display { font-size: 1.15rem; }
+.vsec > summary::-webkit-details-marker, .vcat > summary::-webkit-details-marker { display: none; }
+.vsec > summary::after, .vcat > summary::after { content: ''; width: 8px; height: 8px; border-right: 1.5px solid var(--champagne); border-bottom: 1.5px solid var(--champagne); transform: rotate(45deg); flex: none; margin: -4px 2px 0 0; transition: transform .2s; }
+.vsec[open] > summary::after, .vcat[open] > summary::after { transform: rotate(-135deg); margin-top: 4px; }
+.vsec > summary > span:last-of-type, .vcat > summary > span:last-of-type { margin-left: auto; }
+.vsec-in { padding: 0 18px 18px; }
+.vcats { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.vcat { border-bottom: 1px solid var(--line); }
+.vcat > summary { padding: 12px 2px; min-height: 48px; }
+.vcat .chips { padding: 0 0 12px; }
+.vcity { display: grid; gap: 10px; }
+.vcity-list { max-height: 260px; overflow-y: auto; }
+.vcity-list .chip[hidden] { display: none; }
+.pkg-pl .pl-sub::before { content: " \00b7  "; }
+@media (max-width: 640px) { .pkg-pl .pl-sub { display: block; } .pkg-pl .pl-sub::before { content: none; } }

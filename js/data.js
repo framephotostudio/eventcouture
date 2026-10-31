@@ -72,8 +72,8 @@
     mc:           { name: 'MC or host', group: 'Music and fun', fixed: [300, 900], tier: 'U', tip: true },
     entertainment:{ name: 'Entertainment or activity', group: 'Music and fun', fixed: [200, 900], tier: 'U' },
     kids:         { name: "Kids' entertainment", group: 'Music and fun', fixed: [200, 600], tier: 'SU' },
-    hairMakeup:   { name: 'Hair and makeup', group: 'Look', perPerson: [110, 260], people: 1, tier: 'SU', tip: true },
-    attire:       { name: 'Attire', group: 'Look', fixed: [150, 600], tier: 'LSU', taxable: true },
+    hairMakeup:   { name: 'Hair and makeup', group: 'Attire and beauty', perPerson: [110, 260], people: 1, tier: 'SU', tip: true },
+    attire:       { name: 'Attire', group: 'Attire and beauty', fixed: [150, 600], tier: 'LSU', taxable: true },
     invitations:  { name: 'Printed invitations and postage', group: 'Favors and paper', perGuest: [2.5, 7], tier: 'U', taxable: true },
     favors:       { name: 'Favors and welcome bags', group: 'Favors and paper', perGuest: [3, 10], tier: 'SU', taxable: true },
     transport:    { name: 'Luxury transportation (limo, Rolls-Royce or party bus)', group: 'Logistics', fixed: [400, 1600], tier: 'U' },
@@ -94,7 +94,7 @@
     kosha:        { name: 'Kosha (the couple\u2019s stage and seating)', group: 'Style', fixed: [900, 4000], flat: true, tier: 'LSU', taxable: true },
     dhol:         { name: 'Dhol player', group: 'Music and fun', fixed: [300, 900], flat: true, tier: 'LSU', tip: true },
     mandap:       { name: 'Mandap (ceremony canopy and decor)', group: 'Style', fixed: [1500, 6500], flat: true, tier: 'LSU', taxable: true },
-    mehndi:       { name: 'Mehndi (henna) artist for the bride and guests', group: 'Look', fixed: [350, 1400], flat: true, tier: 'LSU', tip: true },
+    mehndi:       { name: 'Mehndi (henna) artist for the bride and guests', group: 'Attire and beauty', fixed: [350, 1400], flat: true, tier: 'LSU', tip: true },
     baraat:       { name: 'Baraat (the groom\u2019s horse or car arrival)', group: 'Logistics', fixed: [900, 2800], flat: true, tier: 'SU' },
     sofreh:       { name: 'Sofreh aghd (the ceremony spread)', group: 'Style', fixed: [800, 3500], flat: true, tier: 'LSU', taxable: true },
     qawwali:      { name: 'Qawwali group', group: 'Music and fun', fixed: [1200, 4000], flat: true, tier: 'LSU', tip: true },
@@ -102,23 +102,23 @@
     lionDance:    { name: 'Lion dance troupe', group: 'Music and fun', fixed: [600, 1600], flat: true, tier: 'LSU', tip: true },
     teaCeremony:  { name: 'Tea ceremony set and setup', group: 'Style', fixed: [150, 700], flat: true, tier: 'LSU', taxable: true },
     giftTrays:    { name: 'M\u00e2m qu\u1ea3 gift trays (betel, fruit, sweets, tea)', group: 'Style', fixed: [300, 1200], flat: true, tier: 'LSU', taxable: true },
-    pyebaek:      { name: 'Pyebaek ceremony set and hanbok rental', group: 'Look', fixed: [400, 1500], flat: true, tier: 'LSU', taxable: true },
+    pyebaek:      { name: 'Pyebaek ceremony set and hanbok rental', group: 'Attire and beauty', fixed: [400, 1500], flat: true, tier: 'LSU', taxable: true },
     sponsors:     { name: 'Veil, cord and coins for the sponsors\u2019 rites', group: 'Style', fixed: [100, 400], flat: true, tier: 'LSU', taxable: true },
-    gele:         { name: 'Gele tying for the bride and family', group: 'Look', fixed: [150, 600], flat: true, tier: 'LSU', tip: true },
+    gele:         { name: 'Gele tying for the bride and family', group: 'Attire and beauty', fixed: [150, 600], flat: true, tier: 'LSU', tip: true },
     stefana:      { name: 'Stefana crowns and koumbaro gifts', group: 'Style', fixed: [150, 500], flat: true, tier: 'LSU', taxable: true },
     lazo:         { name: 'Lazo, arras and padrinos gifts', group: 'Style', fixed: [80, 350], flat: true, tier: 'LSU', taxable: true },
     flamenco:     { name: 'Flamenco or rumba group', group: 'Music and fun', fixed: [800, 2500], flat: true, tier: 'LSU', tip: true },
     jamon:        { name: 'Jam\u00f3n carver station', group: 'Food and drink', fixed: [600, 1800], flat: true, tier: 'LSU', taxable: true },
     karavai:      { name: 'Karavai bread for the bread-and-salt welcome', group: 'Food and drink', fixed: [80, 250], flat: true, tier: 'LSU', taxable: true },
-    negafa:       { name: 'Negafa: outfit changes, jewelry and the amariya', group: 'Look', fixed: [1500, 5000], flat: true, tier: 'LSU', tip: true },
+    negafa:       { name: 'Negafa: outfit changes, jewelry and the amariya', group: 'Attire and beauty', fixed: [1500, 5000], flat: true, tier: 'LSU', tip: true },
     gospel:       { name: 'Gospel choir or soloist', group: 'Music and fun', fixed: [400, 2500], flat: true, tier: 'LSU', tip: true },
     broom:        { name: 'Jumping the broom: keepsake broom', group: 'Style', fixed: [60, 250], flat: true, tier: 'LSU', taxable: true },
     libation:     { name: 'Libation ceremony (elder or officiant, vessel and offering)', group: 'Style', fixed: [100, 450], flat: true, tier: 'LSU' },
     elements:     { name: 'Tasting the four elements set', group: 'Style', fixed: [40, 150], flat: true, tier: 'LSU', taxable: true },
-    kente:        { name: 'Kente stoles or accents for the wedding party', group: 'Look', fixed: [150, 700], flat: true, tier: 'LSU', taxable: true },
+    kente:        { name: 'Kente stoles or accents for the wedding party', group: 'Attire and beauty', fixed: [150, 700], flat: true, tier: 'LSU', taxable: true },
     secondLine:   { name: 'Second line brass band and parade', group: 'Music and fun', fixed: [1200, 3500], flat: true, tier: 'LSU', tip: true },
     davul:        { name: 'Davul and zurna players (drum and pipe)', group: 'Music and fun', fixed: [600, 2200], flat: true, tier: 'LSU', tip: true },
-    kina:         { name: 'K\u0131na night: henna, red veil and trays', group: 'Look', fixed: [400, 1600], flat: true, tier: 'LSU', taxable: true },
+    kina:         { name: 'K\u0131na night: henna, red veil and trays', group: 'Attire and beauty', fixed: [400, 1600], flat: true, tier: 'LSU', taxable: true },
     dakka:        { name: 'Dakka marrakchia or Andalusian band', group: 'Music and fun', fixed: [1000, 3500], flat: true, tier: 'LSU', tip: true },
     /* Restaurant, ordering from the menu: no venue, catering or rentals. Lunch and brunch cost about 20% less than dinner. */
     restaurantFood:   { name: 'Meals ordered from the menu', group: 'Food and drink', perGuest: [26, 42], tier: 'LSU', taxable: true, gratuity: true, meal: true },
@@ -635,7 +635,7 @@
     { w: 32, t: 'Book photographer, caterer and music', only: ['wedding', 'gala', 'quince'], not: ['restaurant', 'privateRoom'] },
     { w: 32, t: 'Book the photographer and music', only: ['wedding', 'gala', 'quince'], in: ['restaurant', 'privateRoom'] },
     { w: 24, t: 'Send save-the-dates', only: ['wedding'] },
-    { w: 10, t: 'Choose your concept and budget version', not: ['restaurant'] },
+    { w: 10, t: 'Choose your look and spending level', not: ['restaurant'] },
     { w: 9, t: 'Book the venue or reserve private dining', not: ['restaurant', 'home'] },
     { w: 8, t: 'Book key vendors (food, photos, music)', not: ['restaurant', 'privateRoom'] },
     { w: 4, t: 'Choose the restaurant and reserve a table for your group', in: ['restaurant'] },
@@ -661,7 +661,7 @@
   ];
   var CREDIT_PACKS = [{ credits: 10, price: 4.99 }, { credits: 25, price: 9.99 }, { credits: 60, price: 19.99 }];
   var PACKAGES = [
-    { id: 'concepts3', name: 'Three more event concepts', price: 7.99, credits: 16, desc: 'Three new theme directions for this event, guided by what you want changed.' }
+    { id: 'concepts3', name: 'Three more event looks', price: 7.99, credits: 16, desc: 'Three new theme directions for this event, guided by what you want changed.' }
   ];
   var ADDONS = [
     { id: 'graphics', name: 'Matching event graphics', price: 6.99, desc: 'Welcome sign, menu, place card, table number and thank-you card; editable; PDF or PNG.' },

@@ -89,6 +89,7 @@ with sync_playwright() as p:
         sk=pg.get_attribute('.pkg-next','data-pkrow'); pg.click('.pkg-next [data-pkskip]'); pg.wait_for_timeout(300)
         check(n, pg.get_attribute('.pkg-next','data-pkrow')!=sk, 'skip for now moves on')
         st=pg.inner_text('#pkgSum'); check(n, 'Package 2' in st and 'Package total' in st and pg.query_selector('[data-pksum="pdf"]') and pg.query_selector('[data-pksum="mail"]'), 'package summary shows the chosen package, total and save/email buttons')
+        check(n, not pg.evaluate("document.querySelector('.pkg-all').open"), 'the full booking list is tucked away until she opens it'); pg.click('.pkg-all summary'); pg.wait_for_timeout(200)
         check(n, 'Booked' in pg.inner_text('#pkgSum') and 'Booked' in pg.inner_text('.pkg-all .pk-row >> nth=0'), 'summary and booking list show what is booked')
         pg.evaluate("document.querySelector('#pkgSum').scrollIntoView({block:'start'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/pkgsum_{n}.png', full_page=False)
         money=lambda: int(''.join(ch for ch in pg.inner_text('.pkg-sum-t b') if ch.isdigit()))
