@@ -55,7 +55,7 @@ with sync_playwright() as p:
         check(n, '$2,499' in st and 'Couture All-Inclusive' in st and 'Most complete' in st and 'invitations' in pg.inner_text('[data-cqt=allin]'), 'the premium All-Inclusive package is offered')
         check(n, pg.is_disabled('[data-cqt=essentials]'), 'Essentials is off for a package with more than 5 vendors')
         check(n, pg.query_selector('#cqCall') is not None, 'free 15-minute call option')
-        check(n, 'our booking promise' in st.lower() and 'Nothing is booked without your OK' in st and 'within 2 business days' in st and 'Free replacement if a vendor cancels' in st, 'the booking promise is in the pop-up')
+        check(n, 'our booking promise' in st.lower() and 'Nothing is booked without your OK' in st and 'Weekly updates until everything is booked' in st and 'Free replacement if a vendor cancels' in st, 'the booking promise is in the pop-up')
         check(n, 'Nothing is booked without your OK' in card, 'the card shows the promise too')
         pg.wait_for_timeout(300); pg.locator('.sheet').screenshot(path=f'{OUT}/concierge_sheet_{n}.png')
         n0=len(SAVED); pg.click('#cqGo'); pg.wait_for_timeout(300); check(n, 'name' in (pg.inner_text('.toast') if pg.query_selector('.toast') else '').lower() and len(SAVED)==n0, 'asks for the name first')

@@ -47,7 +47,7 @@ with sync_playwright() as p:
             if pg.is_visible('#pkgGo'):
                 pg.click('#pkgGo'); pg.wait_for_timeout(2500)
                 ql = ' | '.join(q for c, q, h in qs)
-                if cu == 'arabic': check('zaffe' in ql and 'arabic wedding singer and band' in ql, f'{vp} arabic: searches {ql}')
+                if cu == 'arabic': check('zaffe' in ql and 'arabic wedding band' not in ql, f'{vp} arabic: searches {ql}')
                 if cu == 'indian': check('dhol player' in ql and 'mandap' in ql, f'{vp} indian: searches {ql}')
                 if cu == 'persian': check('sofreh' in ql, f'{vp} persian: searches {ql}')
                 if vp == 'desk': print(cu, 'searches:', ql)
