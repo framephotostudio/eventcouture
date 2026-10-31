@@ -965,3 +965,9 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .wiz-checks { gap: 10px 22px; flex-wrap: wrap; }
 .alc-tgl { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--ink); min-height: 32px; }
 .alc-tgl input, .wiz-checks input { width: 18px; height: 18px; accent-color: var(--ink); }
+/* The booking promise */
+.cq-ticks { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.cq-ticks li { position: relative; padding-left: 22px; line-height: 1.4; }
+.cq-ticks li::before { content: ''; position: absolute; left: 3px; top: .32em; width: 9px; height: 5px; border-left: 2px solid var(--champagne); border-bottom: 2px solid var(--champagne); transform: rotate(-45deg); }
+.cq-promise { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 14px 16px; background: var(--surface); }
+.cq-promise .eyebrow { margin: 0; }
