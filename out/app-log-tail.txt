@@ -1,0 +1,232 @@
+pp[11968:9f6c] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient _modifyTextEditingAllowedForReason:notify:animated:modifyAllowancesBlock:completion:]  Text editing allowed did change (editingAllowedAfter = YES)
+2026-10-31 18:05:33.216 Df App[11968:9f6c] [com.apple.UIKit:UIPeripheralHost] endPlacementForInputViewSet: <<UIInputViewSet: 0x600003504a50>; (empty)> windowScene: <UIWindowScene: 0x103e09990; role: UIWindowSceneSessionRoleApplication; persistentIdentifier: 6547C9A6-8BCB-4BA2-B456-C7F79FA1721A; activationState: UISceneActivationStateForegroundActive>
+2026-10-31 18:05:33.216 Df App[11968:9f6c] [com.apple.UIKit:KeyboardArbiterClientLog] -[_UIRemoteKeyboards prepareToMoveKeyboard:withIAV:isIAVRelevant:showing:notifyRemote:forScene:] position: {{0, 0}, {0, 0}} visible: 0; notifyRemote: 1; isMinimized: NO
+2026-10-31 18:05:33.216 Df App[11968:9f6c] [com.apple.UIKit:KeyboardVisualMode] Show keyboard with visual mode windowed (0)
+2026-10-31 18:05:33.216 Df App[11968:9f6c] [com.apple.RemoteTextInput:RTILog] -[RTIInputSystemClient remoteTextInputSessionWithID:textSuggestionsChanged:]  Text input session suggestions changed. sessionID = 5BF826B9-CB57-4FD6-8D6D-7E03494F6C3D
+2026-10-31 18:05:33.217 E  App[11968:9f6c] [com.apple.RemoteTextInput:RTILog] -[RTIInputSystemClient remoteTextInputSessionWithID:textSuggestionsChanged:]  Can only set suggestions for an active session. sessionID = 5BF826B9-CB57-4FD6-8D6D-7E03494F6C3D
+2026-10-31 18:05:33.218 Df App[11968:a009] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:2738  FetchAndLogFrameSize GetCurrentIOBufferFrameSize deviceID=95, frame size is 512
+2026-10-31 18:05:33.228 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_gracefullyRemoveItemFromPlayQueue: [0x103c290c0|P/PL] <0x104843e00|I/YJF.02> posting ItemStoppedBeingCurrent
+2026-10-31 18:05:33.237 Df App[11968:a009] [com.apple.coremedia:] <<<< LayerSync >>>> FigLayerSynchronizerSetLayerArrayWithDeferredTransaction: (0x600002621f20) called. layersNotSubjectToImageQueueMediaTiming ((null))
+2026-10-31 18:05:33.237 Df App[11968:a009] [com.apple.coremedia:] <<<< Boss >>>> FigPlaybackBossSetRateAndAnchorTime: <0x103d39d70|I/YJF.02> called, newRate = 0.000, itemTime = nan, hostClockTime = nan = now (659.977) + nan
+2026-10-31 18:05:33.237 Df App[11968:a009] [com.apple.coremedia:] <<<< Boss >>>> bossScheduleReachedEndCallbackForTime: <0x103d39d70|I/YJF.02> called, endTime = nan
+2026-10-31 18:05:33.237 Df App[11968:a009] [com.apple.coremedia:] <<<< Boss >>>> bossScheduleAdvanceForOverlappedPlaybackCallbackForTime: <0x103d39d70|I/YJF.02> called, advanceTime = nan
+2026-10-31 18:05:33.237 Df App[11968:a009] [com.apple.coremedia:] <<<< Boss >>>> figPlaybackBossPrerollCompleted: <0x103d39d70|I/YJF.02> cleaning up for invalidation
+2026-10-31 18:05:33.238 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_gracefullyRemoveItemFromPlayQueue: [0x103c290c0] P/PL play queue now: []
+2026-10-31 18:05:33.238 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_stopResetDisturbReprepareAndResumeWithTransaction: [0x103c290c0] P/PL called for reason: playerfig_RemoveFromPlayQueue
+2026-10-31 18:05:33.239 Df App[11968:a009] (CoreVideo) pool 0x6000035051e0 being deallocated [11 in use, 1 free] _targetBufferCountsBitfield 0x0
+2026-10-31 18:05:33.240 Df App[11968:a009] [com.apple.coremedia:] <<<< VMC >>>> vmc2Finalize: Finalized VMC 0x104832000 on behalf of client pid 11968
+2026-10-31 18:05:33.240 Df App[11968:a009] [com.apple.coremedia:] <<<< IQ-CA >>>> piqca_finalize: Finalized IQ 0x10400f600 on behalf of client pid 11968 (App)
+2026-10-31 18:05:33.241 Df App[11968:a009] [com.apple.coremedia:] <<<< FAQ TIMING SHIM >>>> FigAudioQueueTimingShimStop: [0x600003014000] Calling AudioQueueStop(0x2ec0022, immediate:1)
+2026-10-31 18:05:33.243 Df App[11968:a009] [com.apple.coreaudio:aqme]        MEMixerChannel.cpp:2969  2-channel audiovisual content is NOT eligible for spatialization
+2026-10-31 18:05:33.243 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: called
+2026-10-31 18:05:33.243 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: I/YJF.01
+2026-10-31 18:05:33.243 Df App[11968:a009] [com.apple.coreaudio:aqme]        MEMixerChannel.cpp:2969  2-channel audiovisual content is NOT eligible for spatialization
+2026-10-31 18:05:33.244 Df App[11968:a009] [com.apple.coreaudio:AudioConverter]        AudioConverter.cpp:1007  Created a new in process converter -> 0x600000c6e190, from  2 ch,  44100 Hz, Float32, deinterleaved to  2 ch,  44100 Hz, Float32, deinterleaved
+2026-10-31 18:05:33.244 Df App[11968:a009] [com.apple.coreaudio:AQ]      AudioQueueObject.cpp:5401  ApplyParameters: aq@0x10584ae00 volume 1.000 1.000 1.000 1.000 1.000 1.000, 1.000
+2026-10-31 18:05:33.245 Df App[11968:9f6c] [com.apple.coremedia:] <<<< FigDeferredTransaction >>>> fdt_commitTransactionOnMainQueue: Warning: deferred transaction <FigDeferredTransaction 0x600001705d00, wants CATransaction, is committed
+Changes:
+<FigDeferredTransactionChange 0x600000c88060
+unknown caller requesting to
+
+0x7ff813f6a534>
+
+Post commit changes:
+> was delayed by 0.048s before it began running
+2026-10-31 18:05:33.246 Df App[11968:a009] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:2738  FetchAndLogFrameSize GetCurrentIOBufferFrameSize deviceID=95, frame size is 512
+2026-10-31 18:05:33.247 E  App[11968:9f6c] [com.apple.WebKit:ResourceLoadStatistics] Failed to request allowed query parameters from WebPrivacy.
+2026-10-31 18:05:33.248 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayer >>>> -[AVPlayer _removeItem:]: currentItem KVO: P/PL called with I/YJF.02
+2026-10-31 18:05:33.248 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayer >>>> -[AVPlayer _removeItem:]: currentItem KVO: P/PL called with I/YJF.03
+2026-10-31 18:05:33.248 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayer >>>> -[AVPlayer _removeItem:]: currentItem KVO: P/PL called with I/YJF.04
+2026-10-31 18:05:33.249 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayer >>>> -[AVPlayer _removeItem:]: currentItem KVO: P/PL called with I/YJF.05
+2026-10-31 18:05:33.249 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayer >>>> -[AVPlayer _removeItem:]: currentItem KVO: P/PL called with I/YJF.06
+2026-10-31 18:05:33.249 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: called
+2026-10-31 18:05:33.249 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: I/YJF.02
+2026-10-31 18:05:33.250 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: called
+2026-10-31 18:05:33.250 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: I/YJF.03
+2026-10-31 18:05:33.251 Df App[11968:a009] [com.apple.coreaudio:aqme]        MEMixerChannel.cpp:2969  2-channel audiovisual content is NOT eligible for spatialization
+2026-10-31 18:05:33.251 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: called
+2026-10-31 18:05:33.251 Df App[11968:a009] [com.apple.coreaudio:aqme]  MEDeviceStreamClient.cpp:491   AQME Default-InputOutput: client stopping: <AudioQueueObject@0x10584ae00; Unknown FigPlayer; [11968]; play>; running count now 1
+2026-10-31 18:05:33.251 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: I/YJF.04
+2026-10-31 18:05:33.252 Df App[11968:9f95] [com.apple.coremedia:] <<<< FAQ >>>> subaq_startStopListener: [0x103e4e2c0:0x103e4e5d0] RP/PL.11 AudioQueue has stopped
+2026-10-31 18:05:33.252 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: called
+2026-10-31 18:05:33.252 Df App[11968:a009] [com.apple.coremedia:] <<<< FAQ TIMING SHIM >>>> FigAudioQueueTimingShimStop: [0x600003014000] Calling AudioQueueStop(0x2ec0022, immediate:1)
+2026-10-31 18:05:33.252 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: I/YJF.05
+2026-10-31 18:05:33.253 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: called
+2026-10-31 18:05:33.254 Df App[11968:a009] [com.apple.coremedia:] <<<< FAQ >>>> subaq_disposeCAAudioQueue: [0x103e4e2c0:0x103e4e5d0] RP/PL.11 FigAudioQueueTimingShimDispose 0x600003014000
+2026-10-31 18:05:33.254 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: I/YJF.06
+2026-10-31 18:05:33.254 Df App[11968:a009] [com.apple.coremedia:] <<<< FAQ TIMING SHIM >>>> FigAudioQueueTimingShimDispose: [0x600003014000] Calling AudioQueueDispose(0x2ec0022, immediate:1)
+2026-10-31 18:05:33.257 Df App[11968:9f6c] [com.apple.WebKit:Fullscreen] PlaybackSessionManagerProxy::requestHideAndExitFullscreen(E388FBA4)
+2026-10-31 18:05:33.257 Df App[11968:a009] [com.apple.coreaudio:AQ]      AudioQueueObject.cpp:557   ~AudioQueueObject: aq@0x10584ae00: Deleting
+2026-10-31 18:05:33.258 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_getNextPlaybackState: [0x103c290c0] P/PL new playback state: WaitingForPlaybackItem (Player) (playerRate: 1.000), WILL NOT update boss rate (nan), previous state: Playing, change reason: CurrentItemChanged, playthrough prediction: unknown, options: None
+2026-10-31 18:05:33.258 Df App[11968:9f6c] [com.apple.WebKit:Process] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::makeViewBlankIfUnpaintedSinceLastLoadCommit: Making the view blank because of a JS prompt before the first paint for its page
+2026-10-31 18:05:33.258 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039aca90] I/YJF.02 called
+2026-10-31 18:05:33.259 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> itemfig_Invalidate: <0x104843e00|I/YJF.02> called
+2026-10-31 18:05:33.259 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039b0340] I/YJF.03 called
+2026-10-31 18:05:33.260 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> itemfig_Invalidate: <0x105067600|I/YJF.03> called
+2026-10-31 18:05:33.260 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039b0340] I/YJF.03 called
+2026-10-31 18:05:33.261 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039052b0] I/YJF.04 called
+2026-10-31 18:05:33.261 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> itemfig_Invalidate: <0x104046200|I/YJF.04> called
+2026-10-31 18:05:33.262 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039052b0] I/YJF.04 called
+2026-10-31 18:05:33.262 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x600003906490] I/YJF.05 called
+2026-10-31 18:05:33.262 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> itemfig_Invalidate: <0x104079000|I/YJF.05> called
+2026-10-31 18:05:33.263 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x600003906490] I/YJF.05 called
+2026-10-31 18:05:33.263 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039acea0] I/YJF.06 called
+2026-10-31 18:05:33.264 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> itemfig_Invalidate: <0x105877000|I/YJF.06> called
+2026-10-31 18:05:33.264 Df App[11968:9f6c] [com.apple.WebKit:ViewState] 0x10481fe00 (pageProxyID=10) -[WKWebView _updateVisibleContentRects:] - scroll view state is non-stable, bailing (shouldDeferGeometryUpdates 0, dynamicViewportUpdateMode 0, needsResetViewStateAfterCommitLoadForMainFrame 1, sizeChangedSinceLastVisibleContentRectUpdate 0, [_scrollView isZoomBouncing] 0, currentlyAdjustingScrollViewInsetsForKeyboard 0)
+2026-10-31 18:05:33.264 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039acea0] I/YJF.06 called
+2026-10-31 18:05:33.265 Df App[11968:9f95] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039aca90] I/YJF.02 called
+2026-10-31 18:05:33.270 Df App[11968:9f6c] (CoreVideo) pool 0x0 being deallocated [0 in use, 0 free] _targetBufferCountsBitfield 0x0
+2026-10-31 18:05:33.274 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_setClientVideoLayerArray: [0x103c290c0] P/PL: clientLayerArray [] associated with videoLayerArray []
+2026-10-31 18:05:33.275 Df App[11968:9f95] [com.apple.coremedia:] <<< URLAsset >>> URLAssetFinalize: Called for asset 0x60000175d780
+2026-10-31 18:05:33.277 Df App[11968:a2cf] [com.apple.coremedia:] <<<< FigCustomURLHandling >>>> curll_invalidate: 0x600002927cd0 called
+2026-10-31 18:05:33.281 Df App[11968:9f6c] [com.apple.WebKit:Fullscreen] PlaybackSessionManagerProxy::requestHideAndExitFullscreen(E388FBA4)
+2026-10-31 18:05:33.281 Df App[11968:9f6c] [com.apple.WebKit:Process] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::makeViewBlankIfUnpaintedSinceLastLoadCommit: Making the view blank because of a JS prompt before the first paint for its page
+2026-10-31 18:05:33.282 Df App[11968:9f6c] [com.apple.coremedia:] <<<< AVPlayer >>>> -[AVPlayer dealloc]: AVPlayer [0x600000223420] P/PL releasing figPlayer 0x60000370e4c0
+2026-10-31 18:05:33.282 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlayer_Invalidate: [0x600003500b00] P/PL called
+2026-10-31 18:05:33.283 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_Invalidate: [0x103c290c0] P/PL
+2026-10-31 18:05:33.283 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_RemoveFromPlayQueue: [0x103c290c0] P/PL item 0x0
+2026-10-31 18:05:33.283 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlayer_Finalize: [0x600003500b00] P/PL called
+2026-10-31 18:05:33.283 Df App[11968:a009] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_Invalidate: [0x103c290c0] P/PL
+2026-10-31 18:05:33.450 Df App[11968:9f6c] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient beginRemoteTextInputSessionWithID:options:documentTraits:initialDocumentState:]_block_invoke  Connection to service with mach name com.apple.rti-screencontinuity was invalidated. Attempting to create a new connection.
+2026-10-31 18:05:33.450 Df App[11968:9f6c] [com.apple.xpc:connection] [0x103f126b0] activating connection: mach=true listener=false peer=false name=com.apple.rti-screencontinuity
+2026-10-31 18:05:33.451 Df App[11968:9f6c] [com.apple.xpc:connection] [0x103f126b0] failed to do a bootstrap look-up: xpc_error=[3: No such process]
+2026-10-31 18:05:33.451 Df App[11968:9f6c] [com.apple.xpc:connection] [0x103f126b0] invalidated after a failed init
+2026-10-31 18:05:33.451 Df App[11968:9f6c] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient _beginSessionWithID:forServices:force:]  Begin text input session. sessionID = 5BF826B9-CB57-4FD6-8D6D-7E03494F6C3D, options = <RTISessionOptions: 0x6000002880c0; shouldResign = NO; animated = YES; offscreenDirection = 0; enhancedWindowingModeEnabled = NO
+2026-10-31 18:05:33.451 Df App[11968:9f95] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient _configureConnection:withMachName:]_block_invoke  Client connection to service was invalidated: <NSXPCConnection: 0x60000330c820> connection to service named com.apple.rti-screencontinuity
+2026-10-31 18:05:33.472 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x116000d90 - [PID=11988, throttler=0x1160019b0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-10-31 18:05:33.473 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x116000df0 - [PID=11988, throttler=0x1160019b0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-10-31 18:05:33.521 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x116000d90 - [PID=11988, throttler=0x1160019b0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-10-31 18:05:33.521 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x116000df0 - [PID=11988, throttler=0x1160019b0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-10-31 18:05:33.888 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x116000d90 - [PID=11988, throttler=0x1160019b0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-10-31 18:05:34.012 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didFinishDocumentLoadForFrame: frameID=14, isMainFrame=1
+2026-10-31 18:05:34.018 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x116000d90 - [PID=11988, throttler=0x1160019b0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-10-31 18:05:34.022 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x116000d90 - [PID=11988, throttler=0x1160019b0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-10-31 18:05:34.068 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didFinishLoadForFrame: frameID=14, isMainFrame=1
+2026-10-31 18:05:34.068 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x1160054f0 - NavigationState will release its process network assertion soon because the page load completed
+2026-10-31 18:05:34.069 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x116003f30 - [PID=11988, throttler=0x1160019b0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'Client navigation'
+2026-10-31 18:05:34.071 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x116000d90 - [PID=11988, throttler=0x1160019b0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-10-31 18:05:34.071 E  App[11968:9f6c] [com.apple.WebKit:ResourceLoadStatistics] Failed to request restricted opener domains from WebPrivacy
+2026-10-31 18:05:34.559 Df App[11968:9f6c] [com.apple.WebKit:Process] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::stopMakingViewBlankDueToLackOfRenderingUpdateIfNecessary:
+2026-10-31 18:05:34.559 Df App[11968:9f6c] [com.apple.WebKit:ViewState] 0x10481fe00 (pageProxyID=10) -[WKWebView _didCommitLayerTree:] - received a commit (4) while deferring visible content rect updates (dynamicViewportUpdateMode 0, needsResetViewStateAfterCommitLoadForMainFrame 1 (wants commit 4), sizeChangedSinceLastVisibleContentRectUpdate 0, [_scrollView isZoomBouncing] 0, currentlyAdjustingScrollViewInsetsForKeyboard 0)
+2026-10-31 18:05:34.561 Df App[11968:9f6c] [com.apple.WebKit:ViewState] 0x10481fe00 (pageProxyID=10) -[WKWebView _updateVisibleContentRects:] - performing first visible content rect update after deferring updates
+2026-10-31 18:05:37.068 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x1160054f0 NavigationState is releasing background process assertion because a page load completed
+2026-10-31 18:05:37.069 Df App[11968:9f6c] [com.apple.WebKit:ProcessSuspension] 0x116003f60 - [PID=11988, throttler=0x1160019b0] ProcessThrottler::Activity::invalidate: Ending background activity / 'Page Load'
+2026-10-31 18:05:37.399 Df App[11968:9f6c] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.facecouture.events-default  persistentID: 6547C9A6-8BCB-4BA2-B456-C7F79FA1721A
+2026-10-31 18:05:39.955 Df App[11968:9f6c] [com.apple.KeyboardArbiter:Client] RX sceneBecameFocused:(null)
+2026-10-31 18:05:48.353 E  App[11968:a033] [com.apple.coreaudio:AMCP]  71683          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-10-31 18:05:48.353 E  App[11968:a033] [com.apple.coreaudio:AMCP]  71683          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-10-31 18:05:48.353 E  App[11968:a033] [com.apple.coreaudio:AMCP]  71683          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-10-31 18:05:48.897 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=31
+2026-10-31 18:05:48.898 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize
+2026-10-31 18:05:48.898 A  App[11968:9f6c] (AppSSO) canPerformAuthorizationWithURL
+2026-10-31 18:05:48.899 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:05:48.900 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:05:48.902 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:05:48.904 Df App[11968:9f6c] [com.apple.authkit:siwa] Should process URL called
+2026-10-31 18:05:48.904 Df App[11968:9f6c] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-10-31 18:05:48.907 Df App[11968:9f6c] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-10-31 18:05:48.907 Df App[11968:9f6c] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-10-31 18:05:48.908 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-10-31 18:05:48.909 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-10-31 18:05:48.909 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-10-31 18:05:48.910 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=31, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-10-31 18:05:48.912 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=31, policyAction=0
+2026-10-31 18:05:48.913 Df App[11968:9f6c] [com.apple.WebKit:ProcessSwapping] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: keep using process 11988 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-10-31 18:05:48.914 Df App[11968:9f6c] [com.apple.WebKit:Process] 0x116001920 - [PID=11988] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-10-31 18:05:48.915 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-10-31 18:06:03.908 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=31
+2026-10-31 18:06:03.908 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize
+2026-10-31 18:06:03.908 A  App[11968:9f6c] (AppSSO) canPerformAuthorizationWithURL
+2026-10-31 18:06:03.909 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:03.909 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:03.910 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:03.910 Df App[11968:9f6c] [com.apple.authkit:siwa] Should process URL called
+2026-10-31 18:06:03.910 Df App[11968:9f6c] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-10-31 18:06:03.913 Df App[11968:9f6c] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-10-31 18:06:03.913 Df App[11968:9f6c] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-10-31 18:06:03.914 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-10-31 18:06:03.915 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-10-31 18:06:03.915 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-10-31 18:06:03.916 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=31, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-10-31 18:06:03.916 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=31, policyAction=0
+2026-10-31 18:06:03.917 Df App[11968:9f6c] [com.apple.WebKit:ProcessSwapping] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: keep using process 11988 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-10-31 18:06:03.917 Df App[11968:9f6c] [com.apple.WebKit:Process] 0x116001920 - [PID=11988] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-10-31 18:06:03.918 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-10-31 18:06:03.926 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=31
+2026-10-31 18:06:03.926 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize
+2026-10-31 18:06:03.926 A  App[11968:9f6c] (AppSSO) canPerformAuthorizationWithURL
+2026-10-31 18:06:03.926 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:03.927 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:03.927 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:03.928 Df App[11968:9f6c] [com.apple.authkit:siwa] Should process URL called
+2026-10-31 18:06:03.928 Df App[11968:9f6c] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-10-31 18:06:03.931 Df App[11968:9f6c] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-10-31 18:06:03.931 Df App[11968:9f6c] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-10-31 18:06:03.931 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-10-31 18:06:03.931 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-10-31 18:06:03.931 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-10-31 18:06:03.931 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=31, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-10-31 18:06:03.931 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=31, policyAction=0
+2026-10-31 18:06:03.931 Df App[11968:9f6c] [com.apple.WebKit:ProcessSwapping] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: keep using process 11988 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-10-31 18:06:03.932 Df App[11968:9f6c] [com.apple.WebKit:Process] 0x116001920 - [PID=11988] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-10-31 18:06:03.932 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-10-31 18:06:18.910 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=31
+2026-10-31 18:06:18.911 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize
+2026-10-31 18:06:18.911 A  App[11968:9f6c] (AppSSO) canPerformAuthorizationWithURL
+2026-10-31 18:06:18.911 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:18.911 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:18.912 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:18.912 Df App[11968:9f6c] [com.apple.authkit:siwa] Should process URL called
+2026-10-31 18:06:18.912 Df App[11968:9f6c] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-10-31 18:06:18.913 Df App[11968:9f6c] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-10-31 18:06:18.913 Df App[11968:9f6c] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-10-31 18:06:18.913 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-10-31 18:06:18.913 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-10-31 18:06:18.914 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-10-31 18:06:18.914 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=31, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-10-31 18:06:18.914 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=31, policyAction=0
+2026-10-31 18:06:18.914 Df App[11968:9f6c] [com.apple.WebKit:ProcessSwapping] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: keep using process 11988 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-10-31 18:06:18.915 Df App[11968:9f6c] [com.apple.WebKit:Process] 0x116001920 - [PID=11988] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-10-31 18:06:18.915 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-10-31 18:06:33.912 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=31
+2026-10-31 18:06:33.913 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize
+2026-10-31 18:06:33.913 A  App[11968:9f6c] (AppSSO) canPerformAuthorizationWithURL
+2026-10-31 18:06:33.913 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:33.914 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:33.915 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:33.916 Df App[11968:9f6c] [com.apple.authkit:siwa] Should process URL called
+2026-10-31 18:06:33.916 Df App[11968:9f6c] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-10-31 18:06:33.918 Df App[11968:9f6c] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-10-31 18:06:33.918 Df App[11968:9f6c] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-10-31 18:06:33.918 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-10-31 18:06:33.919 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-10-31 18:06:33.919 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-10-31 18:06:33.920 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=31, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-10-31 18:06:33.921 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=31, policyAction=0
+2026-10-31 18:06:33.921 Df App[11968:9f6c] [com.apple.WebKit:ProcessSwapping] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: keep using process 11988 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-10-31 18:06:33.922 Df App[11968:9f6c] [com.apple.WebKit:Process] 0x116001920 - [PID=11988] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-10-31 18:06:33.923 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-10-31 18:06:48.914 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=31
+2026-10-31 18:06:48.914 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize
+2026-10-31 18:06:48.914 A  App[11968:9f6c] (AppSSO) canPerformAuthorizationWithURL
+2026-10-31 18:06:48.915 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:48.915 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:48.916 A  App[11968:9f6c] (AppSSOCore) canPerformAuthorizationWithURL
+2026-10-31 18:06:48.916 Df App[11968:9f6c] [com.apple.authkit:siwa] Should process URL called
+2026-10-31 18:06:48.916 Df App[11968:9f6c] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-10-31 18:06:48.917 Df App[11968:9f6c] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-10-31 18:06:48.917 Df App[11968:9f6c] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-10-31 18:06:48.917 Df App[11968:9f6c] [com.apple.WebKit:AppSSO] 0x116000c20 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-10-31 18:06:48.917 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-10-31 18:06:48.918 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-10-31 18:06:48.918 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=31, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-10-31 18:06:48.918 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=31, policyAction=0
+2026-10-31 18:06:48.918 Df App[11968:9f6c] [com.apple.WebKit:ProcessSwapping] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::decidePolicyForNavigationAction: keep using process 11988 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-10-31 18:06:48.919 Df App[11968:9f6c] [com.apple.WebKit:Process] 0x116001920 - [PID=11988] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-10-31 18:06:48.919 Df App[11968:9f6c] [com.apple.WebKit:Loading] 0x104809620 - [pageProxyID=10, webPageID=11, PID=11988] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-10-31 18:06:55.443 Df App[11968:bbe8] [com.apple.Safari.SafeBrowsing:Database] Service did finish database update with protection type 1 and provider 1
+2026-10-31 18:06:55.443 Df App[11968:bbe8] [com.apple.Safari.SafeBrowsing:Database] Service did finish database update with protection type 1 and provider 1
+2026-10-31 18:07:35.857 E  App[11968:a033] [com.apple.coreaudio:AMCP]  71683          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-10-31 18:07:36.798 E  App[11968:a033] [com.apple.coreaudio:AMCP]  71683          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-10-31 18:07:44.050 E  App[11968:a033] [com.apple.coreaudio:AMCP]  71683          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-10-31 18:08:12.013 E  App[11968:a033] [com.apple.coreaudio:AMCP]  71683          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
