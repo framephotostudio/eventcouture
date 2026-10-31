@@ -36,7 +36,7 @@ with sync_playwright() as p:
             zf=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')]
             check(n, zf[:2]==['Zaffet El Ezz','Zaffet Al-Afrah'], city+': California zaffe first, then the worldwide one: '+str(zf[:2]))
             hm=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="hairMakeup"] td > b')]
-            check(n, (hm[:1]==['Hammoudeh Alex']) == city.startswith('Orange'), city+': Hammoudeh Alex is the hair stylist only in Orange County: '+str(hm[:1]))
+            check(n, hm[:1]==['Makeup by Richard'] and (('Hammoudeh Alex' in hm[1:3]) == city.startswith('Orange')), city+': Makeup by Richard first; Hammoudeh Alex next only in Orange County: '+str(hm[:3]))
             check(n, dj[:2]==(['DJ Mosses','DJ Roy'] if city.startswith('San Diego') else ['DJ Mosses','DJ L\u2019Rythm']) and 'Recommended' in cellt, city+': DJ Mosses first; then DJ L\u2019Rythm in OC and LA, DJ Roy in San Diego: '+str(dj))
             if city.startswith('Orange'):
                 pg.evaluate("document.querySelector('tr[data-pkrow=\"dj\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_pkg_{n}.png')
@@ -81,7 +81,7 @@ with sync_playwright() as p:
         base=plan(pg, 'Orange County, CA', '#/new/1', 'Glam black and gold 40th birthday party')
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000)
         hb=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="hairMakeup"] td > b')]
-        check(n, not hb or hb[0]=='Hammoudeh Alex', 'Orange County birthday party: Hammoudeh is the hair stylist '+str(hb[:1]))
+        check(n, not hb or hb[0]=='Makeup by Richard', 'Orange County birthday party: Makeup by Richard first '+str(hb[:3]))
         base=plan(pg, 'Houston, TX')
         pg.goto(U+base+'/budget'); pg.wait_for_selector('#musicPlan')
         if pg.get_attribute('[data-music="singer"]','aria-pressed')!='true': pg.click('[data-music="singer"]'); pg.wait_for_timeout(400)
