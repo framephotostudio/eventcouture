@@ -399,7 +399,7 @@
     inspoFor_ = forId && drafts()[forId] ? forId : null;
     if (type && !inspoTypes().some(function (t) { return t.id === type; })) type = '';
     frame('<div class="stack-lg"><div class="stack"><h2>Inspiration by occasion</h2><p class="muted">Tap a photo you love. Your plan, from the decor to the playlist, is built around what’s in it.</p></div>' + inspoGallery(type) + '</div>');
-    var on = $('#ifilter [aria-pressed="true"]'); if (on && on.dataset.t) on.scrollIntoView({ block: 'nearest', inline: 'center' });
+    var on = $('#ifilter [aria-pressed="true"]'), fl = on && on.parentNode; if (on && on.dataset.t && fl) { var fr = fl.getBoundingClientRect(), or_ = on.getBoundingClientRect(); fl.scrollLeft += (or_.left + or_.width / 2) - (fr.left + fr.width / 2); }
     bindInspo(0, function (t) { history.replaceState(null, '', '#/inspiration/' + (t || 'all') + (inspoFor_ ? '/' + inspoFor_ : '')); });
   }
 
@@ -604,7 +604,7 @@
   function cultureRow(ev) {
     if (!hasTradition(ev)) return '';
     var eng = ev.type === 'engagement', keys = Object.keys(D.CULTURES).filter(function (k) { return !eng || D.CULTURES[k].engagement; });
-    return '<div class="culture-row"><label for="cultureSel"><b>' + (eng ? 'Engagement tradition' : 'Wedding tradition') + '</b></label><select id="cultureSel"><option value="">' + (eng ? 'Classic engagement party' : 'Classic wedding') + '</option>' +
+    return '<div class="culture-row"><label for="cultureSel"><b>' + (eng ? 'Engagement tradition' : 'Wedding tradition') + '</b></label><select id="cultureSel" class="input"><option value="">' + (eng ? 'Classic engagement party' : 'Classic wedding') + '</option>' +
       keys.map(function (k) { return '<option value="' + k + '"' + (ev.culture === k ? ' selected' : '') + '>' + esc(eng ? D.CULTURES[k].engagement.name : D.CULTURES[k].name) + '</option>'; }).join('') + '</select></div>' +
       (ev.culture ? '' : '<span class="small muted">' + (eng ? 'Planning an Arabic engagement? Pick it here and we add the zaffe, singer, kosha and Arabic menu.' : 'Planning a cultural wedding? Pick it here and we add its traditions, music and vendors to your plan.') + '</span>');
   }
@@ -774,7 +774,7 @@
         '</div>' + '<div class="stack" id="musicBox"' + (draft.culture && D.CULTURES[draft.culture] ? '' : ' hidden') + '>' + musicChips(draft) + '</div>' + '<div class="stack"><h3 id="whereLbl">Where is it? <span class="muted small" style="font-family:var(--body)">(required)</span></h3><span class="muted small">Not sure yet? Pick it and we\u2019ll compare every option for you.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + ((draft.settingChoices || []).length ? draft.settingChoices.indexOf(st.id) >= 0 : draft.setting === st.id && !draft.settingOpen && !(st.id === 'indoor' && draft.venueKind === 'ballroom')) + '">' + esc(st.name) + '</button>' + (st.id === 'indoor' ? '<button type="button" class="chip" data-v="ballroom" aria-pressed="' + ((draft.settingChoices || []).length ? draft.settingChoices.indexOf('ballroom') >= 0 : draft.setting === 'indoor' && (draft.venueKind === 'ballroom' || draft.venueKind === 'both') && !draft.settingOpen) + '">Hotel ballroom</button>' : ''); }).join('') + '<button type="button" class="chip" data-v="unsure" aria-pressed="' + !!(draft.settingOpen && !(draft.settingChoices || []).length) + '">Not sure yet</button>' + '</div>' +
         '<label class="row small"><input type="checkbox" id="kids"' + (draft.kids ? ' checked' : '') + '> Children will attend</label></div>' +
         '<details class="more"' + (draft.date || draft.timeTouched || draft.alcoholTouched || draft.mustsTouched || draft.payer && draft.payer !== 'host' ? ' open' : '') + '><summary class="link">More details: date, time, drinks, must-haves (optional)</summary><div class="stack" style="margin-top:12px">' +
-        '<div class="panel stack"><label class="field"><span>Name your event</span><input class="input" id="name" value="' + esc(draft.name) + '" placeholder="Name it, or tap an idea below" maxlength="80"></label><span class="muted small">Ideas from your inspiration</span><div class="chips" id="names"></div><span class="muted small">Your event saves under this name in My events, so you can come back and finish anytime.</span></div>' +
+        '<div class="panel stack"><label class="field"><span>Name your event</span><input class="input" id="name" maxlength="100" value="' + esc(draft.name) + '" placeholder="Name it, or tap an idea below"></label><span class="muted small">Ideas from your inspiration</span><div class="chips" id="names"></div><span class="muted small">Your event saves under this name in My events, so you can come back and finish anytime.</span></div>' +
         '<div class="grid2">' +
         '<div class="field"><label class="field" id="dateOne"' + (draft.dateFrom && !draft.date ? ' hidden' : '') + '><span>Date</span><input class="input" type="date" id="date" min="' + todayISO() + '" value="' + esc(draft.date) + '"></label><div class="grid2" id="dateRange"' + (draft.dateFrom && !draft.date ? '' : ' hidden') + '><label class="field"><span>Earliest date</span><input class="input" type="date" id="dateFrom" min="' + todayISO() + '" value="' + esc(draft.dateFrom || '') + '"></label><label class="field"><span>Latest date</span><input class="input" type="date" id="dateTo" min="' + todayISO() + '" value="' + esc(draft.dateTo || '') + '"></label></div><label class="row small"><input type="checkbox" id="dateFlex"' + (draft.dateFrom && !draft.date ? ' checked' : '') + '> No exact date yet, pick a range</label></div>' +
         '<label class="field"><span>Start time</span><input class="input" type="time" id="time" value="' + esc(draft.timeTouched ? draft.time : (draft.time && draft.time !== '18:00' ? draft.time : defaultTime(draft.type, draft.kids))) + '"></label>' +
@@ -1025,7 +1025,7 @@
     var kn = $('#keepNoteX'); if (kn) kn.addEventListener('click', function () { ev.keepNoteHidden = true; saveEvent(ev); kn.closest('.keep-note').remove(); });
     if (!ev.sample) syncQuotes(ev);
     if (!ev.sample && isKept(ev) && ev.published) { publishInvite(ev).catch(function () {}); syncInbox(ev, function () { if (location.hash.indexOf('#/e/' + ev.id) === 0 && !document.querySelector('.sheet-back')) planView(ev, tab); }); }   /* guests' RSVPs come in; edits reach the shared invitation */
-    var cur = $('.rail [aria-current]'); if (cur && cur.scrollIntoView && window.innerWidth < 960) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
+    var cur = $('.rail [aria-current]'), rail = cur && cur.closest('.rail'); if (cur && rail && window.innerWidth < 960) { var rr = rail.getBoundingClientRect(), cr = cur.getBoundingClientRect(); rail.scrollLeft += (cr.left + cr.width / 2) - (rr.left + rr.width / 2); }   /* centre the current tab in the tab bar only; never move the page */
     var rn = $('#rename'); if (rn) rn.addEventListener('click', function () {
       sheet('<h3>Rename your event</h3><input class="input" id="nn" maxlength="80" value="' + esc(ev.name) + '"><div class="chips">' + suggestNames(ev, ev.type).map(function (n) { return '<button type="button" class="chip" data-name="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') + '</div><button class="btn gold block" id="ok">Save name</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
         el.addEventListener('click', function (e) { var b = e.target.closest('[data-name]'); if (b) $('#nn', el).value = b.dataset.name; });
@@ -1680,21 +1680,21 @@
   function onRequest(ev, cat, x) { var ov = (ev.overrides || {})[cat]; return !!(x && x.rec && PERFORMERS.indexOf(cat) >= 0 && !(ov && ov.amount > 0)); }
   function pkgData(ev, b, cats, cp) {
     var bizOf = function (cat) { var id = cp.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };
-    var tot = 0, rows = cats.map(function (c) {
+    var tot = 0, askN = 0, rows = cats.map(function (c) {
       var x = bizOf(c.cat), it = b.items.find(function (i) { return i.id === c.cat; }), bk = statusOf(ev, c.cat) === 'booked', ov = (ev.overrides || {})[c.cat];
-      var amt = ov && ov.amount > 0 ? ov.amount : it ? it.mid : 0; tot += amt;
+      var amt = ov && ov.amount > 0 ? ov.amount : it ? it.mid : 0; if (onRequest(ev, c.cat, x)) { askN++; } else tot += amt;   /* lines priced on request are not added to the package total */
       var info = x ? [x.name + (hotelClass(x.name) ? ' (' + hotelClass(x.name) + ')' : ''), x.address ? x.address.split(',').slice(0, 2).join(',') : '', siteOf(x) ? String(siteOf(x)).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : (x.phone || '')].filter(Boolean).join('\n') : 'Still to choose';
       return { cat: catName(c.cat, ev), name: x ? x.name : '', rec: !!(x && x.rec), info: info, status: bk ? 'Booked' : 'Not booked yet', amt: amt, est: !(ov && ov.amount > 0), ask: onRequest(ev, c.cat, x) };
     });
     var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; }).map(function (id) { return catName(id, ev); });
-    return { rows: rows, total: tot, removed: ex, n: Math.min(ev.pkgChosen || 0, (ev.packages || []).length - 1) + 1, booked: rows.filter(function (r) { return r.status === 'Booked'; }).length };
+    return { rows: rows, total: tot, askN: askN, removed: ex, n: Math.min(ev.pkgChosen || 0, (ev.packages || []).length - 1) + 1, booked: rows.filter(function (r) { return r.status === 'Booked'; }).length };
   }
   function pkgSummaryCard(ev, b, cats, cp) {
     var d = pkgData(ev, b, cats, cp);
     return '<div class="pkg-sum" id="pkgSum"><div class="pkg-sum-h"><p class="eyebrow">\u2713 Your final package</p><h3>Package ' + d.n + ' \u00b7 ' + esc(ev.name) + '</h3><p class="small muted">' + esc(whenText(ev)) + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p></div>' +
       '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.rec ? ' <span class="badge rec">\u2605 Recommended</span>' : '') + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.ask ? '<span class="muted">Price on request</span>' : (r.est ? 'est. ' : '') + money(r.amt)) + '</span></div>'; }).join('') + '</div>' +
       rideRow(ev, b, false) +
-      '<div class="pkg-sum-t"><span>' + (d.booked === d.rows.length ? 'Package total, all booked' : 'Package total') + '<span class="small muted pkg-sum-note">Your plan\u2019s estimate also keeps a 10% cushion for surprises.</span>' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
+      '<div class="pkg-sum-t"><span>' + (d.booked === d.rows.length ? 'Package total, all booked' : 'Package total') + '<span class="small muted pkg-sum-note">' + (d.askN ? 'Not counting ' + plural(d.askN, 'line') + ' priced on request. ' : '') + 'Your plan\u2019s estimate (' + money(b.total) + ') ' + (d.askN ? 'adds estimates for those and ' : 'also ') + 'keeps a 10% cushion for surprises.</span>' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
       '<p class="small muted">' + d.booked + ' of ' + d.rows.length + ' booked' + (d.removed.length ? ' \u00b7 Not needed: ' + d.removed.map(esc).join(', ') : '') + '</p>' +
       '<p class="small">This is your package. Save it as a PDF, email it to yourself or forward it to a co-host anytime, booked or not.</p><div class="row pkg-sum-acts"><button class="btn gold small" data-pksum="pdf">Save as PDF</button><button class="btn ghost small" data-pksum="mail">Email it</button><button class="btn ghost small" data-pksum="share">Share</button></div></div>';
   }
@@ -2539,6 +2539,8 @@
     return { names: 'Guest of honor’s name', ph: t === 'baby-shower' ? 'Layla Haddad' : 'Sofia', age: ['birthday', 'milestone', 'kids-birthday'].indexOf(t) >= 0 ? 'Turning (age)' : t === 'graduation' ? 'Class of (year)' : '', host: 'Hosted by (optional)' };
   }
   function inviteLines(ev) {
+    /* a name the app picked from the look ("Blush Wisteria Ballroom") is never shown to guests as if it were a place or a person */
+    var nm = function (fallback) { return ev.nameAuto ? fallback : ev.name; };
     var inv = ev.inv || {}, names = String(inv.names || '').trim(), host = String(inv.host || '').trim(), age = parseInt(inv.age, 10) || 0, t = ev.type, cu = E.culture(ev);
     if (inv.custom && String(inv.custom).trim()) return String(inv.custom).split('\n').map(function (x) { return { k: 'body', t: x.trim() }; }).filter(function (x) { return x.t; }).concat(tailLines(ev));
     var L = [], pre = function (x) { L.push({ k: 'pre', t: x }); }, big = function (x) { L.push({ k: 'name', t: x }); }, body = function (x) { L.push({ k: 'body', t: x }); };
@@ -2548,10 +2550,10 @@
     var theme = themeWords(ev);
     if (t === 'wedding') {
       if (names) { pre(host || (cu && cu.pre) || 'Together with their families'); big(names); body('request the honour of your presence'); body('at the celebration of their marriage'); }
-      else { pre('The honour of your presence is requested'); body('at'); big(ev.name); }
-    } else if (t === 'engagement') { pre(host ? host + ' invite you' : 'Please join us'); body('in celebrating the engagement of'); big(names || ev.name); }
-    else if (t === 'anniversary') { pre(host ? host + ' invite you' : 'Please join us'); body('in celebrating ' + (age ? words(age) + ' years of marriage' : 'the anniversary') + ' of'); big(names || ev.name); }
-    else if (t === 'quince') { pre(host || 'With the blessing of God and her parents'); big(names || ev.name); body('requests the pleasure of your company'); body('as she celebrates her quinceañera'); }
+      else { pre('The honour of your presence is requested'); body('at'); big(nm('A Wedding Celebration')); }
+    } else if (t === 'engagement') { pre(host ? host + ' invite you' : 'Please join us'); body('in celebrating the engagement of'); big(names || nm('the happy couple')); }
+    else if (t === 'anniversary') { pre(host ? host + ' invite you' : 'Please join us'); body('in celebrating ' + (age ? words(age) + ' years of marriage' : 'the anniversary') + ' of'); big(names || nm('the happy couple')); }
+    else if (t === 'quince') { pre(host || 'With the blessing of God and her parents'); big(names || nm('Our Quinceañera')); body('requests the pleasure of your company'); body('as she celebrates her quinceañera'); }
     else if (t === 'sweet16') { pre('Please join us'); body('as we celebrate'); big(names ? names + '’s Sweet Sixteen' : ev.name); }
     else if (t === 'gala') { pre((names || 'The hosts') + ' request the pleasure of your company at'); big(ev.name); }
     else if (t === 'corporate') { pre((names || 'You are cordially invited') + (names ? ' cordially invites you to' : ' to')); big(ev.name); }
@@ -2561,8 +2563,8 @@
     else if (t === 'bridal-shower') { pre('Please join us for a bridal shower'); body('honoring'); big(names ? names + ', bride-to-be' : 'the bride-to-be'); }
     else if (t === 'gender-reveal') { pre('Boy or girl?'); body('Please join us as ' + (names || 'the parents-to-be') + ' reveal'); big('the big surprise'); }
     else if (t === 'bachelorette') { pre('One last celebration before the ring'); body('Join us in celebrating'); big(names ? names + ', bride-to-be' : ev.name); }
-    else if (t === 'graduation') { pre('Please join us'); body('in celebrating the graduation of'); big(names || ev.name); if (age) body('Class of ' + age); }
-    else if (t === 'retirement') { pre('Please join us'); body('in honoring'); big(names || ev.name); body('on a wonderful retirement'); }
+    else if (t === 'graduation') { pre('Please join us'); body('in celebrating the graduation of'); big(names || nm('our graduate')); if (age) body('Class of ' + age); }
+    else if (t === 'retirement') { pre('Please join us'); body('in honoring'); big(names || nm('our retiree')); body('on a wonderful retirement'); }
     else { pre(names ? names + ' invite you to' : 'You are cordially invited to'); big(ev.name); }
     if (host && ['wedding', 'quince', 'engagement', 'anniversary'].indexOf(t) < 0 && fieldsHaveHost(t)) body('Hosted by ' + host);
     formalWhen(ev).forEach(function (x) { L.push({ k: 'when', t: x }); });
@@ -2599,12 +2601,12 @@
       '<div class="in"><div class="inv-frame">' + (kind === 'kids' ? '<div class="inv-confetti" aria-hidden="true"></div>' : '') +
       (mono ? '<div class="inv-mono" aria-hidden="true">' + esc(mono) + '</div>' : '<div class="inv-orn" aria-hidden="true">' + (kind === 'kids' ? '★' : '❦') + '</div>') +
       lines.map(function (l) { return '<p class="inv-' + l.k + '">' + esc(l.t) + '</p>'; }).join('') + (extra || '') + '</div></div>' +
-      '<div class="inv-ribbon" aria-hidden="true">' + pal.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div></div>';
+      '<div class="inv-ribbon" aria-hidden="true">' + pal.filter(function (c) { return lum(c) < 0.94; }).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div></div>';
   }
   function inviteEditor(ev) {
     if (ev.sample) return '';
     var f = inviteFields(ev), inv = ev.inv || {};
-    return '<details class="panel stack inv-edit"' + (inv.names ? '' : ' open') + '><summary><b>Personalize your invitation</b> <span class="muted small">' + (inv.names ? 'names, wording and reply date' : 'add names for a personal invitation') + '</span></summary>' +
+    return '<details class="panel stack inv-edit"' + (inv.names ? '' : ' open') + '><summary><b>Personalize your invitation</b> <span class="muted small">' + (inv.names ? 'names, wording and reply date' : 'Add names for a personal invitation') + '</span></summary>' +
       '<div class="grid2"><label class="field"><span>' + esc(f.names) + '</span><input class="input" id="invNames" maxlength="80" placeholder="' + esc(f.ph) + '" value="' + esc(inv.names || '') + '"></label>' +
       (f.age ? '<label class="field"><span>' + esc(f.age) + '</span><input class="input num" type="number" min="1" max="2100" id="invAge" value="' + esc(inv.age || '') + '"></label>' : '') +
       (f.host ? '<label class="field"><span>' + esc(f.host) + '</span><input class="input" id="invHost" maxlength="80" placeholder="' + esc(ev.type === 'wedding' ? 'Together with their families' : ev.type === 'quince' ? 'With the blessing of God and her parents' : 'Her family') + '" value="' + esc(inv.host || '') + '"></label>' : '') +
