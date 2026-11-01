@@ -201,6 +201,7 @@ const CAT_RULES = {
   cake: { types: /supermarket|grocery|convenience|gas_station|fast_food/, names: /walmart|kroger|h-e-b|heb\b|costco|sam's club|safeway|publix|dunkin|krispy|donut/i },
   catering: { types: /fast_food|convenience|gas_station|supermarket/, names: /mcdonald|chick-fil-a|subway|taco bell|wendy|burger king|domino|pizza hut|papa john|panda express|popeyes|kfc/i },
   hairMakeup: { types: /store|school|nail_salon|barber/, names: /beauty supply|sally beauty|ulta|sephora|school|academy|barber|nail/i },
+  hair: { types: /store|school|nail_salon/, names: /beauty supply|sally beauty|ulta|sephora|school|academy|nail/i },
   rentals: { types: /car_rental|truck|storage/, names: /u-haul|penske|budget truck|storage|car rental/i },
   balloons: { types: /supermarket|grocery|department_store/, names: /party city|walmart|dollar|kroger/i },
   decor: { types: /home_goods_store|furniture_store|department_store|supermarket/, names: /hobby lobby|michaels|home goods|homegoods|walmart|target|ikea|at home/i },
@@ -220,6 +221,7 @@ const MUST_LOOK_LIKE = {
   photographer: { types: /photograph/, names: /photo|studio|image|portrait|film|captur|lens|visual/i },
   videographer: { types: /video|film|photograph/, names: /video|film|cinema|motion|studio|media|production/i },
   hairMakeup: { types: /beauty|hair|spa|makeup/, names: /makeup|mua|beauty|glam|hair|bridal|artistry|lash|face/i },
+  hair: { types: /beauty|hair|spa/, names: /hair|stylist|salon|blowout|bridal|glam|beauty|updo|extensions/i },
   decor: { types: /event|party|florist|furniture_rental|interior/, names: /decor|design|event|rental|styl|backdrop|balloon|floral|draper|luxe|occasion/i }
 };
 function rightKind(p, cat) {

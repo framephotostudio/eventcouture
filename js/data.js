@@ -72,7 +72,8 @@
     mc:           { name: 'MC or host', group: 'Music and fun', fixed: [300, 900], tier: 'U', tip: true },
     entertainment:{ name: 'Entertainment or activity', group: 'Music and fun', fixed: [200, 900], tier: 'U' },
     kids:         { name: "Kids' entertainment", group: 'Music and fun', fixed: [200, 600], tier: 'SU' },
-    hairMakeup:   { name: 'Hair and makeup', group: 'Attire and beauty', perPerson: [110, 260], people: 1, tier: 'SU', tip: true },
+    hairMakeup:   { name: 'Makeup artist', group: 'Attire and beauty', perPerson: [60, 140], people: 1, tier: 'SU', tip: true },
+    hair:         { name: 'Hair stylist', group: 'Attire and beauty', perPerson: [50, 120], people: 1, tier: 'SU', tip: true },
     attire:       { name: 'Attire', group: 'Attire and beauty', fixed: [150, 600], tier: 'LSU', taxable: true },
     invitations:  { name: 'Printed invitations and postage', group: 'Favors and paper', perGuest: [2.5, 7], tier: 'U', taxable: true },
     favors:       { name: 'Favors and welcome bags', group: 'Favors and paper', perGuest: [3, 10], tier: 'SU', taxable: true },
@@ -129,11 +130,11 @@
 
   /* Which categories each event style uses. */
   var PROFILES = {
-    dining:  ['privateDining', 'cake', 'decor', 'balloons', 'florals', 'photographer', 'favors', 'attire', 'hairMakeup', 'lighting', 'transport', 'invitations'],
-    shower:  ['venue', 'catering', 'bar', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'photographer', 'entertainment', 'favors', 'invitations', 'cleanup', 'attire', 'hairMakeup', 'photoBooth', 'lighting'],
-    party:   ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'dj', 'photographer', 'photoBooth', 'entertainment', 'favors', 'invitations', 'cleanup', 'attire', 'hairMakeup', 'lighting', 'videographer', 'mc', 'insurance', 'security', 'transport', 'parking'],
-    gala:    ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'lighting', 'dj', 'liveMusic', 'mc', 'photographer', 'videographer', 'photoBooth', 'entertainment', 'favors', 'invitations', 'attire', 'hairMakeup', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
-    wedding: ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'florals', 'lighting', 'dj', 'singer', 'liveMusic', 'mc', 'photographer', 'videographer', 'photoBooth', 'favors', 'invitations', 'attire', 'hairMakeup', 'officiant', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
+    dining:  ['privateDining', 'cake', 'decor', 'balloons', 'florals', 'photographer', 'favors', 'attire', 'hairMakeup', 'hair', 'lighting', 'transport', 'invitations'],
+    shower:  ['venue', 'catering', 'bar', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'photographer', 'entertainment', 'favors', 'invitations', 'cleanup', 'attire', 'hairMakeup', 'hair', 'photoBooth', 'lighting'],
+    party:   ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'dj', 'photographer', 'photoBooth', 'entertainment', 'favors', 'invitations', 'cleanup', 'attire', 'hairMakeup', 'hair', 'lighting', 'videographer', 'mc', 'insurance', 'security', 'transport', 'parking'],
+    gala:    ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'lighting', 'dj', 'liveMusic', 'mc', 'photographer', 'videographer', 'photoBooth', 'entertainment', 'favors', 'invitations', 'attire', 'hairMakeup', 'hair', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
+    wedding: ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'florals', 'lighting', 'dj', 'singer', 'liveMusic', 'mc', 'photographer', 'videographer', 'photoBooth', 'favors', 'invitations', 'attire', 'hairMakeup', 'hair', 'officiant', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
     /* Where the event happens can override the event type. */
     restaurant:  ['restaurantFood', 'restaurantDrinks', 'cake', 'cakeFee', 'tableDecor', 'photographer', 'favors'],
     privateRoom: ['privateDining', 'cake', 'cakeFee', 'decor', 'florals', 'balloons', 'photographer', 'favors', 'invitations']
@@ -153,11 +154,11 @@
 
   /* Event-specific adjustments (multipliers on the Signature range). */
   var ADJUST = {
-    wedding: { venue: 2.6, catering: 1.6, cake: 1.5, florals: 3, attire: 5, decor: 1.5, people: { hairMakeup: 5 }, hours: { photographer: 8, videographer: 8, dj: 5 } },
-    quince: { venue: 1.6, florals: 1.6, attire: 2.5, people: { hairMakeup: 3 }, hours: { photographer: 5 } },
+    wedding: { venue: 2.6, catering: 1.6, cake: 1.5, florals: 3, attire: 5, decor: 1.5, people: { hairMakeup: 5, hair: 5 }, hours: { photographer: 8, videographer: 8, dj: 5 } },
+    quince: { venue: 1.6, florals: 1.6, attire: 2.5, people: { hairMakeup: 3, hair: 3 }, hours: { photographer: 5 } },
     gala: { venue: 1.8, catering: 1.4, lighting: 1.5 },
-    'bridal-shower': { people: { hairMakeup: 1 } },
-    bachelorette: { people: { hairMakeup: 4 }, transport: 1.4 },
+    'bridal-shower': { people: { hairMakeup: 1, hair: 1 } },
+    bachelorette: { people: { hairMakeup: 4, hair: 4 }, transport: 1.4 },
     milestone: { venue: 1.3, decor: 1.3 },
     'baby-shower': {}, brunch: {}, dinner: {}, birthday: {}
   };
@@ -409,6 +410,7 @@
       { id: 'danceFloor', only: ['wedding', 'engagement', 'anniversary', 'quince', 'sweet16', 'gala', 'milestone', 'birthday', 'graduation', 'corporate', 'holiday', 'christmas'] } ] },
     { group: 'Services', items: [
       { id: 'hairMakeup', not: ['dinner', 'holiday', 'christmas', 'corporate', 'other', 'kids-birthday', 'retirement'] },
+      { id: 'hair', not: ['dinner', 'holiday', 'christmas', 'corporate', 'other', 'kids-birthday', 'retirement'] },
       { id: 'transport' }, { id: 'coordinator' }, { id: 'favors' }, { id: 'invitations' } ] }
   ];
   /* At a restaurant: only what you'd bring to the table. */
@@ -759,11 +761,11 @@
       { name: 'DJ L\u2019Rythm', ig: 'djlrythm', cats: ['dj', 'lighting'], cities: ['Los Angeles, CA', 'Orange County, CA'], weight: 105, cultures: ['arabic', ''], note: 'Female Arabic DJ, plus lighting, sound, sparks and stage effects rentals. Orange County and LA' },
       { name: 'DJ Roy', ig: 'djroy_1', cats: ['dj'], country: 'US', notCities: ['Houston, TX'], first: true, cultures: ['', 'arabic', 'moroccan', 'persian', 'indian', 'russian', 'spanish', 'mexican', 'turkish', 'fusion'], note: 'All kinds of music: Arabic, English, Spanish, Turkish, Persian, Indian, Russian, Kurdish and French' },
       { name: 'Makeup by Richard', ig: 'richardghareeb', cats: ['hairMakeup'], cities: ['Los Angeles, CA', 'Orange County, CA', 'San Diego, CA'], weight: 120, note: 'Richard Ghareeb: luxury bridal and celebrity makeup artist, Los Angeles, Orange County and San Diego' },
-      { name: 'Hammoudeh Alex', ig: 'hammoudeh.hamdan', cats: ['hairMakeup'], cities: ['Orange County, CA'], cultures: ['arabic', 'parties'], note: 'Hair stylist for brides and parties: styles, extensions, cuts, color and smoothing' },
+      { name: 'Hammoudeh Alex', ig: 'hammoudeh.hamdan', cats: ['hair'], cities: ['Orange County, CA'], cultures: ['arabic', 'parties'], note: 'Hair stylist for brides and parties: styles, extensions, cuts, color and smoothing' },
       /* Wassim: first for Arabic weddings in Houston, and for every other Houston event right after Makeup by Suzette */
-      { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hairMakeup'], cities: ['Houston, TX'], cultures: ['arabic'], weight: 25, note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' },
-      { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hairMakeup'], cities: ['Houston, TX'], weight: 15, note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' },
-      { name: 'Makeup by Suzette', ig: 'makeupbysuzette', cats: ['hairMakeup'], cities: ['Houston, TX'], note: 'Celebrity makeup and hair artist and glam team, bridal glam. Houston and worldwide' },
+      { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hair'], cities: ['Houston, TX'], cultures: ['arabic'], weight: 25, note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' },
+      { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hair'], cities: ['Houston, TX'], weight: 15, note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' },
+      { name: 'Makeup by Suzette', ig: 'makeupbysuzette', cats: ['hairMakeup', 'hair'], cities: ['Houston, TX'], note: 'Celebrity makeup and hair artist and glam team, bridal glam. Houston and worldwide' },
       /* No Instagram: maps is what to search on Google Maps, and the link opens their listing there. */
       /* Houston Persian weddings: Kasra first, then Aban, Caspian, Garson and Zafran. */
       { name: 'Kasra Persian Grill', maps: 'Kasra Persian Grill Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 60, note: 'Persian grill and catering: kabobs, rice and stews for weddings and parties' },

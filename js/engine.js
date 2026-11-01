@@ -71,6 +71,7 @@
     }
     var list = (D.PROFILES[t.style] || D.PROFILES.party).slice();
     if (ev.setting === 'outdoor') list = list.concat(['tent', 'restrooms', 'generator', 'permits']);
+    if ((ev.priorities || []).indexOf('hairMakeup') >= 0 && ev.priorities.indexOf('hair') < 0) ev.priorities = ev.priorities.concat('hair');   /* the 'Hair and makeup' must-have covers both */
     list = list.concat((ev.priorities || []).filter(function (c) { return D.CATEGORIES[c] && ['venue', 'catering'].indexOf(c) < 0; }));   /* a must-have is always in the plan */
     if (ev.kids) list.push('kids');
     if (ev.type === 'wedding' && list.indexOf('officiant') < 0) list.push('officiant');
@@ -78,7 +79,7 @@
     if (ev.setting === 'home') list = list.filter(function (c) { return c !== 'venue' && c !== 'privateDining'; }).concat(t.style === 'dining' ? ['catering', 'rentals'] : []);
     if (ev.alcohol === 'none') list = list.filter(function (c) { return c !== 'bartender'; });
     /* No one is being dressed for a dinner party, holiday party or gala: guests bring their own look. */
-    if (['dinner', 'holiday', 'christmas', 'gala', 'corporate', 'other', 'kids-birthday'].indexOf(ev.type) >= 0 || (ev.kids && /birthday/.test(ev.type || ''))) list = list.filter(function (c) { return c !== 'attire' && c !== 'hairMakeup'; });   /* a child's party doesn't budget a glam look for the host */
+    if (['dinner', 'holiday', 'christmas', 'gala', 'corporate', 'other', 'kids-birthday'].indexOf(ev.type) >= 0 || (ev.kids && /birthday/.test(ev.type || ''))) list = list.filter(function (c) { return c !== 'attire' && c !== 'hairMakeup' && c !== 'hair'; });   /* a child's party doesn't budget a glam look for the host */
     if (ev.type === 'corporate') list = list.filter(function (c) { return ['balloons', 'favors', 'cake', 'cakeFee'].indexOf(c) < 0 || (ev.include || []).indexOf(c) >= 0; });
     /* Balloon installations don't suit black-tie or romantic occasions unless the host adds them. */
     if (['gala', 'wedding', 'anniversary', 'engagement', 'dinner', 'holiday', 'christmas'].indexOf(ev.type) >= 0) list = list.filter(function (c) { return c !== 'balloons' || (ev.include || []).indexOf('balloons') >= 0; });
@@ -165,7 +166,7 @@
   /* Made for your budget: one plan that lands at the host's number, protecting must-haves. */
   var FIT_TIER = { id: 'F', name: 'Your budget plan', mult: 1, blurb: 'One plan built to your exact budget, with your must-haves protected.' };
   /* Never auto-dropped: venue, food, security and insurance (venues often require the last two). They can be trimmed, not removed. */
-  var OPTIONAL = ['videographer', 'singer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'cleanup', 'hairMakeup', 'florals', 'balloons', 'effects', 'danceFloor', 'chocolateFountain', 'dessertBar', 'iceCreamCart', 'coffeeBar', 'foodTruck', 'popcornCart', 'booth360', 'livePainter', 'caricature', 'flowerWall', 'bounceHouse', 'facePainter', 'characterVisit', 'gameTruck', 'magician', 'balloonTwister', 'craftStation', 'pettingZoo'];
+  var OPTIONAL = ['videographer', 'singer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'cleanup', 'hairMakeup', 'hair', 'florals', 'balloons', 'effects', 'danceFloor', 'chocolateFountain', 'dessertBar', 'iceCreamCart', 'coffeeBar', 'foodTruck', 'popcornCart', 'booth360', 'livePainter', 'caricature', 'flowerWall', 'bounceHouse', 'facePainter', 'characterVisit', 'gameTruck', 'magician', 'balloonTwister', 'craftStation', 'pettingZoo'];
   /* Lowercase a category name for a sentence, keeping DJ, MC and LED as they are. */
   function lc(name) { return String(name).toLowerCase().replace(/\b(dj|mc|led)\b/g, function (m) { return m.toUpperCase(); }); }
   function listJoin(a) { return a.length < 2 || a.some(function (x) { return / and /.test(x); }) ? a.join(', ') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
@@ -195,7 +196,7 @@
     }
     if (total() > target) {
       /* Some things are part of the occasion itself: hair and makeup for a bride or quinceañera, flowers at a wedding. */
-      var essential = ({ wedding: ['hairMakeup', 'florals'], quince: ['hairMakeup', 'florals'] }[ev.type] || []).concat(musicOf(ev), (culture(ev) || {}).add || []);   /* the music they chose and their traditions stay in */
+      var essential = ({ wedding: ['hairMakeup', 'hair', 'florals'], quince: ['hairMakeup', 'hair', 'florals'] }[ev.type] || []).concat(musicOf(ev), (culture(ev) || {}).add || []);   /* the music they chose and their traditions stay in */
       var optional = OPTIONAL.concat(['dinner', 'holiday', 'christmas', 'brunch'].indexOf(ev.type) >= 0 ? ['photographer', 'decor'] : []).concat(ev.kids && /birthday/.test(ev.type) ? ['dj', 'photographer'] : []);
       rows.filter(function (r) { return !r.pri && !r.fixed && optional.indexOf(r.id) >= 0 && essential.indexOf(r.id) < 0 && r.amt > 0; })
         .sort(function (a, b) { return b.amt - a.amt; })
@@ -307,11 +308,11 @@
   function guardian(ev, b) {
     if (!ev.budget || b.total <= ev.budget) return { over: 0, swaps: [] };
     var over = b.total - ev.budget;
-    var optional = ['videographer', 'singer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'security', 'photographer', 'dj', 'attire', 'hairMakeup', 'balloons', 'florals', 'effects', 'danceFloor', 'chocolateFountain', 'dessertBar', 'iceCreamCart', 'coffeeBar', 'foodTruck', 'popcornCart', 'booth360', 'livePainter', 'caricature', 'flowerWall', 'bounceHouse', 'facePainter', 'characterVisit', 'gameTruck', 'magician', 'balloonTwister', 'craftStation', 'pettingZoo'];
+    var optional = ['videographer', 'singer', 'liveMusic', 'lighting', 'coordinator', 'photoBooth', 'mc', 'transport', 'invitations', 'parking', 'favors', 'entertainment', 'security', 'photographer', 'dj', 'attire', 'hairMakeup', 'hair', 'balloons', 'florals', 'effects', 'danceFloor', 'chocolateFountain', 'dessertBar', 'iceCreamCart', 'coffeeBar', 'foodTruck', 'popcornCart', 'booth360', 'livePainter', 'caricature', 'flowerWall', 'bounceHouse', 'facePainter', 'characterVisit', 'gameTruck', 'magician', 'balloonTwister', 'craftStation', 'pettingZoo'];
     var pri = ev.priorities || [];
     var swaps = b.items.filter(function (i) { return optional.indexOf(i.id) >= 0 && pri.indexOf(i.id) < 0 && !(ev.type === 'wedding' && /photographer|attire/.test(i.id)); })
       .sort(function (a, b2) { return b2.mid - a.mid; })
-      .map(function (i) { return { kind: 'drop', id: i.id, text: ({ photographer: 'Skip the hired photographer; friends take the photos', dj: 'Play your own playlist instead of hiring a DJ', attire: 'Wear something you already own or rent the look', hairMakeup: 'Do hair and makeup yourself', florals: 'Use greenery and grocery-store flowers', balloons: 'Skip the balloon installation' }[i.id]) || 'Skip ' + lc(i.name), save: Math.round(i.mid * (1 + D.CONTINGENCY)) }; });
+      .map(function (i) { return { kind: 'drop', id: i.id, text: ({ photographer: 'Skip the hired photographer; friends take the photos', dj: 'Play your own playlist instead of hiring a DJ', attire: 'Wear something you already own or rent the look', hairMakeup: 'Do your own makeup', hair: 'Do your own hair', florals: 'Use greenery and grocery-store flowers', balloons: 'Skip the balloon installation' }[i.id]) || 'Skip ' + lc(i.name), save: Math.round(i.mid * (1 + D.CONTINGENCY)) }; });
     var florals = b.items.find(function (i) { return i.id === 'florals'; });
     if (florals) swaps.push({ kind: 'note', id: 'florals', text: 'Use seasonal flowers and greenery-heavy designs', save: Math.round(florals.mid * 0.35) });
     var bar = b.items.find(function (i) { return i.id === 'bar'; });
@@ -387,7 +388,7 @@
     var have; try { have = (ev.tier === 'F' && ev.budget ? budgetFit(ev) : budget(ev, ev.tier || 'S')).items.map(function (i) { return i.id; }); } catch (e) { return t; }
     if (t === 'Order decor, balloons and florals') { var parts = ['decor'].concat(have.indexOf('balloons') >= 0 ? ['balloons'] : []).concat(have.indexOf('florals') >= 0 ? ['florals'] : []); return 'Order ' + (parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0]); }
     if (t === 'Book the venue or reserve private dining' && ev.setting === 'outdoor') return 'Reserve the space or get the park permit';
-    if (t === 'Plan outfits and book hair and makeup') return have.indexOf('hairMakeup') >= 0 ? t : 'Plan outfits';
+    if (t === 'Plan outfits and book hair and makeup') return have.indexOf('hairMakeup') >= 0 || have.indexOf('hair') >= 0 ? t : 'Plan outfits';
     if (t === 'Book key vendors (food, photos, music)') { var k = [have.indexOf('catering') >= 0 ? 'food' : null, have.indexOf('photographer') >= 0 ? 'photos' : null, (have.indexOf('dj') >= 0 || have.indexOf('liveMusic') >= 0) ? 'music' : null].filter(Boolean); return k.length ? 'Book key vendors (' + k.join(', ') + ')' : 'Book your vendors'; }
     return t;
   }
