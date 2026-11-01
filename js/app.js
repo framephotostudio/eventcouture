@@ -430,8 +430,8 @@
     frame(
       (lastEv ? '<a class="resume-bar" href="#/e/' + esc(lastEv.id) + ((lastEv.packages || []).length ? '/budget' : '') + '"><span>Welcome back. <b>Continue planning ' + esc(lastEv.name || 'your event') + '</b></span><span aria-hidden="true">\u2192</span></a>' : '') +
       (CFG.app ? '' : '<div class="app-soon-bar"><img src="img/brand/ec-mark-128.png" alt="" width="30" height="30"><span><b>The Event Couture app is coming soon</b> to iPhone and Android. Plan, book and invite from your phone.</span></div>') +
-      '<section class="hero"><div class="hero-copy"><p class="hero-tag">Your inspiration. A beautifully planned event.</p><h1>Plan your dream event, from one photo</h1>' +
-      '<p class="lead">AI designs the look. Real prices for your city, real top-rated vendors, a checklist and invitations do the rest. Free to plan.</p>' +
+      '<section class="hero"><div class="hero-copy"><p class="hero-tag">Your inspiration. A beautifully planned event.</p><h1>Plan your whole event in minutes</h1>' +
+      '<p class="lead">Share a photo or a few words. AI designs the look, and you get a budget estimate for your city, top-rated vendors, a checklist and invitations. Free to plan.</p>' +
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div></div>' +
       '<figure class="hero-photo"><div class="scene">' +
       '<img src="' + srcOf(HERO_IMG) + '" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
