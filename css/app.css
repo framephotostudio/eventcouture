@@ -983,3 +983,4 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .guide .faq details { padding: 14px 16px; }
 .guide .faq summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
 .guide .faq details p { margin: 10px 0 0; }
+.hero .hero-tag { margin: 0 0 10px; font-size: .78rem; letter-spacing: .18em; text-transform: uppercase; color: var(--champagne); font-weight: 500; }
