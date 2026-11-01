@@ -86,6 +86,6 @@ with sync_playwright() as p:
         pg.close()
     b.close()
 import re
-bad = re.findall(r'champagne|wine|cocktail|vineyard|prosecco|mimosa|martini', open('js/inspo.js').read().lower().replace('champagne-garden', ''))
+bad = re.findall(r'champagne|wine|cocktail|vineyard|prosecco|mimosa|martini', open('js/inspo.js').read().lower().replace('champagne-garden', '').replace('blush-champagne-ballroom', ''))   # file ids stay; only names and words people see
 check(not bad, 'alcohol words in inspiration photos: ' + str(set(bad)))
 print('\n'.join(problems) if problems else 'inspiration ok')
