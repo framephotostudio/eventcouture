@@ -8,8 +8,8 @@ const sm = await (await fetch('https://eventcouture.app/sitemap.xml')).text(); o
 const home = await (await fetch('https://eventcouture.app/')).text(); out.homeHead = home.slice(0, 3000);
 const g = await (await fetch('https://eventcouture.app/plan/wedding/')).text(); out.guideHead = g.slice(0, 2500);
 // Lighthouse, mobile
-execSync('npm install --no-save lighthouse@12 chrome-launcher@1 >/dev/null 2>&1');
 const chrome = execSync('node -e "console.log(require(\'playwright\').chromium.executablePath())"').toString().trim();
+execSync('npm install --no-save playwright@1 lighthouse@12 chrome-launcher@1 >/dev/null 2>&1');
 for (const [name, u] of [['home', 'https://eventcouture.app/'], ['guide', 'https://eventcouture.app/plan/wedding/']]) {
   try {
     execSync(`CHROME_PATH="${chrome}" npx lighthouse "${u}" --quiet --chrome-flags="--headless=new --no-sandbox" --only-categories=performance,seo,accessibility,best-practices --output=json --output-path=showcase/lh-${name}.json`, { stdio: 'ignore', timeout: 240000 });
