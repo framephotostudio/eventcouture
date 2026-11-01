@@ -30,14 +30,14 @@ module.exports = function landing(ctx) {
   add('ai-event-planner', `AI Event Planner: Plan Any Party or Wedding Online, Free | Event Couture`,
     `Event Couture is an AI event planner and party planner: share a photo or a few words and get three looks, a budget for your city, top-rated vendors, a checklist and invitations. Free to plan.`,
     'AI event planner: from one photo to a full plan',
-    `<p class="lead">Event Couture is a free online event planner that uses AI to turn your inspiration into a complete plan. Share a photo you love, paste a Pinterest or TikTok link, or just describe your party in a few words. In about a minute you get three event looks, a budget sized to your city and guest count, top-rated venues and vendors near you, a menu, a playlist, a day-of schedule and an invitation your guests can RSVP to.</p>
+    `<p class="lead">Event Couture is a free online event planner. AI reads your inspiration and designs the look; a pricing engine built on real local costs does the budget; real top-rated businesses fill your vendor list. Share a photo you love, paste a Pinterest or TikTok link, or just describe your party in a few words. In about a minute you get three event looks, a budget sized to your city and guest count, top-rated venues and vendors near you, a menu, a playlist, a day-of schedule and an invitation your guests can RSVP to.</p>
 <div class="cta">${startBtn('#/new/1', 'Plan my event with AI')}<a class="btn ghost" href="../#/inspiration">Browse inspiration</a></div>
 ${photo('blush-wisteria-ballroom')}
-<h2>What the AI party planner does for you</h2><ol class="plain">
-<li><b>Reads your inspiration.</b> Colors, flowers, lighting and decor are picked out of your photo or words, so the plan matches the look you love.</li>
-<li><b>Designs three looks.</b> Each comes with a color palette, decor list, menu ideas, music and a dress code. Pick one, or ask for three more.</li>
-<li><b>Prices everything for your city.</b> Every line, from the venue to the cake, is sized to local prices and your guest count, with tax, service charges and tips included. See it at three spending levels, or one made for your budget.</li>
-<li><b>Finds the people to hire.</b> Top-rated venues and vendors near you, side by side in packages you can compare, swap and book one by one.</li>
+<h2>What AI does, and what it doesn’t</h2><ol class="plain">
+<li><b>AI reads your inspiration.</b> Colors, flowers, lighting and decor are picked out of your photo or words, so the plan matches the look you love.</li>
+<li><b>AI designs three looks.</b> Each comes with a color palette, decor list, menu ideas, music and a dress code. Pick one, or ask for three more.</li>
+<li><b>Real prices, not AI guesses.</b> A pricing engine sizes every line, from the venue to the cake, to local prices and your guest count, with tax, service charges and tips included. See it at three spending levels, or one made for your budget.</li>
+<li><b>Finds real people to hire.</b> Real, top-rated venues and vendors near you, ranked by their ratings and reviews, side by side in packages you can compare, swap and book one by one.</li>
 <li><b>Handles the guests.</b> A formal invitation link, RSVPs, voting on choices, a registry and cost splitting. Your guests never need an app.</li>
 <li><b>Keeps you on schedule.</b> A checklist with due dates counted back from your date, and an hour-by-hour plan for the day.</li></ol>
 <h2>Events you can plan</h2><p>Weddings, engagement parties, bridal and baby showers, gender reveals, bachelorettes, birthdays (kids’, milestone, sweet 16), quinceañeras, graduations, anniversaries, retirements, brunches, dinner parties, holiday and Christmas parties, galas and corporate events, plus ${nCult} cultural weddings with their own traditions and music.</p>
