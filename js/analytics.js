@@ -35,6 +35,8 @@
 
     /* Pages: hash routes become readable paths with no event ids, e.g. #/e/abc123/budget -> /eventcouture/plan/budget */
     function pagePath() {
+      var sp = location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
+      if (sp && sp !== '/eventcouture') return '/eventcouture' + sp;   /* planning guides and landing pages: /plan/wedding, /ai-event-planner */
       var h = (location.hash || '#/').slice(1).split('/').filter(Boolean), out = [];
       if (!h.length) out = ['home'];
       else if (h[0] === 'e') out = ['plan', h[2] || 'overview'];
@@ -63,6 +65,7 @@
       else if (b = t.closest('#browseInspo, [data-scroll=inspo]')) track('inspiration_browse', { from: page });
       else if (b = t.closest('a[href^="#/sample/"]')) track('sample_open', { sample: (b.getAttribute('href').split('/')[2] || '') });
       else if (b = t.closest('a[href="#/new"]')) track('plan_start_click', { from: page });
+      else if (b = t.closest('main.guide a[href*="#/new"], main.guide a[href*="#/start/"], main.guide a[href*="#/inspiration"], header.topbar a[href*="#/new"]')) track('guide_start_click', { from: page });
       else if (b = t.closest('#speak')) track('voice_input');
       else if (b = t.closest('#later')) track('save_for_later', { step: page });
       else if (b = t.closest('#more')) track('concepts_more');

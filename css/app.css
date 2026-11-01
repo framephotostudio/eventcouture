@@ -971,3 +971,15 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .cq-ticks li::before { content: ''; position: absolute; left: 3px; top: .32em; width: 9px; height: 5px; border-left: 2px solid var(--champagne); border-bottom: 2px solid var(--champagne); transform: rotate(-45deg); }
 .cq-promise { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 14px 16px; background: var(--surface); }
 .cq-promise .eyebrow { margin: 0; }
+/* Planning guides and landing pages */
+.guide .lead { font-size: 1.08rem; line-height: 1.6; max-width: 70ch; }
+.guide .lp-fig { margin: 0; display: grid; gap: 6px; }
+.guide .lp-fig img { width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--r-sm, 12px); display: block; }
+.guide .lp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.guide .lp-grid img { width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 10px; display: block; }
+.guide .lp-grid figure { margin: 0; }
+.guide .lp-grid h3 { margin: 0; font-size: 1.1rem; }
+.guide .faq { display: grid; gap: 10px; }
+.guide .faq details { padding: 14px 16px; }
+.guide .faq summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+.guide .faq details p { margin: 10px 0 0; }

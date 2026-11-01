@@ -72,6 +72,10 @@ jobs:
           v=$(git rev-parse --short HEAD)
           sed -i -E "s#(src|href)=\"(js/[a-z]+\.js|css/app\.css)\"#\1=\"\2?v=$v\"#g" _site/index.html
           grep -E 'js/|css/' _site/index.html
+      - name: Send every visitor to the secure (https) address
+        continue-on-error: true
+        run: |
+          curl -s -o /dev/null -w "Enforce HTTPS: %{http_code}\n" -X PUT -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${{ github.repository }}/pages" -d '{"https_enforced":true}'
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: _site }
