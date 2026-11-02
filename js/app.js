@@ -319,7 +319,7 @@
       if (p[0] === 'vendors' && p[1] === 'requests') { if (CFG.app) { location.replace('#/'); return; } return vendorRequests(); }
       if (p[0] === 'r' && /^[a-f0-9]{20}$/.test(p[1] || '')) return vendorReply(p[1]);
       if (p[0] === 'vendors' && p[1] === 'new' && p[2]) { if (CFG.app) { location.replace('#/'); return; } var nv = store.get('vendor', {}); if (!nv.name) { nv.name = decodeURIComponent(p[2]).slice(0, 120); store.set('vendor', nv); } CLAIMING = ''; return vendorJoin(); }
-      if (p[0] === 'vendors' && p[1] === 'claim' && p[2]) { if (CFG.app) { location.replace('#/'); return; } var cv = store.get('vendor', {}), cn = decodeURIComponent(p[2]).slice(0, 120); if (cv.name !== cn) { cv = { name: cn, ig: p[3] ? '@' + decodeURIComponent(p[3]).replace(/^@/, '') : '' }; store.set('vendor', cv); } CLAIMING = cn; return vendorJoin(); }
+      if (p[0] === 'vendors' && p[1] === 'claim' && p[2]) { if (CFG.app) { location.replace('#/'); return; } var cv = store.get('vendor', {}), cn = decodeURIComponent(p[2]).slice(0, 120); if (cv.name !== cn && !cv.key && !cv.serverId) { cv = { name: cn, ig: p[3] ? '@' + decodeURIComponent(p[3]).replace(/^@/, '') : '' }; store.set('vendor', cv); }   /* never replace a listing this device already manages */ CLAIMING = cn; return vendorJoin(); }
       if (p[0] === 'vendors') { CLAIMING = ''; if (CFG.app) { location.replace('#/'); return; } return vendorJoin(); }
       if (p[0] === 'v' && p[1]) return vendorProfile(p[1]);
       if (p[0] === 'help') return help();
@@ -339,6 +339,12 @@
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) checkNewer(); });
   document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-fc]')) T('face_couture_click', { from: e.target.closest('.fc-finish') ? 'photos' : 'hair_and_makeup' }); });
+  /* One-time update (Nov 2026): the officiant and the setup/cleanup crew became optional extras, and hotel ballrooms include rentals.
+     Plans that already had a price, quote, booking or saved business for one of those keep it. */
+  (function () { try { var all = events(), changed = false; Object.keys(all).forEach(function (id) { var ev = all[id]; if (!ev || ev.mig2) return; ev.mig2 = 1; changed = true;
+    ['officiant', 'cleanup', 'rentals'].forEach(function (c) { var used = (ev.overrides || {})[c] || (ev.shortlist || []).some(function (x) { return x && x.cat === c; }) || (ev.packages || []).some(function (pk) { return pk && pk.items && pk.items[c]; });
+      if (used && (ev.exclude || []).indexOf(c) < 0 && (ev.include || []).indexOf(c) < 0) ev.include = (ev.include || []).concat(c); }); });
+    if (changed) store.set('events', all); } catch (e) {} })();
   window.addEventListener('hashchange', function () { if (NEWER) { location.reload(); return; } checkNewer(); });
   window.addEventListener('hashchange', function () { clearToasts(); $$('.sheet-back').forEach(function (x) { x.remove(); }); route(); });   /* pop-ups never follow you to another page */
   function notFound() { frame('<div class="stack"><h2>This page doesn’t exist</h2><p class="muted">It may have been removed. <a href="#/">Go to the home page</a>.</p></div>'); }
@@ -1705,14 +1711,14 @@
   /* "Message this vendor": a ready-to-send inquiry she sends herself (text, Instagram, email), written from her plan and package.
      It carries a private reply link: the vendor answers in a minute, sharing only what they want, and the answer lands in her plan.
      Vendors hear about Event Couture from a real client, never from us. */
-  var REPLY_URL = 'https://eventcouture.app/#/r/';
+  var REPLY_URL = 'https://eventcouture.app/#/r/', ASK_PENDING = {};
   function lookColors(ev) { var cols = []; ((ev.concept && ev.concept.palette) || []).forEach(function (h) { var n = hexName(h); if (n && cols.indexOf(n) < 0) cols.push(n); }); return cols.slice(0, 3); }
   function askOf(ev, cat, biz) { return ((ev.asks || {})[cat + '|' + biz.id]) || null; }
   function inquiryText(ev, cat, biz, o) {
     o = o || {};
-    var what = E.lc(catName(cat, ev)).replace(/ \(.*\)$/, ''), tn = E.lc(E.typeName(ev)), when = ev.date ? ' on ' + new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+    var what = E.lc(catName(cat, ev)).replace(/ \(.*\)$/, ''), tn0 = ev.type === 'other' ? 'celebration' : E.typeName(ev), tn = E.culture(ev) ? tn0.charAt(0) + tn0.slice(1).toLowerCase() : tn0.toLowerCase(), when = ev.date ? ' on ' + new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ev.dateFrom ? ' sometime between ' + shortDate(ev.dateFrom) + ' and ' + shortDate(ev.dateTo || ev.dateFrom) : '';
     var look = ev.concept && (ev.concept.styleName || ev.concept.name || '').replace(/ (wedding|party|celebration)$/i, ''), cols = lookColors(ev), it = E.budget(ev, ev.tier).items.find(function (i) { return i.id === cat; });
-    return 'Hi ' + biz.name.split(/ [-|·] /)[0] + '! I’m ' + (o.first ? o.first + ', ' : '') + 'planning a' + (/^[aeiou]/.test(tn) ? 'n ' : ' ') + tn + ' in ' + (ev.city || '').split(',')[0] + when + ' for about ' + (ev.guests || 0) + ' guests' +
+    return 'Hi ' + biz.name.split(/ [-|·] /)[0] + '! I’m ' + (o.first ? o.first + ', ' : '') + 'planning a' + (/^[aeiou]/i.test(tn) ? 'n ' : ' ') + tn + ' in ' + (ev.city || '').split(',')[0] + when + ' for about ' + (ev.guests || 0) + ' guests' +
       '.' + (look ? ' The look we\u2019re going for is ' + look + (cols.length ? ', in ' + listAnd(cols) : '') + '.' : '') + ' I\u2019d love to know your availability and pricing for ' + what + '.' +
       (o.budget && it ? ' My budget for ' + what + ' is about ' + money(it.mid) + '.' : '') +
       (o.link ? ' I found you on Event Couture. You can reply in a minute here, sharing only what you\u2019re comfortable with: ' + REPLY_URL + o.link : ' I found you on Event Couture (eventcouture.app).');
@@ -1737,17 +1743,19 @@
       var vb = el.querySelector('#vbud'); if (vb) vb.addEventListener('change', function () { o.budget = vb.checked; redo(); });
       if (!o.link && CFG.apiUrl && !ev.sample) {   /* make the private reply link once per business */
         var key = randKey(), cols = lookColors(ev);
-        apiMarket('ask/new', { key: key, d: { type: E.typeName(ev), date: ev.date || '', city: ev.city, guests: ev.guests, look: ev.concept ? (ev.concept.styleName || ev.concept.name || '').replace(/ (wedding|party|celebration)$/i, '') : '', colors: cols.join(', '), need: catName(cat, ev).replace(/ \(.*\)$/, ''), setting: settingName(ev), vendor: biz.name, hours: ev.hours || 0 } }).then(function (r) {
+        if (ASK_PENDING[cat + '|' + biz.id]) return; ASK_PENDING[cat + '|' + biz.id] = 1;
+        apiMarket('ask/new', { key: key, d: { cur: E.currency(), type: ev.type === 'other' ? 'Celebration' : E.typeName(ev), date: ev.date || '', city: ev.city, guests: ev.guests, look: ev.concept ? (ev.concept.styleName || ev.concept.name || '').replace(/ (wedding|party|celebration)$/i, '') : '', colors: cols.join(', '), need: catName(cat, ev).replace(/ \(.*\)$/, ''), setting: settingName(ev), vendor: biz.name, hours: ev.hours || 0 } }).then(function (r) {
           ev.asks = ev.asks || {}; ev.asks[cat + '|' + biz.id] = { id: r.id, key: key, cat: cat, biz: biz.id, name: biz.name, at: Date.now() }; saveEvent(ev);
-          o.link = r.id; var nt = el.querySelector('#vlinknote'); if (nt) nt.textContent = 'Includes your private reply link.';
+          delete ASK_PENDING[cat + '|' + biz.id]; o.link = r.id; var nt = el.querySelector('#vlinknote'); if (nt) nt.textContent = 'Includes your private reply link.';
           if (edited) { if (ta.value.indexOf(REPLY_URL) < 0) ta.value += ' Reply here: ' + REPLY_URL + r.id; } else redo();
-        }).catch(function () { var nt = el.querySelector('#vlinknote'); if (nt) nt.textContent = ''; });
+        }).catch(function () { delete ASK_PENDING[cat + '|' + biz.id]; var nt = el.querySelector('#vlinknote'); if (nt) nt.textContent = ''; });
       }
       var txt = function () { return ta.value; };
-      var copy = function () { try { if (navigator.clipboard) return navigator.clipboard.writeText(txt()); } catch (e) {} ta.select(); try { document.execCommand('copy'); } catch (e) {} return Promise.resolve(); };
+      var copySync = function () { ta.focus(); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.setSelectionRange(ta.value.length, ta.value.length); return ok; };   /* works inside the tap, before anything opens */
+      var copy = function () { if (copySync()) return Promise.resolve(); try { if (navigator.clipboard) return navigator.clipboard.writeText(txt()); } catch (e) {} return Promise.reject(new Error('copy')); };
       var sent = function () { var a = askOf(ev, cat, biz); if (a && !a.sent) { a.sent = Date.now(); saveEvent(ev); if (after) after(); } };
       el.querySelector('[data-vcopy]').addEventListener('click', function () { Promise.resolve(copy()).then(function () { sent(); toast('Message copied. Paste it to ' + biz.name); }, function () { toast('Select the message and copy it'); }); });
-      $$('[data-vgo]', el).forEach(function (b) { b.addEventListener('click', function () { var w = window.open(b.dataset.vgo, '_blank', 'noopener'); Promise.resolve(copy()).then(function () { sent(); toast('Message copied. Paste it in the chat'); }); if (!w) location.href = b.dataset.vgo; }); });
+      $$('[data-vgo]', el).forEach(function (b) { b.addEventListener('click', function () { var ok = copySync(); var w = window.open(b.dataset.vgo, '_blank'); if (w) try { w.opener = null; } catch (e) {} if (ok) { sent(); toast('Message copied. Paste it in the chat'); } else Promise.resolve(copy()).then(function () { sent(); toast('Message copied. Paste it in the chat'); }, function () { toast('Select the message and copy it, then paste it in the chat'); }); }); });
       var sm = el.querySelector('[data-vsms]'); if (sm) sm.addEventListener('click', function (e) { e.preventDefault(); sent(); location.href = 'sms:' + phone.replace(/[^\d+]/g, '') + (/iPhone|iPad/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(txt()); });
       T('vendor_message_open', { category: cat });
     });
@@ -1756,7 +1764,7 @@
   function askLine(ev, cat, biz) {
     var a = biz && askOf(ev, cat, biz); if (!a) return '';
     var r = a.reply; if (!r) return a.sent ? '<span class="small muted ask-st">Messaged · waiting for a reply</span>' : '';
-    var bits = [r.avail === 'yes' ? 'Available' : r.avail === 'no' ? 'Not available' : r.avail === 'check' ? 'Checking the date' : '', r.priceMode === 'price' && r.price ? 'from ' + money(r.price) + (r.priceNote ? ' ' + r.priceNote : '') : r.priceMode === 'direct' ? 'pricing shared directly' : '', r.phone ? '<a class="link" href="tel:' + esc(r.phone.replace(/[^\d+]/g, '')) + '">' + esc(r.phone) + '</a>' : ''].filter(Boolean);
+    var bits = [r.avail === 'yes' ? 'Available' : r.avail === 'no' ? 'Not available' : r.avail === 'check' ? 'Checking the date' : '', r.priceMode === 'price' && r.price ? 'from ' + money(r.price) + (r.priceNote ? ' ' + esc(r.priceNote) : '') : r.priceMode === 'direct' ? 'prefers to share pricing directly' : '', r.phone ? '<a class="link" href="tel:' + esc(r.phone.replace(/[^\d+]/g, '')) + '">' + esc(r.phone) + '</a>' : ''].filter(Boolean);
     return '<span class="small ask-st ask-ok"><b>Replied:</b> ' + bits.join(' · ') + (r.note ? ' <span class="muted">“' + esc(r.note.slice(0, 140)) + (r.note.length > 140 ? '…' : '') + '”</span>' : '') + '</span>';
   }
   var ASK_CHECKED = {};
@@ -1778,10 +1786,10 @@
       var chip = function (name, v, label, on) { return '<button type="button" class="chip" data-' + name + '="' + v + '" aria-pressed="' + !!on + '">' + label + '</button>'; };
       frame('<div class="wizard stack-lg vreply"><div class="stack"><p class="eyebrow">A client found you on Event Couture</p><h2>' + esc(d.vendor || 'Your reply') + ', can you help with this event?</h2><p class="muted">Answer in a minute. Share only what you’re comfortable with: every question is optional. Your answer goes straight to the client’s plan.</p></div>' +
         '<div class="panel"><dl class="vr-d">' + rows.map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl></div>' +
-        (j.reply ? '<p class="note small">You already replied. You can update your answer below.</p>' : '') +
+        (j.reply ? '<p class="note small">' + ((store.get('askvt', {}))[id] ? 'You already replied. You can update your answer below.' : 'This request already has a reply. If that wasn\u2019t you, reach the client directly.') + '</p>' : '') +
         '<div class="panel stack"><div class="stack"><b>Are you available on this date?</b><div class="chips" id="vrAvail">' + chip('av', 'yes', 'Yes', r.avail === 'yes') + chip('av', 'check', 'Need to check', r.avail === 'check') + chip('av', 'no', 'No', r.avail === 'no') + '</div></div>' +
-        '<div class="stack"><b>Pricing</b><div class="chips" id="vrPrice">' + chip('pm', 'price', 'Share a starting price', r.priceMode === 'price') + chip('pm', 'direct', 'I’d rather share pricing directly', r.priceMode !== 'price') + '</div>' +
-        '<div class="grid2" id="vrPriceBox"' + (r.priceMode === 'price' ? '' : ' hidden') + '><label class="field"><span>Starting price (USD)</span><input class="input num" type="number" min="0" id="vrPriceVal" value="' + (r.price || '') + '"></label><label class="field"><span>Per (optional)</span><input class="input" id="vrPriceNote" maxlength="60" placeholder="e.g. per person, for 4 hours" value="' + esc(r.priceNote || '') + '"></label></div></div>' +
+        '<div class="stack"><b>Pricing</b><div class="chips" id="vrPrice">' + chip('pm', 'price', 'Share a starting price', r.priceMode === 'price') + chip('pm', 'direct', 'I’d rather share pricing directly', r.priceMode === 'direct') + '</div>' +
+        '<div class="grid2" id="vrPriceBox"' + (r.priceMode === 'price' ? '' : ' hidden') + '><label class="field"><span>Starting price (' + esc(d.cur || 'USD') + ')</span><input class="input num" type="number" min="0" id="vrPriceVal" value="' + (r.price || '') + '"></label><label class="field"><span>Per (optional)</span><input class="input" id="vrPriceNote" maxlength="60" placeholder="e.g. per person, for 4 hours" value="' + esc(r.priceNote || '') + '"></label></div></div>' +
         '<div class="grid2"><label class="field"><span>Your name or business</span><input class="input" id="vrName" maxlength="120" value="' + esc(r.name || d.vendor || '') + '"></label><label class="field"><span>Phone (optional)</span><input class="input" id="vrPhone" type="tel" maxlength="30" value="' + esc(r.phone || '') + '"></label></div>' +
         '<label class="field"><span>A note for the client (optional)</span><textarea class="input" id="vrNote" rows="3" maxlength="600">' + esc(r.note || '') + '</textarea></label>' +
         '<button class="btn gold block" id="vrSend">Send my reply</button><p class="small muted" id="vrMsg" aria-live="polite"></p></div>' +
@@ -1790,10 +1798,12 @@
       pick('vrAvail', 'av'); pick('vrPrice', 'pm');
       $('#vrSend').addEventListener('click', function () {
         var av = $('#vrAvail [aria-pressed="true"]'), pm = $('#vrPrice [aria-pressed="true"]');
-        var body = { name: $('#vrName').value, phone: $('#vrPhone').value, avail: av ? av.dataset.av : '', priceMode: pm ? pm.dataset.pm : 'direct', price: +$('#vrPriceVal').value || 0, priceNote: $('#vrPriceNote').value, note: $('#vrNote').value };
+        var body = { name: $('#vrName').value, phone: $('#vrPhone').value, avail: av ? av.dataset.av : '', priceMode: pm ? pm.dataset.pm : '', price: +$('#vrPriceVal').value || 0, priceNote: $('#vrPriceNote').value, note: $('#vrNote').value };
         if (!body.avail && !body.phone.trim() && !body.note.trim() && !body.price) { $('#vrMsg').textContent = 'Add at least one answer.'; return; }
+        var vts = store.get('askvt', {}); if (vts[id]) body.vt = vts[id];
         this.disabled = true; var btn = this;
-        apiMarket('ask/' + id + '/reply', body).then(function () {
+        apiMarket('ask/' + id + '/reply', body).then(function (res) {
+          if (res && res.vt) { vts[id] = res.vt; store.set('askvt', vts); }
           T('vendor_reply', {});
           frame('<div class="wizard stack-lg"><div class="stack"><p class="eyebrow">Sent</p><h2>Thank you! Your reply is on its way</h2><p class="muted">The client sees it in their Event Couture plan and will reach out if it’s a fit.</p></div>' + (CFG.app ? '' : '<div class="panel stack"><b>Want more clients like this?</b><p class="small muted">List your business on Event Couture for free: clients planning events in your city see your packages and can ask you for quotes.</p><a class="btn gold" href="#/vendors/new/' + encodeURIComponent(body.name || d.vendor || '') + '">List my business free</a></div>') + '</div>');
         }).catch(function (e) { btn.disabled = false; $('#vrMsg').textContent = e.message || 'That didn’t send. Please try again.'; });
@@ -2048,7 +2058,7 @@
     /* The main items a plan like hers normally has (venue, catering, photographer...) that aren't in it now, removed by mistake or
        dropped, so she can always put them back. */
     var full = E.budget(Object.assign({}, ev, { exclude: [], include: [] }), ev.tier).items.map(function (i) { return i.id; });
-    if (['home', 'restaurant', 'privateRoom'].indexOf(ev.setting) < 0 && full.indexOf('venue') < 0) full.unshift('venue');
+    if (ev.setting === 'indoor' && full.indexOf('venue') < 0) full.unshift('venue');
     var main = full.filter(function (id) { return D.CATEGORIES[id] && have.indexOf(id) < 0 && (id === 'venue' || NOT_VENDORS.indexOf(id) < 0 && NO_SEARCH.indexOf(id) < 0); });
     var extra = D.PKG_ADDONS.map(function (g) { return { group: g.group, items: g.items.filter(fits).map(function (it) { return it.id; }).filter(function (id) { return main.indexOf(id) < 0; }) }; });
     return (main.length ? [{ group: 'Main items', items: main }] : []).concat(extra).filter(function (g) { return g.items.length; });
@@ -2205,7 +2215,8 @@
           if (phone) { var so = savedFor(ev, cat).find(function (x) { return x.id === own.id; }); if (so) so.phone = lk; }
           save(); rerender(); toast(nm + ' is in package ' + (k + 1)); });
         $$('[data-pkpick]', box).forEach(function (pb) { pb.addEventListener('click', function () { if (lockSample(ev)) return; var id = pb.dataset.pkpick, p = picks.concat(more).find(function (x) { return x.id === id; }), j = pkIds.indexOf(id);
-          if (j >= 0 && j !== k) { ev.packages[j].items[cat] = cur; pk.items[cat] = id; [j, k].forEach(function (q) { if ((ev.pkgChosen || 0) === q && !savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, ev.packages[q].items[cat]); }); syncPrice(ev, cat); }   /* already in another package: the two trade places */
+          if (j >= 0 && j !== k && !cur) { var spare = list.find(function (x) { return pkIds.indexOf(x.id) < 0; }); pk.items[cat] = id; if (spare) putInPackage(ev, j, cat, spare); else delete ev.packages[j].items[cat]; syncPrice(ev, cat); }   /* this package was empty: the other one gets a fresh pick */
+          else if (j >= 0 && j !== k) { ev.packages.forEach(function (q, qi) { if (qi !== k && q.items[cat] === id) q.items[cat] = cur; }); pk.items[cat] = id; [j, k].forEach(function (q) { if ((ev.pkgChosen || 0) === q && !savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, ev.packages[q].items[cat]); }); syncPrice(ev, cat); }   /* already in another package: the two trade places */
           else if (!putInPackage(ev, k, cat, p)) return toast('Remove one of your saved options for this first.');
           save(); rerender(); toast(p.name + ' is in package ' + (k + 1)); }); });
       }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn\u2019t available right now.') + ' ' + mapsBtn(ev, cat) + '</p>'; });
@@ -2234,6 +2245,7 @@
       }).join('') + '</div></div>' + more(ev, b.items.length, Math.min(3, b.items.length), 'budget lines, with quantities and sources') +
       '<div class="panel sum"><div><span>Subtotal</span><span class="num">' + money(b.mid) + '</span></div><div><span>Cushion for surprises (10%)</span><span class="num">' + money(b.contingency) + '</span></div><div class="grand"><span>Estimated total</span><span class="num">' + money(b.total) + '</span></div><div class="small muted"><span>Range</span><span class="num">' + money(b.lo * 1.1) + ' to ' + money(b.hi * 1.1) + '</span></div></div>' +
       (excluded.length ? '<div class="stack"><b>Removed from this plan</b><div class="chips">' + excluded.map(function (id) { return '<button class="chip" data-restore="' + id + '">Add back ' + esc(E.lc(D.CATEGORIES[id].name)) + '</button>'; }).join('') + '</div></div>' : '') +
+      (ev.sample ? '' : '<div><button type="button" class="btn small ghost" data-budgetadd>+ Add an item</button></div>') +
       '<p class="muted small">Estimates are a starting point. Always confirm prices, minimums and availability with each venue and vendor before you book.</p></div>' + (hasPk ? '</details>' : '');
   };
   TAB_BIND.budget = function (ev, save, rerender) {
@@ -2242,6 +2254,7 @@
     [['#budgetMore', 'bm'], ['.pkg-all', 'pa']].forEach(function (d) { var el = $(d[0]); if (el) el.addEventListener('toggle', function () { OPEN_BITS[d[1] + ev.id] = el.open; }); });
     if (PENDING_FIND && AI.live) { var pf = PENDING_FIND; PENDING_FIND = null; setTimeout(function () { var sb = document.querySelector('[data-pkswap="' + pf + '"]'); if (sb) { sb.closest('.pk-row').scrollIntoView({ block: 'center' }); sb.click(); } }, 60); }
     $$('#tierseg [data-tier]').forEach(function (btn) { btn.addEventListener('click', function () { var bf = snap(ev); ev.tier = btn.dataset.tier; save(); rerender(); if (bf.tier !== ev.tier) undoToast(ev, bf, 'Switched to ' + tierName(ev.tier), rerender); }); });
+    $$('[data-budgetadd]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; extrasSheet(ev, E.budget(ev, ev.tier), function (cat) { var bf = snap(ev); ev.exclude = (ev.exclude || []).filter(function (x) { return x !== cat; }); ev.include = (ev.include || []).filter(function (x) { return x !== cat; }).concat([cat]); save(); rerender(); undoToast(ev, bf, catName(cat, ev) + ' added to your budget', rerender); }); }); });
     $$('[data-drop]').forEach(function (btn) { btn.addEventListener('click', function () { if (lockSample(ev)) return; var bf = snap(ev); ev.exclude = (ev.exclude || []).concat(btn.dataset.drop); ev.include = (ev.include || []).filter(function (x) { return x !== btn.dataset.drop; }); save(); rerender(); undoToast(ev, bf, 'Removed ' + E.lc(D.CATEGORIES[btn.dataset.drop].name), rerender); }); });
     $$('[data-restore]').forEach(function (btn) { btn.addEventListener('click', function () { ev.exclude = ev.exclude.filter(function (x) { return x !== btn.dataset.restore; }); ev.include = (ev.include || []).concat(btn.dataset.restore); save(); rerender(); }); });
     var priceSheet = function (id, note) {

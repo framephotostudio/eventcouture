@@ -36,7 +36,7 @@ export default {
       if (inv) return await invite(req, env, inv[1], inv[2] || '', json);
       const prp = url.pathname.match(/^\/api\/prop\/([a-f0-9]{16,32})(?:\/(publish|delete))?$/);
       if (prp) return await proposal(req, env, prp[1], prp[2] || '', json);
-      const ask = url.pathname.match(/^\/api\/ask\/([a-f0-9]{20})(?:\/(reply))?$/);
+      const ask = url.pathname.match(/^\/api\/ask\/([a-f0-9]{20})(?:\/(reply|delete))?$/);
       if (ask) return await askVendor(req, env, ask[1], ask[2] || '', json);
       if (url.pathname === '/api/ask/new') return await askVendor(req, env, '', 'new', json);
       if (req.method === 'GET' && url.pathname === '/api/vendors') return await vendorSearch(env, url, json);
@@ -587,38 +587,48 @@ async function proposal(req, env, id, action, json) {
 
 // ---------- Vendor replies: a customer's message carries a private link; the vendor answers in one minute, sharing only what they want ----------
 // No customer contact details are stored or shown. Everything the vendor shares is optional (phone, availability, a starting price).
-const ASK_TTL = 240 * 86400;
-const aclip = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
+const ASK_TTL = 240 * 86400, ASK_HITS = new Map();
+// A tighter limit for reply links than for planning: 30 new links and 20 replies an hour from one address.
+function askOk(ip, kind, max) { const now = Date.now(), key = kind + ip, a = (ASK_HITS.get(key) || []).filter(t => now - t < 3600e3); if (a.length >= max) return false; a.push(now); ASK_HITS.set(key, a); if (ASK_HITS.size > 5000) ASK_HITS.clear(); return true; }
+const aclip = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, n);   // no tags, ever
 async function askVendor(req, env, id, action, json) {
   if (!env.EC_KV) return json({ error: 'Vendor replies are not connected yet.' }, 503);
   const ip = req.headers.get('cf-connecting-ip') || 'unknown';
   if (action === 'new') {
     if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
-    if (!(await rateOk(env, ip))) return json({ error: 'Please wait a few minutes and try again.' }, 429);
+    if (!askOk(ip, 'n', 30) || !(await rateOk(env, ip))) return json({ error: 'Please wait a few minutes and try again.' }, 429);
     const b = await req.json().catch(() => ({})), d = b.d || {};
     if (!b.key || String(b.key).length < 20) return json({ error: 'Missing key' }, 400);
     const rec = { kh: await sha(b.key), at: Date.now(), reply: null, d: {
       type: aclip(d.type, 60), date: /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') ? d.date : '', city: aclip(d.city, 80), guests: Math.max(0, Math.min(5000, parseInt(d.guests, 10) || 0)),
-      look: aclip(d.look, 80), colors: aclip(d.colors, 120), need: aclip(d.need, 80), setting: aclip(d.setting, 60), vendor: aclip(d.vendor, 120), first: aclip(d.first, 40), hours: Math.max(0, Math.min(24, +d.hours || 0)) } };
+      look: aclip(d.look, 80), colors: aclip(d.colors, 120), need: aclip(d.need, 80), setting: aclip(d.setting, 60), vendor: aclip(d.vendor, 120), cur: /^[A-Z]{3}$/.test(d.cur || '') ? d.cur : 'USD', hours: Math.max(0, Math.min(24, +d.hours || 0)) } };
     if (!rec.d.need || !rec.d.vendor) return json({ error: 'Missing details' }, 400);
     const nid = [...crypto.getRandomValues(new Uint8Array(10))].map(x => x.toString(16).padStart(2, '0')).join('');
-    await env.EC_KV.put('ask:' + nid, JSON.stringify(rec), { expirationTtl: ASK_TTL });
+    try { await env.EC_KV.put('ask:' + nid, JSON.stringify(rec), { expirationTtl: ASK_TTL }); } catch (e) { return json({ error: 'Reply links are busy right now. Your message still works without one.' }, 503); }
     return json({ id: nid });
   }
   const k = 'ask:' + id, rec = await env.EC_KV.get(k, 'json');
   if (!rec) return json({ error: 'This request isn’t available anymore.' }, 404);
-  if (req.method === 'GET') return json({ d: rec.d, reply: rec.reply, at: rec.at });
-  if (req.method !== 'POST' || action !== 'reply') return json({ error: 'Not found' }, 404);
+  if (req.method === 'GET') return json({ d: rec.d, reply: rec.reply ? { ...rec.reply, vth: undefined } : null, at: rec.at });
+  if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
   if (!(await rateOk(env, ip))) return json({ error: 'Please wait a few minutes and try again.' }, 429);
   const b = await req.json().catch(() => ({}));
+  if (action === 'delete') { if (!b.key || await sha(b.key) !== rec.kh) return json({ error: 'Not allowed' }, 403); await env.EC_KV.delete(k); return json({ ok: true }); }   // the customer removes her request
+  if (action !== 'reply') return json({ error: 'Not found' }, 404);
+  if (!askOk(ip, 'r', 20)) return json({ error: 'Please wait a few minutes and try again.' }, 429);
+  // The first reply gets a private edit token; only that browser can change the answer, a few times at most.
+  if (rec.reply && (!b.vt || await sha(b.vt) !== rec.reply.vth)) return json({ error: 'This request already has a reply.', code: 'replied' }, 409);
+  if (rec.reply && (rec.reply.edits || 0) >= 5) return json({ error: 'This reply can\u2019t be changed again. Reach the client directly.' }, 429);
   const avail = ['yes', 'no', 'check'].includes(b.avail) ? b.avail : '';
-  const priceMode = b.priceMode === 'price' ? 'price' : 'direct';
+  const priceMode = b.priceMode === 'price' ? 'price' : b.priceMode === 'direct' ? 'direct' : '';
   const price = priceMode === 'price' ? Math.max(0, Math.min(1e7, Math.round(+b.price || 0))) : 0;
   const reply = { name: aclip(b.name, 120), phone: aclip(b.phone, 30).replace(/[^\d+()\-.\s]/g, ''), ig: aclip(b.ig, 40).replace(/[^\w.@]/g, ''), avail, priceMode, price, priceNote: aclip(b.priceNote, 60), note: aclip(b.note, 600), at: Date.now() };
-  if (!reply.avail && !reply.phone && !reply.note && !reply.price) return json({ error: 'Add at least one answer.' }, 400);
+  if (!reply.avail && !reply.phone && !reply.note && !reply.price && !reply.priceMode) return json({ error: 'Add at least one answer.' }, 400);
+  const vt = rec.reply ? b.vt : [...crypto.getRandomValues(new Uint8Array(16))].map(x => x.toString(16).padStart(2, '0')).join('');
+  reply.vth = rec.reply ? rec.reply.vth : await sha(vt); reply.edits = rec.reply ? (rec.reply.edits || 0) + 1 : 0;
   rec.reply = reply;
-  await env.EC_KV.put(k, JSON.stringify(rec), { expirationTtl: ASK_TTL });
-  return json({ ok: true });
+  try { await env.EC_KV.put(k, JSON.stringify(rec), { expirationTtl: ASK_TTL }); } catch (e) { return json({ error: 'That didn\u2019t send. Please try again in a little while.' }, 503); }
+  return json({ ok: true, vt });
 }
 
 // ---------- Payments: Stripe Checkout for Event Couture's own fees (the concierge booking packages) ----------

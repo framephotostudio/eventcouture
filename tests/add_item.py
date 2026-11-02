@@ -21,6 +21,8 @@ with sync_playwright() as p:
         pg.click('[data-pkadd=venue]'); pg.wait_for_selector('tr[data-pkrow="venue"]', timeout=15000); pg.wait_for_timeout(500)
         cells = [x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="venue"] td > b')]
         npk = len(pg.query_selector_all('.pkg-cmp thead th.pk-colh:not(.pk-addcol)')); check(n, npk >= 1 and len(cells) == npk, 'venue back in every package: ' + str(cells) + ' of ' + str(npk))
+        pg.goto(U + base + '/budget'); pg.wait_for_timeout(500); pg.evaluate("document.querySelectorAll('details#budgetMore').forEach(d => d.open = true)"); pg.wait_for_selector('[data-budgetadd]'); pg.click('[data-budgetadd]'); pg.wait_for_selector('[data-pkadd=cleanup]'); pg.click('[data-pkadd=cleanup]'); pg.wait_for_timeout(500)
+        check(n, 'Setup and cleanup crew' in pg.inner_text('#tab'), '+ Add an item on the budget adds a line (setup and cleanup crew)')
         check(n, not e, 'no page errors ' + str(e[:2]))
         sw = pg.evaluate('document.documentElement.scrollWidth > innerWidth'); check(n, not sw, 'no sideways scroll')
     b.close()

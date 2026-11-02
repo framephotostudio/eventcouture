@@ -133,8 +133,9 @@
     if (catId === 'bar' || catId === 'restaurantDrinks') {
       /* A full open bar averages $25-45 a guest at a wedding or gala; a casual party pours less. */
       if (catId === 'bar' && ['wedding', 'gala', 'quince', 'engagement', 'anniversary'].indexOf(ev.type) < 0) { lo *= 0.7; hi *= 0.7; }
-      if (ev.alcohol === 'none') { lo *= 0.3; hi *= 0.3; label = ev.kids && /birthday/.test(ev.type) ? 'Drinks (juice, lemonade, water)' : catId === 'bar' ? 'Non-alcoholic drinks (mocktails, soft drinks, coffee)' : 'Non-alcoholic drinks'; }
-      else if (ev.alcohol === 'wine') { lo *= 0.6; hi *= 0.6; label = catId === 'bar' ? 'Beer and wine' : 'Drinks (beer and wine, about two per person)'; }
+      var noneX = catId === 'bar' ? 0.3 : 0.4, wineX = catId === 'bar' ? 0.6 : 0.75;   /* restaurant drinks keep their own (menu) ratios */
+      if (ev.alcohol === 'none') { lo *= noneX; hi *= noneX; label = ev.kids && /birthday/.test(ev.type) ? 'Drinks (juice, lemonade, water)' : catId === 'bar' ? 'Non-alcoholic drinks (mocktails, soft drinks, coffee)' : 'Non-alcoholic drinks'; }
+      else if (ev.alcohol === 'wine') { lo *= wineX; hi *= wineX; label = catId === 'bar' ? 'Beer and wine' : 'Drinks (beer and wine, about two per person)'; }
     }
     /* Hotel ballroom: the room comes with the hotel's catering package (food, service staff, tables, chairs, linens), so the
        room is only a small fee and there are no separate rentals. The bar package and bartender fee are charged on top. */
