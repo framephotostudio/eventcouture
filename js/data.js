@@ -766,6 +766,7 @@
       { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hair'], cities: ['Houston, TX'], cultures: ['arabic'], weight: 25, note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' },
       { name: 'Wassim Hair Stylist', ig: 'wassimhairstylist_houston', cats: ['hair'], cities: ['Houston, TX'], weight: 15, note: 'Lebanese hair stylist, from Dubai to Houston. Color, highlights and extensions; home and hotel visits' },
       { name: 'Makeup by Suzette', ig: 'makeupbysuzette', cats: ['hairMakeup', 'hair'], cities: ['Houston, TX'], note: 'Celebrity makeup and hair artist and glam team, bridal glam. Houston and worldwide' },
+      { name: 'Makeup by Farnazz', ig: 'makeupbyfarnazz', cats: ['hairMakeup'], cities: ['Houston, TX'], note: 'Certified pro makeup artist. Bridal, engagement and quincea\u00f1era makeup $300 a person; non-bridal $150 a person; plus a travel fee. Studio in Stafford, TX or on location' },
       /* No Instagram: maps is what to search on Google Maps, and the link opens their listing there. */
       /* Houston Persian weddings: Kasra first, then Aban, Caspian, Garson and Zafran. */
       { name: 'Kasra Persian Grill', maps: 'Kasra Persian Grill Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 60, note: 'Persian grill and catering: kabobs, rice and stews for weddings and parties' },
