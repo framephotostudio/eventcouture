@@ -6,7 +6,7 @@ const srv = spawn('node', ['gz.cjs', 'st/_site'], { stdio: 'ignore', detached: t
 await new Promise(r => setTimeout(r, 1500));
 const chrome = execSync('node -e "console.log(require(\'playwright\').chromium.executablePath())"').toString().trim();
 execSync('npm install --no-save playwright@1 lighthouse@12 chrome-launcher@1 >/dev/null 2>&1');
-const runs = [['new_home', 'http://localhost:8799/'], ['live_home', 'https://eventcouture.app/']];
+const runs = [['new_home', 'http://localhost:8799/'], ['new_home2', 'http://localhost:8799/'], ['new_home3', 'http://localhost:8799/'], ['new_guide', 'http://localhost:8799/plan/wedding/'], ['new_landing', 'http://localhost:8799/ai-event-planner/'], ['live_home', 'https://eventcouture.app/'], ['live_home2', 'https://eventcouture.app/']];
 for (const [name, u] of runs) {
   try {
     execSync(`CHROME_PATH="${chrome}" npx lighthouse "${u}" --quiet --chrome-flags="--headless=new --no-sandbox" --only-categories=performance,seo,accessibility,best-practices --output=json --output-path=showcase/lh.json`, { stdio: 'ignore', timeout: 240000 });
