@@ -86,7 +86,7 @@ jobs:
           [ -n "$TS_SITEKEY" ] && sed -i "s#turnstile: ''#turnstile: '$TS_SITEKEY'#" js/config.js || true   # stays in preview mode for payments until real checkout exists
           cat js/config.js
       - name: Package site
-        run: mkdir _site && cp -r index.html manifest.json css js img _site/
+        run: mkdir _site && cp -r index.html manifest.json sw.js css js img _site/
       - name: Planning guides for search engines (one page per city and per occasion, plus a sitemap)
         run: node tools/seo.cjs _site
       - name: Serve the brand fonts from our own site (faster first paint)

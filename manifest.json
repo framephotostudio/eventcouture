@@ -1,14 +1,55 @@
 {
   "name": "Event Couture by Always Luxe",
   "short_name": "Event Couture",
-  "description": "Turn saved inspiration into a beautiful event you can afford.",
+  "description": "Plan your whole event in minutes: the look, a budget estimate for your city, vendors, a checklist and invitations.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#FAF8F4",
   "theme_color": "#4B1235",
   "icons": [
-    { "src": "img/brand/web/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "img/brand/web/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "img/brand/web/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "img/brand/web/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/brand/web/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "img/brand/web/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "./",
+  "scope": "./",
+  "categories": [
+    "lifestyle",
+    "productivity"
+  ],
+  "shortcuts": [
+    {
+      "name": "Plan a new event",
+      "url": "./#/new",
+      "icons": [
+        {
+          "src": "img/brand/web/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "My events",
+      "url": "./#/events",
+      "icons": [
+        {
+          "src": "img/brand/web/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }

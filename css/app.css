@@ -1009,3 +1009,5 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .mb-sw i { width: 28px; height: 28px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); display: inline-block; }
 @media print { body.printing-plan .ps-cover figcaption { position: static; color: #555; background: none; padding: 6px 0 0; } }
 footer.site nav.foot-guides { gap: 6px 14px; font-size: .8rem; margin-top: 4px; opacity: .9; }
+.app-soon-bar [data-install] { display: block; margin-top: 2px; padding: 0; text-align: left; }
+.install-steps li { margin: 8px 0; }
