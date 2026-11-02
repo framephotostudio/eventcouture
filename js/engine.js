@@ -309,8 +309,8 @@
       pros.push('Statement pieces: lighting, ' + (has('liveMusic') ? 'live music, ' : '') + 'fuller florals');
       if (has('coordinator')) pros.push('A day-of coordinator so the host can relax');
       pros.push('Most memorable guest experience');
-      cons.push('Highest total, about ' + money(b.total));
-      cons.push('Larger deposits due earlier');
+      cons.push('The most sought-after vendors book up 9 to 12 months ahead');   /* cons are about planning, never the price itself */
+      cons.push('More vendors to coordinate and confirm');
     }
     if (ev.budget && b.total > ev.budget) cons.unshift('About ' + money(b.total - ev.budget) + ' over your budget');
     else if (ev.budget) pros.unshift('Fits your budget with ' + money(ev.budget - b.total) + ' to spare');
