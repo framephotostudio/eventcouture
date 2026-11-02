@@ -45,7 +45,32 @@ const cta = (o, city, up) => `<div class="panel stack"><b>Plan ${esc(o ? o.phras
 const write = (rel, html) => { const f = path.join(OUT, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, html); };
 const urls = [];
 
-/* City pages */
+/* City pages. The 20 biggest US markets get full local guides and go to Google; the others stay reachable from the
+   site but carry noindex until they get the same local detail (avoids near-duplicate pages). */
+const TOP = {
+  'New York, NY': 'Peak seasons are May to June and September to October, when the best venues book 12 to 18 months ahead. Venue food-and-drink minimums are among the highest in the country, so a Friday, Sunday or winter date can lower the total a lot.',
+  'Los Angeles, CA': 'The mild weather allows outdoor events most of the year. Beaches, parks and some landmark sites need a permit from the city or county, and traffic means a venue close to guests matters as much as the view.',
+  'Orange County, CA': 'Coastal weather is mild all year, with cooler, cloudier mornings in late spring and early summer. Beach ceremonies need a permit from the city that manages that beach.',
+  'San Diego, CA': 'Weather is mild year round; late spring and early summer often bring a cool, cloudy marine layer near the coast, and September to October are the warmest, clearest months.',
+  'San Francisco, CA': 'Summers are often cool and foggy; September and October are usually the warmest months. Plan layers or heaters for evening events, and expect high venue and catering prices in the city.',
+  'Chicago, IL': 'Peak season runs June to October. Winters are cold and snowy, so many venues offer lower prices from November to March, especially on Fridays and Sundays.',
+  'Houston, TX': 'Summers are hot and humid, and hurricane season runs June through November. Most hosts choose spring (March to May) or late fall, and keep an indoor or tented backup for outdoor events.',
+  'Dallas, TX': 'Summers are hot and spring brings storms. April, May and October are the most popular months for outdoor events; plan shade and cooling for anything outdoors from June to September.',
+  'Austin, TX': 'Hill Country venues are popular for weddings. Summers are hot; spring and fall are peak season, and big festivals in March and October raise hotel prices.',
+  'San Antonio, TX': 'Winters are mild and summers are hot. Fiesta in April fills hotels and River Walk venues, so book early or choose another month.',
+  'Miami, FL': 'Peak season is November to April. May to October is hot and rainy, with afternoon storms and hurricane season, so outdoor events need a covered backup.',
+  'Orlando, FL': 'Summer brings heat and near-daily afternoon thunderstorms. Cooler, drier months from November to April are the most popular, and theme-park holidays raise hotel rates.',
+  'Atlanta, GA': 'Summers are hot and humid. Spring and fall are peak season; outdoor venues need shade and a rain plan.',
+  'Washington, DC': 'Cherry blossom season in late March and April is very busy. Summers are hot and humid; September to November is the most popular time for events.',
+  'Philadelphia, PA': 'Peak months are May, June, September and October. Winter dates often come with lower venue prices.',
+  'Boston, MA': 'Peak season runs June to October, and fall foliage weekends book first. Winters are cold and snowy, which brings lower prices.',
+  'Phoenix, AZ': 'Summer heat often passes 105\u00b0F, so most events happen from October to April. Outdoor summer events need evening times, shade and cooling.',
+  'Las Vegas, NV': 'Summers are very hot. Spring and fall are the most popular seasons, and large conventions can raise hotel prices on short notice.',
+  'Seattle, WA': 'October to April is rainy. July to September is usually dry and books first, so outdoor events outside summer need a covered plan.',
+  'Detroit, MI': 'Peak season runs June to October. Winters are cold and snowy, with lower venue prices from November to March.'
+};
+const recsIn = (city) => { const st = city.split(', ')[1] || ''; const seen = {}; return (D.RECOMMENDED || []).filter(r => (r.cities && r.cities.includes(city)) || (r.onlyCities && r.onlyCities.includes(city)) || (!r.cities && !r.onlyCities && r.states && r.states.includes(st) && !(r.notCities || []).includes(city))).filter(r => { const k = r.ig || r.name; if (seen[k]) return false; seen[k] = 1; return true; }); };
+const catLabel = id => (D.CATEGORIES[id] ? D.CATEGORIES[id].name.split(' (')[0] : id);
 for (const c of CITIES) {
   const country = E.countryOf(c.name), cityShort = c.name.split(',')[0];
   const rows = OCC.map(o => { const t = totals(o, c.name); return `<tr><td><a href="../${o.slug}/">${esc(o.name)}</a></td><td class="n">${o.guests}</td><td class="n">${money(t[0], c.name)}</td><td class="n"><b>${money(t[1], c.name)}</b></td><td class="n">${money(t[2], c.name)}</td><td><a class="small" href="../../#/start/${o.start}/${encodeURIComponent(c.name)}">Plan it</a></td></tr>`; }).join('');
@@ -58,9 +83,31 @@ for (const c of CITIES) {
 <h2>Typical vendor rates in ${esc(cityShort)}</h2><div class="table-wrap panel"><table class="qty"><tbody>${rate('photographer', 'an hour')}${rate('videographer', 'an hour')}${rate('dj', 'an hour')}${rate('liveMusic', 'an hour')}${rate('catering', 'a guest')}${rate('bartender', 'an hour')}${rate('rentals', 'a guest')}${rate('cake', 'base, plus per guest')}${rate('balloons', '')}${rate('photoBooth', '')}</tbody></table></div>
 ${areas.length ? `<h2>Popular areas for venues</h2><p>${areas.map(esc).join(' · ')}</p>` : ''}
 ${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2><div class="cols">${OCC.map(o => `<a href="../${o.slug}/">${esc(o.name)}</a>`).join('')}</div>`;
-  const title = `What events cost in ${c.name} (${YEAR} guide) | Event Couture`;
-  write(`plan/${c.slug}/index.html`, page({ rel: 2, title, h1: `Planning an event in ${c.name}`, desc: `Typical ${YEAR} costs for weddings, quinceañeras, birthdays, showers and more in ${c.name}, with local vendor rates and the best areas for venues.`, body, canonical: `${BASE}plan/${c.slug}/` }));
-  urls.push(`${BASE}plan/${c.slug}/`);
+  const top = TOP[c.name];
+  let local = '', ld = [];
+  if (top) {
+    const wed = OCC.find(o => o.key === 'wedding'), quince = OCC.find(o => o.key === 'quince'), bday = OCC.find(o => o.key === 'birthday'), baby = OCC.find(o => o.key === 'baby-shower');
+    const tw = totals(wed, c.name), tq = quince && totals(quince, c.name), tb = bday && totals(bday, c.name), tbs = baby && totals(baby, c.name);
+    const cult = OCC.filter(o => o.culture).map(o => ({ o, t: totals(o, c.name) })).sort((x, y) => x.t[1] - y.t[1]);
+    const recs = recsIn(c.name), nv = (D.NEW_VENUES || []).filter(v => v.city === c.name);
+    local = `<h2>Planning notes for ${esc(cityShort)}</h2><p>${esc(top)}</p>` +
+      `<h2>Cultural weddings in ${esc(cityShort)}</h2><p class="small muted">Signature level, typical guest count for each tradition.</p><div class="table-wrap panel"><table class="qty"><thead><tr><th>Wedding</th><th class="n">Guests</th><th class="n">Signature budget</th></tr></thead><tbody>${cult.map(x => `<tr><td><a href="../${x.o.slug}/">${esc(x.o.name)}</a></td><td class="n">${x.o.guests}</td><td class="n">${money(x.t[1], c.name)}</td></tr>`).join('')}</tbody></table></div>` +
+      (recs.length ? `<h2>Event Couture picks in ${esc(cityShort)}</h2><p class="small muted">Founder\u2019s picks: not paid placement or an independent review. Always check reviews and contracts yourself.</p><ul class="plain">${recs.slice(0, 16).map(r => `<li><b>${esc(r.name)}</b> \u00b7 ${esc(r.cats.map(catLabel).join(', '))}${r.cultures && r.cultures.length && !r.cultures.includes('parties') ? ' \u00b7 ' + esc(r.cultures.map(k => (D.CULTURES[k] || { name: k }).name.replace(/ Wedding$/, '')).join(', ')) + ' weddings' : ''}${r.ig ? ` \u00b7 <a href="https://instagram.com/${esc(r.ig)}" rel="nofollow noopener" target="_blank">@${esc(r.ig)}</a>` : ''}${r.note ? `<br><span class="small muted">${esc(r.note)}</span>` : ''}</li>`).join('')}</ul>` : '') +
+      (nv.length ? `<h2>Newly opened venues</h2><ul class="plain">${nv.map(v => `<li><b>${esc(v.name)}</b>${v.area ? ' \u00b7 ' + esc(v.area) : ''}${v.note ? `<br><span class="small muted">${esc(v.note)}</span>` : ''}</li>`).join('')}</ul>` : '');
+    const faqs = [[`How much does a wedding cost in ${cityShort}?`, `For about ${wed.guests} guests, ${money(tw[0], c.name)} done smartly, ${money(tw[1], c.name)} with the key pieces handled by pros, and ${money(tw[2], c.name)} or more for full-service luxury, in ${YEAR}.`],
+      tq ? [`How much does a quinceañera cost in ${cityShort}?`, `About ${money(tq[0], c.name)} to ${money(tq[2], c.name)} for ${quince.guests} guests, with ${money(tq[1], c.name)} a typical middle budget.`] : null,
+      tb ? [`How much does a birthday party cost in ${cityShort}?`, `About ${money(tb[0], c.name)} to ${money(tb[2], c.name)} for ${bday.guests} guests.`] : null,
+      tbs ? [`How much does a baby shower cost in ${cityShort}?`, `About ${money(tbs[0], c.name)} to ${money(tbs[2], c.name)} for ${baby.guests} guests.`] : null,
+      [`When is the best time to host an event in ${cityShort}?`, top]].filter(Boolean);
+    local += `<h2>Questions people ask</h2><div class="faq">${faqs.map(([q, a]) => `<details class="panel"><summary><b>${esc(q)}</b></summary><p>${esc(a)}</p></details>`).join('')}</div>`;
+    ld = [{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }];
+  }
+  const fullBody = top ? body.replace(`${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2>`, `${local}${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2>`) : body;
+  const title = top ? `Event & Wedding Costs in ${cityShort} (${YEAR}): Local Planning Guide | Event Couture` : `What events cost in ${c.name} (${YEAR} guide) | Event Couture`;
+  let html = page({ rel: 2, title, h1: top ? `Planning an event in ${c.name}: ${YEAR} costs and local tips` : `Planning an event in ${c.name}`, desc: top ? `${YEAR} costs for weddings, quinceañeras, birthdays and showers in ${c.name}, cultural wedding budgets, local vendor rates, the best areas for venues and when to book.` : `Typical ${YEAR} costs for weddings, quinceañeras, birthdays, showers and more in ${c.name}, with local vendor rates and the best areas for venues.`, body: fullBody, canonical: `${BASE}plan/${c.slug}/`, ld });
+  if (!top) html = html.replace('<head>', '<head><meta name="robots" content="noindex,follow">');
+  write(`plan/${c.slug}/index.html`, html);
+  if (top) urls.push(`${BASE}plan/${c.slug}/`);
 }
 
 const AKA = { wedding: 'wedding ceremony and reception, small or intimate weddings, micro weddings and big ballroom weddings', engagement: 'engagement parties and proposal celebrations', 'bridal-shower': 'bridal showers, bridal brunches and kitchen teas', bachelorette: 'bachelorette parties, hen parties and girls’ weekends', 'baby-shower': 'baby showers, baby sprinkles and sip and sees', 'gender-reveal': 'gender reveal parties, boy or girl parties', birthday: 'adult birthday parties, birthday dinners and surprise parties', 'kids-birthday': 'kids’ birthday parties, first birthdays and children’s themed parties', milestone: '30th, 40th, 50th, 60th and 70th birthday parties', sweet16: 'sweet sixteen parties', quince: 'quinceañeras, XV años and fiestas de quince años', graduation: 'graduation parties, grad parties and open houses', anniversary: 'anniversary parties and vow renewals', retirement: 'retirement parties and farewell celebrations', brunch: 'brunches, tea parties and garden luncheons', dinner: 'dinner parties and private dinners', christmas: 'Christmas parties and family holiday dinners', holiday: 'holiday parties, New Year’s Eve parties and seasonal celebrations', gala: 'galas, charity fundraisers and award dinners', corporate: 'corporate events, company parties and office celebrations',

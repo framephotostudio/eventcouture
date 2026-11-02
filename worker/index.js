@@ -26,7 +26,7 @@ export default {
     const cors = {
       'access-control-allow-origin': allowed.includes(origin) ? origin : (allowed[0] || '*'),
       'access-control-allow-methods': 'GET,POST,OPTIONS',
-      'access-control-allow-headers': 'content-type,authorization',
+      'access-control-allow-headers': 'content-type,authorization,x-admin-code',
       'vary': 'origin'
     };
     if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
@@ -42,15 +42,17 @@ export default {
       if (url.pathname === '/api/status') {
         return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env) });
       }
+      if (req.method === 'GET' && url.pathname === '/api/optin/export') return await optinExport(req, env, cors);
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
       // Per-visitor rate limit (free, best effort): 40 requests an hour per IP across AI and search.
       if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown'))) return json({ error: 'You\u2019ve made a lot of requests. Please wait a few minutes and try again. Nothing was charged.' }, 429);
       if (+(req.headers.get('content-length') || 0) > 12e6) return json({ error: 'Those photos are too large. Try fewer or smaller photos.' }, 413);
       const body = await req.json().catch(() => ({}));
       // Bot check (Cloudflare Turnstile) for new booking requests, quote requests and new vendor listings, once TURNSTILE_SECRET is set.
-      const human = url.pathname === '/api/concierge/new' || url.pathname === '/api/req/new' || (url.pathname === '/api/vendor/save' && !body.id);
+      const human = url.pathname === '/api/concierge/new' || url.pathname === '/api/req/new' || url.pathname === '/api/optin' || (url.pathname === '/api/vendor/save' && !body.id);
       if (human && env.TURNSTILE_SECRET && !(await turnstileOk(env, body.ts, req.headers.get('cf-connecting-ip')))) return json({ error: 'Please confirm you\u2019re not a robot and try again.', code: 'turnstile' }, 403);
       delete body.ts;
+      if (url.pathname === '/api/optin' || url.pathname === '/api/optin/remove') { if (!env.EC_KV) return json({ error: 'Email sign-up is not connected yet.' }, 503); return await optin(env, url.pathname.endsWith('remove'), body, json); }
       if (url.pathname === '/api/concierge/new') { if (!env.EC_KV) return json({ error: 'Booking requests are not connected yet.' }, 503); const cr = await conciergeNew(env, body); return cr.error ? json(cr, 400) : json(cr); }
       const mk = url.pathname.match(/^\/api\/(vendor\/save|vendor\/report|req\/new|req\/list|req\/reply|req\/inbox|req\/delete)$/);
       if (mk) { if (!env.EC_KV) return json({ error: 'Vendor listings are not connected yet.' }, 503); return await market(env, mk[1], body, req.headers.get('cf-connecting-ip') || 'unknown', json); }
@@ -517,4 +519,31 @@ async function turnstileOk(env, token, ip) {
     const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: f });
     const j = await r.json(); return j.success === true;
   } catch (e) { return false; }
+}
+
+// Email tips list: stored only with explicit consent, keyed by a hash of the address so a removal finds it.
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
+async function emailKey(email) { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(email.trim().toLowerCase())); return 'optin:' + [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 40); }
+async function optin(env, remove, body, json) {
+  const email = String(body.email || '').trim().slice(0, 254);
+  if (!EMAIL_RE.test(email)) return json({ error: 'Enter a valid email address.' }, 400);
+  const key = await emailKey(email);
+  if (remove) { await env.EC_KV.delete(key); return json({ ok: true }); }
+  if (body.consent !== true) return json({ error: 'Tick the box to agree to the emails.' }, 400);
+  const clip = (v, n) => String(v || '').replace(/[\r\n]+/g, ' ').slice(0, n);
+  const rec = { email, consent: 'Yes, email me planning tips and reminders for this event. I can unsubscribe anytime.', at: new Date().toISOString(), type: clip(body.type, 60), date: /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? body.date : '', city: clip(body.city, 80), guests: Math.max(0, Math.min(100000, +body.guests || 0)) };
+  await env.EC_KV.put(key, JSON.stringify(rec));
+  return json({ ok: true });
+}
+async function optinExport(req, env, cors) {
+  const code = req.headers.get('x-admin-code') || '';
+  if (!env.ADMIN_CODE || !env.EC_KV) return new Response('Not found', { status: 404, headers: cors });
+  const a = new TextEncoder().encode(code), b = new TextEncoder().encode(env.ADMIN_CODE);
+  let same = a.length === b.length ? 0 : 1; for (let i = 0; i < Math.max(a.length, b.length); i++) same |= (a[i] || 0) ^ (b[i] || 0);
+  if (same !== 0) return new Response('Forbidden', { status: 403, headers: cors });
+  const rows = [['email', 'signed_up', 'event_type', 'event_date', 'city', 'guests', 'consent']];
+  let cursor;
+  do { const l = await env.EC_KV.list({ prefix: 'optin:', cursor }); for (const k of l.keys) { const r = await env.EC_KV.get(k.name, 'json'); if (r) rows.push([r.email, r.at, r.type, r.date, r.city, r.guests, r.consent]); } cursor = l.list_complete ? null : l.cursor; } while (cursor);
+  const csv = rows.map(r => r.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  return new Response(csv, { headers: { ...cors, 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
 }

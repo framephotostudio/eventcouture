@@ -984,3 +984,11 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 .guide .faq summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
 .guide .faq details p { margin: 10px 0 0; }
 .hero .hero-tag { margin: 0 0 10px; font-size: .78rem; letter-spacing: .18em; text-transform: uppercase; color: #80632F; font-weight: 500; }
+
+/* email tips sign-up under Save your plan */
+.optin { display: grid; gap: 12px; margin-top: 12px; }
+.optin-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.optin-row input { flex: 1 1 220px; min-width: 0; }
+.optin .check { border-top: 0; padding: 0; }
+.optin-done { margin: 10px 0 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

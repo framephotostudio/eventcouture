@@ -4,7 +4,7 @@
   var NAME = C.legalName || 'Always Luxe';
   var EMAIL = C.supportEmail || '';
   var STATE = C.governingState || '';
-  var UPDATED = 'October 25, 2026';
+  var UPDATED = 'November 2, 2026';
   var mail = EMAIL ? '<a href="mailto:' + EMAIL + '">' + EMAIL + '</a>' : 'the contact address on our Help page';
   var law = STATE ? 'the State of ' + STATE : 'the state in which ' + NAME + ' is established';
 
@@ -26,6 +26,7 @@
       '<div><b>Venue and vendor searches</b> (city, area, kind of place) and your starting point for drive times<span>Sent through our server to Google Maps Platform to return places and drive times.</span></div>' +
       '<div><b>Vendor listings</b> (business name, email, phone, Instagram, prices, policies) entered on For vendors<span>Stored on our server and shown to people planning events in the cities you serve, except your email, which is shared only with a host whose quote request you answer. Edit your listing anytime; email us to remove it.</span></div>' +
       '<div><b>Quote requests</b> (city, kind of vendor, event type, date, guest count, theme, budget for that item and any note you add)<span>Stored on our server and shown to listed vendors in that city and category. Your name and contact details are never included. Requests and replies are deleted automatically 14 days after your event date, or after 90 days when there is no date.</span></div>' +
+      '<div><b>Your email for planning tips</b> (only if you tick the box: your email plus the event type, date, city and guest count)<span>Stored on our server so we can send planning tips and booking reminders for that event. Never sold or shared with vendors. Remove it anytime at Stop emails (#/unsubscribe) or by emailing us.</span></div>' +
       '<div><b>Technical data</b> (IP address, browser type, time of request)<span>Received by our hosting and server providers when your device connects. Our server keeps a short-lived count of requests per IP address to prevent abuse; it expires within about an hour.</span></div>' +
       '<div><b>Purchases</b> (when payments are switched on)<span>Handled by our payment processor or by Apple or Google. We receive confirmation of what you bought; we never receive your full card number.</span></div>' +
       '<div><b>Usage statistics</b> (which pages are opened and which buttons are tapped, plus general choices such as the kind of event, city, guest-count range and budget range)<span>Sent to Google Analytics to count visits and see which features people use. We never send names, guest lists, photos, what you type, or your event\u2019s details. Advertising features are turned off. Nothing is sent if your browser asks sites not to track you (Do Not Track or Global Privacy Control).</span></div>' +

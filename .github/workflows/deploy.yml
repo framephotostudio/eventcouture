@@ -58,6 +58,7 @@ jobs:
           echo "url=$url" >> $GITHUB_OUTPUT
           printf '%s' "${{ secrets.GEMINI_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put GEMINI_KEY
           printf '%s' "${{ secrets.GOOGLE_MAPS_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put GOOGLE_MAPS_KEY
+          if [ -n "${{ secrets.ADMIN_CODE }}" ]; then printf '%s' "${{ secrets.ADMIN_CODE }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put ADMIN_CODE; else echo "No ADMIN_CODE secret yet: the email list download stays off."; fi
       - name: Bot check for forms (Cloudflare Turnstile, free; skipped if the token can't manage Turnstile)
         if: env.SERVER == 'yes'
         continue-on-error: true

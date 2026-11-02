@@ -310,6 +310,8 @@
       if (p[0] === 'e') { var ev = getEvent(p[1]); if (!ev) return frame('<div class="stack"><h2>This plan isn\u2019t here</h2><p class="muted">It may have been deleted, or it was made on another device.</p><div><a class="btn" href="#/events">Go to My events</a></div></div>'); return planView(ev, p[2] || 'overview'); }
       if (p[0] === 'g') return guestPage(p[1]);
       if (p[0] === 'booked') return cqThanks();
+      if (p[0] === 'unsubscribe') return unsubscribePage();
+      if (p[0] === 'admin' && p[1] === 'emails') return emailExportPage();
       if (p[0] === 'cq' && p[1]) return cqRequest(p[1]);
       if (p[0] === 'vendors' && p[1] === 'requests') { if (CFG.app) { location.replace('#/'); return; } return vendorRequests(); }
       if (p[0] === 'vendors') { if (CFG.app) { location.replace('#/'); return; } return vendorJoin(); }
@@ -1158,6 +1160,7 @@
     var sec = function (h, inner, edit) { return '<section class="ps-sec"><div class="ps-h"><h3>' + h + '</h3>' + (edit && !ev.sample ? '<a class="ps-edit link small" href="' + go + edit[0] + '">' + edit[1] + '</a>' : '') + '</div>' + inner + '</section>'; };
     return '<div class="stack plan-sheet">' +
       '<div class="panel plan-save"><div><b>Save your plan</b><p class="small muted">Keep a copy as a PDF, email it to yourself or send it to a co-host. ' + (ev.sample ? '' : 'Don\u2019t love something? Tap Change or Replace next to it.') + '</p></div><div class="row plan-actions"><button class="btn gold small" id="pdfPlan">Save as PDF</button><button class="btn ghost small" id="mailPlan">Email it to me</button><button class="btn ghost small" id="sharePlan">Share</button>' + (window.ECNative && window.ECNative.isNative ? '' : '<button class="btn ghost small" id="printPlan">Print</button>') + '</div></div>' +
+      optinPanel(ev) +
       '<div class="ps-head"><span class="small muted">' + esc(E.typeName(ev)) + '</span><h2>' + esc(ev.name) + '</h2><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + esc(fmtTime(ev.time)) : '') : 'Date to be set') + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + esc(settingName(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p>' + (ev.sample ? '' : '<button class="ps-edit link small" data-plan-when>' + (ev.date || ev.dateFrom ? 'Change date' : 'Set your date') + '</button>') + '</div>' +
       sec('Your look', dots(c.palette, c.styleName + ' colors') + '<p><b>' + esc(c.styleName) + '.</b> ' + esc(moodFor(c, ev)) + '</p><ul class="incl">' + decorFor(c, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>', ['concepts', 'Choose a different look']) +
       sec('Budget, ' + esc(tierName(b.tier.id)), '<details class="ps-more"><summary>' + money(b.total) + ' estimated total \u00b7 see every line</summary><div class="table-wrap"><table class="qty"><thead><tr><th>Item</th><th>Status</th><th>Amount</th></tr></thead><tbody>' + b.items.map(function (i) { var st = statusOf(ev, i.id); var oo = (ev.overrides || {})[i.id]; return '<tr><td>' + esc(i.name) + '</td><td class="small muted">' + (st === 'booked' ? (oo && oo.amount > 0 ? 'Booked' : 'Booked, estimate') : st === 'quote' ? 'Quote' : 'Estimate') + '</td><td class="n">' + money(i.mid) + '</td></tr>'; }).join('') + '<tr><td><b>Estimated total</b></td><td class="small muted">' + (ev.budget ? 'Budget ' + money(ev.budget) : '') + '</td><td class="n"><b>' + money(b.total) + '</b></td></tr></tbody></table></div></details><p class="small muted">Includes tax, service' + (tipsHere(ev) ? ', tips' : '') + ' and a 10% cushion. Amounts marked Quote or Booked are the prices you entered.</p>', ['budget', 'Change level or prices']) +
@@ -1247,6 +1250,7 @@
     if (!$('#pdfPlan')) return;
     ['#pdfPlan', '#mailPlan', '#sharePlan', '#printPlan'].forEach(function (sel) { var el = $(sel); if (el) el.addEventListener('click', function (e) { if (ev.sample || isKept(ev)) return; e.stopImmediatePropagation(); keepSheet(ev, 'Keep your plan to save or share it', function () { rerender(); }); }); });
     $('#pdfPlan').addEventListener('click', function () { savePlanPdf(ev); });
+    bindOptin(ev);
     $('#mailPlan').addEventListener('click', function () {
       var d = planData(ev), body = planText(d, true) + '\n\nTip: tap Save as PDF in Event Couture for the full plan with your schedule and shopping list.';
       var subj = 'My Event Couture plan: ' + ev.name, enc = function (t) { return encodeURIComponent(t).length; };
@@ -2977,6 +2981,50 @@
     ['Agreement', [['agree', 'I confirm my listed prices are accurate and I’ll keep them up to date', 'check', 1]]]
   ];
   /* Live vendor listings and quote requests (needs the Event Couture server). */
+  /* Email tips and reminders: only with a ticked box. The address goes to our server for the owner to send planning
+     tips and reminders for this event; anyone can remove it at #/unsubscribe. */
+  function optinPanel(ev) {
+    if (ev.sample || !CFG.apiUrl) return '';
+    if (ev.optin) return '<p class="small muted optin-done">Planning tips and reminders will go to ' + esc(ev.optin.email) + '. <a href="#/unsubscribe">Stop emails</a></p>';
+    return '<form class="panel optin" id="optin" novalidate><div><b>Get planning tips and reminders</b><p class="small muted">A short email when it\u2019s time to book each vendor, plus ideas for your ' + esc(E.typeName(ev).toLowerCase()) + '. No spam; stop anytime.</p></div>' +
+      '<div class="row optin-row"><label class="sr-only" for="optEmail">Email</label><input id="optEmail" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" maxlength="120">' +
+      '<button class="btn gold small" type="submit">Sign me up</button></div>' +
+      '<label class="check small"><input type="checkbox" id="optOk"> Yes, email me planning tips and reminders for this event. I can unsubscribe anytime (<a href="#/privacy">Privacy</a>).</label></form>';
+  }
+  function bindOptin(ev) {
+    var f = $('#optin'); if (!f) return;
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var em = ($('#optEmail').value || '').trim(), ok = $('#optOk').checked, btn = f.querySelector('button');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return toast('Enter a valid email address');
+      if (!ok) return toast('Tick the box to agree to the emails');
+      btn.disabled = true;
+      tsToken().then(function (ts) { return fetch(CFG.apiUrl + '/api/optin', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ts: ts, email: em, consent: true, type: E.typeName(ev), date: ev.date || '', city: ev.city || '', guests: ev.guests || 0 }) }); })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || 'Couldn\u2019t sign you up. Try again.'); return j; }); })
+        .then(function () { ev.optin = { email: em, at: new Date().toISOString() }; saveEvent(ev); T('email_optin', { event_type: ev.type }); toast('You\u2019re signed up'); f.outerHTML = optinPanel(ev); })
+        .catch(function (er) { btn.disabled = false; toast(er.message); });
+    });
+  }
+  function unsubscribePage() {
+    frame('<div class="wizard stack-lg"><h2>Stop planning emails</h2><p class="muted">Enter the email you signed up with and we\u2019ll remove it right away.</p><form id="unsub" class="stack" novalidate><label for="unEmail">Email</label><input id="unEmail" type="email" autocomplete="email" maxlength="120"><div><button class="btn primary" type="submit">Remove my email</button></div></form></div>');
+    $('#unsub').addEventListener('submit', function (e) {
+      e.preventDefault(); var em = ($('#unEmail').value || '').trim(); if (!/@/.test(em)) return toast('Enter your email address');
+      fetch(CFG.apiUrl + '/api/optin/remove', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: em }) })
+        .then(function (r) { if (!r.ok) throw new Error(); Object.values(events()).forEach(function (x) { if (x && x.optin && x.optin.email.toLowerCase() === em.toLowerCase()) { delete x.optin; saveEvent(x); } }); T('email_optout', {}); frame('<div class="wizard stack-lg"><h2>You\u2019re unsubscribed</h2><p class="muted">We won\u2019t send planning emails to that address.</p><div><a class="btn primary" href="#/">Back to Event Couture</a></div></div>'); })
+        .catch(function () { toast('Couldn\u2019t remove it right now. Email ' + (CFG.supportEmail || 'us') + ' and we\u2019ll do it.'); });
+    });
+  }
+  /* Owner only: download the email list. The admin code is typed each time and never saved. */
+  function emailExportPage() {
+    frame('<div class="wizard stack-lg"><h2>Email list</h2><form id="exp" class="stack" novalidate><label for="admCode">Admin code</label><input id="admCode" type="password" autocomplete="off"><div><button class="btn primary" type="submit">Download CSV</button></div></form></div>', { noRibbon: true });
+    $('#exp').addEventListener('submit', function (e) {
+      e.preventDefault();
+      fetch(CFG.apiUrl + '/api/optin/export', { headers: { 'x-admin-code': $('#admCode').value } })
+        .then(function (r) { if (!r.ok) throw new Error(r.status === 403 ? 'Wrong code' : 'Not available'); return r.text(); })
+        .then(function (csv) { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'event-couture-emails.csv'; document.body.appendChild(a); a.click(); a.remove(); toast('Downloaded'); })
+        .catch(function (er) { toast(er.message || 'Not available'); });
+    });
+  }
   /* Cloudflare Turnstile: a free, usually invisible check that a person (not a bot) is sending a form. Used for new vendor
      listings, quote requests and booking requests once CFG.turnstile (the site key) is set; otherwise it is skipped. */
   var tsLoad = null;
