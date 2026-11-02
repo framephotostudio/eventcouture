@@ -261,8 +261,9 @@
     app.innerHTML = ribbon +
       '<header class="topbar"><a class="brand logo-mark" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.markGold) + '" alt="Event Couture" width="563" height="210"><span class="wordmark" aria-hidden="true">Event Couture</span><span class="by" aria-hidden="true">by Always Luxe</span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events" title="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help" title="Help">' + ICON.help + '</a></nav></header>' +
-      '<main id="main"' + (location.hash !== lastHash ? ' class="fade"' : '') + '>' + inner + '</main>' +
+      '<main id="main"' + (location.hash !== lastHash && !(lastHash === null && app.hasAttribute('data-pre')) ? ' class="fade"' : '') + '>' + inner + '</main>' +
       '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a>' + (CFG.app ? '' : '<a href="plan/">Planning guides</a>') + (CFG.app ? '' : '<a href="#/pricing">Pricing</a>') + '' + (CFG.app ? '' : '<a href="#/vendors">For vendors</a>') + '<a href="#/privacy">Privacy</a><a href="#/terms">Terms</a></nav><div class="name">Event Couture by Always Luxe</div>' + (CFG.supportEmail ? '<div class="small">Questions? <a href="mailto:' + esc(CFG.supportEmail) + '">' + esc(CFG.supportEmail) + '</a></div>' : '') + (CFG.app ? '' : '<div class="small">iPhone and Android app coming soon</div>') + '<div class="small">Also from Always Luxe: <a href="https://facecouture.app/" target="_blank" rel="noopener">Face Couture</a></div></footer>';
+    app.removeAttribute('data-pre');
     var ld = document.getElementById('loader'); if (ld && !ld.classList.contains('done')) { ld.classList.add('done'); setTimeout(function () { if (ld.parentNode) ld.parentNode.removeChild(ld); }, 450); }
     if (location.hash !== lastHash) window.scrollTo(0, 0);
     var h2 = app.querySelector('main h1, main h2'); document.title = (h2 && location.hash.length > 2 ? h2.textContent.replace(/Rename$/, '').trim() + ' \u00b7 ' : '') + 'Event Couture by Always Luxe';
@@ -434,7 +435,7 @@
       '<p class="lead">Share a photo or a few words. AI designs the look, and you get a budget estimate for your city, top-rated vendors, a checklist and invitations. Free to plan.</p>' +
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div></div>' +
       '<figure class="hero-photo"><div class="scene">' +
-      '<img src="' + srcOf(HERO_IMG) + '" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
+      '<img src="' + srcOf(HERO_IMG) + '"' + (window.EC_EMBED ? '' : ' srcset="img/hero-480.webp 480w, img/hero-720.webp 720w, img/hero-960.webp 960w" sizes="(min-width: 900px) 46vw, 100vw"') + ' width="960" height="1200" fetchpriority="high" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
       tags.map(function (t) { return '<button class="hot' + (t[2] > 65 ? ' r' : t[2] < 30 ? ' l' : '') + '" style="left:' + t[2] + '%;top:' + t[3] + '%" aria-expanded="false" aria-label="' + esc(t[0]) + ', ' + money(t[1]) + '"><span class="dot" aria-hidden="true"></span><span class="lbl" aria-hidden="true"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span></button>'; }).join('') +
       '</div><figcaption>AI-generated sample look. Tap a dot to see what that piece costs.</figcaption></figure></section>' +
       HOW_IT_WORKS +
@@ -1635,7 +1636,7 @@
     }
     var k = Math.min(ev.pkgView || 0, pks.length - 1), pk = pks[k];
     var bizOf = function (pkx, cat) { var id = pkx.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };
-    var line = function (x) { return (x.rec ? '<span class="badge rec">\u2605 Recommended</span> ' : '') + hotelBadge(x.name).replace(/^ /, '') + [x.rec && /^ig:/.test(x.id) ? '@' + esc(String(x.id).slice(3)) : '',x.rating ? '★ ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' · '); };
+    var line = function (x) { return (x.rec ? '<span class="badge rec" title="Founder\u2019s pick: chosen by the founder of Event Couture. Not paid placement or an independent review.">\u2605 Recommended</span> ' : '') + hotelBadge(x.name).replace(/^ /, '') + [x.rec && /^ig:/.test(x.id) ? '@' + esc(String(x.id).slice(3)) : '',x.rating ? '★ ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', PRICE_SIGN[x.price] || '', x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' · '); };
     var est = function (cat, x) { if (x && onRequest(ev, cat, x)) return 'Price on request'; var it = b.items.find(function (i) { return i.id === cat; }); return it ? 'est. ' + money(it.mid) : ''; };
     var links = function (x, cat) { return (cat && isRestaurantPick(ev, cat, x) ? '<a class="btn small gold" target="_blank" rel="noopener" href="' + esc(reserveLink(ev, x)) + '">Reserve a table</a>' : '') + (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">' + (/^ig:/.test(x.id) ? 'Instagram' : /^rec:/.test(x.id) ? 'Map' : 'Website') + '</a>' : '') + (x.maps ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : ''); };
     var row = function (c, pkx, mode) {
@@ -1722,6 +1723,7 @@
     if (!link) return toast('Payments for this option open soon.');
     var u = link + (link.indexOf('?') < 0 ? '?' : '&') + 'client_reference_id=' + encodeURIComponent(cq.ref) + (cq.email ? '&prefilled_email=' + encodeURIComponent(cq.email) : '');
     T('concierge_checkout', { tier: cq.tier, event_type: ev.type });
+    T('begin_checkout', { currency: 'USD', value: cq.price || 0, item_name: 'Concierge ' + (cq.tierName || cq.tier), event_type: ev.type });
     if (window.ECNative && window.ECNative.openUrl) return window.ECNative.openUrl(u);
     location.href = u;
   }
@@ -1744,7 +1746,7 @@
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { $('#cqEmail', el).focus(); return toast('Enter a valid email'); }
         var t = CQ_TIERS.find(function (x) { return x.id === pick; }); if (!t || n > t.max) return toast('Choose a package that fits your ' + n + ' vendors');
         go.disabled = true; go.textContent = 'Saving your request\u2026';
-        fetch(CFG.apiUrl + '/api/concierge/new', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tier: t.id, tierName: t.name, price: cqPrice(t), founding: cqCfg().founding !== false, name: nm, phone: ph, email: em, when: $('#cqWhen', el).value, type: E.typeName(ev), date: ev.date || '', city: ev.city, guests: ev.guests, vendors: n, summary: cqSummary(ev) }) })
+        tsToken().then(function (ts) { return fetch(CFG.apiUrl + '/api/concierge/new', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ts: ts, tier: t.id, tierName: t.name, price: cqPrice(t), founding: cqCfg().founding !== false, name: nm, phone: ph, email: em, when: $('#cqWhen', el).value, type: E.typeName(ev), date: ev.date || '', city: ev.city, guests: ev.guests, vendors: n, summary: cqSummary(ev) }) }); })
           .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j.ref) throw new Error(j.error || 'Couldn\u2019t save your request. Try again.'); return j; }); })
           .then(function (j) { ev.concierge = { ref: j.ref, tier: t.id, tierName: t.name, price: cqPrice(t), name: nm, phone: ph, email: em, at: new Date().toISOString() }; saveEvent(ev); T('concierge_request', { tier: t.id, event_type: ev.type }); close(); rerender(); cqPay(ev); })
           .catch(function (e) { go.disabled = false; go.textContent = 'Continue to secure payment'; toast(e.message || 'Couldn\u2019t save your request. Try again.'); });
@@ -1754,7 +1756,7 @@
   /* Back from Stripe: the payment went through, so the latest saved request is marked paid. */
   function cqThanks() {
     var ev = Object.values(events()).filter(function (e) { return e && e.concierge && e.concierge.ref; }).sort(function (a, b) { return (b.concierge.at || '').localeCompare(a.concierge.at || ''); })[0];
-    if (ev && !ev.concierge.paid) { ev.concierge.paid = true; ev.concierge.paidAt = new Date().toISOString(); saveEvent(ev); T('concierge_paid', { tier: ev.concierge.tier, event_type: ev.type }); }
+    if (ev && !ev.concierge.paid) { ev.concierge.paid = true; ev.concierge.paidAt = new Date().toISOString(); saveEvent(ev); T('concierge_paid', { tier: ev.concierge.tier, event_type: ev.type }); T('purchase', { currency: 'USD', value: ev.concierge.price || 0, transaction_id: ev.concierge.ref, item_name: 'Concierge ' + (ev.concierge.tierName || ev.concierge.tier), event_type: ev.type }); }
     frame('<div class="wizard stack-lg" style="text-align:center;justify-items:center"><img src="img/brand/ec-mark-128.png" alt="" width="64" height="64"><h2>You\u2019re booked with Event Couture</h2><p class="muted">Thank you' + (ev ? ', ' + esc(String(ev.concierge.name || '').split(' ')[0]) : '') + '. The founder of Event Couture will call you within 1 business day to confirm your details and start booking your vendors. A receipt is on its way to your email.</p>' + (ev ? '<a class="btn primary" href="#/e/' + esc(ev.id) + '/budget">Back to my plan</a>' : '<a class="btn primary" href="#/events">My events</a>') + '</div>');
   }
   /* Demah's view of one request: the link (with its private code) comes from the Stripe payment. */
@@ -1788,7 +1790,7 @@
   function pkgSummaryCard(ev, b, cats, cp) {
     var d = pkgData(ev, b, cats, cp);
     return '<div class="pkg-sum" id="pkgSum"><div class="pkg-sum-h"><p class="eyebrow">\u2713 Your final package</p><h3>Package ' + d.n + ' \u00b7 ' + esc(ev.name) + '</h3><p class="small muted">' + esc(whenText(ev)) + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p></div>' +
-      '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.rec ? ' <span class="badge rec">\u2605 Recommended</span>' : '') + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.ask ? '<span class="muted">Price on request</span>' : (r.est ? 'est. ' : '') + money(r.amt)) + '</span></div>'; }).join('') + '</div>' +
+      '<div class="pkg-sum-rows">' + d.rows.map(function (r) { return '<div class="pkg-sum-r"><span class="pkg-sum-c">' + esc(r.cat) + '</span><span class="pkg-sum-n"><b>' + (r.name ? esc(r.name) : '<span class="muted">Still to choose</span>') + '</b>' + (r.rec ? ' <span class="badge rec" title="Founder\u2019s pick: chosen by the founder of Event Couture. Not paid placement or an independent review.">\u2605 Recommended</span>' : '') + (r.status === 'Booked' ? ' <span class="badge ok">Booked</span>' : '') + '</span><span class="num pkg-sum-a">' + (r.ask ? '<span class="muted">Price on request</span>' : (r.est ? 'est. ' : '') + money(r.amt)) + '</span></div>'; }).join('') + '</div>' +
       rideRow(ev, b, false) +
       '<div class="pkg-sum-t"><span>' + (d.booked === d.rows.length ? 'Package total, all booked' : 'Package total') + '<span class="small muted pkg-sum-note">' + (d.askN ? 'Not counting ' + plural(d.askN, 'line') + ' priced on request. ' : '') + 'Your plan\u2019s estimate (' + money(b.total) + ') ' + (d.askN ? 'adds estimates for those and ' : 'also ') + 'keeps a 10% cushion for surprises.</span>' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
       '<p class="small muted">' + d.booked + ' of ' + d.rows.length + ' booked' + (d.removed.length ? ' \u00b7 Not needed: ' + d.removed.map(esc).join(', ') : '') + '</p>' +
@@ -2275,7 +2277,7 @@
       : '<div class="stack"><button class="btn small" data-getq="' + esc(cat) + '">Get quotes from vendors</button><span class="muted small">Free. Vendors see your date, city, guest count, theme and budget for this, never your name or contact details.</span></div>';
     var ig = (ev.shortlist || []).filter(function (x) { return x.cat === cat && /^ig:/.test(x.id); });
     var recs = recFor(ev, cat);
-    var recH = recs.length ? '<div class="stack rec-box"><p class="eyebrow">\u2605 Recommended by Event Couture</p>' + recs.map(function (r) { var saved = savedFor(ev, cat).some(function (x) { return x.id === r.id; }); return '<div class="it"><div class="grow"><b>' + esc(r.name) + '</b> <span class="badge rec">Recommended</span><div class="small muted">' + esc(r.note) + (r.ig ? ' \u00b7 @' + esc(r.ig) : '') + '</div></div><span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(r.website) + '">' + (r.ig ? 'Instagram' : 'Map') + '</a>' + (ev.sample ? '' : saved ? (r.ig ? '<button class="btn small" data-igmsg="' + esc(r.ig) + '">Message</button>' : '<span class="badge ok">Saved</span>') : '<button class="btn small" data-recadd="' + esc(r.id) + '">Save</button>') + '</span></div>'; }).join('') + '</div>' : '';
+    var recH = recs.length ? '<div class="stack rec-box"><p class="eyebrow">\u2605 Recommended by Event Couture</p><p class="small muted">Founder\u2019s picks for this city. Not paid placement or an independent review; always check reviews and contracts yourself.</p>' + recs.map(function (r) { var saved = savedFor(ev, cat).some(function (x) { return x.id === r.id; }); return '<div class="it"><div class="grow"><b>' + esc(r.name) + '</b> <span class="badge rec" title="Founder\u2019s pick: chosen by the founder of Event Couture. Not paid placement or an independent review.">Recommended</span><div class="small muted">' + esc(r.note) + (r.ig ? ' \u00b7 @' + esc(r.ig) : '') + '</div></div><span class="acts"><a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(r.website) + '">' + (r.ig ? 'Instagram' : 'Map') + '</a>' + (ev.sample ? '' : saved ? (r.ig ? '<button class="btn small" data-igmsg="' + esc(r.ig) + '">Message</button>' : '<span class="badge ok">Saved</span>') : '<button class="btn small" data-recadd="' + esc(r.id) + '">Save</button>') + '</span></div>'; }).join('') + '</div>' : '';
     return '<div class="panel stack" style="margin-top:10px">' + recH + quotes +
       '<div class="stack"><b>Found someone on Instagram?</b><span class="muted small">Add them to your options, then message them your request in one tap.</span><div class="row"><input class="input" data-ighandle placeholder="@their.instagram" aria-label="Instagram handle" style="flex:1;min-width:150px" autocapitalize="off" autocorrect="off"><button class="btn small ghost" data-igadd>Add</button></div>' +
       ig.map(function (x) { var h = x.id.slice(3); return '<div class="row small"><b>@' + esc(h) + '</b><button class="btn small" data-igmsg="' + esc(h) + '">Message @' + esc(h) + '</button></div>'; }).join('') + '</div></div>';
@@ -2973,7 +2975,20 @@
     ['Agreement', [['agree', 'I confirm my listed prices are accurate and I’ll keep them up to date', 'check', 1]]]
   ];
   /* Live vendor listings and quote requests (needs the Event Couture server). */
+  /* Cloudflare Turnstile: a free, usually invisible check that a person (not a bot) is sending a form. Used for new vendor
+     listings, quote requests and booking requests once CFG.turnstile (the site key) is set; otherwise it is skipped. */
+  var tsLoad = null;
+  function tsToken() {
+    if (!CFG.turnstile || CFG.app) return Promise.resolve('');
+    tsLoad = tsLoad || new Promise(function (ok, no) { window.ecTsReady = ok; var sc = document.createElement('script'); sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=ecTsReady&render=explicit'; sc.async = true; sc.onerror = no; document.head.appendChild(sc); });
+    return tsLoad.then(function () { return new Promise(function (ok) {
+      var box = document.getElementById('tsBox'); if (!box) { box = document.createElement('div'); box.id = 'tsBox'; box.style.cssText = 'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:300'; document.body.appendChild(box); }
+      var id = window.turnstile.render(box, { sitekey: CFG.turnstile, appearance: 'interaction-only', callback: function (t) { ok(t); setTimeout(function () { try { window.turnstile.remove(id); } catch (e) {} }, 0); }, 'error-callback': function () { ok(''); } });
+    }); }).catch(function () { return ''; });
+  }
+  function needsHuman(path, body) { return path === 'req/new' || (path === 'vendor/save' && body && !body.id); }
   function apiMarket(path, body) {
+    if (body && needsHuman(path, body) && body.ts === undefined) return tsToken().then(function (t) { body.ts = t; return apiMarket(path, body); });
     return fetch(CFG.apiUrl + '/api/' + path, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {})
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error(j.error || 'Request failed'); e.status = r.status; throw e; } return j; }); });
   }
@@ -3085,6 +3100,7 @@
   var FAQ = [
     ['How do I invite guests?', 'Open your plan, then Guests & invitations, Invite and registry. Copy your invite link and send it by text, email or social media. Guests RSVP, vote and see the details from the link, with no app needed. Keep your plan first to share it.', 'invite invitation invitations send link rsvp guests share'],
     ['Can guests add photos?', 'Yes. Guests open your invite link and tap Add photos under Share your photos. Everyone\u2019s pictures land in your plan under Photos and thank-yous.', 'photos photo pictures album upload add'],
+    ['What does Recommended mean?', 'A Recommended badge marks a founder\u2019s pick: a business the founder of Event Couture chose for that city or tradition. It is not paid placement and not an independent review. Always check reviews, licenses and contracts yourself before you book.'],
     ['Is there a subscription?', 'No. Planning is free, and you pay once per event only if you want to keep and share your plan. Nothing renews automatically.', 'subscription subscribe monthly recurring renew renewal'],
     ['How much does it cost?', 'You pay once per event, based on how many people you invite, in US dollars: US$9.99 up to 25 guests, US$19.99 up to 75, US$39.99 up to 150, US$69.99 up to 350, and more for larger events. Guests never pay to view, RSVP or vote.', 'price cost pay pass much'],
     ['What if my guest list grows?', 'Move up a size under Overview, Your pass. You pay only the difference, and your plan stays exactly as it is.', 'grow grows growing more upgrade capacity bigger places full waitlist'],

@@ -58,10 +58,25 @@ jobs:
           echo "url=$url" >> $GITHUB_OUTPUT
           printf '%s' "${{ secrets.GEMINI_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put GEMINI_KEY
           printf '%s' "${{ secrets.GOOGLE_MAPS_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put GOOGLE_MAPS_KEY
+      - name: Bot check for forms (Cloudflare Turnstile, free; skipped if the token can't manage Turnstile)
+        if: env.SERVER == 'yes'
+        continue-on-error: true
+        working-directory: worker
+        run: |
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/challenges/widgets"; auth="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          key=$(curl -s -H "$auth" "$api?per_page=50" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);if(!j.success){console.error(JSON.stringify(j.errors));return}const w=j.result.find(x=>x.name==='Event Couture forms');console.log(w?w.sitekey:'')}catch(e){}})")
+          if [ -z "$key" ]; then
+            key=$(curl -s -X POST -H "$auth" -H "content-type: application/json" "$api" -d '{"name":"Event Couture forms","domains":["eventcouture.app","www.eventcouture.app","localhost"],"mode":"managed"}' | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);if(!j.success){console.error(JSON.stringify(j.errors));return}console.log(j.result.sitekey)}catch(e){}})")
+          fi
+          if [ -z "$key" ]; then echo "::warning::Turnstile not set up: the Cloudflare token needs the 'Turnstile Sites: Edit' permission. Forms still work without it."; echo y | npx -y wrangler@3 secret delete TURNSTILE_SECRET >/dev/null 2>&1 || true; exit 0; fi
+          sec=$(curl -s -H "$auth" "$api/$key" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).result.secret||'')}catch(e){}})")
+          echo "::add-mask::$sec"
+          if [ -n "$sec" ] && printf '%s' "$sec" | npx -y wrangler@3 secret put TURNSTILE_SECRET; then echo "TS_SITEKEY=$key" >> $GITHUB_ENV; else echo y | npx -y wrangler@3 secret delete TURNSTILE_SECRET >/dev/null 2>&1 || true; fi
       - name: Point the site at the server
         if: env.SERVER == 'yes'
         run: |
-          sed -i "s#apiUrl: ''#apiUrl: '${{ steps.worker.outputs.url }}'#" js/config.js   # stays in preview mode for payments until real checkout exists
+          sed -i "s#apiUrl: ''#apiUrl: '${{ steps.worker.outputs.url }}'#" js/config.js
+          [ -n "$TS_SITEKEY" ] && sed -i "s#turnstile: ''#turnstile: '$TS_SITEKEY'#" js/config.js || true   # stays in preview mode for payments until real checkout exists
           cat js/config.js
       - name: Package site
         run: mkdir _site && cp -r index.html manifest.json css js img _site/

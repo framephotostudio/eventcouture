@@ -10,7 +10,11 @@
   try {
     var live = /(^|\.)(facecouture|eventcouture)\.app$/.test(location.hostname);
     var optOut = navigator.doNotTrack === '1' || window.doNotTrack === '1' || navigator.globalPrivacyControl === true;
-    if (!live || optOut || !/^G-[A-Z0-9]{6,}$/.test(GA_ID)) return;
+    /* The owner's and testers' own visits stay out of the numbers: open any page once with ?ec_owner=1 on that phone or
+       computer (?ec_owner=0 turns tracking back on). It is remembered on that device. */
+    var owner = false;
+    try { var om = /[?&]ec_owner=([01])/.exec(location.search); if (om) localStorage.setItem('ec.owner', om[1]); owner = localStorage.getItem('ec.owner') === '1'; } catch (e) {}
+    if (!live || optOut || owner || !/^G-[A-Z0-9]{6,}$/.test(GA_ID)) return;
     window.dataLayer = window.dataLayer || [];
     window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
     var app = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());

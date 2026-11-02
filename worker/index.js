@@ -47,6 +47,10 @@ export default {
       if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown'))) return json({ error: 'You\u2019ve made a lot of requests. Please wait a few minutes and try again. Nothing was charged.' }, 429);
       if (+(req.headers.get('content-length') || 0) > 12e6) return json({ error: 'Those photos are too large. Try fewer or smaller photos.' }, 413);
       const body = await req.json().catch(() => ({}));
+      // Bot check (Cloudflare Turnstile) for new booking requests, quote requests and new vendor listings, once TURNSTILE_SECRET is set.
+      const human = url.pathname === '/api/concierge/new' || url.pathname === '/api/req/new' || (url.pathname === '/api/vendor/save' && !body.id);
+      if (human && env.TURNSTILE_SECRET && !(await turnstileOk(env, body.ts, req.headers.get('cf-connecting-ip')))) return json({ error: 'Please confirm you\u2019re not a robot and try again.', code: 'turnstile' }, 403);
+      delete body.ts;
       if (url.pathname === '/api/concierge/new') { if (!env.EC_KV) return json({ error: 'Booking requests are not connected yet.' }, 503); const cr = await conciergeNew(env, body); return cr.error ? json(cr, 400) : json(cr); }
       const mk = url.pathname.match(/^\/api\/(vendor\/save|vendor\/report|req\/new|req\/list|req\/reply|req\/inbox|req\/delete)$/);
       if (mk) { if (!env.EC_KV) return json({ error: 'Vendor listings are not connected yet.' }, 503); return await market(env, mk[1], body, req.headers.get('cf-connecting-ip') || 'unknown', json); }
@@ -504,4 +508,13 @@ async function conciergeNew(env, b) {
   if (!rec.name || !rec.phone || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rec.email)) return { error: 'Add your name, phone and email.' };
   await env.EC_KV.put('cq:' + ref, JSON.stringify(rec), { expirationTtl: 60 * 60 * 24 * 366 });
   return { ref };
+}
+
+async function turnstileOk(env, token, ip) {
+  if (!token || typeof token !== 'string' || token.length > 2048) return false;
+  try {
+    const f = new FormData(); f.append('secret', env.TURNSTILE_SECRET); f.append('response', token); if (ip) f.append('remoteip', ip);
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: f });
+    const j = await r.json(); return j.success === true;
+  } catch (e) { return false; }
 }

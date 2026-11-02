@@ -13,5 +13,6 @@ window.EC_CONFIG = {
   /* Always Luxe Concierge Booking (US plans): paste each Stripe Payment Link. The offer stays hidden until at least one is set.
      call: a free 15-minute call booking link (for example Calendly). founding: true shows the founding client prices. */
   concierge: { links: { essentials: '', signature: '', full: '', allin: '' }, call: '', founding: true },
+  turnstile: '',   /* Cloudflare Turnstile site key (public). Filled in by deploy when the Turnstile widget exists; empty = no check */
   version: '0.64.0'
 };
