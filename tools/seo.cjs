@@ -84,13 +84,18 @@ for (const c of CITIES) {
 ${areas.length ? `<h2>Popular areas for venues</h2><p>${areas.map(esc).join(' · ')}</p>` : ''}
 ${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2><div class="cols">${OCC.map(o => `<a href="../${o.slug}/">${esc(o.name)}</a>`).join('')}</div>`;
   const top = TOP[c.name];
+  const pct = Math.round((c.index - 1) * 100);
+  const autoNote = country.id === 'US'
+    ? `Event costs in ${cityShort} run ${pct === 0 ? 'close to the US average' : `about ${Math.abs(pct)}% ${pct > 0 ? 'above' : 'below'} the US average`}, and ${c.tax ? `sales tax is about ${c.tax}%` : 'there is no local sales tax'}. Book popular venues and photographers 9 to 12 months ahead for weekends in peak season.`
+    : `Prices here are shown in ${country.currency}${c.tax ? ` and include ${c.taxName || 'tax'} (${c.tax}%)` : ''}${country.tip === false ? ', with no tips added because tipping isn\u2019t expected for most event services' : ', with customary tips added for service staff'}. Book popular venues and photographers well ahead for weekends in peak season.`;
+  const neighbors = CITIES.filter(x => x !== c && (country.id === 'US' ? x.name.split(', ')[1] === c.name.split(', ')[1] : E.countryOf(x.name).id === country.id)).slice(0, 8);
   let local = '', ld = [];
-  if (top) {
+  {
     const wed = OCC.find(o => o.key === 'wedding'), quince = OCC.find(o => o.key === 'quince'), bday = OCC.find(o => o.key === 'birthday'), baby = OCC.find(o => o.key === 'baby-shower');
     const tw = totals(wed, c.name), tq = quince && totals(quince, c.name), tb = bday && totals(bday, c.name), tbs = baby && totals(baby, c.name);
     const cult = OCC.filter(o => o.culture).map(o => ({ o, t: totals(o, c.name) })).sort((x, y) => x.t[1] - y.t[1]);
     const recs = recsIn(c.name), nv = (D.NEW_VENUES || []).filter(v => v.city === c.name);
-    local = `<h2>Planning notes for ${esc(cityShort)}</h2><p>${esc(top)}</p>` +
+    local = `<h2>Planning notes for ${esc(cityShort)}</h2><p>${esc(top || autoNote)}</p>${top ? `<p>${esc(autoNote)}</p>` : ''}` +
       `<h2>Cultural weddings in ${esc(cityShort)}</h2><p class="small muted">Signature level, typical guest count for each tradition.</p><div class="table-wrap panel"><table class="qty"><thead><tr><th>Wedding</th><th class="n">Guests</th><th class="n">Signature budget</th></tr></thead><tbody>${cult.map(x => `<tr><td><a href="../${x.o.slug}/">${esc(x.o.name)}</a></td><td class="n">${x.o.guests}</td><td class="n">${money(x.t[1], c.name)}</td></tr>`).join('')}</tbody></table></div>` +
       (recs.length ? `<h2>Event Couture picks in ${esc(cityShort)}</h2><p class="small muted">Founder\u2019s picks: not paid placement or an independent review. Always check reviews and contracts yourself.</p><ul class="plain">${recs.slice(0, 16).map(r => `<li><b>${esc(r.name)}</b> \u00b7 ${esc(r.cats.map(catLabel).join(', '))}${r.cultures && r.cultures.length && !r.cultures.includes('parties') ? ' \u00b7 ' + esc(r.cultures.map(k => (D.CULTURES[k] || { name: k }).name.replace(/ wedding$/i, '')).join(', ')) + ' weddings' : ''}${r.ig ? ` \u00b7 <a href="https://instagram.com/${esc(r.ig)}" rel="nofollow noopener" target="_blank">@${esc(r.ig)}</a>` : ''}${r.note ? `<br><span class="small muted">${esc(r.note)}</span>` : ''}</li>`).join('')}</ul>` : '') +
       (nv.length ? `<h2>Newly opened venues</h2><ul class="plain">${nv.map(v => `<li><b>${esc(v.name)}</b>${v.area ? ' \u00b7 ' + esc(v.area) : ''}${v.note ? `<br><span class="small muted">${esc(v.note)}</span>` : ''}</li>`).join('')}</ul>` : '');
@@ -98,16 +103,16 @@ ${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2><div class="co
       tq ? [`How much does a quinceañera cost in ${cityShort}?`, `About ${money(tq[0], c.name)} to ${money(tq[2], c.name)} for ${quince.guests} guests, with ${money(tq[1], c.name)} a typical middle budget.`] : null,
       tb ? [`How much does a birthday party cost in ${cityShort}?`, `About ${money(tb[0], c.name)} to ${money(tb[2], c.name)} for ${bday.guests} guests.`] : null,
       tbs ? [`How much does a baby shower cost in ${cityShort}?`, `About ${money(tbs[0], c.name)} to ${money(tbs[2], c.name)} for ${baby.guests} guests.`] : null,
-      [`When is the best time to host an event in ${cityShort}?`, top]].filter(Boolean);
+      top ? [`When is the best time to host an event in ${cityShort}?`, top] : null].filter(Boolean);
+    if (neighbors.length) local += `<h2>Weddings in nearby cities</h2><div class="table-wrap panel"><table class="qty"><thead><tr><th>City</th><th class="n">Signature wedding</th></tr></thead><tbody>${neighbors.map(x => `<tr><td><a href="../${x.slug}/">${esc(x.name)}</a></td><td class="n">${money(totals(wed, x.name)[1], x.name)}</td></tr>`).join('')}</tbody></table></div>`;
     local += `<h2>Questions people ask</h2><div class="faq">${faqs.map(([q, a]) => `<details class="panel"><summary><b>${esc(q)}</b></summary><p>${esc(a)}</p></details>`).join('')}</div>`;
     ld = [{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }];
   }
-  const fullBody = top ? body.replace(`${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2>`, `${local}${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2>`) : body;
-  const title = top ? `Event & Wedding Costs in ${cityShort} (${YEAR}): Local Planning Guide | Event Couture` : `What events cost in ${c.name} (${YEAR} guide) | Event Couture`;
-  let html = page({ rel: 2, title, h1: top ? `Planning an event in ${c.name}: ${YEAR} costs and local tips` : `Planning an event in ${c.name}`, desc: top ? `${YEAR} costs for weddings, quinceañeras, birthdays and showers in ${c.name}, cultural wedding budgets, local vendor rates, the best areas for venues and when to book.` : `Typical ${YEAR} costs for weddings, quinceañeras, birthdays, showers and more in ${c.name}, with local vendor rates and the best areas for venues.`, body: fullBody, canonical: `${BASE}plan/${c.slug}/`, ld });
-  if (!top) html = html.replace('<head>', '<head><meta name="robots" content="noindex,follow">');
+  const fullBody = true ? body.replace(`${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2>`, `${local}${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2>`) : body;
+  const title = `Event & Wedding Costs in ${cityShort} (${YEAR}): Local Planning Guide | Event Couture`;
+  let html = page({ rel: 2, title, h1: `Planning an event in ${c.name}: ${YEAR} costs and local tips`, desc: true ? `${YEAR} costs for weddings, quinceañeras, birthdays and showers in ${c.name}, cultural wedding budgets, local vendor rates, the best areas for venues and when to book.` : `Typical ${YEAR} costs for weddings, quinceañeras, birthdays, showers and more in ${c.name}, with local vendor rates and the best areas for venues.`, body: fullBody, canonical: `${BASE}plan/${c.slug}/`, ld });
   write(`plan/${c.slug}/index.html`, html);
-  if (top) urls.push(`${BASE}plan/${c.slug}/`);
+  urls.push(`${BASE}plan/${c.slug}/`);
 }
 
 const AKA = { wedding: 'wedding ceremony and reception, small or intimate weddings, micro weddings and big ballroom weddings', engagement: 'engagement parties and proposal celebrations', 'bridal-shower': 'bridal showers, bridal brunches and kitchen teas', bachelorette: 'bachelorette parties, hen parties and girls’ weekends', 'baby-shower': 'baby showers, baby sprinkles and sip and sees', 'gender-reveal': 'gender reveal parties, boy or girl parties', birthday: 'adult birthday parties, birthday dinners and surprise parties', 'kids-birthday': 'kids’ birthday parties, first birthdays and children’s themed parties', milestone: '30th, 40th, 50th, 60th and 70th birthday parties', sweet16: 'sweet sixteen parties', quince: 'quinceañeras, XV años and fiestas de quince años', graduation: 'graduation parties, grad parties and open houses', anniversary: 'anniversary parties and vow renewals', retirement: 'retirement parties and farewell celebrations', brunch: 'brunches, tea parties and garden luncheons', dinner: 'dinner parties and private dinners', christmas: 'Christmas parties and family holiday dinners', holiday: 'holiday parties, New Year’s Eve parties and seasonal celebrations', gala: 'galas, charity fundraisers and award dinners', corporate: 'corporate events, company parties and office celebrations',
