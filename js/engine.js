@@ -84,7 +84,7 @@
     /* Balloon installations don't suit black-tie or romantic occasions unless the host adds them. */
     if (['gala', 'wedding', 'anniversary', 'engagement', 'dinner', 'holiday', 'christmas'].indexOf(ev.type) >= 0) list = list.filter(function (c) { return c !== 'balloons' || (ev.include || []).indexOf('balloons') >= 0; });
     if ((ev.type === 'holiday' || ev.type === 'christmas')) list = list.filter(function (c) { return (c !== 'cake' && c !== 'cakeFee') || (ev.include || []).indexOf(c) >= 0; });
-    if (hotelBallroom(ev)) list = list.filter(function (c) { return ['rentals', 'bartender', 'cleanup'].indexOf(c) < 0 || (ev.include || []).indexOf(c) >= 0; });
+    if (hotelBallroom(ev)) list = list.filter(function (c) { return c !== 'rentals' || (ev.include || []).indexOf(c) >= 0; });   /* the hotel supplies tables, chairs and linens; drinks and bartenders are still charged */
     /* A setup and cleanup crew is optional everywhere: venues, hotels and restaurants clear their own space, the caterer clears the food
        and each vendor packs up their own decor. She adds a crew from the extras when her place needs one (often at home or outdoors). */
     list = list.filter(function (c) { return c !== 'cleanup' || (ev.include || []).indexOf('cleanup') >= 0; });
@@ -135,8 +135,10 @@
       else if (ev.alcohol === 'wine') { lo *= 0.75; hi *= 0.75; label = catId === 'bar' ? 'Beer and wine' : 'Drinks (beer and wine, about two per person)'; }
     }
     /* Hotel ballroom: the room comes with the hotel's catering package (food, service staff, tables, chairs, linens), so the
-       room is only a small fee and there are no separate rentals, bartenders or cleanup crew. */
+       room is only a small fee and there are no separate rentals. The bar package and bartender fee are charged on top. */
     if (hotelBallroom(ev) && catId === 'venue') { lo *= 0.12; hi *= 0.15; label = 'Hotel ballroom (room included with the catering package; ceremony or setup fee)'; }
+    if (hotelBallroom(ev) && catId === 'bartender') label = 'Hotel bartender fee';
+    if (catId === 'rentals' && ev.setting === 'indoor' && !hotelBallroom(ev)) label = 'Rentals (tables, chairs, linens, tableware), if your venue doesn\u2019t include them';   /* many venues do, a blank space doesn't */
     if (hotelBallroom(ev) && catId === 'catering') label = 'Hotel catering package (food, service staff, tables, chairs, linens)';
     if (c.meal && isDaytime(ev)) { lo *= 0.8; hi *= 0.8; mealNote = ', lunch or brunch prices'; }
     var extras = [];
