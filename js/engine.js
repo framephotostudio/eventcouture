@@ -410,7 +410,7 @@
     today = today || new Date();
     var st = ev.setting || 'indoor';
     var bigEvent = ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0;
-    return D.CHECKLIST.filter(function (c) { return (!c.cu || c.cu === (culture(ev) && ev.culture)) && (!c.needs || musicOf(ev).indexOf(c.needs) >= 0) && !(bigEvent && /^Book the venue or reserve|^Book key vendors/.test(c.t)) && (!c.only || c.only.indexOf(ev.type) >= 0) && (!c.not || c.not.indexOf(st) < 0) && (!c.in || c.in.indexOf(st) >= 0) && (!c.minGuests || (ev.guests || 0) >= c.minGuests || ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0); }).map(function (c, i) {
+    return D.CHECKLIST.filter(function (c) { return (!c.cu || c.cu === (culture(ev) && ev.culture)) && (!c.needs || musicOf(ev).indexOf(c.needs) >= 0) && !(bigEvent && /^Book the venue or reserve|^Book key vendors/.test(c.t)) && (!c.only || c.only.indexOf(ev.type) >= 0) && (!c.not || c.not.indexOf(st) < 0) && (!c.in || c.in.indexOf(st) >= 0) && !(c.noHotel && hotelBallroom(ev)) && !(c.small && bigEvent) && (!c.minGuests || (ev.guests || 0) >= c.minGuests || ['wedding', 'gala', 'quince'].indexOf(ev.type) >= 0); }).map(function (c, i) {
       var due = date ? new Date(date.getTime() - c.w * 7 * 864e5) : null;
       /* A step whose usual lead time had already passed when the plan was made isn't "overdue": it's simply first. */
       var start = new Date((ev.created || today.toISOString().slice(0, 10)) + 'T00:00:00'); if (isNaN(start)) start = today;
