@@ -253,7 +253,7 @@
   function faceCard(ctx) {
     return '<a class="sister" href="https://facecouture.app/" target="_blank" rel="noopener"><img src="' + srcOf('img/brand/facecouture-icon-128.png') + '" alt="" width="53" height="44"><span><b>' + (ctx === 'look' ? 'Get photo-ready for the day' : 'Also from Always Luxe') + '</b><span class="muted small">Face Couture: couture beauty for every photo</span></span><span class="sister-go" aria-hidden="true">\u2192</span></a>';
   }
-  var BRAND = { markGold: 'img/brand/logo-mark-gold-wide.png', mark: 'img/brand/ec-mark-128.png', logo: 'img/brand/logo-full.jpg', compact: 'img/brand/logo-compact.jpg', banner: 'img/brand/logo-banner-wide.jpg', letters: 'img/brand/logo-letters.png' };
+  var BRAND = { markGold: 'img/brand/logo-mark-gold-wide.webp', mark: 'img/brand/ec-mark-128.png', logo: 'img/brand/logo-full.jpg', compact: 'img/brand/logo-compact.jpg', banner: 'img/brand/logo-banner-wide.jpg', letters: 'img/brand/logo-letters.png' };
   var lastHash = null;
   function frame(inner, opts) {
     opts = opts || {};
@@ -435,7 +435,7 @@
       '<p class="lead">Share a photo or a few words. AI designs the look, and you get a budget estimate for your city, top-rated vendors, a checklist and invitations. Free to plan.</p>' +
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div></div>' +
       '<figure class="hero-photo"><div class="scene">' +
-      '<img src="' + srcOf(HERO_IMG) + '"' + (window.EC_EMBED ? '' : ' srcset="img/hero-480.webp 480w, img/hero-720.webp 720w, img/hero-960.webp 960w" sizes="(min-width: 900px) 46vw, 100vw"') + ' width="960" height="1200" fetchpriority="high" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
+      '<img src="' + srcOf(HERO_IMG) + '"' + (window.EC_EMBED ? '' : ' srcset="img/hero-480.webp 480w, img/hero-720.webp 720w, img/hero-960.webp 960w" sizes="(min-width: 900px) 46vw, calc(100vw - 40px)"') + ' width="960" height="1200" fetchpriority="high" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
       tags.map(function (t) { return '<button class="hot' + (t[2] > 65 ? ' r' : t[2] < 30 ? ' l' : '') + '" style="left:' + t[2] + '%;top:' + t[3] + '%" aria-expanded="false" aria-label="' + esc(t[0]) + ', ' + money(t[1]) + '"><span class="dot" aria-hidden="true"></span><span class="lbl" aria-hidden="true"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span></button>'; }).join('') +
       '</div><figcaption>AI-generated sample look. Tap a dot to see what that piece costs.</figcaption></figure></section>' +
       HOW_IT_WORKS +
