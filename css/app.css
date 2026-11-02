@@ -579,7 +579,11 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 /* "by Always Luxe" reads clearly: Bodoni's small-size design (thicker thin strokes), a little larger on phones */
 .brand.logo-mark .by { font-optical-sizing: none; font-variation-settings: "opsz" 6; font-weight: 600; font-size: 12px; letter-spacing: .14em; }
 /* Phones too: "by Always Luxe" sits beside the logo, as on desktop (stacked only on the very smallest screens) */
-@media (min-width: 341px) and (max-width: 699px) { .brand.logo-mark { grid-auto-flow: column; align-items: center; gap: 8px; } .brand.logo-mark img { height: 38px; } .brand.logo-mark .by { font-size: 11px; letter-spacing: .12em; margin-top: 3px !important; white-space: nowrap; } }
+@media (min-width: 341px) and (max-width: 699px) { .brand.logo-mark { grid-auto-flow: column; align-items: center; gap: 8px; } .brand.logo-mark img { height: 40px; } .brand.logo-mark .by { font-size: 11.5px; letter-spacing: .1em; margin-top: 3px !important; white-space: nowrap; } }
+@media (min-width: 380px) and (max-width: 699px) { .brand.logo-mark img { height: 46px; } .brand.logo-mark .by { font-size: 13px; } }
+@media (min-width: 420px) and (max-width: 699px) { .brand.logo-mark { gap: 10px; } .brand.logo-mark img { height: 50px; } .brand.logo-mark .by { font-size: 15px; letter-spacing: .12em; } }
+/* Bolder "by Always Luxe" everywhere */
+.brand.logo-mark .by { font-weight: 700 !important; }
 @media (max-width: 340px) { .brand.logo-mark .by { font-size: 11px; letter-spacing: .1em; } }
 .brand.logo-mark:hover { text-decoration: none; }
 .topbar nav { grid-column: 3; justify-self: end; position: static !important; transform: none !important; flex-direction: row !important; gap: 6px !important; margin: 0; }

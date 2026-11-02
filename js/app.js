@@ -1773,7 +1773,7 @@
       var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
       return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(2) + '<div class="pkg-top"><h3>' + (pks.length === 1 ? 'Your package' : 'Compare your packages') + '</h3></div>' + AREA_LINE(ev) +
         '<p class="pkg-guide">Each package has a top-rated pick for every part of your plan. Tap <b>Swap</b> on anything you don’t like. When you’re happy, tap <b>Choose</b> on the one you like best: it becomes your <b>final package</b>, and we walk you through booking it.</p>' +
-        '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of every package and your budget, and your estimated total goes down to match. You can add it back anytime.</p>' +
+        '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of every package and your budget, and your estimated total goes down to match. You can add it back anytime.' + (ev.sample ? '' : ' <button type="button" class="link small" data-pkextras>+ Add an item</button>') + '</p>' +
         (pks.length === 1 && !ev.sample ? '<div class="pkg-one-more"><span class="small muted">Want to compare? We make a second package with different top-rated picks.</span><button class="btn small ghost" id="pkgMore">+ Compare with another package</button></div>' : '') + '<div class="pkg-cmp-wrap"><table class="pkg-cmp' + (pks.length === 1 ? ' one' : '') + '" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + rideRow(ev, b, true, ncol) + '</tbody></table></div>' +
         (ex.length && !ev.sample ? '<p class="small muted">Removed: ' + ex.map(function (id) { return esc(catName(id, ev)) + ' <button class="link small" data-pkunx="' + id + '">Add back</button>'; }).join(' · ') + '</p>' : '') +
         '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
@@ -1942,7 +1942,13 @@
   function addOnsFor(ev, have) {
     var rest = ev.setting === 'restaurant' || ev.setting === 'privateRoom';
     var fits = function (it) { return D.CATEGORIES[it.id] && have.indexOf(it.id) < 0 && (it.kids ? (ev.type === 'kids-birthday' || ev.kids && /birthday/.test(ev.type || '')) && !rest && (!it.settings || it.settings.indexOf(ev.setting) >= 0) : rest ? D.PKG_ADDONS_RESTAURANT.indexOf(it.id) >= 0 : (!it.only || it.only.indexOf(ev.type) >= 0) && (!it.not || it.not.indexOf(ev.type) < 0) && (!it.settings || it.settings.indexOf(ev.setting) >= 0)) ; };
-    return D.PKG_ADDONS.map(function (g) { return { group: g.group, items: g.items.filter(fits).map(function (it) { return it.id; }) }; }).filter(function (g) { return g.items.length; });
+    /* The main items a plan like hers normally has (venue, catering, photographer...) that aren't in it now, removed by mistake or
+       dropped, so she can always put them back. */
+    var full = E.budget(Object.assign({}, ev, { exclude: [], include: [] }), ev.tier).items.map(function (i) { return i.id; });
+    if (['home', 'restaurant', 'privateRoom'].indexOf(ev.setting) < 0 && full.indexOf('venue') < 0) full.unshift('venue');
+    var main = full.filter(function (id) { return D.CATEGORIES[id] && have.indexOf(id) < 0 && (id === 'venue' || NOT_VENDORS.indexOf(id) < 0 && NO_SEARCH.indexOf(id) < 0); });
+    var extra = D.PKG_ADDONS.map(function (g) { return { group: g.group, items: g.items.filter(fits).map(function (it) { return it.id; }).filter(function (id) { return main.indexOf(id) < 0; }) }; });
+    return (main.length ? [{ group: 'Main items', items: main }] : []).concat(extra).filter(function (g) { return g.items.length; });
   }
   /* At the end of every package: an easy way to add a limo or car service, when it isn't in the package yet and suits the occasion. */
   function rideRow(ev, b, inTable, ncol) {
@@ -1956,7 +1962,7 @@
   /* All the extras, grouped, in one pop-up: the package itself stays clean. */
   function extrasSheet(ev, b, onPick) {
     var groups = addOnsFor(ev, b.items.map(function (i) { return i.id; }));
-    sheet('<h3>Add extras</h3><p class="muted small">Optional extras for your ' + esc(E.culture(ev) ? E.typeName(ev).replace(/ (Wedding|Engagement)/, function (m) { return m.toLowerCase(); }) : E.lc(E.typeName(ev))) + '. Each one adds a line, a price and top-rated local businesses that offer it.</p>' +
+    sheet('<h3>Add an item</h3><p class="muted small">Anything your plan is missing, and optional extras for your ' + esc(E.culture(ev) ? E.typeName(ev).replace(/ (Wedding|Engagement)/, function (m) { return m.toLowerCase(); }) : E.lc(E.typeName(ev))) + '. Each one adds a line, a price and top-rated local businesses that offer it.</p>' +
       groups.map(function (g) { return '<p class="pkg-add-g small muted">' + esc(g.group) + '</p><div class="chips">' + g.items.map(function (id) { return '<button type="button" class="chip" data-pkadd="' + id + '">+ ' + esc(addLabel(id, ev)) + '</button>'; }).join('') + '</div>'; }).join('') +
       '<button class="btn ghost block" data-close style="margin-top:14px">Close</button>', function (el, close) {
       $$('[data-pkadd]', el).forEach(function (bt) { bt.addEventListener('click', function () { close(); onPick(bt.dataset.pkadd); }); });
@@ -1968,7 +1974,7 @@
     var pl = ev.setting === 'restaurant' ? null : playlistOf(ev), have = b.items.map(function (i) { return i.id; });
     var groups = ev.sample ? [] : addOnsFor(ev, have);
     return (pl ? '<div class="pkg-pl"><span aria-hidden="true">\u266b</span><span class="grow"><b>Playlist: ' + esc(pl.name) + '</b><span class="small muted pl-sub">' + pl.songs.length + ' songs, part of your package</span></span><a class="btn small ghost" href="#/e/' + esc(ev.id) + '/style" data-goto="playlist">See the songs</a></div>' : '') +
-      (groups.length ? '<div class="pkg-adds-row"><span class="grow"><b class="small">Want extras?</b><span class="small muted"> ' + esc(addTeaser(groups, ev)) + '</span></span><button type="button" class="btn small ghost" data-pkextras>+ Add extras</button></div>' : '');
+      (groups.length ? '<div class="pkg-adds-row"><span class="grow"><b class="small">' + (groups[0].group === 'Main items' ? 'Missing something?' : 'Want extras?') + '</b><span class="small muted"> ' + esc(groups[0].group === 'Main items' ? groups[0].items.slice(0, 3).map(function (id) { return addLabel(id, ev); }).join(', ') + (groups[0].items.length > 3 ? ' and more' : '') : addTeaser(groups, ev)) + '</span></span><button type="button" class="btn small ghost" data-pkextras>+ Add an item</button></div>' : '');
   }
   function pkgSumDoc(ev) {
     var b = E.budget(ev, ev.tier), cats = pkgCats(ev, b), pks = ev.packages || [], cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], d = pkgData(ev, b, cats, cp);
