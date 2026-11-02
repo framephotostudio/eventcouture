@@ -19,7 +19,7 @@ with sync_playwright() as p:
     pg.screenshot(path=OUT + '/draft-events.png', full_page=True)
     if name not in pg.inner_text('#main'): problems.append('draft name not listed')
     pg.reload(); pg.wait_for_selector('text=In progress')
-    pg.click('text=Continue'); pg.wait_for_selector('#name')
+    pg.click('.list .acts >> text=Continue'); pg.wait_for_selector('#name')
     if pg.input_value('#name') != name or pg.input_value('#guests') != '150': problems.append('draft details lost')
     pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]'); pg.click('#next'); pg.wait_for_selector('.concept'); pg.click('.concept button.gold'); pg.wait_for_selector('#rename')
     pg.click('#rename'); pg.fill('#nn', 'Our Forever Day'); pg.click('#ok'); pg.wait_for_timeout(200)

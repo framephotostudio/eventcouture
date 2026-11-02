@@ -318,6 +318,7 @@
       if (p[0] === 'cq' && p[1]) return cqRequest(p[1]);
       if (p[0] === 'vendors' && p[1] === 'requests') { if (CFG.app) { location.replace('#/'); return; } return vendorRequests(); }
       if (p[0] === 'r' && /^[a-f0-9]{20}$/.test(p[1] || '')) return vendorReply(p[1]);
+      if (p[0] === 'move' && /^[a-f0-9]{24}$/.test(p[1] || '') && CFG.apiUrl) return movePage(p[1]);
       if (p[0] === 'vendors' && p[1] === 'new' && p[2]) { if (CFG.app) { location.replace('#/'); return; } var nv = store.get('vendor', {}); if (!nv.name) { nv.name = decodeURIComponent(p[2]).slice(0, 120); store.set('vendor', nv); } CLAIMING = ''; return vendorJoin(); }
       if (p[0] === 'vendors' && p[1] === 'claim' && p[2]) { if (CFG.app) { location.replace('#/'); return; } var cv = store.get('vendor', {}), cn = decodeURIComponent(p[2]).slice(0, 120); var mine = cv.key || cv.serverId; if (cv.name !== cn && !mine) { cv = { name: cn, ig: p[3] ? '@' + decodeURIComponent(p[3]).replace(/^@/, '') : '' }; store.set('vendor', cv); }   /* never replace a listing this device already manages */ CLAIMING = mine && cv.name !== cn ? '' : cn; if (mine && cv.name !== cn) setTimeout(function () { toast('This device manages the listing for ' + (cv.name || 'another business') + '. To claim ' + cn + ', use a different device or ask us by email.'); }, 300); return vendorJoin(); }
       if (p[0] === 'vendors') { CLAIMING = ''; if (CFG.app) { location.replace('#/'); return; } return vendorJoin(); }
@@ -345,6 +346,66 @@
     ['officiant', 'cleanup', 'rentals'].forEach(function (c) { var used = (ev.overrides || {})[c] || (ev.shortlist || []).some(function (x) { return x && x.cat === c; }) || (ev.packages || []).some(function (pk) { return pk && pk.items && pk.items[c]; });
       if (used && (ev.exclude || []).indexOf(c) < 0 && (ev.include || []).indexOf(c) < 0) ev.include = (ev.include || []).concat(c); }); });
     if (changed) store.set('events', all); } catch (e) {} })();
+  /* Continue on another device: a private link (30 days) that copies this plan to another phone or computer, and backup files. */
+  function planBlob(ev) {
+    var copy = JSON.parse(JSON.stringify(ev)), photos = (copy.inspiration && copy.inspiration.photos) || [];
+    var size = function () { return JSON.stringify(copy).length; };
+    if (size() < 1400000) return Promise.resolve(copy);
+    return Promise.all(photos.map(function (p) { return p && p.src ? shrinkPhoto(p.src, 900).then(function (s) { p.src = s; }) : null; })).then(function () {
+      if (size() > 1400000) copy.inspiration.photos = photos.filter(function (p) { return p && p.src; }).slice(0, 1);
+      return copy;
+    });
+  }
+  function moveSheet(ev) {
+    if (!CFG.apiUrl) return backupFile(ev);
+    sheet('<h3>Continue on another device</h3><p class="muted small">Your plan saves automatically on this device. To keep working on your phone or another computer, send yourself a private link. Opening it there copies this plan, with your packages, guests and vendor replies.</p>' +
+      '<p class="small muted">The link works for 30 days. Anyone with it can open a copy of your plan, so send it only to yourself.</p>' +
+      '<div id="mvOut" class="stack"><button class="btn gold block" id="mvMake">Create my private link</button></div>' +
+      '<button class="btn ghost block" data-mvfile>Download a backup file instead</button><button class="btn ghost block" data-close>Close</button>', function (el, close) {
+      el.querySelector('[data-mvfile]').addEventListener('click', function () { backupFile(ev); });
+      el.querySelector('#mvMake').addEventListener('click', function () {
+        var bt = this; bt.disabled = true; bt.textContent = 'Creating your link…';
+        planBlob(ev).then(function (plan) { return apiMarket('move/new', { plan: plan }); }).then(function (r) {
+          var link = 'https://eventcouture.app/#/move/' + r.id, body = 'My Event Couture plan "' + ev.name + '": ' + link;
+          T('plan_move_link', {});
+          el.querySelector('#mvOut').innerHTML = '<label class="field"><span>Your private link</span><input class="input" id="mvLink" readonly value="' + esc(link) + '"></label>' +
+            '<button class="btn gold block" id="mvCopy">Copy link</button><a class="btn ghost block" href="mailto:?subject=' + encodeURIComponent('My Event Couture plan') + '&body=' + encodeURIComponent(body) + '">Email it to myself</a><a class="btn ghost block" href="sms:' + (/iPhone|iPad/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(body) + '">Text it to myself</a>';
+          el.querySelector('#mvCopy').addEventListener('click', function () { var i = el.querySelector('#mvLink'); i.focus(); i.setSelectionRange(0, i.value.length); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} if (!ok && navigator.clipboard) navigator.clipboard.writeText(link).then(function () { toast('Link copied'); }, function () { toast('Select the link and copy it'); }); else toast(ok ? 'Link copied' : 'Select the link and copy it'); });
+        }).catch(function (e) { bt.disabled = false; bt.textContent = 'Create my private link'; toast(e.message || 'That didn’t work. Try again, or download a backup file.'); });
+      });
+    });
+  }
+  function backupFile(ev) {
+    planBlob(ev).then(function (plan) {
+      var blob = new Blob([JSON.stringify({ eventCouture: 1, plan: plan })], { type: 'application/json' }), a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = (ev.name || 'event').replace(/[^\w -]+/g, '').trim().replace(/\s+/g, '-') + '-event-couture.json'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      toast('Backup saved. Open it from My events › Restore a backup on any device');
+    });
+  }
+  /* Bring a plan in from a link or a file. If this device already has it, she chooses: replace it or keep both. */
+  function importPlan(plan, done) {
+    if (!plan || !plan.id || !plan.name) return toast('That isn’t an Event Couture plan.');
+    var all = events(), have = all[plan.id];
+    var put = function (asCopy) { var p = JSON.parse(JSON.stringify(plan)); if (asCopy) { p.id = uid(); p.name = plan.name + ' (copy)'; } p.mig2 = p.mig2 || 0; p.updated = Date.now(); all = events(); all[p.id] = p; store.set('events', all); T('plan_imported', {}); location.hash = '#/e/' + p.id; toast(p.name + ' is on this device now'); if (done) done(); };
+    if (!have) return put(false);
+    sheet('<h3>You already have “' + esc(have.name) + '” here</h3><p class="muted small">This device has a version saved ' + (have.updated ? new Date(have.updated).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'earlier') + '. The one you’re opening was saved ' + (plan.updated ? new Date(plan.updated).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'earlier') + '.</p><button class="btn gold block" data-imp="replace">Replace it with the one I’m opening</button><button class="btn ghost block" data-imp="copy">Keep both</button><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
+      $$('[data-imp]', el).forEach(function (b) { b.addEventListener('click', function () { close(); put(b.dataset.imp === 'copy'); }); });
+    });
+  }
+  function movePage(id) {
+    frame('<div class="wizard stack"><p class="muted">Opening your plan…</p></div>');
+    fetch(CFG.apiUrl + '/api/move/' + encodeURIComponent(id)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || 'Not found'); return j; }); }).then(function (j) {
+      var p = j.plan;
+      frame('<div class="wizard stack-lg"><div class="stack"><p class="eyebrow">Continue your plan</p><h2>' + esc(p.name || 'Your plan') + '</h2><p class="muted">' + esc([p.city, p.guests ? p.guests + ' guests' : ''].filter(Boolean).join(' · ')) + '</p><p class="muted small">Add it to this device to keep planning here. It saves on this device from then on.</p></div><button class="btn gold block" id="mvAdd">Add this plan to this device</button></div>');
+      $('#mvAdd').addEventListener('click', function () { importPlan(p); });
+    }).catch(function (e) { frame('<div class="wizard stack"><h2>This link isn’t available</h2><p class="muted">' + esc(e.message || '') + '</p><a class="btn gold" href="#/events">My events</a></div>'); });
+  }
+  document.addEventListener('click', function (e) {
+    var m = e.target.closest && e.target.closest('[data-move],[data-backup],[data-restore-file]'); if (!m) return;
+    if (m.hasAttribute('data-restore-file')) { var f = document.createElement('input'); f.type = 'file'; f.accept = 'application/json,.json'; f.addEventListener('change', function () { var file = f.files[0]; if (!file) return; if (file.size > 8e6) return toast('That file is too large.'); var rd = new FileReader(); rd.onload = function () { try { var j = JSON.parse(rd.result); importPlan(j && j.plan); } catch (x) { toast('That isn’t an Event Couture backup file.'); } }; rd.readAsText(file); }); f.click(); return; }
+    var id = (location.hash.match(/^#\/e\/([^/]+)/) || [])[1], ev = id && events()[id]; if (!ev) return;
+    if (m.hasAttribute('data-move')) moveSheet(ev); else backupFile(ev);
+  });
   window.addEventListener('hashchange', function () { if (NEWER) { location.reload(); return; } checkNewer(); });
   window.addEventListener('hashchange', function () { clearToasts(); $$('.sheet-back').forEach(function (x) { x.remove(); }); route(); });   /* pop-ups never follow you to another page */
   function notFound() { frame('<div class="stack"><h2>This page doesn’t exist</h2><p class="muted">It may have been removed. <a href="#/">Go to the home page</a>.</p></div>'); }
@@ -493,6 +554,7 @@
     var ds = Object.values(drafts()).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); });
     var stepName = { 1: 'Inspiration', 2: 'Details', 3: 'Review details' };
     frame('<div class="stack-lg"><div class="row" style="justify-content:space-between"><h2>My events</h2><a class="btn gold small" href="#/new">Plan a new event</a></div>' +
+      '<p class="small muted">Your plans save automatically on this device. To work on another phone or computer, open a plan and tap <b>Continue on another device</b>. <button class="link small" data-restore-file>Restore a backup file</button></p>' +
       (ds.length ? '<div class="stack"><h3>In progress</h3><p class="muted small">Saved automatically. Pick up right where you left off.</p><div class="list panel">' + ds.map(function (d) {
         var dsrc = d.inspiration.photos[0] ? d.inspiration.photos[0].src : E.inspoOf(d) ? INSPO_IMG + 'sm/' + E.inspoOf(d).id + '.jpg' : '';
         var thumb = dsrc ? '<img src="' + srcOf(dsrc) + '" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:8px">' : '<span style="width:52px;height:52px;border-radius:8px;background:var(--champagne-soft);display:block"></span>';
@@ -1031,7 +1093,7 @@
     var head = '<div class="plan-head">' + (hp ? thumb(hp, 'banner') : '<div class="swatch" aria-hidden="true">' + (ev.concept.palette || []).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div>') +
       '<div class="plan-row"><div style="min-width:0"><h2>' + esc(ev.name) + (ev.sample ? '' : ' <button class="link small" id="rename" style="font-family:var(--body)">Rename</button>') + '</h2><div class="meta">' + (ev.concept.styleName && ev.concept.styleName !== ev.name ? '<span>' + esc(ev.concept.styleName) + '</span>' : '') + '<span>' + (ev.sample ? esc(fmtDate(ev.date)) + (ev.time && ev.date ? ', ' + fmtTime(ev.time) : '') : '<button class="link small" id="when" aria-label="Date and time: ' + esc(ev.date ? fmtDate(ev.date) : 'not set') + '. Change">' + (ev.date || ev.dateFrom ? esc(whenText(ev)) : 'Set your date') + '</button>') + '</span><span>' + esc(ev.city) + '</span><span>' + (ev.sample ? plural(ev.guests, 'guest') : '<button class="link small" id="guestsBtn" aria-label="' + plural(ev.guests, 'guest') + '. Change">' + plural(ev.guests, 'guest') + '</button>') + '</span>' + (ev.sample ? '' : '<span><label class="alc-tgl small"><input type="checkbox" id="alcTgl"' + (ev.alcohol !== 'none' ? ' checked' : '') + '> Alcohol</label></span>') + '<span>' + (ev.sample ? esc(settingName(ev)) : '<button class="link small" id="where" aria-label="Where it happens: ' + esc(settingName(ev)) + '. Change">' + esc(settingName(ev)) + '</button>') + '</span></div></div>' +
       '<div class="plan-total"><div class="display num" style="font-size:1.9rem">' + money(b.total) + '</div><div class="muted small">' + 'Estimated total \u00b7 ' + (b.tier.id === 'F' ? (b.shortBy ? 'Closest plan, ' + money(b.shortBy) + ' over your budget' : 'Fits your ' + money(ev.budget) + ' budget') : esc(b.tier.name)) + '</div>' + (!ev.sample && !ev.budget && b.tier.id !== 'L' && b.tier.id !== 'F' ? '<button class="link small" data-lower>From ' + money(E.budget(ev, 'L').total) + ' with Luxe for Less</button>' : '') + '</div></div>' +
-      (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new">Start your own</a> to edit it with your details.</div>' : '') + '</div>';
+      (ev.sample ? '<div class="note">This is a sample plan. <a href="#/new">Start your own</a> to edit it with your details.</div>' : '<p class="small muted save-line"><span aria-hidden="true">\u2713</span> Saved on this device \u00b7 <button class="link small" data-move>Continue on another device</button></p>') + '</div>';
     if (!TAB_VIEWS[tab]) tab = 'overview';
     var gi = groupOf(tab);
     var groupBar = '<nav class="groupbar" aria-label="Plan sections">' + TAB_GROUPS.map(function (g, i) { return '<a href="' + base + '/' + g[1][0][0] + '"' + (i === gi ? ' aria-current="true"' : '') + '>' + esc(g[0]) + '</a>'; }).join('') + '</nav>';
@@ -1190,6 +1252,7 @@
     if (ev.sample || !(CFG.app || CFG.launchFree)) return '';
     return '<details class="plan-settings"><summary>Plan settings</summary><div class="stack" style="padding-top:10px">' +
       (isKept(ev) ? '<p class="small muted">Your plan is kept. Every edit is saved' + (ev.paid && ev.paid.at ? ', available until ' + esc(accessUntil(ev, ev.paid.at)) : '') + '.</p>' : '<div class="row" style="justify-content:space-between"><span class="small">Keep your plan to save every edit and share it with guests. Free' + (CFG.app ? ' in the app' : ' during our launch') + '.</span><button class="btn small" data-keep>Keep my plan</button></div>') +
+      '<div class="row" style="justify-content:space-between"><span class="small">Your plan saves on this device. Keep working on your phone or another computer, or keep a backup file.</span><span class="acts"><button class="btn small ghost" data-move>Continue on another device</button><button class="btn small ghost" data-backup>Download a backup</button></span></div>' +
       '<div class="row" style="justify-content:space-between"><span class="small muted">Delete removes the plan, guest list and photos from this device.</span><button class="btn small ghost" id="del" style="color:var(--bad)">Delete event</button></div></div></details>';
   }
   /* The finished plan as plain data, for the PDF, email and share. */

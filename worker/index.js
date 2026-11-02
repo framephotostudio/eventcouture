@@ -39,6 +39,8 @@ export default {
       const ask = url.pathname.match(/^\/api\/ask\/([a-f0-9]{20})(?:\/(reply|delete))?$/);
       if (ask) return await askVendor(req, env, ask[1], ask[2] || '', json);
       if (url.pathname === '/api/ask/new') return await askVendor(req, env, '', 'new', json);
+      const mv = url.pathname.match(/^\/api\/move\/(new|[a-f0-9]{24})$/);
+      if (mv) return await movePlan(req, env, mv[1], json);
       if (req.method === 'GET' && url.pathname === '/api/vendors') return await vendorSearch(env, url, json);
       const vp = url.pathname.match(/^\/api\/vendor\/([a-z0-9]{8,16})$/);
       if (req.method === 'GET' && vp) return await vendorProfile(env, vp[1], json);
@@ -629,6 +631,27 @@ async function askVendor(req, env, id, action, json) {
   rec.reply = reply;
   try { await env.EC_KV.put(k, JSON.stringify(rec), { expirationTtl: ASK_TTL }); } catch (e) { return json({ error: 'That didn\u2019t send. Please try again in a little while.' }, 503); }
   return json({ ok: true, vt });
+}
+
+// ---------- Continue on another device: a private link that copies one plan to another phone or computer (30 days) ----------
+const MOVE_MAX = 1500000;
+async function movePlan(req, env, id, json) {
+  if (!env.EC_KV) return json({ error: 'Moving plans is not connected yet.' }, 503);
+  const ip = req.headers.get('cf-connecting-ip') || 'unknown';
+  if (id === 'new') {
+    if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
+    if (+(req.headers.get('content-length') || 0) > MOVE_MAX + 4000) return json({ error: 'This plan is too large to move. Remove a few photos and try again.' }, 413);
+    if (!askOk(ip, 'm', 20) || !(await rateOk(env, ip))) return json({ error: 'Please wait a few minutes and try again.' }, 429);
+    const b = await req.json().catch(() => ({})), text = JSON.stringify(b.plan || null);
+    if (!b.plan || typeof b.plan !== 'object' || !b.plan.id) return json({ error: 'Missing plan' }, 400);
+    if (text.length > MOVE_MAX) return json({ error: 'This plan is too large to move. Remove a few photos and try again.' }, 413);
+    const nid = [...crypto.getRandomValues(new Uint8Array(12))].map(x => x.toString(16).padStart(2, '0')).join('');
+    try { await env.EC_KV.put('mv:' + nid, text, { expirationTtl: 30 * 86400 }); } catch (e) { return json({ error: 'That didn\u2019t work right now. Please try again in a little while.' }, 503); }
+    return json({ id: nid });
+  }
+  if (req.method !== 'GET') return json({ error: 'Not found' }, 404);
+  const plan = await env.EC_KV.get('mv:' + id, 'json');
+  return plan ? json({ plan }) : json({ error: 'This link has expired or was already replaced. Make a new one from the plan on your other device.' }, 404);
 }
 
 // ---------- Payments: Stripe Checkout for Event Couture's own fees (the concierge booking packages) ----------
