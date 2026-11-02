@@ -31,11 +31,14 @@
       try {
         var p = {}; Object.keys(params || {}).forEach(function (k) { if (params[k] !== undefined && params[k] !== null && params[k] !== '') p[k] = typeof params[k] === 'string' ? params[k].slice(0, 90) : params[k]; });
         p.app_name = 'event_couture'; p.app_platform = platform;
+        try { var rs = sessionStorage.getItem('ec.ref'); if (rs) p.ref_source = rs; } catch (e) {}
         var key = name + JSON.stringify(p), now = Date.now(); if (last[key] && now - last[key] < 800) return; last[key] = now;
         clean(); gtag('event', name, p);
       } catch (e) {}
     }
     window.ecTrack = track;
+    /* Referrals: someone who taps "Plan my event" on a shared invitation or view-only plan is counted as coming from it for the rest of the visit. */
+    document.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('[data-promo]'); if (!a) return; var src = a.getAttribute('data-promo') || 'share'; try { sessionStorage.setItem('ec.ref', src); } catch (er) {} track('referral_click', { source: src }); }, true);
 
     /* Pages: hash routes become readable paths with no event ids, e.g. #/e/abc123/budget -> /eventcouture/plan/budget */
     function pagePath() {
