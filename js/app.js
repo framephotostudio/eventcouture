@@ -1561,6 +1561,7 @@
   /* Prices that belong to a saved option carry its id (opt), so removing the option removes its price or booking too.
      A price typed on the Budget page for no particular option is left alone unless the front-runner has a quote. */
   function syncPrice(ev, cat) {
+    if (cat === 'venue') { var hp = pickOf(ev, 'venue'); if (ev.venueKind === 'ballroom' && hp && hp.name) ev.hotelPick = { name: hp.name, cls: E.hotelClass(hp.name, hp.price, hp.rating) }; else delete ev.hotelPick; }   /* hotel food is priced by the class of the hotel she picked */
     var o = ev.overrides = ev.overrides || {}, ov = o[cat], l = savedFor(ev, cat);
     var has = function (id) { return l.some(function (x) { return x.id === id; }); };
     if (ov && !ov.opt && ov.source === 'booking' && ov.note) { var m = l.find(function (x) { return x.name === ov.note; }); if (m) ov.opt = m.id; }
