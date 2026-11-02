@@ -53,16 +53,20 @@ with sync_playwright() as p:
         pg.screenshot(path=f'{OUT}/pkg2_{n}.png', full_page=True)
         # swap one item in package 2
         pg.click('[data-pkswap][data-pk="1"] >> nth=1'); pg.wait_for_selector('[data-pkpick]'); old=ev()['packages'][1]['items']; cat=pg.get_attribute('[data-pkswap][data-pk="1"] >> nth=1','data-pkswap')
-        pg.click('[data-pkpick] >> nth=0'); pg.wait_for_timeout(300); new=ev()['packages'][1]['items']
-        check(n, new[cat]!=old[cat] and new[cat]!=ev()['packages'][0]['items'][cat], 'swap replaces just that item')
+        p0=ev()['packages'][0]['items'][cat]
+        check(n, pg.query_selector(f'[data-pkpick="{p0}"]') is not None and pg.query_selector('.pk-swapin .pk-cur') is not None, 'swap lists the picks already in the packages first, with the current one marked')
+        pg.click(f'[data-pkpick="{p0}"]'); pg.wait_for_timeout(300); new=ev()['packages'][1]['items']
+        check(n, new[cat]==p0 and ev()['packages'][0]['items'][cat]==old[cat], 'picking package 1\'s choice trades the two, never the same business twice')
+        pg.click('[data-pkswap][data-pk="1"] >> nth=1'); pg.wait_for_selector('[data-pkmore]'); pg.click('[data-pkmore]'); pg.click('[data-pkmorebox] [data-pkpick] >> nth=0'); pg.wait_for_timeout(300)
+        nn=ev()['packages'][1]['items'][cat]; check(n, nn not in (old[cat], p0) and nn!=ev()['packages'][0]['items'][cat], 'Show more options: a new business swaps in')
         check(n, all(len([x for x in ev()['shortlist'] if x['cat']==c])<=3 for c in new), 'never more than 3 saved per category')
         # put a business from the full list into the package
         pg.goto(U+base+'/vendors'); pg.wait_for_timeout(300); pg.click('[data-vendor] >> nth=0'); pg.wait_for_selector('[data-topkg]'); vc=pg.get_attribute('[data-vendor] >> nth=0','data-vendor')
         key=pg.get_attribute('[data-topkg] >> nth=0','data-topkg'); pg.click('[data-topkg] >> nth=0'); pg.wait_for_timeout(300)
         check(n, ev()['packages'][1]['items'][vc]==key.split('|')[1], 'Put in package adds a business from the full list')
         # add one she found herself
-        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkswap][data-pk="1"] >> nth=2'); pg.wait_for_selector('.pk-swap .cmp-add'); oc=pg.get_attribute('[data-pkswap][data-pk="1"] >> nth=2','data-pkswap')
-        pg.click('.pk-swap .cmp-add summary'); pg.fill('[data-ownname]','Bella Cakes by Ana'); pg.fill('[data-ownlink]','bellacakes.com'); pg.click('[data-ownadd]'); pg.wait_for_timeout(300)
+        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkswap][data-pk="1"] >> nth=2'); pg.wait_for_selector('.pk-swap [data-ownopen]'); oc=pg.get_attribute('[data-pkswap][data-pk="1"] >> nth=2','data-pkswap')
+        pg.click('.pk-swap [data-ownopen]'); pg.fill('[data-ownname]','Bella Cakes by Ana'); pg.fill('[data-ownlink]','bellacakes.com'); pg.click('[data-ownadd]'); pg.wait_for_timeout(300)
         check(n, 'Bella Cakes by Ana' in pg.inner_text('#pkg'), 'her own business goes into the package')
         # change the venue area from the package
         pg.click('#pkgArea'); pg.wait_for_selector('#parea'); pg.select_option('#parea','__other'); pg.fill('#pareaOther','Rice Village'); old_v=ev()['packages'][ev()['pkgView']]['items']

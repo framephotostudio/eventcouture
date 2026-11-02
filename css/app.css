@@ -1021,3 +1021,8 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 footer.site nav.foot-guides { gap: 6px 14px; font-size: .8rem; margin-top: 4px; opacity: .9; }
 .app-soon-bar [data-install] { display: block; margin-top: 2px; padding: 0; text-align: left; }
 .install-steps li { margin: 8px 0; }
+/* Swap: her 3 picks first, more on request, add her own */
+.pk-swapin .it.pk-cur { background: color-mix(in srgb, var(--gold, #C9A35B) 10%, transparent); border-radius: 10px; }
+.pk-swapin [data-pkmore], .pk-swapin .pk-own { margin-top: 10px; }
+.pk-swapin [data-ownbox] .btn { margin-top: 8px; }
+.pk-swapin .it { padding: 8px 10px; margin: 0 -10px 4px; }
