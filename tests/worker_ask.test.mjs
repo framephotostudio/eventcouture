@@ -1,0 +1,22 @@
+// Vendor replies on the server: create a request, vendor reads it and answers (only what they choose), no customer contact stored: node tests/worker_ask.test.mjs
+import assert from 'assert';
+const src = await import('../worker/index.js');
+const store = new Map();
+const env = { EC_KV: { get: async (k, t) => store.has(k) ? (t === 'json' ? JSON.parse(store.get(k)) : store.get(k)) : null, put: async (k, v) => { store.set(k, v); }, delete: async k => { store.delete(k); } }, ALLOWED_ORIGINS: 'https://x' };
+const call = async (path, body) => { const r = await src.default.fetch(new Request('https://w' + path, body ? { method: 'POST', headers: { origin: 'https://x', 'content-type': 'application/json', 'cf-connecting-ip': '6.6.6.6' }, body: JSON.stringify(body) } : { headers: { origin: 'https://x' } }), env); return { status: r.status, body: await r.json() }; };
+const key = 'k'.repeat(36);
+assert.equal((await call('/api/ask/new', { key: 'short', d: { need: 'DJ', vendor: 'DJ Yamani' } })).status, 400, 'needs a real key');
+assert.equal((await call('/api/ask/new', { key, d: { need: '', vendor: '' } })).status, 400, 'needs what and who');
+let r = await call('/api/ask/new', { key, d: { type: 'Wedding', date: '2027-06-12', city: 'Houston, TX', guests: 150, look: 'Ivory Elegance', colors: 'ivory, gold', need: 'DJ', vendor: 'DJ Yamani', first: 'Layla', email: 'secret@x.com', phone: '713' } });
+assert.equal(r.status, 200); const id = r.body.id; assert.match(id, /^[a-f0-9]{20}$/);
+r = await call('/api/ask/' + id); assert.equal(r.status, 200); assert.equal(r.body.d.need, 'DJ'); assert.equal(r.body.d.guests, 150); assert.equal(r.body.reply, null);
+assert.ok(!JSON.stringify(r.body).includes('secret@x.com') && !JSON.stringify(r.body).includes(key) && !('kh' in r.body), 'no customer contact or key ever stored or shown');
+assert.equal((await call('/api/ask/' + id + '/reply', {})).status, 400, 'an empty reply is refused');
+r = await call('/api/ask/' + id + '/reply', { name: 'DJ Yamani', avail: 'yes', priceMode: 'direct', price: 5000, phone: '(713) 555-0100<script>' , note: 'Happy to help!' });
+assert.equal(r.status, 200);
+r = await call('/api/ask/' + id); assert.equal(r.body.reply.avail, 'yes'); assert.equal(r.body.reply.price, 0, 'price hidden when they prefer to share directly'); assert.ok(!/[<>]/.test(r.body.reply.phone), 'phone cleaned');
+await call('/api/ask/' + id + '/reply', { avail: 'check', priceMode: 'price', price: 1800 });
+r = await call('/api/ask/' + id); assert.equal(r.body.reply.price, 1800); assert.equal(r.body.reply.avail, 'check');
+assert.equal((await call('/api/ask/' + 'f'.repeat(20))).status, 404, 'unknown request');
+assert.equal((await call('/api/ask/xyz/reply', { avail: 'yes' })).status, 404, 'bad id');
+console.log('ask worker tests passed');

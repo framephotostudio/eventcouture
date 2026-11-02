@@ -1026,3 +1026,8 @@ footer.site nav.foot-guides { gap: 6px 14px; font-size: .8rem; margin-top: 4px; 
 .pk-swapin [data-pkmore], .pk-swapin .pk-own { margin-top: 10px; }
 .pk-swapin [data-ownbox] .btn { margin-top: 8px; }
 .pk-swapin .it { padding: 8px 10px; margin: 0 -10px 4px; }
+/* Vendor replies */
+.ask-st { display: block; margin-top: 4px; }
+.ask-ok b { color: var(--ok, #2E7D4F); }
+.vreply .vr-d { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+.vreply .vr-d dt { color: var(--muted); font-size: .9rem; } .vreply .vr-d dd { margin: 0; font-weight: 500; }

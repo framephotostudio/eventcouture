@@ -317,6 +317,8 @@
       if (p[0] === 'admin' && p[1] === 'emails') return emailExportPage();
       if (p[0] === 'cq' && p[1]) return cqRequest(p[1]);
       if (p[0] === 'vendors' && p[1] === 'requests') { if (CFG.app) { location.replace('#/'); return; } return vendorRequests(); }
+      if (p[0] === 'r' && /^[a-f0-9]{20}$/.test(p[1] || '')) return vendorReply(p[1]);
+      if (p[0] === 'vendors' && p[1] === 'new' && p[2]) { if (CFG.app) { location.replace('#/'); return; } var nv = store.get('vendor', {}); if (!nv.name) { nv.name = decodeURIComponent(p[2]).slice(0, 120); store.set('vendor', nv); } CLAIMING = ''; return vendorJoin(); }
       if (p[0] === 'vendors' && p[1] === 'claim' && p[2]) { if (CFG.app) { location.replace('#/'); return; } var cv = store.get('vendor', {}), cn = decodeURIComponent(p[2]).slice(0, 120); if (cv.name !== cn) { cv = { name: cn, ig: p[3] ? '@' + decodeURIComponent(p[3]).replace(/^@/, '') : '' }; store.set('vendor', cv); } CLAIMING = cn; return vendorJoin(); }
       if (p[0] === 'vendors') { CLAIMING = ''; if (CFG.app) { location.replace('#/'); return; } return vendorJoin(); }
       if (p[0] === 'v' && p[1]) return vendorProfile(p[1]);
@@ -1700,28 +1702,103 @@
   }
   function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rec: p.rec || undefined, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '', reservable: p.reservable || undefined }; }
   function usedIn(ev, cat, id, except) { return (ev.packages || []).some(function (pk, k) { return k !== except && pk.items[cat] === id; }); }
-  /* "Message this vendor": a ready-to-send inquiry she sends herself (text, Instagram, email), saying where she found them.
+  /* "Message this vendor": a ready-to-send inquiry she sends herself (text, Instagram, email), written from her plan and package.
+     It carries a private reply link: the vendor answers in a minute, sharing only what they want, and the answer lands in her plan.
      Vendors hear about Event Couture from a real client, never from us. */
-  function inquiryText(ev, cat, biz) {
-    var what = E.lc(catName(cat, ev)).replace(/ \(.*\)$/, ''), when = ev.date ? ' on ' + new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
-    return 'Hi ' + biz.name.split(/ [-|·] /)[0] + '! I’m planning a' + (/^[aeiou]/i.test(E.lc(E.typeName(ev))) ? 'n ' : ' ') + E.lc(E.typeName(ev)) + ' in ' + (ev.city || '').split(',')[0] + when + ' for about ' + (ev.guests || 0) + ' guests, and I’d love to know your availability and pricing for ' + what + '. I found you on Event Couture (eventcouture.app).';
+  var REPLY_URL = 'https://eventcouture.app/#/r/';
+  function lookColors(ev) { var cols = []; ((ev.concept && ev.concept.palette) || []).forEach(function (h) { var n = hexName(h); if (n && cols.indexOf(n) < 0) cols.push(n); }); return cols.slice(0, 3); }
+  function askOf(ev, cat, biz) { return ((ev.asks || {})[cat + '|' + biz.id]) || null; }
+  function inquiryText(ev, cat, biz, o) {
+    o = o || {};
+    var what = E.lc(catName(cat, ev)).replace(/ \(.*\)$/, ''), tn = E.lc(E.typeName(ev)), when = ev.date ? ' on ' + new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+    var look = ev.concept && (ev.concept.styleName || ev.concept.name || '').replace(/ (wedding|party|celebration)$/i, ''), cols = lookColors(ev), it = E.budget(ev, ev.tier).items.find(function (i) { return i.id === cat; });
+    return 'Hi ' + biz.name.split(/ [-|·] /)[0] + '! I’m ' + (o.first ? o.first + ', ' : '') + 'planning a' + (/^[aeiou]/.test(tn) ? 'n ' : ' ') + tn + ' in ' + (ev.city || '').split(',')[0] + when + ' for about ' + (ev.guests || 0) + ' guests' +
+      '.' + (look ? ' The look we\u2019re going for is ' + look + (cols.length ? ', in ' + listAnd(cols) : '') + '.' : '') + ' I\u2019d love to know your availability and pricing for ' + what + '.' +
+      (o.budget && it ? ' My budget for ' + what + ' is about ' + money(it.mid) + '.' : '') +
+      (o.link ? ' I found you on Event Couture. You can reply in a minute here, sharing only what you\u2019re comfortable with: ' + REPLY_URL + o.link : ' I found you on Event Couture (eventcouture.app).');
   }
-  function messageVendor(ev, cat, biz) {
+  function listAnd(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+  function messageVendor(ev, cat, biz, after) {
     var ig = biz.ig || (/^ig:/.test(biz.id) ? biz.id.slice(3) : (String(biz.site || biz.url || '').match(/instagram\.com\/([\w.]+)/i) || [])[1]), site = siteOf(biz) || '', phone = biz.phone || '';
-    sheet('<h3>Message ' + esc(biz.name) + '</h3><p class="muted small">Edit anything you like, then send it your way. Copy it, then paste it into their Instagram, text or email.</p>' +
-      '<textarea class="input" id="vmsg" rows="6" aria-label="Your message">' + esc(inquiryText(ev, cat, biz)) + '</textarea>' +
-      '<div class="stack" style="margin-top:12px"><button class="btn gold block" data-vcopy>Copy message</button>' +
+    var it = E.budget(ev, ev.tier).items.find(function (i) { return i.id === cat; }), ask = askOf(ev, cat, biz), o = { first: store.get('firstName', ''), budget: false, link: ask && ask.id };
+    sheet('<h3>Message ' + esc(biz.name) + '</h3><p class="muted small">Written from your plan. Edit anything, then copy it into their Instagram, text or email. Their answer comes back to your plan.</p>' +
+      '<div class="grid2"><label class="field"><span>Your first name (optional)</span><input class="input" id="vfirst" maxlength="40" value="' + esc(o.first) + '"></label>' + (it ? '<label class="row small" style="align-self:end;gap:8px"><input type="checkbox" id="vbud"> Mention my budget for this (about ' + money(it.mid) + ')</label>' : '') + '</div>' +
+      '<textarea class="input" id="vmsg" rows="7" aria-label="Your message" style="margin-top:10px">' + esc(inquiryText(ev, cat, biz, o)) + '</textarea>' +
+      '<p class="small muted" id="vlinknote">' + (o.link ? 'Includes your private reply link.' : CFG.apiUrl && !ev.sample ? 'Adding your private reply link…' : '') + '</p>' +
+      '<div class="stack" style="margin-top:8px"><button class="btn gold block" data-vcopy>Copy message</button>' +
       (ig ? '<button class="btn ghost block" data-vgo="https://ig.me/m/' + esc(ig) + '">Copy and open Instagram</button>' : '') +
       (phone ? '<a class="btn ghost block" data-vsms href="#">Send as a text</a>' : '') +
       (!ig && site && !/google\.[a-z.]+\/maps/.test(site) ? '<button class="btn ghost block" data-vgo="' + esc(site) + '">Copy and open their website</button>' : '') +
       '<button class="btn ghost block" data-close>Close</button></div>', function (el, close) {
-      var txt = function () { return el.querySelector('#vmsg').value; };
-      var copy = function () { try { if (navigator.clipboard) return navigator.clipboard.writeText(txt()); } catch (e) {} var t = el.querySelector('#vmsg'); t.select(); try { document.execCommand('copy'); } catch (e) {} return Promise.resolve(); };
-      el.querySelector('[data-vcopy]').addEventListener('click', function () { Promise.resolve(copy()).then(function () { toast('Message copied. Paste it to ' + biz.name); }, function () { toast('Select the message and copy it'); }); });
-      $$('[data-vgo]', el).forEach(function (b) { b.addEventListener('click', function () { var w = window.open(b.dataset.vgo, '_blank', 'noopener'); Promise.resolve(copy()).then(function () { toast('Message copied. Paste it in the chat'); }); if (!w) location.href = b.dataset.vgo; }); });
-      var sm = el.querySelector('[data-vsms]'); if (sm) sm.addEventListener('click', function (e) { e.preventDefault(); location.href = 'sms:' + phone.replace(/[^\d+]/g, '') + (/iPhone|iPad/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(txt()); });
+      var ta = el.querySelector('#vmsg'), edited = false;
+      var redo = function () { if (!edited) ta.value = inquiryText(ev, cat, biz, o); };
+      ta.addEventListener('input', function () { edited = true; });
+      el.querySelector('#vfirst').addEventListener('input', function (e) { o.first = e.target.value.trim().slice(0, 40); store.set('firstName', o.first); redo(); });
+      var vb = el.querySelector('#vbud'); if (vb) vb.addEventListener('change', function () { o.budget = vb.checked; redo(); });
+      if (!o.link && CFG.apiUrl && !ev.sample) {   /* make the private reply link once per business */
+        var key = randKey(), cols = lookColors(ev);
+        apiMarket('ask/new', { key: key, d: { type: E.typeName(ev), date: ev.date || '', city: ev.city, guests: ev.guests, look: ev.concept ? (ev.concept.styleName || ev.concept.name || '').replace(/ (wedding|party|celebration)$/i, '') : '', colors: cols.join(', '), need: catName(cat, ev).replace(/ \(.*\)$/, ''), setting: settingName(ev), vendor: biz.name, hours: ev.hours || 0 } }).then(function (r) {
+          ev.asks = ev.asks || {}; ev.asks[cat + '|' + biz.id] = { id: r.id, key: key, cat: cat, biz: biz.id, name: biz.name, at: Date.now() }; saveEvent(ev);
+          o.link = r.id; var nt = el.querySelector('#vlinknote'); if (nt) nt.textContent = 'Includes your private reply link.';
+          if (edited) { if (ta.value.indexOf(REPLY_URL) < 0) ta.value += ' Reply here: ' + REPLY_URL + r.id; } else redo();
+        }).catch(function () { var nt = el.querySelector('#vlinknote'); if (nt) nt.textContent = ''; });
+      }
+      var txt = function () { return ta.value; };
+      var copy = function () { try { if (navigator.clipboard) return navigator.clipboard.writeText(txt()); } catch (e) {} ta.select(); try { document.execCommand('copy'); } catch (e) {} return Promise.resolve(); };
+      var sent = function () { var a = askOf(ev, cat, biz); if (a && !a.sent) { a.sent = Date.now(); saveEvent(ev); if (after) after(); } };
+      el.querySelector('[data-vcopy]').addEventListener('click', function () { Promise.resolve(copy()).then(function () { sent(); toast('Message copied. Paste it to ' + biz.name); }, function () { toast('Select the message and copy it'); }); });
+      $$('[data-vgo]', el).forEach(function (b) { b.addEventListener('click', function () { var w = window.open(b.dataset.vgo, '_blank', 'noopener'); Promise.resolve(copy()).then(function () { sent(); toast('Message copied. Paste it in the chat'); }); if (!w) location.href = b.dataset.vgo; }); });
+      var sm = el.querySelector('[data-vsms]'); if (sm) sm.addEventListener('click', function (e) { e.preventDefault(); sent(); location.href = 'sms:' + phone.replace(/[^\d+]/g, '') + (/iPhone|iPad/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(txt()); });
       T('vendor_message_open', { category: cat });
     });
+  }
+  /* Under a business in her package: what they answered (or that she asked). Answers are checked when the plan opens. */
+  function askLine(ev, cat, biz) {
+    var a = biz && askOf(ev, cat, biz); if (!a) return '';
+    var r = a.reply; if (!r) return a.sent ? '<span class="small muted ask-st">Messaged · waiting for a reply</span>' : '';
+    var bits = [r.avail === 'yes' ? 'Available' : r.avail === 'no' ? 'Not available' : r.avail === 'check' ? 'Checking the date' : '', r.priceMode === 'price' && r.price ? 'from ' + money(r.price) + (r.priceNote ? ' ' + r.priceNote : '') : r.priceMode === 'direct' ? 'pricing shared directly' : '', r.phone ? '<a class="link" href="tel:' + esc(r.phone.replace(/[^\d+]/g, '')) + '">' + esc(r.phone) + '</a>' : ''].filter(Boolean);
+    return '<span class="small ask-st ask-ok"><b>Replied:</b> ' + bits.join(' · ') + (r.note ? ' <span class="muted">“' + esc(r.note.slice(0, 140)) + (r.note.length > 140 ? '…' : '') + '”</span>' : '') + '</span>';
+  }
+  var ASK_CHECKED = {};
+  function checkAsks(ev, after) {
+    if (!CFG.apiUrl || ev.sample) return;
+    var open = Object.keys(ev.asks || {}).map(function (k) { return ev.asks[k]; }).filter(function (a) { return a.id && Date.now() - (ASK_CHECKED[a.id] || 0) > 15e3 && (!a.reply || Date.now() - (a.checked || 0) > 6e5) && Date.now() - a.at < 240 * 864e5; }).slice(0, 12);
+    if (!open.length) return;
+    Promise.all(open.map(function (a) { ASK_CHECKED[a.id] = Date.now(); return fetch(CFG.apiUrl + '/api/ask/' + a.id).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (!j || !j.reply) return 0; var nw = !a.reply || a.reply.at !== j.reply.at; a.reply = j.reply; a.checked = Date.now(); return nw ? a : 0; }).catch(function () { return 0; }); })).then(function (got) {
+      var nw = got.filter(Boolean); if (!nw.length) return; saveEvent(ev); toast(nw.length === 1 ? nw[0].name + ' replied to your message' : nw.length + ' vendors replied to your messages'); if (after) after();
+    });
+  }
+  /* The page a vendor opens from her message: the event details, and a one-minute reply. Every answer is optional. */
+  function vendorReply(id) {
+    frame('<div class="wizard stack-lg"><p class="muted">Loading the request…</p></div>');
+    if (!CFG.apiUrl) { frame('<div class="wizard stack"><h2>This reply link isn’t working here</h2><p class="muted">Open it on eventcouture.app.</p></div>'); return; }
+    fetch(CFG.apiUrl + '/api/ask/' + encodeURIComponent(id)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || 'Not found'); return j; }); }).then(function (j) {
+      var d = j.d || {}, r = j.reply || {}, when = d.date ? new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : 'Date not set yet';
+      var rows = [['Event', d.type], ['Date', when], ['Where', [d.city, d.setting].filter(Boolean).join(' · ')], ['Guests', d.guests ? 'About ' + d.guests : ''], ['Look', [d.look, d.colors].filter(Boolean).join(' · ')], ['Looking for', d.need]].filter(function (x) { return x[1]; });
+      var chip = function (name, v, label, on) { return '<button type="button" class="chip" data-' + name + '="' + v + '" aria-pressed="' + !!on + '">' + label + '</button>'; };
+      frame('<div class="wizard stack-lg vreply"><div class="stack"><p class="eyebrow">A client found you on Event Couture</p><h2>' + esc(d.vendor || 'Your reply') + ', can you help with this event?</h2><p class="muted">Answer in a minute. Share only what you’re comfortable with: every question is optional. Your answer goes straight to the client’s plan.</p></div>' +
+        '<div class="panel"><dl class="vr-d">' + rows.map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl></div>' +
+        (j.reply ? '<p class="note small">You already replied. You can update your answer below.</p>' : '') +
+        '<div class="panel stack"><div class="stack"><b>Are you available on this date?</b><div class="chips" id="vrAvail">' + chip('av', 'yes', 'Yes', r.avail === 'yes') + chip('av', 'check', 'Need to check', r.avail === 'check') + chip('av', 'no', 'No', r.avail === 'no') + '</div></div>' +
+        '<div class="stack"><b>Pricing</b><div class="chips" id="vrPrice">' + chip('pm', 'price', 'Share a starting price', r.priceMode === 'price') + chip('pm', 'direct', 'I’d rather share pricing directly', r.priceMode !== 'price') + '</div>' +
+        '<div class="grid2" id="vrPriceBox"' + (r.priceMode === 'price' ? '' : ' hidden') + '><label class="field"><span>Starting price (USD)</span><input class="input num" type="number" min="0" id="vrPriceVal" value="' + (r.price || '') + '"></label><label class="field"><span>Per (optional)</span><input class="input" id="vrPriceNote" maxlength="60" placeholder="e.g. per person, for 4 hours" value="' + esc(r.priceNote || '') + '"></label></div></div>' +
+        '<div class="grid2"><label class="field"><span>Your name or business</span><input class="input" id="vrName" maxlength="120" value="' + esc(r.name || d.vendor || '') + '"></label><label class="field"><span>Phone (optional)</span><input class="input" id="vrPhone" type="tel" maxlength="30" value="' + esc(r.phone || '') + '"></label></div>' +
+        '<label class="field"><span>A note for the client (optional)</span><textarea class="input" id="vrNote" rows="3" maxlength="600">' + esc(r.note || '') + '</textarea></label>' +
+        '<button class="btn gold block" id="vrSend">Send my reply</button><p class="small muted" id="vrMsg" aria-live="polite"></p></div>' +
+        '<p class="small muted">Event Couture never shares the client’s contact details here, and never charges you to reply. ' + (CFG.app ? '' : '<a class="link" href="#/vendors/new/' + encodeURIComponent(d.vendor || '') + '">List your business for free</a>') + '</p></div>');
+      var pick = function (box, attr) { $$('#' + box + ' [data-' + attr + ']').forEach(function (b) { b.addEventListener('click', function () { $$('#' + box + ' [data-' + attr + ']').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); if (attr === 'pm') $('#vrPriceBox').hidden = b.dataset.pm !== 'price'; }); }); };
+      pick('vrAvail', 'av'); pick('vrPrice', 'pm');
+      $('#vrSend').addEventListener('click', function () {
+        var av = $('#vrAvail [aria-pressed="true"]'), pm = $('#vrPrice [aria-pressed="true"]');
+        var body = { name: $('#vrName').value, phone: $('#vrPhone').value, avail: av ? av.dataset.av : '', priceMode: pm ? pm.dataset.pm : 'direct', price: +$('#vrPriceVal').value || 0, priceNote: $('#vrPriceNote').value, note: $('#vrNote').value };
+        if (!body.avail && !body.phone.trim() && !body.note.trim() && !body.price) { $('#vrMsg').textContent = 'Add at least one answer.'; return; }
+        this.disabled = true; var btn = this;
+        apiMarket('ask/' + id + '/reply', body).then(function () {
+          T('vendor_reply', {});
+          frame('<div class="wizard stack-lg"><div class="stack"><p class="eyebrow">Sent</p><h2>Thank you! Your reply is on its way</h2><p class="muted">The client sees it in their Event Couture plan and will reach out if it’s a fit.</p></div>' + (CFG.app ? '' : '<div class="panel stack"><b>Want more clients like this?</b><p class="small muted">List your business on Event Couture for free: clients planning events in your city see your packages and can ask you for quotes.</p><a class="btn gold" href="#/vendors/new/' + encodeURIComponent(body.name || d.vendor || '') + '">List my business free</a></div>') + '</div>');
+        }).catch(function (e) { btn.disabled = false; $('#vrMsg').textContent = e.message || 'That didn’t send. Please try again.'; });
+      });
+    }).catch(function (e) { frame('<div class="wizard stack"><h2>This request isn’t available</h2><p class="muted">' + esc(e.message || '') + ' It may have expired. If you know the client, reach out to them directly.</p></div>'); });
   }
   /* On a Recommended listing: the business can update or remove it themselves. */
   function claimLink(x) { return x && x.rec && !CFG.app ? ' <a class="link small quiet" href="#/vendors/claim/' + encodeURIComponent(x.name) + (x.ig || /^ig:/.test(x.id) ? '/' + encodeURIComponent(x.ig || x.id.slice(3)) : '') + '">Your business?</a>' : ''; }
@@ -1781,7 +1858,7 @@
     var row = function (c, pkx, mode) {
       var x = bizOf(pkx, c.cat), bk = x && isBooked(ev, c.cat, x);
       return '<div class="pk-row" data-pkrow="' + c.cat + '"><div class="pk-h"><b>' + esc(catName(c.cat, ev)) + '</b>' + (bk ? '<span class="badge ok">Booked</span>' : '') + (mode === 'book' && !bk && !ev.sample ? '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don\u2019t need it">\u00d7</button>' : '') + '<span class="num muted small">' + est(c.cat, x) + '</span></div>' +
-        (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + '</span></div>' +
+        (x ? '<div class="pk-biz"><b>' + esc(x.name) + '</b><span class="small muted">' + line(x) + '</span>' + askLine(ev, c.cat, x) + '</div>' +
           '<div class="pk-acts">' + links(x, c.cat) + (ev.sample || c.kind === 'venue' && isRestaurantPick(ev, c.cat, x) ? '' : '<button class="btn small ghost" data-pkmsg="' + c.cat + '">Message</button>') + (ev.sample ? '' : (bk || mode === 'book' ? '' : '<button class="btn small ghost" data-pkswap="' + c.cat + '">Change</button>') + (mode === 'book' ? '<button class="btn small' + (bk ? ' ghost' : '') + '" data-pkbook="' + c.cat + '">' + (bk ? 'Booked ✓' : 'I booked it') + '</button>' : '')) + '</div>'
         : '<p class="small muted">No top-rated match came back yet. ' + (ev.sample ? '' : '<button class="link small" data-pkswap="' + c.cat + '">See options</button> \u00b7 ' + mapsBtn(ev, c.cat, c.q)) + '</p>') +
         '<div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></div>';
@@ -1793,7 +1870,7 @@
         (addCol ? '<th class="pk-colh pk-addcol"><button class="btn small ghost" id="pkgMore">+ Create package ' + (pks.length + 1) + '</button><span class="small muted">Different picks to compare</span></th>' : '') + '</tr>';
       var rowsH = cats.map(function (c) {
         return '<tr data-pkrow="' + c.cat + '"><th scope="row"><div class="pk-rh"><b>' + esc(catName(c.cat, ev)) + '</b>' + (ev.sample ? '' : '<button class="pk-x" data-pkx="' + c.cat + '" aria-label="Remove ' + esc(catName(c.cat, ev)) + ' from my plan" title="Don’t need it">×</button>') + '</div><span class="small muted num">' + (pks.some(function (q) { return onRequest(ev, c.cat, bizOf(q, c.cat)); }) ? 'Price on request' : est(c.cat)) + '</span></th>' +
-          pks.map(function (x, i) { var biz = bizOf(x, c.cat); return '<td>' + (biz ? '<b>' + esc(biz.name) + '</b><span class="small muted">' + line(biz) + '</span><div class="pk-cell-acts">' + (siteOf(biz) ? '<a class="link small" target="_blank" rel="noopener" href="' + esc(siteOf(biz)) + '">' + (/^ig:/.test(biz.id) ? 'Instagram' : /^rec:/.test(biz.id) ? 'Map' : 'Website') + '</a>' : '') + (ev.sample ? '' : '<button class="link small" data-pkmsg="' + c.cat + '" data-pk="' + i + '">Message</button><button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Swap</button>') + '</div>' : '<span class="small muted">No match yet</span><br>' + mapsBtn(ev, c.cat, c.q) + '<br>' + (ev.sample ? '' : ' <button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Find one</button>')) + '</td>'; }).join('') +
+          pks.map(function (x, i) { var biz = bizOf(x, c.cat); return '<td>' + (biz ? '<b>' + esc(biz.name) + '</b><span class="small muted">' + line(biz) + '</span>' + askLine(ev, c.cat, biz) + '<div class="pk-cell-acts">' + (siteOf(biz) ? '<a class="link small" target="_blank" rel="noopener" href="' + esc(siteOf(biz)) + '">' + (/^ig:/.test(biz.id) ? 'Instagram' : /^rec:/.test(biz.id) ? 'Map' : 'Website') + '</a>' : '') + (ev.sample ? '' : '<button class="link small" data-pkmsg="' + c.cat + '" data-pk="' + i + '">Message</button><button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Swap</button>') + '</div>' : '<span class="small muted">No match yet</span><br>' + mapsBtn(ev, c.cat, c.q) + '<br>' + (ev.sample ? '' : ' <button class="link small" data-pkswap="' + c.cat + '" data-pk="' + i + '">Find one</button>')) + '</td>'; }).join('') +
           (addCol ? '<td class="pk-addcol"></td>' : '') + '</tr><tr class="pk-swaprow"><td colspan="' + ncol + '"><div class="pk-swap" data-pkswapbox="' + c.cat + '"></div></td></tr>';
       }).join('');
       var ex = (ev.exclude || []).filter(function (id) { return D.CATEGORIES[id]; });
@@ -2097,9 +2174,10 @@
     $$('[data-pkcopy]').forEach(function (bt) { bt.addEventListener('click', function () { copyText(vendorAsk(ev, bt.dataset.pkcopy), 'Your message'); }); });
     $$('[data-pkback]').forEach(function (bt) { bt.addEventListener('click', function () { if (lockSample(ev)) return; ev.pkgConfirmed = false; ev.pkgView = ev.pkgChosen || 0; save(); rerender(); }); });
     $$('[data-pkbook]').forEach(function (bt) { bt.addEventListener('click', function () { var cat = bt.dataset.pkbook, pk = ev.packages[Math.min((ev.pkgConfirmed ? ev.pkgChosen : ev.pkgView) || 0, ev.packages.length - 1)]; compareSheet(ev, cat, rerender, { book: pk.items[cat] }); }); });
+    checkAsks(ev, rerender);   /* any vendor replies since she last looked */
     $$('[data-pkmsg]').forEach(function (bt) { bt.addEventListener('click', function () {
       var cat = bt.dataset.pkmsg, k = bt.dataset.pk != null ? +bt.dataset.pk : Math.min(ev.pkgChosen || 0, ev.packages.length - 1), id = (ev.packages[k] || {}).items[cat], biz = id && savedFor(ev, cat).find(function (o) { return o.id === id; });
-      if (biz) messageVendor(ev, cat, biz);
+      if (biz) messageVendor(ev, cat, biz, rerender);
     }); });
     $$('[data-pkswap]').forEach(function (bt) { bt.addEventListener('click', function () {
       if (bt.dataset.pk) ev.pkgView = +bt.dataset.pk;
