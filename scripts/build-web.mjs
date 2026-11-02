@@ -19,13 +19,13 @@ try {
   let local = css, n = 0; fs.mkdirSync(path.join(OUT, 'fonts'), { recursive: true });
   for (const u of [...new Set(css.match(/https:\/\/fonts\.gstatic\.com[^)]+/g) || [])]) { const f = 'f' + (n++) + '.woff2'; fs.writeFileSync(path.join(OUT, 'fonts', f), Buffer.from(await (await fetch(u)).arrayBuffer())); local = local.split(u).join('./' + f); }
   fs.writeFileSync(path.join(OUT, 'fonts/fonts.css'), local);
-  html = html.replace(/<link rel="preconnect"[^>]*>\s*/g, '').replace(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com[^"]*">/, '<link rel="stylesheet" href="fonts/fonts.css">');
+  html = html.replace(/<link rel="preconnect"[^>]*>\s*/g, '').replace(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com[^"]*">/g, (m, i, all) => all.search(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com/) === i ? '<link rel="stylesheet" href="fonts/fonts.css">' : '');
   console.log('fonts bundled:', n);
 } catch (e) { console.warn('fonts not bundled (system fonts used):', e.message); }
 // app layer: native share, links, haptics and the tab bar
 { const h = html.indexOf('<head>') + 6; html = html.slice(0, h) + '<script>window.__EC_APP=true</script><script src="app-early.js"></script>' + html.slice(h); }
 { const i = html.indexOf('</head>'); html = html.slice(0, i) + '<link rel="stylesheet" href="app.css">' + html.slice(i); }
-{ const i = html.lastIndexOf('</body>'); html = html.slice(0, i) + '<script src="app.js"></script>' + html.slice(i); }
+{ const i = html.lastIndexOf('</body>'); html = html.slice(0, i) + '<script src="app.js" defer></script>' + html.slice(i); }
 html = html.replace(/<link rel="manifest"[^>]*>\s*/, '');
 fs.writeFileSync(path.join(OUT, 'index.html'), html);
 if (process.env.EC_SHOT_TOUR === '1') {   /* simulator screenshots only, never in store builds */
