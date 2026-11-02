@@ -1941,7 +1941,7 @@
   var ADDING = {};   /* an extra being added: a double tap adds it once */
   function addOnsFor(ev, have) {
     var rest = ev.setting === 'restaurant' || ev.setting === 'privateRoom';
-    var fits = function (it) { return D.CATEGORIES[it.id] && have.indexOf(it.id) < 0 && (it.kids ? (ev.type === 'kids-birthday' || ev.kids && /birthday/.test(ev.type || '')) && !rest && (!it.settings || it.settings.indexOf(ev.setting) >= 0) : rest ? D.PKG_ADDONS_RESTAURANT.indexOf(it.id) >= 0 : (!it.only || it.only.indexOf(ev.type) >= 0) && (!it.not || it.not.indexOf(ev.type) < 0) && (!it.settings || it.settings.indexOf(ev.setting) >= 0)) ; };
+    var fits = function (it) { return D.CATEGORIES[it.id] && have.indexOf(it.id) < 0 && !(it.id === 'cleanup' && ev.venueKind === 'ballroom' && ev.setting === 'indoor') && (it.kids ? (ev.type === 'kids-birthday' || ev.kids && /birthday/.test(ev.type || '')) && !rest && (!it.settings || it.settings.indexOf(ev.setting) >= 0) : rest ? D.PKG_ADDONS_RESTAURANT.indexOf(it.id) >= 0 : (!it.only || it.only.indexOf(ev.type) >= 0) && (!it.not || it.not.indexOf(ev.type) < 0) && (!it.settings || it.settings.indexOf(ev.setting) >= 0)) ; };
     /* The main items a plan like hers normally has (venue, catering, photographer...) that aren't in it now, removed by mistake or
        dropped, so she can always put them back. */
     var full = E.budget(Object.assign({}, ev, { exclude: [], include: [] }), ev.tier).items.map(function (i) { return i.id; });
