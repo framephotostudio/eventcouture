@@ -45,6 +45,8 @@
   function eventPhoto(ev) {
     var up = ev.inspiration && ev.inspiration.photos && ev.inspiration.photos[0];
     if (up) return { src: up.src, alt: 'Your inspiration photo' };
+    var cp = ev.concept && (ev.concept.inspo || ev.concept.photo), cpi = cp && E.inspoOf({ inspiration: { inspo: cp } });
+    if (cpi) return { src: INSPO_IMG + cpi.id + '.jpg', alt: cpi.alt, ai: true };   /* the photo of the look she chose */
     var ip = E.inspoOf(ev); if (ip) return { src: INSPO_IMG + ip.id + '.jpg', alt: ip.alt, ai: true };
     return ev.photo || null; /* sample plans only; we never generate or substitute pictures for a host's event */
   }
@@ -917,7 +919,7 @@
       var shown = list.map(function (c) { return c.inspo; }).filter(Boolean).concat(E.inspoOf(ev) ? [E.inspoOf(ev).id] : []);
       $('#cs').innerHTML = list.map(function (c, i) {
         var sel = ev.concept && ev.concept.id === c.id;
-        var own = c.inspo && E.inspoOf({ inspiration: { inspo: c.inspo } }), like = own ? null : E.similarPhoto(c, ev, shown); if (like) shown.push(like.id);   /* every look shows a labeled inspiration photo */
+        var own = c.inspo && E.inspoOf({ inspiration: { inspo: c.inspo } }), like = own ? null : E.similarPhoto(c, ev, shown); if (like) { shown.push(like.id); c.photo = like.id; }   /* the plan keeps the photo shown on the look she picks */   /* every look shows a labeled inspiration photo */
         return '<article class="concept' + (sel ? ' selected' : '') + '">' + (own ? thumb({ src: INSPO_IMG + 'sm/' + c.inspo + '.jpg', alt: 'The inspiration photo you chose', ai: true }) : like ? '<div class="thumb"><img src="' + esc(srcOf(INSPO_IMG + 'sm/' + like.id + '.jpg')) + '" alt="AI-generated inspiration with a similar look" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()"><span class="ai-tag">AI-generated inspiration \u00b7 similar look</span></div>' : '') + '<div class="in"><span class="concept-num">Look ' + (i + 1) + ' of ' + list.length + '</span><span class="badge est">' + esc(sel ? 'Your current choice' : c.fit) + '</span><h3>' + esc(c.name) + '</h3>' + dots(c.palette, c.styleName + ' colors') + '<p class="muted">' + esc(moodFor(c, ev)) + '</p><ul>' + outlineFor(c, ev).map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul><button class="btn ' + (i === 0 ? 'gold' : '') + ' block" data-i="' + i + '" aria-label="Choose ' + esc(c.name) + '">Choose this look</button></div></article>';
       }).join('');
     }
@@ -1720,7 +1722,7 @@
         if (!p || !putInPackage(ev, k, c.cat, p)) miss.push(c.cat);
       }).catch(function () { miss.push(c.cat); }).then(function () { done++; if (onStep) onStep(done, cats.length); });
     };
-    var i = 0; var next = function () { if (i >= cats.length) return Promise.resolve(); var batch = cats.slice(i, i + 3); i += 3; return Promise.all(batch.map(one)).then(next); };
+    var i = 0; var next = function () { if (i >= cats.length) return Promise.resolve(); var batch = cats.slice(i, i + 6); i += 6;   /* six searches at a time: a full package in a few seconds */ return Promise.all(batch.map(one)).then(next); };
     return next().then(function () { ev.packages[k].miss = miss; saveEvent(ev); return k; });
   }
   var PRICE_SIGN = { PRICE_LEVEL_INEXPENSIVE: 'Budget-friendly', PRICE_LEVEL_MODERATE: 'Moderate prices', PRICE_LEVEL_EXPENSIVE: 'Upscale', PRICE_LEVEL_VERY_EXPENSIVE: 'Luxury prices' };

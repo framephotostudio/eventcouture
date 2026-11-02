@@ -92,14 +92,14 @@ async function freePlaces(env) {
   if (!env.EC_KV) return false;
   const key = 'places:' + new Date().toISOString().slice(0, 7), n = parseInt((await env.EC_KV.get(key)) || '0', 10);
   if (n >= FREE_PLACES) return false;
-  await env.EC_KV.put(key, String(n + 1), { expirationTtl: 60 * 60 * 24 * 40 });
+  try { await env.EC_KV.put(key, String(n + 1), { expirationTtl: 60 * 60 * 24 * 40 }); } catch (e) { return false; }   // can't count it, so don't spend
   return true;
 }
 async function freeMonthly(env, name, limit, n) {
   if (!env.EC_KV) return false;
   const key = name + ':' + new Date().toISOString().slice(0, 7), used = parseInt((await env.EC_KV.get(key)) || '0', 10);
   if (used + n > limit) return false;
-  await env.EC_KV.put(key, String(used + n), { expirationTtl: 60 * 60 * 24 * 40 });
+  try { await env.EC_KV.put(key, String(used + n), { expirationTtl: 60 * 60 * 24 * 40 }); } catch (e) { return false; }   // can't count it, so don't spend
   return true;
 }
 function cap(env) { return Number(env.DAILY_CAP_USD || 0.66); }
@@ -109,16 +109,19 @@ async function reserve(env, usd) {
   if (!env.EC_KV) return false; // never spend without a working counter
   const now = await spent(env);
   if (now + usd > cap(env)) return false;
-  await env.EC_KV.put(dayKey(), String(Math.round((now + usd) * 10000) / 10000), { expirationTtl: 60 * 60 * 48 });
+  try { await env.EC_KV.put(dayKey(), String(Math.round((now + usd) * 10000) / 10000), { expirationTtl: 60 * 60 * 48 }); } catch (e) { return false; }
   return true;
 }
 
 /* ---------- concepts (Gemini) ---------- */
+// Per-visitor limit, kept in the server's memory (no storage writes, so it never uses up Cloudflare's free daily
+// write allowance). Best effort: 150 requests an hour per visitor; the daily dollar cap still protects spending.
+const RL = new Map();
 async function rateOk(env, ip) {
-  const key = 'rl:' + ip + ':' + new Date().toISOString().slice(0, 13);
-  const n = parseInt(await env.EC_KV.get(key) || '0', 10);
-  if (n >= 40) return false;
-  await env.EC_KV.put(key, String(n + 1), { expirationTtl: 3700 });
+  const hour = new Date().toISOString().slice(0, 13), key = ip + ':' + hour, n = RL.get(key) || 0;
+  if (n >= 150) return false;
+  RL.set(key, n + 1);
+  if (RL.size > 5000) for (const k of RL.keys()) if (!k.endsWith(hour)) RL.delete(k);
   return true;
 }
 /* Pick the newest Gemini Flash model the key can use, so retired model names never break the app. Cached for a day. */
@@ -267,7 +270,7 @@ async function googleSearch(env, body) {
   });
   if (!r.ok) throw new Error('places');
   const list = (await r.json()).places || [];
-  if (env.EC_KV) await env.EC_KV.put(key, JSON.stringify(list), { expirationTtl: 60 * 60 * 24 * 7 });
+  if (env.EC_KV) try { await env.EC_KV.put(key, JSON.stringify(list), { expirationTtl: 60 * 60 * 24 * 7 }); } catch (e) {}   // a full cache never breaks a search
   return list;
 }
 async function places(env, query, city, level = 'S', vendor = false, cat = '', hint = '') {
