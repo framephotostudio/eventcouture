@@ -1,23 +1,18 @@
-// Lighthouse (mobile) on the stage1 branch and on the live site, with the real fonts, plus what shifts.
+// Header preview: "by Always Luxe" as live vs. thicker options, with the real brand fonts, phone and desktop.
 import fs from 'node:fs'; import { execSync, spawn } from 'node:child_process';
-fs.mkdirSync('showcase', { recursive: true }); const out = {};
-execSync('git clone -q --depth 1 --branch stage1 https://github.com/framephotostudio/eventcouture.git st && cd st && mkdir _site && cp -r index.html manifest.json css js img _site/ && node tools/seo.cjs _site >/dev/null && node tools/fonts.cjs _site');
+fs.mkdirSync('showcase', { recursive: true });
+execSync('git clone -q --depth 1 --branch install https://github.com/framephotostudio/eventcouture.git st && cd st && mkdir _site && cp -r index.html manifest.json sw.js css js img _site/ && node tools/fonts.cjs _site');
 const srv = spawn('node', ['gz.cjs', 'st/_site'], { stdio: 'ignore', detached: true });
 await new Promise(r => setTimeout(r, 1500));
-const chrome = execSync('node -e "console.log(require(\'playwright\').chromium.executablePath())"').toString().trim();
-execSync('npm install --no-save playwright@1 lighthouse@12 chrome-launcher@1 >/dev/null 2>&1');
-const runs = [['live_home', 'https://eventcouture.app/'], ['live_home2', 'https://eventcouture.app/'], ['live_guide', 'https://eventcouture.app/plan/wedding/'], ['live_landing', 'https://eventcouture.app/ai-event-planner/']];
-for (const [name, u] of runs) {
-  try {
-    execSync(`CHROME_PATH="${chrome}" npx lighthouse "${u}" --quiet --chrome-flags="--headless=new --no-sandbox" --only-categories=performance,seo,accessibility,best-practices --output=json --output-path=showcase/lh.json`, { stdio: 'ignore', timeout: 240000 });
-    const j = JSON.parse(fs.readFileSync('showcase/lh.json', 'utf8')); const a = j.audits;
-    const shifts = ((a['layout-shifts'] || a['layout-shift-elements'] || {}).details || {}).items || [];
-    out[name] = { scores: Object.fromEntries(Object.entries(j.categories).map(([k, v]) => [k, Math.round(v.score * 100)])), LCP: a['largest-contentful-paint'].displayValue, CLS: a['cumulative-layout-shift'].displayValue, TBT: a['total-blocking-time'].displayValue,
-      lcpEl: JSON.stringify(((a['largest-contentful-paint-element'] || {}).details || {}).items || []).slice(0, 400),
-      shifts: shifts.slice(0, 6).map(s => ({ score: s.score, node: s.node && (s.node.snippet || s.node.selector), causes: JSON.stringify(s.subItems || '').slice(0, 300) })),
-      lcpPhases: JSON.stringify(((a['lcp-breakdown-insight'] || a['lcp-phases-insight'] || {}).details || {}).items || ((a['largest-contentful-paint-element'] || {}).details || {}).items || '').slice(0, 1500),
-      reqs: (((a['network-requests'] || {}).details || {}).items || []).slice(0, 25).map(r => [r.url.replace(/^https?:\/\/[^/]+/, '').slice(0, 60), Math.round(r.networkRequestTime || r.startTime || 0), Math.round(r.networkEndTime || r.endTime || 0), r.priority, Math.round((r.transferSize || 0) / 1024)]),
-      fails: Object.values(a).filter(x => x.score !== null && x.score < 0.9 && !['informative', 'notApplicable', 'manual'].includes(x.scoreDisplayMode)).map(x => x.id + ': ' + (x.displayValue || x.title)).slice(0, 20) };
-  } catch (e) { out[name] = { error: String(e.message || e).slice(0, 300) }; }
+const { chromium } = await import('playwright');
+const b = await chromium.launch();
+const V = { live: '.brand.logo-mark .by{font-variation-settings:normal!important;font-optical-sizing:auto!important;font-size:10.5px}@media(min-width:700px){.brand.logo-mark .by{font-size:26px}}', thick: '', thicker: '.brand.logo-mark .by{-webkit-text-stroke:.35px #E9D29E}@media(min-width:700px){.brand.logo-mark .by{-webkit-text-stroke:.6px #E9D29E}}' };
+for (const [n, w, h, s] of [['phone', 390, 120, 3], ['desktop', 1280, 90, 2]]) {
+  for (const [k, css] of Object.entries(V)) {
+    const pg = await (await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: s })).newPage();
+    await pg.route(/googletagmanager|workers\.dev/, r => r.abort());
+    await pg.goto('http://localhost:8799/'); await pg.waitForSelector('.topbar'); await pg.evaluate(() => document.fonts.ready); if (css) await pg.addStyleTag({ content: css }); await pg.waitForTimeout(800);
+    await pg.screenshot({ path: `showcase/by-${n}-${k}.png`, clip: { x: 0, y: 0, width: w, height: n === 'phone' ? 64 : 70 } }); await pg.close();
+  }
 }
-fs.writeFileSync('showcase/lh.json', JSON.stringify(out, null, 1)); try { process.kill(-srv.pid); } catch (e) {} console.log('done'); process.exit(0);
+await b.close(); try { process.kill(-srv.pid); } catch (e) {} console.log('done'); process.exit(0);
