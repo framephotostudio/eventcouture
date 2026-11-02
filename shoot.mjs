@@ -1,22 +1,21 @@
-// Live SEO audit: redirects, status codes, robots/sitemap, tags, and Lighthouse (mobile) scores.
-import fs from 'node:fs'; import { execSync } from 'node:child_process';
+// Lighthouse (mobile) on the stage1 branch and on the live site, with the real fonts, plus what shifts.
+import fs from 'node:fs'; import { execSync, spawn } from 'node:child_process';
 fs.mkdirSync('showcase', { recursive: true }); const out = {};
-const head = async (u) => { try { const r = await fetch(u, { redirect: 'manual' }); return { status: r.status, location: r.headers.get('location'), cache: r.headers.get('cache-control'), type: r.headers.get('content-type') }; } catch (e) { return { error: String(e.message || e) }; } };
-for (const u of ['http://eventcouture.app/', 'https://eventcouture.app/', 'http://www.eventcouture.app/', 'https://www.eventcouture.app/', 'https://eventcouture.app/plan/', 'https://eventcouture.app/plan/wedding/', 'https://eventcouture.app/plan/wedding', 'https://eventcouture.app/plan/houston-tx/', 'https://eventcouture.app/robots.txt', 'https://eventcouture.app/sitemap.xml', 'https://eventcouture.app/this-page-does-not-exist', 'https://eventcouture.app/index.html', 'https://facecouture.app/eventcouture/', 'https://framephotostudio.github.io/eventcouture/', 'https://eventcouture.app/ai-event-planner/', 'https://eventcouture.app/wedding-planner/', 'https://eventcouture.app/birthday-party-planner/', 'https://eventcouture.app/event-budget-calculator/', 'https://eventcouture.app/event-vendors/', 'https://eventcouture.app/cultural-weddings/', 'https://eventcouture.app/event-inspiration/', 'https://eventcouture.app/plan/quinceanera/'])
-  out[u] = await head(u);
-const sm = await (await fetch('https://eventcouture.app/sitemap.xml')).text(); out.sitemapUrls = (sm.match(/<loc>/g) || []).length; out.robots = await (await fetch('https://eventcouture.app/robots.txt')).text(); out.notFoundTitle = ((await (await fetch('https://eventcouture.app/nope-xyz')).text()).match(/<title>[^<]*/) || [''])[0];
-const home = await (await fetch('https://eventcouture.app/')).text(); out.homeHead = home.slice(0, 3000);
-const g = await (await fetch('https://eventcouture.app/plan/wedding/')).text(); out.guideHead = g.slice(0, 2500);
-// Lighthouse, mobile
+execSync('git clone -q --depth 1 --branch stage1 https://github.com/framephotostudio/eventcouture.git st && cd st && mkdir _site && cp -r index.html manifest.json css js img _site/ && node tools/seo.cjs _site >/dev/null');
+const srv = spawn('node', ['gz.cjs', 'st/_site'], { stdio: 'ignore', detached: true });
+await new Promise(r => setTimeout(r, 1500));
 const chrome = execSync('node -e "console.log(require(\'playwright\').chromium.executablePath())"').toString().trim();
 execSync('npm install --no-save playwright@1 lighthouse@12 chrome-launcher@1 >/dev/null 2>&1');
-for (const [name, u] of [['home', 'https://eventcouture.app/'], ['guide', 'https://eventcouture.app/plan/wedding/'], ['landing', 'https://eventcouture.app/ai-event-planner/']]) {
+const runs = [['new_home', 'http://localhost:8799/'], ['new_guide', 'http://localhost:8799/plan/wedding/'], ['new_city', 'http://localhost:8799/plan/houston-tx/'], ['new_landing', 'http://localhost:8799/ai-event-planner/'], ['live_home', 'https://eventcouture.app/'], ['live_guide', 'https://eventcouture.app/plan/wedding/']];
+for (const [name, u] of runs) {
   try {
-    execSync(`CHROME_PATH="${chrome}" npx lighthouse "${u}" --quiet --chrome-flags="--headless=new --no-sandbox" --only-categories=performance,seo,accessibility,best-practices --output=json --output-path=showcase/lh-${name}.json`, { stdio: 'ignore', timeout: 240000 });
-    const j = JSON.parse(fs.readFileSync(`showcase/lh-${name}.json`, 'utf8')); const a = j.audits;
-    out['lh_' + name] = { scores: Object.fromEntries(Object.entries(j.categories).map(([k, v]) => [k, Math.round(v.score * 100)])), LCP: a['largest-contentful-paint'].displayValue, CLS: a['cumulative-layout-shift'].displayValue, TBT: a['total-blocking-time'].displayValue, FCP: a['first-contentful-paint'].displayValue,
-      fails: Object.values(a).filter(x => x.score !== null && x.score < 0.9 && x.scoreDisplayMode !== 'informative' && x.scoreDisplayMode !== 'notApplicable').map(x => x.id + ': ' + (x.displayValue || x.title)).slice(0, 30) };
-    fs.unlinkSync(`showcase/lh-${name}.json`);
-  } catch (e) { out['lh_' + name] = { error: String(e.message || e).slice(0, 300) }; }
+    execSync(`CHROME_PATH="${chrome}" npx lighthouse "${u}" --quiet --chrome-flags="--headless=new --no-sandbox" --only-categories=performance,seo,accessibility,best-practices --output=json --output-path=showcase/lh.json`, { stdio: 'ignore', timeout: 240000 });
+    const j = JSON.parse(fs.readFileSync('showcase/lh.json', 'utf8')); const a = j.audits;
+    const shifts = ((a['layout-shifts'] || a['layout-shift-elements'] || {}).details || {}).items || [];
+    out[name] = { scores: Object.fromEntries(Object.entries(j.categories).map(([k, v]) => [k, Math.round(v.score * 100)])), LCP: a['largest-contentful-paint'].displayValue, CLS: a['cumulative-layout-shift'].displayValue, TBT: a['total-blocking-time'].displayValue,
+      lcpEl: JSON.stringify(((a['largest-contentful-paint-element'] || {}).details || {}).items || []).slice(0, 400),
+      shifts: shifts.slice(0, 6).map(s => ({ score: s.score, node: s.node && (s.node.snippet || s.node.selector), causes: JSON.stringify(s.subItems || '').slice(0, 300) })),
+      fails: Object.values(a).filter(x => x.score !== null && x.score < 0.9 && !['informative', 'notApplicable', 'manual'].includes(x.scoreDisplayMode)).map(x => x.id + ': ' + (x.displayValue || x.title)).slice(0, 20) };
+  } catch (e) { out[name] = { error: String(e.message || e).slice(0, 300) }; }
 }
-fs.writeFileSync('showcase/seo-audit.json', JSON.stringify(out, null, 1)); console.log('done');
+fs.writeFileSync('showcase/lh.json', JSON.stringify(out, null, 1)); try { process.kill(-srv.pid); } catch (e) {} console.log('done'); process.exit(0);

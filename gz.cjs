@@ -1,0 +1,3 @@
+const http=require('http'),fs=require('fs'),path=require('path'),zlib=require('zlib');const root=process.argv[2];
+const T={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.ico':'image/x-icon'};
+http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]);if(p.endsWith('/'))p+='index.html';const f=path.join(root,p);fs.readFile(f,(e,d)=>{if(e){r.writeHead(404);return r.end()}const t=T[path.extname(f)]||'application/octet-stream';if(/text|javascript|json|svg/.test(t)){r.writeHead(200,{'content-type':t,'content-encoding':'gzip'});r.end(zlib.gzipSync(d))}else{r.writeHead(200,{'content-type':t});r.end(d)}})}).listen(8799);
