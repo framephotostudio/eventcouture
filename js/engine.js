@@ -131,8 +131,10 @@
     if (catId === 'tableDecor' && ev.kids && /birthday/.test(ev.type || '')) label = 'Table decor (small centerpiece, confetti, party favors)';   /* no candles at a child's party */
     /* Drinks follow the host's alcohol choice: none = soft drinks and mocktails, wine = beer and wine only */
     if (catId === 'bar' || catId === 'restaurantDrinks') {
-      if (ev.alcohol === 'none') { lo *= 0.4; hi *= 0.4; label = ev.kids && /birthday/.test(ev.type) ? 'Drinks (juice, lemonade, water)' : catId === 'bar' ? 'Non-alcoholic drinks (mocktails, soft drinks, coffee)' : 'Non-alcoholic drinks'; }
-      else if (ev.alcohol === 'wine') { lo *= 0.75; hi *= 0.75; label = catId === 'bar' ? 'Beer and wine' : 'Drinks (beer and wine, about two per person)'; }
+      /* A full open bar averages $25-45 a guest at a wedding or gala; a casual party pours less. */
+      if (catId === 'bar' && ['wedding', 'gala', 'quince', 'engagement', 'anniversary'].indexOf(ev.type) < 0) { lo *= 0.7; hi *= 0.7; }
+      if (ev.alcohol === 'none') { lo *= 0.3; hi *= 0.3; label = ev.kids && /birthday/.test(ev.type) ? 'Drinks (juice, lemonade, water)' : catId === 'bar' ? 'Non-alcoholic drinks (mocktails, soft drinks, coffee)' : 'Non-alcoholic drinks'; }
+      else if (ev.alcohol === 'wine') { lo *= 0.6; hi *= 0.6; label = catId === 'bar' ? 'Beer and wine' : 'Drinks (beer and wine, about two per person)'; }
     }
     /* Hotel ballroom: the room comes with the hotel's catering package (food, service staff, tables, chairs, linens), so the
        room is only a small fee and there are no separate rentals. The bar package and bartender fee are charged on top. */

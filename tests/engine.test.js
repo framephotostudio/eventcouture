@@ -88,9 +88,9 @@ t('run of show is in order and formatted', () => {
 });
 
 t('plan made for your budget lands at the budget and protects must-haves', () => {
-  const ev = { type: 'wedding', guests: 200, city: 'Houston, TX', budget: 31000, priorities: ['photographer'] };   // DJs now run $530 to $2,500, so $30,000 for 200 guests is too tight to keep every must-have
+  const ev = { type: 'wedding', guests: 200, city: 'Houston, TX', budget: 33000, priorities: ['photographer'] };   // a real open bar ($25-45 a guest) is in the plan; DJs now run $530 to $2,500, so $30,000 for 200 guests is too tight to keep every must-have
   const f = E.budgetFit(ev);
-  assert(Math.abs(f.total - 31000) <= 200, 'total ' + f.total);
+  assert(Math.abs(f.total - 33000) <= 200, 'total ' + f.total);
   const s = E.budget(ev, 'S').items.find(i => i.id === 'photographer').mid;
   assert(f.items.find(i => i.id === 'photographer').mid >= s * 0.99, 'photographer protected');
   assert(f.dropped.length > 0);

@@ -35,7 +35,7 @@
     venue:        { name: 'Venue rental', group: 'Venue', fixed: [400, 1800], perGuest: [5, 15], tier: 'LSU', taxable: true },
     privateDining:{ name: 'Private dining (food and drink minimum)', group: 'Venue', perGuest: [40, 75], tier: 'LSU', taxable: true, service: true, tip: false },
     catering:     { name: 'Catering', group: 'Food and drink', perGuest: [22, 50], tier: 'LSU', taxable: true, service: true },
-    bar:          { name: 'Bar and drinks', group: 'Food and drink', perGuest: [10, 25], tier: 'LSU', taxable: true },
+    bar:          { name: 'Bar and drinks', group: 'Food and drink', perGuest: [25, 45], tier: 'LSU', taxable: true },
     bartender:    { name: 'Bartender', group: 'Food and drink', perHour: [40, 65], tier: 'SU', tip: true, staffPer: 75 },
     cake:         { name: 'Cake and desserts', group: 'Food and drink', fixed: [40, 100], perGuest: [2.5, 6], tier: 'LSU', taxable: true },
     rentals:      { name: 'Rentals (tables, chairs, linens, tableware)', group: 'Setup', perGuest: [6, 16], tier: 'LSU', taxable: true },
