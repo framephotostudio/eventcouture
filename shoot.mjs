@@ -1,8 +1,19 @@
-import fs from 'node:fs'; fs.mkdirSync('showcase', { recursive: true });
-const API = 'https://event-couture-api.facecouture.workers.dev', H = { origin: 'https://eventcouture.app', 'content-type': 'application/json' }, out = {};
-const t0 = Date.now(); out.status = await (await fetch(API + '/api/status', { headers: H })).text(); out.statusMs = Date.now() - t0;
-for (const [i, q] of [['dj', 'arabic wedding DJ'], ['venue', 'wedding venue ballroom'], ['photographer', 'wedding photographer']].entries()) {
-  const t = Date.now(); const r = await fetch(API + '/api/places', { method: 'POST', headers: H, body: JSON.stringify({ query: q[1], city: 'Los Angeles, CA', cat: q[0], level: 'S' }) });
-  const txt = await r.text(); out['places' + i] = { status: r.status, ms: Date.now() - t, body: txt.slice(0, 300) };
+// Header preview: current "by Always Luxe" (phone stacks it under the logo) vs. beside the logo on phones too, real fonts.
+import fs from 'node:fs'; import { execSync, spawn } from 'node:child_process';
+fs.mkdirSync('showcase', { recursive: true });
+execSync('git clone -q --depth 1 --branch install https://github.com/framephotostudio/eventcouture.git st && cd st && mkdir _site && cp -r index.html manifest.json sw.js css js img _site/ && node tools/fonts.cjs _site');
+const srv = spawn('node', ['gz.cjs', 'st/_site'], { stdio: 'ignore', detached: true });
+await new Promise(r => setTimeout(r, 1500));
+const { chromium } = await import('playwright');
+const b = await chromium.launch();
+const V = { now: '', beside: '@media(max-width:699px){.brand.logo-mark{grid-auto-flow:column;align-items:center;gap:8px}.brand.logo-mark img{height:38px}.brand.logo-mark .by{font-size:11px;letter-spacing:.12em;margin-top:3px!important;white-space:nowrap}}' };
+for (const [n, w, h, s] of [['phone', 390, 120, 3], ['phone360', 360, 120, 3], ['desktop', 1280, 90, 2]]) {
+  for (const [k, css] of Object.entries(V)) {
+    if (n === 'desktop' && k !== 'now') continue;
+    const pg = await (await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: s })).newPage();
+    await pg.route(/googletagmanager|workers\.dev/, r => r.abort());
+    await pg.goto('http://localhost:8799/'); await pg.waitForSelector('.topbar'); await pg.evaluate(() => document.fonts.ready); if (css) await pg.addStyleTag({ content: css }); await pg.waitForTimeout(800);
+    await pg.screenshot({ path: `showcase/hdr-${n}-${k}.png`, clip: { x: 0, y: 0, width: w, height: n === 'desktop' ? 70 : 64 } }); await pg.close();
+  }
 }
-fs.writeFileSync('showcase/api.json', JSON.stringify(out, null, 1)); console.log('done');
+await b.close(); try { process.kill(-srv.pid); } catch (e) {} console.log('done'); process.exit(0);
