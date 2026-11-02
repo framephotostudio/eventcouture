@@ -319,7 +319,7 @@
       if (p[0] === 'vendors' && p[1] === 'requests') { if (CFG.app) { location.replace('#/'); return; } return vendorRequests(); }
       if (p[0] === 'r' && /^[a-f0-9]{20}$/.test(p[1] || '')) return vendorReply(p[1]);
       if (p[0] === 'vendors' && p[1] === 'new' && p[2]) { if (CFG.app) { location.replace('#/'); return; } var nv = store.get('vendor', {}); if (!nv.name) { nv.name = decodeURIComponent(p[2]).slice(0, 120); store.set('vendor', nv); } CLAIMING = ''; return vendorJoin(); }
-      if (p[0] === 'vendors' && p[1] === 'claim' && p[2]) { if (CFG.app) { location.replace('#/'); return; } var cv = store.get('vendor', {}), cn = decodeURIComponent(p[2]).slice(0, 120); if (cv.name !== cn && !cv.key && !cv.serverId) { cv = { name: cn, ig: p[3] ? '@' + decodeURIComponent(p[3]).replace(/^@/, '') : '' }; store.set('vendor', cv); }   /* never replace a listing this device already manages */ CLAIMING = cn; return vendorJoin(); }
+      if (p[0] === 'vendors' && p[1] === 'claim' && p[2]) { if (CFG.app) { location.replace('#/'); return; } var cv = store.get('vendor', {}), cn = decodeURIComponent(p[2]).slice(0, 120); var mine = cv.key || cv.serverId; if (cv.name !== cn && !mine) { cv = { name: cn, ig: p[3] ? '@' + decodeURIComponent(p[3]).replace(/^@/, '') : '' }; store.set('vendor', cv); }   /* never replace a listing this device already manages */ CLAIMING = mine && cv.name !== cn ? '' : cn; if (mine && cv.name !== cn) setTimeout(function () { toast('This device manages the listing for ' + (cv.name || 'another business') + '. To claim ' + cn + ', use a different device or ask us by email.'); }, 300); return vendorJoin(); }
       if (p[0] === 'vendors') { CLAIMING = ''; if (CFG.app) { location.replace('#/'); return; } return vendorJoin(); }
       if (p[0] === 'v' && p[1]) return vendorProfile(p[1]);
       if (p[0] === 'help') return help();
@@ -1095,7 +1095,7 @@
       ['outdoor', 'Outdoors', 'Big, beautiful space and great photos.', 'Needs a tent, restrooms, power and a rain plan.', true],
       ['ballroom', 'Hotel ballroom or banquet hall', 'Food, staff, tables, chairs and linens come in one package; hotels add rooms for guests.', 'Set catering menus and food-and-drink minimums.', !!(ev.settingChoices || []).length],
       ['home', 'At home', 'No venue cost and the most personal.', 'Setup, cleanup and parking fall on you.', g <= 150]].filter(function (o) { return o[4] && (!(ev.settingChoices || []).length || ev.settingChoices.indexOf(o[0]) >= 0); });
-    var rows = opts.map(function (o) { var t = Object.assign({}, ev, { setting: o[0] === 'ballroom' ? 'indoor' : o[0], venueKind: o[0] === 'ballroom' ? 'ballroom' : '' }); return { id: o[0], name: o[1], pro: o[2], con: o[3], total: E.budget(t, t.tier).total }; }).sort(function (a, b) { return a.total - b.total; });
+    var rows = opts.map(function (o) { var t = Object.assign({}, ev, { setting: o[0] === 'ballroom' ? 'indoor' : o[0], venueKind: o[0] === 'ballroom' ? 'ballroom' : '', shortlist: o[0] === 'ballroom' && ev.venueKind !== 'ballroom' ? (ev.shortlist || []).filter(function (x) { return x.cat !== 'venue'; }) : ev.shortlist });   /* a venue she saved for another kind of place doesn't price the hotel */ return { id: o[0], name: o[1], pro: o[2], con: o[3], total: E.budget(t, t.tier).total }; }).sort(function (a, b) { return a.total - b.total; });
     return '<div class="panel stack where-compare"><h3>Where should you host it?</h3><p class="muted small">' + ((ev.settingChoices || []).length ? 'You picked more than one, so here is this same plan priced in each. Your plan is priced for ' + ({ indoor: 'an event venue', ballroom: 'a hotel ballroom', outdoor: 'outdoors', home: 'your home', privateRoom: 'a private room' }[ev.settingChoices[0]] || 'an event venue') + ' until you choose.' : 'You haven\u2019t decided yet, so here is this same plan priced in each kind of place. Your plan uses an event venue until you choose.') + '</p><div class="list">' +
       rows.map(function (r) { return '<div class="it"><div class="grow"><b>' + esc(r.name) + '</b> <span class="num">about ' + money(r.total) + '</span>' + (ev.budget ? (r.total <= ev.budget ? ' <span class="badge ok">Fits your budget</span>' : '') : '') + '<div class="small muted">Pros: ' + esc(r.pro) + ' Cons: ' + esc(r.con) + '</div></div><span class="acts"><button class="btn small ghost" data-pickwhere="' + r.id + '">Choose</button></span></div>'; }).join('') + '</div></div>';
   }
@@ -1510,9 +1510,7 @@
       (pks.length && !ev.sample ? (inPk ? '<span class="badge ok">In package ' + (k + 1) + '</span>' : '<button class="btn small" data-topkg="' + esc(key) + '">Put in package ' + (k + 1) + '</button>') : '');
   }
   /* Hotel class by brand. Google's data has no official star rating, so only well-known brands are labeled. */
-  var LUX5 = /four seasons|ritz[- ]carlton|st\.? regis|waldorf astoria|mandarin oriental|the peninsula|rosewood|\baman\b|park hyatt|montage|bulgari|raffles|fairmont|\bconrad\b|jw marriott|\bedition\b|the langham|shangri-la|post oak hotel|auberge|pendry|four seasons/i;
-  var LUX4 = /marriott(?! (courtyard|fairfield|residence|springhill|towneplace))|\bhilton\b(?! (garden|homewood|hampton|home2))|hyatt regency|grand hyatt|\bwestin\b|sheraton|intercontinental|kimpton|^w [a-z]|\bw hotel|\bomni\b|le m[e\u00e9]ridien|renaissance|\bloews\b|thompson|autograph collection|curio collection|hard rock hotel|royal sonesta|the joule|hotel zaza|four points/i;
-  function hotelClass(name) { name = String(name || ''); if (!/hotel|resort|inn|suites|lodge|ritz|regis|seasons|waldorf|marriott|hilton|hyatt|westin|sheraton|kimpton|omni|loews|peninsula|rosewood|fairmont|conrad|langham|zaza|\bw\b/i.test(name)) return ''; if (/courtyard|fairfield|residence inn|springhill|towneplace|hampton|garden inn|homewood|home2|aloft|\bac hotel|four points|element|tru by|moxy|doubletree|embassy suites/i.test(name)) return ''; return LUX5.test(name) ? '5-star luxury brand' : LUX4.test(name) && !/four points/i.test(name) ? '4-star brand' : ''; }
+  function hotelClass(name) { name = String(name || ''); var c = E.hotelClass(name); return c === 'lux' ? '5-star luxury brand' : c === 'upper' && (E.HOTEL_LUX4.test(name)) ? '4-star brand' : ''; }   /* same brand lists as the pricing */
   function hotelBadge(name) { var c = hotelClass(name); return c ? ' <span class="badge est hotel-class" title="Hotel class by brand. Confirm with the hotel.">' + (c[0] === '5' ? '\u2605\u2605\u2605\u2605\u2605 ' : '\u2605\u2605\u2605\u2605 ') + c + '</span>' : ''; }
   function placeFromFound(f) { return { id: f.id, name: f.name, rating: f.rating, reviews: f.reviews, website: f.site, mapsUrl: f.maps, address: f.address, priceLevel: f.price }; }
   /* Up to three options per category; one is the front-runner (the first saved, until she stars another). */
@@ -1561,7 +1559,6 @@
   /* Prices that belong to a saved option carry its id (opt), so removing the option removes its price or booking too.
      A price typed on the Budget page for no particular option is left alone unless the front-runner has a quote. */
   function syncPrice(ev, cat) {
-    if (cat === 'venue') { var hp = pickOf(ev, 'venue'); if (ev.venueKind === 'ballroom' && hp && hp.name) ev.hotelPick = { name: hp.name, cls: E.hotelClass(hp.name, hp.price, hp.rating) }; else delete ev.hotelPick; }   /* hotel food is priced by the class of the hotel she picked */
     var o = ev.overrides = ev.overrides || {}, ov = o[cat], l = savedFor(ev, cat);
     var has = function (id) { return l.some(function (x) { return x.id === id; }); };
     if (ov && !ov.opt && ov.source === 'booking' && ov.note) { var m = l.find(function (x) { return x.name === ov.note; }); if (m) ov.opt = m.id; }
@@ -1717,13 +1714,15 @@
   function askOf(ev, cat, biz) { return ((ev.asks || {})[cat + '|' + biz.id]) || null; }
   function inquiryText(ev, cat, biz, o) {
     o = o || {};
-    var what = E.lc(catName(cat, ev)).replace(/ \(.*\)$/, ''), tn0 = ev.type === 'other' ? 'celebration' : E.typeName(ev), tn = E.culture(ev) ? tn0.charAt(0) + tn0.slice(1).toLowerCase() : tn0.toLowerCase(), when = ev.date ? ' on ' + new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ev.dateFrom ? ' sometime between ' + shortDate(ev.dateFrom) + ' and ' + shortDate(ev.dateTo || ev.dateFrom) : '';
+    var what = E.lc(catName(cat, ev)).replace(/ \(.*\)$/, ''), tn0 = ev.type === 'other' ? 'celebration' : E.typeName(ev), tn = tnLower(tn0, ev), when = ev.date ? ' on ' + new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ev.dateFrom ? ' sometime between ' + shortDate(ev.dateFrom) + ' and ' + shortDate(ev.dateTo || ev.dateFrom) : '';
     var look = ev.concept && (ev.concept.styleName || ev.concept.name || '').replace(/ (wedding|party|celebration)$/i, ''), cols = lookColors(ev), it = E.budget(ev, ev.tier).items.find(function (i) { return i.id === cat; });
     return 'Hi ' + biz.name.split(/ [-|·] /)[0] + '! I’m ' + (o.first ? o.first + ', ' : '') + 'planning a' + (/^[aeiou]/i.test(tn) ? 'n ' : ' ') + tn + ' in ' + (ev.city || '').split(',')[0] + when + ' for about ' + (ev.guests || 0) + ' guests' +
       '.' + (look ? ' The look we\u2019re going for is ' + look + (cols.length ? ', in ' + listAnd(cols) : '') + '.' : '') + ' I\u2019d love to know your availability and pricing for ' + what + '.' +
       (o.budget && it ? ' My budget for ' + what + ' is about ' + money(it.mid) + '.' : '') +
       (o.link ? ' I found you on Event Couture. You can reply in a minute here, sharing only what you\u2019re comfortable with: ' + REPLY_URL + o.link : ' I found you on Event Couture (eventcouture.app).');
   }
+  /* 'an Indian wedding', 'a Christmas party', 'an African American wedding', 'a baby shower' */
+  function tnLower(t, ev) { var keep = E.culture(ev) || /^(christmas|thanksgiving|easter|halloween|new year|eid|diwali|hanukkah|lunar|valentine|juneteenth|kwanzaa|ramadan|mother|father)/i.test(t); return keep ? t.replace(/\b(Wedding|Party|Celebration|Shower|Reception|Dinner|Brunch|Engagement|Anniversary|Birthday|Gala|Ceremony|Night|Day|Eve|Dinner Party|Gathering)\b/g, function (m) { return m.toLowerCase(); }) : t.toLowerCase(); }
   function listAnd(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
   function messageVendor(ev, cat, biz, after) {
     var ig = biz.ig || (/^ig:/.test(biz.id) ? biz.id.slice(3) : (String(biz.site || biz.url || '').match(/instagram\.com\/([\w.]+)/i) || [])[1]), site = siteOf(biz) || '', phone = biz.phone || '';
@@ -1742,21 +1741,24 @@
       ta.addEventListener('input', function () { edited = true; });
       el.querySelector('#vfirst').addEventListener('input', function (e) { o.first = e.target.value.trim().slice(0, 40); store.set('firstName', o.first); redo(); });
       var vb = el.querySelector('#vbud'); if (vb) vb.addEventListener('change', function () { o.budget = vb.checked; redo(); });
-      if (!o.link && CFG.apiUrl && !ev.sample) {   /* make the private reply link once per business */
-        var key = randKey(), cols = lookColors(ev);
-        if (ASK_PENDING[cat + '|' + biz.id]) return; ASK_PENDING[cat + '|' + biz.id] = 1;
-        apiMarket('ask/new', { key: key, d: { cur: E.currency(), type: ev.type === 'other' ? 'Celebration' : E.typeName(ev), date: ev.date || '', city: ev.city, guests: ev.guests, look: ev.concept ? (ev.concept.styleName || ev.concept.name || '').replace(/ (wedding|party|celebration)$/i, '') : '', colors: cols.join(', '), need: catName(cat, ev).replace(/ \(.*\)$/, ''), setting: settingName(ev), vendor: biz.name, hours: ev.hours || 0 } }).then(function (r) {
-          ev.asks = ev.asks || {}; ev.asks[cat + '|' + biz.id] = { id: r.id, key: key, cat: cat, biz: biz.id, name: biz.name, at: Date.now() }; saveEvent(ev);
-          delete ASK_PENDING[cat + '|' + biz.id]; o.link = r.id; var nt = el.querySelector('#vlinknote'); if (nt) nt.textContent = 'Includes your private reply link.';
-          if (edited) { if (ta.value.indexOf(REPLY_URL) < 0) ta.value += ' Reply here: ' + REPLY_URL + r.id; } else redo();
-        }).catch(function () { delete ASK_PENDING[cat + '|' + biz.id]; var nt = el.querySelector('#vlinknote'); if (nt) nt.textContent = ''; });
+      if (!o.link && CFG.apiUrl && !ev.sample) {   /* make the private reply link once per business; a second sheet waits for the same one */
+        var akey = cat + '|' + biz.id, P = ASK_PENDING[akey];
+        if (!P) {
+          var key = randKey(), cols = lookColors(ev);
+          P = ASK_PENDING[akey] = apiMarket('ask/new', { key: key, d: { cur: E.currency(), type: ev.type === 'other' ? 'Celebration' : E.typeName(ev), date: ev.date || ev.dateFrom || '', dateTo: !ev.date && ev.dateTo ? ev.dateTo : '', city: ev.city, guests: ev.guests, look: ev.concept ? (ev.concept.styleName || ev.concept.name || '').replace(/ (wedding|party|celebration)$/i, '') : '', colors: cols.join(', '), need: catName(cat, ev).replace(/ \(.*\)$/, ''), setting: settingName(ev), vendor: biz.name, hours: ev.hours || 0 } }).then(function (r) {
+            ev.asks = ev.asks || {}; ev.asks[akey] = { id: r.id, key: key, cat: cat, biz: biz.id, name: biz.name, at: Date.now() }; saveEvent(ev); delete ASK_PENDING[akey]; return r.id;
+          }, function (e) { delete ASK_PENDING[akey]; throw e; });
+        }
+        P.then(function (rid) { if (!document.contains(el)) return; o.link = rid; var nt = el.querySelector('#vlinknote'); if (nt) nt.textContent = 'Includes your private reply link.';
+          if (edited) { if (ta.value.indexOf(REPLY_URL) < 0) ta.value += ' Reply here: ' + REPLY_URL + rid; } else redo();
+        }).catch(function () { var nt = el.querySelector('#vlinknote'); if (nt) nt.textContent = ''; });
       }
       var txt = function () { return ta.value; };
-      var copySync = function () { ta.focus(); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.setSelectionRange(ta.value.length, ta.value.length); return ok; };   /* works inside the tap, before anything opens */
+      var copySync = function () { var ro = ta.readOnly; ta.readOnly = true; ta.focus({ preventScroll: true }); ta.setSelectionRange(0, ta.value.length); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.setSelectionRange(0, 0); ta.readOnly = ro; ta.blur(); return ok; };   /* read-only while copying: no phone keyboard */   /* works inside the tap, before anything opens */
       var copy = function () { if (copySync()) return Promise.resolve(); try { if (navigator.clipboard) return navigator.clipboard.writeText(txt()); } catch (e) {} return Promise.reject(new Error('copy')); };
       var sent = function () { var a = askOf(ev, cat, biz); if (a && !a.sent) { a.sent = Date.now(); saveEvent(ev); if (after) after(); } };
       el.querySelector('[data-vcopy]').addEventListener('click', function () { Promise.resolve(copy()).then(function () { sent(); toast('Message copied. Paste it to ' + biz.name); }, function () { toast('Select the message and copy it'); }); });
-      $$('[data-vgo]', el).forEach(function (b) { b.addEventListener('click', function () { var ok = copySync(); var w = window.open(b.dataset.vgo, '_blank'); if (w) try { w.opener = null; } catch (e) {} if (ok) { sent(); toast('Message copied. Paste it in the chat'); } else Promise.resolve(copy()).then(function () { sent(); toast('Message copied. Paste it in the chat'); }, function () { toast('Select the message and copy it, then paste it in the chat'); }); }); });
+      $$('[data-vgo]', el).forEach(function (b) { b.addEventListener('click', function () { var ok = copySync(); var w = window.open(b.dataset.vgo, '_blank'); if (w) try { w.opener = null; } catch (e) {} if (!w) { if (ok) sent(); return toast(ok ? 'Message copied. Your browser blocked the new tab: tap the button again or open them yourself' : 'Your browser blocked the new tab. Copy the message first'); } if (ok) { sent(); toast('Message copied. Paste it in the chat'); } else Promise.resolve(copy()).then(function () { sent(); toast('Message copied. Paste it in the chat'); }, function () { toast('Select the message and copy it, then paste it in the chat'); }); }); });
       var sm = el.querySelector('[data-vsms]'); if (sm) sm.addEventListener('click', function (e) { e.preventDefault(); sent(); location.href = 'sms:' + phone.replace(/[^\d+]/g, '') + (/iPhone|iPad/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(txt()); });
       T('vendor_message_open', { category: cat });
     });
@@ -1782,7 +1784,7 @@
     frame('<div class="wizard stack-lg"><p class="muted">Loading the request…</p></div>');
     if (!CFG.apiUrl) { frame('<div class="wizard stack"><h2>This reply link isn’t working here</h2><p class="muted">Open it on eventcouture.app.</p></div>'); return; }
     fetch(CFG.apiUrl + '/api/ask/' + encodeURIComponent(id)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || 'Not found'); return j; }); }).then(function (j) {
-      var d = j.d || {}, r = j.reply || {}, when = d.date ? new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : 'Date not set yet';
+      var d = j.d || {}, r = j.reply || {}, fd = function (x, wd) { return new Date(x + 'T12:00:00').toLocaleDateString('en-US', wd ? { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' } : { month: 'long', day: 'numeric', year: 'numeric' }); }, when = d.date && d.dateTo ? 'Between ' + fd(d.date) + ' and ' + fd(d.dateTo) : d.date ? fd(d.date, 1) : 'Date not set yet', mineVt = (store.get('askvt', {}))[id], locked = !!j.reply && !mineVt;
       var rows = [['Event', d.type], ['Date', when], ['Where', [d.city, d.setting].filter(Boolean).join(' · ')], ['Guests', d.guests ? 'About ' + d.guests : ''], ['Look', [d.look, d.colors].filter(Boolean).join(' · ')], ['Looking for', d.need]].filter(function (x) { return x[1]; });
       var chip = function (name, v, label, on) { return '<button type="button" class="chip" data-' + name + '="' + v + '" aria-pressed="' + !!on + '">' + label + '</button>'; };
       frame('<div class="wizard stack-lg vreply"><div class="stack"><p class="eyebrow">A client found you on Event Couture</p><h2>' + esc(d.vendor || 'Your reply') + ', can you help with this event?</h2><p class="muted">Answer in a minute. Share only what you’re comfortable with: every question is optional. Your answer goes straight to the client’s plan.</p></div>' +
@@ -1795,12 +1797,13 @@
         '<label class="field"><span>A note for the client (optional)</span><textarea class="input" id="vrNote" rows="3" maxlength="600">' + esc(r.note || '') + '</textarea></label>' +
         '<button class="btn gold block" id="vrSend">Send my reply</button><p class="small muted" id="vrMsg" aria-live="polite"></p></div>' +
         '<p class="small muted">Event Couture never shares the client’s contact details here, and never charges you to reply. ' + (CFG.app ? '' : '<a class="link" href="#/vendors/new/' + encodeURIComponent(d.vendor || '') + '">List your business for free</a>') + '</p></div>');
+      if (locked) { var fp = $('#vrSend').closest('.panel'); if (fp) fp.remove(); return; }   /* someone already answered from another browser: nothing to send here */
       var pick = function (box, attr) { $$('#' + box + ' [data-' + attr + ']').forEach(function (b) { b.addEventListener('click', function () { $$('#' + box + ' [data-' + attr + ']').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); if (attr === 'pm') $('#vrPriceBox').hidden = b.dataset.pm !== 'price'; }); }); };
       pick('vrAvail', 'av'); pick('vrPrice', 'pm');
       $('#vrSend').addEventListener('click', function () {
         var av = $('#vrAvail [aria-pressed="true"]'), pm = $('#vrPrice [aria-pressed="true"]');
         var body = { name: $('#vrName').value, phone: $('#vrPhone').value, avail: av ? av.dataset.av : '', priceMode: pm ? pm.dataset.pm : '', price: +$('#vrPriceVal').value || 0, priceNote: $('#vrPriceNote').value, note: $('#vrNote').value };
-        if (!body.avail && !body.phone.trim() && !body.note.trim() && !body.price) { $('#vrMsg').textContent = 'Add at least one answer.'; return; }
+        if (!body.avail && !body.phone.trim() && !body.note.trim() && !body.price && !body.priceMode) { $('#vrMsg').textContent = 'Add at least one answer.'; return; }
         var vts = store.get('askvt', {}); if (vts[id]) body.vt = vts[id];
         this.disabled = true; var btn = this;
         apiMarket('ask/' + id + '/reply', body).then(function (res) {
@@ -2216,7 +2219,7 @@
           if (phone) { var so = savedFor(ev, cat).find(function (x) { return x.id === own.id; }); if (so) so.phone = lk; }
           save(); rerender(); toast(nm + ' is in package ' + (k + 1)); });
         $$('[data-pkpick]', box).forEach(function (pb) { pb.addEventListener('click', function () { if (lockSample(ev)) return; var id = pb.dataset.pkpick, p = picks.concat(more).find(function (x) { return x.id === id; }), j = pkIds.indexOf(id);
-          if (j >= 0 && j !== k && !cur) { var spare = list.find(function (x) { return pkIds.indexOf(x.id) < 0; }); pk.items[cat] = id; if (spare) putInPackage(ev, j, cat, spare); else delete ev.packages[j].items[cat]; syncPrice(ev, cat); }   /* this package was empty: the other one gets a fresh pick */
+          if (j >= 0 && j !== k && !cur) { var spare = list.find(function (x) { return pkIds.indexOf(x.id) < 0; }); if (spare && !putInPackage(ev, j, cat, spare)) return toast('Remove one of your saved options for this first.'); if (!spare) delete ev.packages[j].items[cat]; pk.items[cat] = id; [j, k].forEach(function (q) { if ((ev.pkgChosen || 0) === q && ev.packages[q].items[cat] && !savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, ev.packages[q].items[cat]); }); syncPrice(ev, cat); }   /* this package was empty: the other one gets a fresh pick */
           else if (j >= 0 && j !== k) { ev.packages.forEach(function (q, qi) { if (qi !== k && q.items[cat] === id) q.items[cat] = cur; }); pk.items[cat] = id; [j, k].forEach(function (q) { if ((ev.pkgChosen || 0) === q && !savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, ev.packages[q].items[cat]); }); syncPrice(ev, cat); }   /* already in another package: the two trade places */
           else if (!putInPackage(ev, k, cat, p)) return toast('Remove one of your saved options for this first.');
           save(); rerender(); toast(p.name + ' is in package ' + (k + 1)); }); });
@@ -3108,7 +3111,7 @@
     bindDelete(ev);
   };
   function bindDelete(ev) {
-    var del = $('#del'); if (del) del.addEventListener('click', function () { sheet('<h3>Delete ' + esc(ev.name) + '?</h3><p class="muted">This can\u2019t be undone.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete event</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { T('event_deleted', { event_type: ev.type }); if (SHARING && ev.published) apiInv(ev.id, 'delete', { key: shareKey(ev) }).catch(function () {}); var all = events(); delete all[ev.id]; store.set('events', all); close(); toast('Event deleted'); location.hash = '#/events'; }); }); });
+    var del = $('#del'); if (del) del.addEventListener('click', function () { sheet('<h3>Delete ' + esc(ev.name) + '?</h3><p class="muted">This can\u2019t be undone.</p><button class="btn block" id="yes" style="background:var(--bad);border-color:var(--bad)">Delete event</button><button class="btn ghost block" data-close>Keep it</button>', function (el, close) { $('#yes', el).addEventListener('click', function () { T('event_deleted', { event_type: ev.type }); if (SHARING && ev.published) apiInv(ev.id, 'delete', { key: shareKey(ev) }).catch(function () {}); if (CFG.apiUrl) Object.keys(ev.asks || {}).forEach(function (k) { var a = ev.asks[k]; if (a && a.id && a.key) apiMarket('ask/' + a.id + '/delete', { key: a.key }).catch(function () {}); });   /* her vendor requests go too */ var all = events(); delete all[ev.id]; store.set('events', all); close(); toast('Event deleted'); location.hash = '#/events'; }); }); });
   }
   TAB_BIND.extras2 = function (ev, save, rerender) {
     var kx = $('#keepX'); if (kx) { kx.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', rerender); }); return; }

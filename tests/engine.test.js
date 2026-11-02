@@ -149,9 +149,9 @@ t('hotel food is priced by hotel class: brand, then the hotel she picked', () =>
   assert.equal(E.hotelClass('Four Seasons Hotel Houston'), 'lux'); assert.equal(E.hotelClass('Hilton Garden Inn Houston Hobby'), 'mid'); assert.equal(E.hotelClass('Hotel ICON, Autograph Collection'), 'upper');
   const ev = { type: 'wedding', guests: 150, city: 'Houston, TX', setting: 'indoor', venueKind: 'ballroom', tier: 'S' };
   const pg = b => Math.round(b.items.find(i => i.id === 'catering').mid / 150);
-  const up = pg(E.budget(ev, 'S')), lux = pg(E.budget(Object.assign({}, ev, { hotelPick: { name: 'Four Seasons Hotel Houston', cls: 'lux' } }), 'S')), mid = pg(E.budget(Object.assign({}, ev, { hotelPick: { name: 'Hilton Garden Inn', cls: 'mid' } }), 'S'));
-  assert(mid < up && up < lux, [mid, up, lux]); assert(up > 130 && up < 220, 'upscale hotel all-in per guest ' + up);   // $110-165 a guest ++ in Houston
-  assert(/Four Seasons Hotel Houston catering package/.test(E.budget(Object.assign({}, ev, { hotelPick: { name: 'Four Seasons Hotel Houston', cls: 'lux' } }), 'S').items.find(i => i.id === 'catering').name));
+  const up = pg(E.budget(ev, 'S')), lux = pg(E.budget(Object.assign({}, ev, { shortlist: [{ cat: 'venue', id: 'fs', name: 'Four Seasons Hotel Houston', pick: true }] }), 'S')), mid = pg(E.budget(Object.assign({}, ev, { shortlist: [{ cat: 'venue', id: 'hg', name: 'Hilton Garden Inn', pick: true }] }), 'S'));
+  assert(mid < up && up < lux, [mid, up, lux]); assert(E.hotelClass('Crystal Palace Banquet Hall') === 'hall' && E.hotelClass('Hilton Houston Post Oak by the Galleria') === 'upper'); assert(up > 130 && up < 220, 'upscale hotel all-in per guest ' + up);   // $110-165 a guest ++ in Houston
+  assert(/Four Seasons Hotel Houston catering package/.test(E.budget(Object.assign({}, ev, { shortlist: [{ cat: 'venue', id: 'fs', name: 'Four Seasons Hotel Houston', pick: true }] }), 'S').items.find(i => i.id === 'catering').name));
 });
 console.log(n + ' checks passed');
 // chosen photo + AI repeat of it + drink word as a color: three different looks, no "Champagne" names

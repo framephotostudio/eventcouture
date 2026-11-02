@@ -101,19 +101,27 @@
   /* Hotel catering packages, per guest before the service charge and tax, by the class of hotel (2026 published packages,
      Houston: Hilton Garden Inn / Marriott-type from about $65; Hotel ICON $110-165, The Laura $129-179, C. Baldwin $145;
      Four Seasons $205 with a 4-hour bar). Scaled to each city by its cost index. */
-  var HOTEL_PP = { mid: [65, 95], upper: [110, 165], lux: [175, 250] }, HOTEL_CLASS_NAME = { mid: 'hotel', upper: 'upscale hotel', lux: 'luxury hotel' };
-  function hotelClassOf(ev, tier) { var p = ev.hotelPick; if (p && HOTEL_PP[p.cls]) return p.cls; return { L: 'mid', S: 'upper', U: 'lux' }[tier.id] || 'upper'; }
-  /* Which class a hotel is: its brand first, then Google's price level, then its rating. */
+  var HOTEL_PP = { hall: [45, 85], mid: [65, 95], upper: [110, 165], lux: [175, 250] }, HOTEL_CLASS_NAME = { hall: 'banquet hall', mid: 'hotel', upper: 'upscale hotel', lux: 'luxury hotel' };
+  var HOUSTON_INDEX = 0.96;   /* the published packages above are Houston prices */
+  /* Hotel class by brand (the same lists drive the star badges). Google has no official star rating. */
+  var LUX5 = /four seasons|ritz[- ]carlton|st\.? regis|waldorf astoria|mandarin oriental|the peninsula|rosewood|\baman\b|park hyatt|montage|bulgari|raffles|fairmont|\bconrad\b|jw marriott|\bedition hotel|the langham|shangri-la|post oak hotel|auberge|pendry|houstonian/i;
+  var LUX4 = /marriott(?! (courtyard|fairfield|residence|springhill|towneplace))|\bhilton\b(?! (garden|homewood|hampton|home2))|hyatt regency|grand hyatt|\bwestin\b|sheraton|intercontinental|kimpton|^w [a-z]|\bw hotel|\bomni\b|le m[eé]ridien|renaissance|\bloews\b|thompson hotel|autograph collection|curio collection|tapestry collection|tribute portfolio|hard rock hotel|royal sonesta|the joule|hotel zaza|hotel icon|the laura hotel|whitehall|c\. baldwin|the sam houston|warwick|benson hotel/i;
+  var MIDH = /courtyard|fairfield|residence inn|springhill|towneplace|hampton inn|\bhampton by|garden inn|homewood|home2|aloft|\bac hotel|four points|element|tru by|moxy|doubletree|embassy suites|holiday inn|best western|la quinta|comfort (inn|suites)|quality inn|wyndham|ramada|days inn|radisson|crowne plaza|hyatt place|hyatt house|candlewood|staybridge|baymont|clarion|country inn|avid hotel|sleep inn|red lion/i;
+  var HOTELISH = /hotel|resort|\binn\b|suites|lodge|ritz|regis|seasons|waldorf|marriott|hilton|hyatt|westin|sheraton|kimpton|omni|loews|peninsula|rosewood|fairmont|conrad|langham|zaza|houstonian|^w /i;
   function hotelClass(name, priceLevel, rating) {
-    var n = String(name || '').toLowerCase();
-    if (/four seasons|ritz[- ]carlton|st\.? regis|waldorf|fairmont|peninsula|mandarin oriental|rosewood|park hyatt|\bedition\b|langham|conrad|houstonian|post oak|nobu|thompson|four seasons|w hotel|^w |1 hotel|montage|pendry|auberge|belmond|aman\b|bulgari|shangri|sofitel|jw marriott|loews|the joule|crescent court|adolphus/.test(n)) return 'lux';
-    if (/garden inn|hampton|holiday inn|courtyard|fairfield|best western|la quinta|homewood|home2|springhill|towneplace|residence inn|comfort|quality inn|wyndham|ramada|days inn|radisson|crowne plaza|doubletree|embassy suites|four points|aloft|hyatt place|hyatt house|candlewood|staybridge|baymont|red lion|clarion|sleep inn|country inn|avid|tru by/.test(n)) return 'mid';
-    if (/marriott|hilton|hyatt|westin|sheraton|omni|intercontinental|renaissance|autograph|curio|le meridien|kimpton|tapestry|tribute|hotel icon|the laura|magnolia|whitehall|hotel saint|hotel zaza|warwick|benson|grand|palace/.test(n)) return 'upper';
-    if (/VERY_EXPENSIVE/.test(priceLevel || '')) return 'lux';
-    if (/EXPENSIVE/.test(priceLevel || '')) return 'upper';
-    if (/MODERATE|INEXPENSIVE/.test(priceLevel || '')) return 'mid';
+    var n = String(name || ''), pl = String(priceLevel || '');
+    if (LUX5.test(n)) return 'lux';
+    if (MIDH.test(n)) return 'mid';
+    if (LUX4.test(n)) return 'upper';
+    if (!HOTELISH.test(n)) return 'hall';   /* a banquet hall or event hall, not a hotel */
+    if (/VERY_EXPENSIVE/.test(pl)) return 'lux';
+    if (/(^|_)EXPENSIVE$/.test(pl)) return 'upper';
+    if (/MODERATE|INEXPENSIVE/.test(pl)) return 'mid';
     return rating >= 4.6 ? 'upper' : 'mid';
   }
+  /* The hotel she's leaning toward: her front-runner venue, worked out fresh every time. */
+  function hotelPickOf(ev) { var l = (ev.shortlist || []).filter(function (x) { return x && x.cat === 'venue' && x.name; }), p = l.find(function (x) { return x.pick; }) || l[0]; return p ? { name: p.name, cls: hotelClass(p.name, p.price, p.rating) } : null; }
+  function hotelClassOf(ev, tier) { var p = hotelPickOf(ev); if (p) return p.cls; return { L: 'mid', S: 'upper', U: 'lux' }[tier.id] || 'upper'; }
   function rules(ev) { return (D.SETTING_RULES && D.SETTING_RULES[ev.setting]) || {}; }
   function tiersFor(catId, ev) { if (musicOf(ev).indexOf(catId) >= 0 || ((culture(ev) || {}).add || []).indexOf(catId) >= 0) return 'LSU';   /* the music she chose and her traditions are in every version */ var r = rules(ev).tiers; return (r && r[catId]) || D.CATEGORIES[catId].tier; }
   /* Start hour; midnight to 4 AM counts as late night (24 to 28), never as daytime. */
@@ -131,7 +139,7 @@
     var fscale = c.flat ? 1 : Math.min(1.5, Math.max(0.4, Math.sqrt(guests / 50)));
     if (c.fixed) { lo += c.fixed[0] * fscale; hi += c.fixed[1] * fscale; }
     var hotelFood = catId === 'catering' && hotelBallroom(ev), hcls = hotelFood && hotelClassOf(ev, tier);
-    var hnorm = tier.mult * (((D.ADJUST.wedding || {}).catering) || 1);   /* published prices are wedding packages at that hotel class: other occasions scale from there */
+    var hnorm = tier.mult * (((D.ADJUST.wedding || {}).catering) || 1) * HOUSTON_INDEX;   /* published prices are wedding packages at that hotel class: other occasions scale from there */
     if (hotelFood) { lo += HOTEL_PP[hcls][0] / hnorm * guests; hi += HOTEL_PP[hcls][1] / hnorm * guests; }   /* the hotel's own package price, not regular catering */
     else if (c.perGuest) { lo += c.perGuest[0] * guests; hi += c.perGuest[1] * guests; }
     if (c.perHour) {
@@ -161,7 +169,7 @@
     if (hotelBallroom(ev) && catId === 'venue') { lo *= 0.12; hi *= 0.15; label = 'Hotel ballroom (room included with the catering package; ceremony or setup fee)'; }
     if (hotelBallroom(ev) && catId === 'bartender') label = 'Hotel bartender fee';
     if (catId === 'rentals' && ev.setting === 'indoor' && !hotelBallroom(ev)) label = 'Rentals (tables, chairs, linens, tableware), if your venue doesn\u2019t include them';   /* many venues do, a blank space doesn't */
-    if (hotelFood) label = (ev.hotelPick && ev.hotelPick.name ? ev.hotelPick.name + ' catering package' : 'Hotel catering package') + ' (' + HOTEL_CLASS_NAME[hcls] + ': food, service staff, tables, chairs, linens)';
+    if (hotelFood) { var hpk = hotelPickOf(ev); label = hpk ? hpk.name + ' catering package (' + HOTEL_CLASS_NAME[hcls] + ': food, service staff, tables, chairs, linens)' : 'Hotel catering package (food, service staff, tables, chairs, linens)'; }
     if (c.meal && isDaytime(ev)) { lo *= 0.8; hi *= 0.8; mealNote = ', lunch or brunch prices'; }
     var extras = [];
     if (c.service) extras.push({ label: 'Service charge (20%)', rate: D.SERVICE });
@@ -766,7 +774,7 @@
     forOccasion: forOccasion,
     similarPhoto: similarPhoto, fitOccasion: fitOccasion, inspoConcept: inspoConcept,
     KIDS_TEXT: KIDS_TEXT,
-    hotelClass: hotelClass, passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
+    hotelClass: hotelClass, HOTEL_LUX5: LUX5, HOTEL_LUX4: LUX4, HOTEL_MID: MIDH, passFor: passFor, upgradeCost: upgradeCost, categoriesFor: categoriesFor, budget: budget, allBudgets: allBudgets,
     prosCons: prosCons, guardian: guardian, quantities: quantities, checklist: checklist, runOfShow: runOfShow,
     placesUsed: placesUsed, startHour: startHour, concepts: concepts, inspoOf: inspoOf, inspoName: inspoName, wordsDiffer: wordsDiffer, kidSafePhoto: kidSafePhoto, swapDrinks: swapDrinks, lookPieces: lookPieces, inspoText: inspoText, withInspo: withInspo, hostNamedColors: hostNamedColors, lc: lc, dressCode: dressCode, budgetFit: budgetFit, matchStyles: matchStyles, money: money, symOf: symOf, typeOf: typeOf, countryOf: countryOf, useCountry: useCountry, currency: currency, moneyIn: moneyIn, culture: culture, musicOf: musicOf, typeName: typeName, MUSIC_CATS: MUSIC_CATS, cityOf: cityOf
   };

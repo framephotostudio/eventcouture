@@ -600,7 +600,7 @@ async function askVendor(req, env, id, action, json) {
     const b = await req.json().catch(() => ({})), d = b.d || {};
     if (!b.key || String(b.key).length < 20) return json({ error: 'Missing key' }, 400);
     const rec = { kh: await sha(b.key), at: Date.now(), reply: null, d: {
-      type: aclip(d.type, 60), date: /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') ? d.date : '', city: aclip(d.city, 80), guests: Math.max(0, Math.min(5000, parseInt(d.guests, 10) || 0)),
+      type: aclip(d.type, 60), date: /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') ? d.date : '', dateTo: /^\d{4}-\d{2}-\d{2}$/.test(d.dateTo || '') ? d.dateTo : '', city: aclip(d.city, 80), guests: Math.max(0, Math.min(5000, parseInt(d.guests, 10) || 0)),
       look: aclip(d.look, 80), colors: aclip(d.colors, 120), need: aclip(d.need, 80), setting: aclip(d.setting, 60), vendor: aclip(d.vendor, 120), cur: /^[A-Z]{3}$/.test(d.cur || '') ? d.cur : 'USD', hours: Math.max(0, Math.min(24, +d.hours || 0)) } };
     if (!rec.d.need || !rec.d.vendor) return json({ error: 'Missing details' }, 400);
     const nid = [...crypto.getRandomValues(new Uint8Array(10))].map(x => x.toString(16).padStart(2, '0')).join('');
