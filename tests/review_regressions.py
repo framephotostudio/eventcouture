@@ -52,7 +52,7 @@ with sync_playwright() as p:
         start(pg, 'ivory and gold romantic wedding', 'wedding', 200, 'indoor', 60000, city='Atlanta, GA')
         names, base = finish(pg)
         check(names and names[0].startswith('Ivory'), tag + ': ivory and gold did not lead: ' + str(names))
-        pg.goto(U + base); pg.wait_for_timeout(300); check(pg.inner_text('.plan-head').startswith('Ivory'), tag + ': name does not follow the chosen look')
+        pg.goto(U + base); pg.wait_for_timeout(300); check(pg.inner_text('.plan-head').replace('AI-generated inspiration','').strip().startswith('Ivory'), tag + ': name does not follow the chosen look')
         # bachelorette splitting the cost: share = amount / people sharing
         start(pg, 'disco bachelorette dinner, splitting everything', 'bachelorette', 10, 'privateRoom', 3000, time='19:30', payer='shared', city='Nashville, TN')
         names, base = finish(pg)
