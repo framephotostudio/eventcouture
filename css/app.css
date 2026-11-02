@@ -379,7 +379,7 @@ input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; accent-
 .hero-photo { margin: 0; }
 .hero-photo figcaption { margin-top: 10px; font-size: .78rem; color: var(--muted); }
 .scene { position: relative; border: 0; border-radius: var(--r-md); overflow: hidden; }
-.scene img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: 50% 45%; }
+.scene img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: 50% 45%; height: auto; }
 @media (min-width: 900px) { .scene img { aspect-ratio: 4 / 5; } }
 /* discreet cost markers: small dot, full 44 px tap area */
 .hot { width: 44px; height: 44px; }
