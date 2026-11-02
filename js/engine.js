@@ -74,8 +74,8 @@
     if ((ev.priorities || []).indexOf('hairMakeup') >= 0 && ev.priorities.indexOf('hair') < 0) ev.priorities = ev.priorities.concat('hair');   /* the 'Hair and makeup' must-have covers both */
     list = list.concat((ev.priorities || []).filter(function (c) { return D.CATEGORIES[c] && ['venue', 'catering'].indexOf(c) < 0; }));   /* a must-have is always in the plan */
     if (ev.kids) list.push('kids');
-    if (ev.type === 'wedding' && list.indexOf('officiant') < 0) list.push('officiant');
-    if (ev.type !== 'wedding') list = list.filter(function (c) { return c !== 'officiant'; });
+    /* An officiant is optional: many couples are married by family clergy, at their mosque or church, or by a friend. She adds one from the extras. */
+    list = list.filter(function (c) { return c !== 'officiant' || ev.type === 'wedding' && (ev.priorities || []).indexOf('officiant') >= 0; });
     if (ev.setting === 'home') list = list.filter(function (c) { return c !== 'venue' && c !== 'privateDining'; }).concat(t.style === 'dining' ? ['catering', 'rentals'] : []);
     if (ev.alcohol === 'none') list = list.filter(function (c) { return c !== 'bartender'; });
     /* No one is being dressed for a dinner party, holiday party or gala: guests bring their own look. */
@@ -85,9 +85,9 @@
     if (['gala', 'wedding', 'anniversary', 'engagement', 'dinner', 'holiday', 'christmas'].indexOf(ev.type) >= 0) list = list.filter(function (c) { return c !== 'balloons' || (ev.include || []).indexOf('balloons') >= 0; });
     if ((ev.type === 'holiday' || ev.type === 'christmas')) list = list.filter(function (c) { return (c !== 'cake' && c !== 'cakeFee') || (ev.include || []).indexOf(c) >= 0; });
     if (hotelBallroom(ev)) list = list.filter(function (c) { return ['rentals', 'bartender', 'cleanup'].indexOf(c) < 0 || (ev.include || []).indexOf(c) >= 0; });
-    /* Venues, hotels and restaurants set up and clear their own space, the caterer clears the food and each vendor packs up their own decor.
-       A separate setup and cleanup crew is only budgeted at home or outdoors, unless she adds it. */
-    if (['home', 'outdoor'].indexOf(ev.setting || 'indoor') < 0 || hotelBallroom(ev)) list = list.filter(function (c) { return c !== 'cleanup' || (ev.include || []).indexOf('cleanup') >= 0; });
+    /* A setup and cleanup crew is optional everywhere: venues, hotels and restaurants clear their own space, the caterer clears the food
+       and each vendor packs up their own decor. She adds a crew from the extras when her place needs one (often at home or outdoors). */
+    list = list.filter(function (c) { return c !== 'cleanup' || (ev.include || []).indexOf('cleanup') >= 0; });
     var said = ((ev.inspiration && ev.inspiration.text) || '').toLowerCase();
     if (ev.setting === 'outdoor' && /\b(park|backyard|beach|yard|lake)\b/.test(said)) list = list.filter(function (c) { return c !== 'venue'; });   /* a park or backyard needs a permit, not a rental */
     var cu = culture(ev);

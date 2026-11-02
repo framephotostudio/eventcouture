@@ -17,8 +17,8 @@ with sync_playwright() as p:
     for vp, size in [('phone', {'width': 390, 'height': 844}), ('desk', {'width': 1280, 'height': 900})]:
         for cu, label, text, must in [
             ('arabic', 'Arabic wedding', 'elegant ivory and gold wedding with a big entrance', ['Zaffe and dabke group', 'Arabic singer with live band', 'DJ (Arabic and international music)', 'Kosha']),
-            ('indian', 'Indian wedding', 'colorful wedding with marigolds', ['Dhol player', 'Mandap', 'Mehndi', 'Pandit']),
-            ('persian', 'Persian wedding', 'romantic white and gold wedding', ['Sofreh aghd', 'Aghd officiant', 'Live band (Persian music)'])]:
+            ('indian', 'Indian wedding', 'colorful wedding with marigolds', ['Dhol player', 'Mandap', 'Mehndi']),
+            ('persian', 'Persian wedding', 'romantic white and gold wedding', ['Sofreh aghd', 'Live band (Persian music)'])]:
             qs.clear(); errs = []
             pg = b.new_page(viewport=size); pg.on('pageerror', lambda e: errs.append(str(e)))
             pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)

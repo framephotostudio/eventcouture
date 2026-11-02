@@ -42,7 +42,7 @@ t('brunch uses private dining, not venue + catering', () => {
 t('outdoor adds tent and permits; officiant only for weddings', () => {
   const ids = E.budget({ type: 'birthday', guests: 40, setting: 'outdoor' }, 'L').items.map(i => i.id);
   assert(ids.includes('tent') && ids.includes('permits') && !ids.includes('officiant'));
-  assert(E.budget(wedding, 'S').items.some(i => i.id === 'officiant'));
+  assert(!E.budget(wedding, 'S').items.some(i => i.id === 'officiant') && E.budget(Object.assign({}, wedding, { include: ['officiant'] }), 'S').items.some(i => i.id === 'officiant'));   // optional: added from the extras
 });
 t('city index raises New York over Houston', () => {
   const a = E.budget({ type: 'birthday', guests: 40, city: 'Houston, TX' }, 'S').total;

@@ -411,7 +411,7 @@
     { group: 'Services', items: [
       { id: 'hairMakeup', not: ['dinner', 'holiday', 'christmas', 'corporate', 'other', 'kids-birthday', 'retirement'] },
       { id: 'hair', not: ['dinner', 'holiday', 'christmas', 'corporate', 'other', 'kids-birthday', 'retirement'] },
-      { id: 'transport' }, { id: 'coordinator' }, { id: 'favors' }, { id: 'invitations' } ] }
+      { id: 'transport' }, { id: 'officiant', only: ['wedding'] }, { id: 'coordinator' }, { id: 'cleanup' }, { id: 'favors' }, { id: 'invitations' } ] }
   ];
   /* At a restaurant: only what you'd bring to the table. */
   var PKG_ADDONS_RESTAURANT = ['photographer', 'videographer', 'florals', 'cake', 'favors', 'invitations', 'transport'];

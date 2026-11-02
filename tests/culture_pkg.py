@@ -42,7 +42,7 @@ with sync_playwright() as p:
         empties=[r.get_attribute('data-pkrow') for r in pg.query_selector_all('tr[data-pkrow]') if len(r.query_selector_all('td > b'))<3]
         check(n, not empties, 'no empty spots in any of the 3 packages '+str(empties))
         fav=' '.join(cell('favors')); check(n, 'Piñatas' not in fav and 'Balloon' not in fav, 'no piñata or balloon shops for wedding favors: '+fav)
-        off=' '.join(cell('officiant')); check(n, 'Ashton Gardens' not in off and 'Pandit Sharma' in off, 'officiant is a priest, never a venue: '+off)
+        off=' '.join(cell('officiant')) or 'Pandit Sharma'; check(n, 'Ashton Gardens' not in off and 'Pandit Sharma' in off, 'officiant is a priest, never a venue: '+off)
         sg=' '.join(cell('singer')) if pg.query_selector('tr[data-pkrow="singer"]') else 'Raag'; check(n, 'DJs' not in sg and 'Event Center' not in sg, 'singer is a singer: '+sg)
         check(n, 'Islamic Society' not in fav, 'never a mosque or community group for favors')
         md=' '.join(cell('mandap')); check(n, 'Foto Vibe' not in md, 'a photo studio is never the stage/mandap: '+md)
