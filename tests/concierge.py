@@ -57,6 +57,7 @@ with sync_playwright() as p:
         check(n, pg.query_selector('#cqCall') is not None, 'free 15-minute call option')
         check(n, 'our booking promise' in st.lower() and 'Nothing is booked without your OK' in st and 'Quick turnaround on vendor options' in st and 'Weekly updates until everything is booked' in st and 'Free replacement if a vendor cancels' in st, 'the booking promise is in the pop-up')
         check(n, 'Nothing is booked without your OK' in card, 'the card shows the promise too')
+        check(n, 'Event Couture services are provided remotely. Event Couture does not attend or manage events in person.' in card and 'Event Couture services are provided remotely. Event Couture does not attend or manage events in person.' in st, 'the card and pop-up say the service is remote')
         pg.wait_for_timeout(300); pg.locator('.sheet').screenshot(path=f'{OUT}/concierge_sheet_{n}.png')
         n0=len(SAVED); pg.click('#cqGo'); pg.wait_for_timeout(300); check(n, 'name' in (pg.inner_text('.toast') if pg.query_selector('.toast') else '').lower() and len(SAVED)==n0, 'asks for the name first')
         pg.fill('#cqName','Sara Q'); pg.fill('#cqPhone','713-555-0199'); pg.fill('#cqEmail','sara@example.com'); pg.click('#cqGo'); pg.wait_for_url('https://buy.stripe.com/**', timeout=10000)
