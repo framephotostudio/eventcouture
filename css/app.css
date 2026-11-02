@@ -576,6 +576,9 @@ main h1, main h2, main h3, main p, main li, main b, main span, main td, .concept
 .brand.logo-mark img { display: block; height: 45px; width: auto; aspect-ratio: 563 / 210; border: 0; border-radius: 0; box-shadow: none; background: none; filter: drop-shadow(0 1px 1px rgba(20, 4, 12, .35)); }
 .brand.logo-mark .by { margin-top: 0; font-family: var(--display); font-weight: 600; font-size: 10.5px; letter-spacing: .16em; line-height: 1; margin-top: 0 !important; position: relative;
   background: linear-gradient(180deg, #F3E3BE 0%, #D9BC84 55%, #EAD5A4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
+/* "by Always Luxe" reads clearly: Bodoni's small-size design (thicker thin strokes), a little larger on phones */
+.brand.logo-mark .by { font-optical-sizing: none; font-variation-settings: "opsz" 6; font-weight: 600; font-size: 12px; letter-spacing: .14em; }
+@media (max-width: 360px) { .brand.logo-mark .by { font-size: 11px; letter-spacing: .1em; } }
 .brand.logo-mark:hover { text-decoration: none; }
 .topbar nav { grid-column: 3; justify-self: end; position: static !important; transform: none !important; flex-direction: row !important; gap: 6px !important; margin: 0; }
 .topbar .icon-btn { width: 28px !important; height: 28px !important; background: transparent; border: .75px solid rgba(214, 190, 140, .75); color: #EAD5A4; }
