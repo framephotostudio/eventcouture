@@ -1375,8 +1375,9 @@
     var all = E.allBudgets(ev);
     var picked = ev.budget && ev.tier && ev.tier !== 'F';   /* she chose a spending level over her budget plan */
     if (ev.budget && !picked) {   /* with a budget: her budget plan first, then the two spending levels closest to her number */
-      var near = all.slice().sort(function (x, y) { return Math.abs(x.total - ev.budget) - Math.abs(y.total - ev.budget); }).slice(0, 2).sort(function (x, y) { return x.total - y.total; });
-      all = [E.budgetFit(ev)].concat(near);
+      var fit = E.budgetFit(ev), lv = all.slice().sort(function (x, y) { return x.total - y.total; });
+      var lighter = lv.filter(function (t) { return t.total < fit.total * 0.97; }).pop(), lavish = lv.filter(function (t) { return t.total > fit.total * 1.03; })[0];
+      all = [fit].concat([lighter, lavish].filter(Boolean));   /* a lighter and a more lavish version beside her plan */
     }
     if (picked) all = all.filter(function (t) { return t.tier.id === ev.tier; });
     var g = E.guardian(ev, b);
