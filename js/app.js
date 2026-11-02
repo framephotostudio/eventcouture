@@ -3372,4 +3372,6 @@
   });
 
   route();
+  /* Owner and testers: ?ec_owner=1 stops counting this device's visits in analytics (js/analytics.js); say so on screen. */
+  (function () { var m = /[?&]ec_owner=([01])/.exec(location.search); if (!m) return; setTimeout(function () { toast(m[1] === '1' ? 'Done. Your visits on this device and browser won\u2019t be counted in Event Couture\u2019s numbers.' : 'Your visits on this device are counted again.'); }, 600); })();
 })();
