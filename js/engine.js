@@ -84,6 +84,7 @@
     /* Balloon installations don't suit black-tie or romantic occasions unless the host adds them. */
     if (['gala', 'wedding', 'anniversary', 'engagement', 'dinner', 'holiday', 'christmas'].indexOf(ev.type) >= 0) list = list.filter(function (c) { return c !== 'balloons' || (ev.include || []).indexOf('balloons') >= 0; });
     if ((ev.type === 'holiday' || ev.type === 'christmas')) list = list.filter(function (c) { return (c !== 'cake' && c !== 'cakeFee') || (ev.include || []).indexOf(c) >= 0; });
+    if (hotelBallroom(ev)) list = list.filter(function (c) { return ['rentals', 'bartender', 'cleanup'].indexOf(c) < 0 || (ev.include || []).indexOf(c) >= 0; });
     var said = ((ev.inspiration && ev.inspiration.text) || '').toLowerCase();
     if (ev.setting === 'outdoor' && /\b(park|backyard|beach|yard|lake)\b/.test(said)) list = list.filter(function (c) { return c !== 'venue'; });   /* a park or backyard needs a permit, not a rental */
     var cu = culture(ev);
@@ -93,6 +94,7 @@
     return list.filter(function (c) { if (seen[c] || (ev.exclude || []).indexOf(c) >= 0) return false; seen[c] = 1; return true; });
   }
 
+  function hotelBallroom(ev) { return !!ev && ev.venueKind === 'ballroom' && ev.setting === 'indoor'; }
   function rules(ev) { return (D.SETTING_RULES && D.SETTING_RULES[ev.setting]) || {}; }
   function tiersFor(catId, ev) { if (musicOf(ev).indexOf(catId) >= 0 || ((culture(ev) || {}).add || []).indexOf(catId) >= 0) return 'LSU';   /* the music she chose and her traditions are in every version */ var r = rules(ev).tiers; return (r && r[catId]) || D.CATEGORIES[catId].tier; }
   /* Start hour; midnight to 4 AM counts as late night (24 to 28), never as daytime. */
@@ -129,6 +131,10 @@
       if (ev.alcohol === 'none') { lo *= 0.4; hi *= 0.4; label = ev.kids && /birthday/.test(ev.type) ? 'Drinks (juice, lemonade, water)' : catId === 'bar' ? 'Non-alcoholic drinks (mocktails, soft drinks, coffee)' : 'Non-alcoholic drinks'; }
       else if (ev.alcohol === 'wine') { lo *= 0.75; hi *= 0.75; label = catId === 'bar' ? 'Beer and wine' : 'Drinks (beer and wine, about two per person)'; }
     }
+    /* Hotel ballroom: the room comes with the hotel's catering package (food, service staff, tables, chairs, linens), so the
+       room is only a small fee and there are no separate rentals, bartenders or cleanup crew. */
+    if (hotelBallroom(ev) && catId === 'venue') { lo *= 0.12; hi *= 0.15; label = 'Hotel ballroom (room included with the catering package; ceremony or setup fee)'; }
+    if (hotelBallroom(ev) && catId === 'catering') label = 'Hotel catering package (food, service staff, tables, chairs, linens)';
     if (c.meal && isDaytime(ev)) { lo *= 0.8; hi *= 0.8; mealNote = ', lunch or brunch prices'; }
     var extras = [];
     if (c.service) extras.push({ label: 'Service charge (20%)', rate: D.SERVICE });
