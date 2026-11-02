@@ -7,7 +7,7 @@ await new Promise(r => setTimeout(r, 1500));
 const { chromium } = await import('playwright');
 const b = await chromium.launch();
 const V = { now: '' }; const _x = { beside: '@media(max-width:699px){.brand.logo-mark{grid-auto-flow:column;align-items:center;gap:8px}.brand.logo-mark img{height:38px}.brand.logo-mark .by{font-size:11px;letter-spacing:.12em;margin-top:3px!important;white-space:nowrap}}' };
-for (const [n, w, h, s] of [['w320', 320, 120, 3], ['w340', 340, 120, 3], ['w360', 360, 120, 3], ['w390', 390, 120, 3], ['w430', 430, 120, 3], ['w680', 680, 120, 2], ['desktop', 1280, 90, 2]]) {
+for (const [n, w, h, s] of [['w320', 320, 120, 3], ['w360', 360, 120, 3], ['w375', 375, 120, 3], ['w390', 390, 120, 3], ['w430', 430, 120, 3], ['w680', 680, 120, 2], ['desktop', 1280, 90, 2]]) {
   for (const [k, css] of Object.entries(V)) {
     if (n === 'desktop' && k !== 'now') continue;
     const pg = await (await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: s })).newPage();
