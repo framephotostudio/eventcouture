@@ -41,12 +41,30 @@
     function need(h) { if (y - h < M + 24) page(); }
     function para(s, f, size, color, indent, lead) { indent = indent || 0; lead = lead || size * 1.45; wrap(s, f, size, CW - indent).forEach(function (ln) { need(lead); y -= lead; text(M + indent, y, ln, f, size, color); }); }
     page();
+    /* cover page: the event photo (cropped to fill), the name, the details and the colors */
+    var cv = d.cover && d.cover.jpeg && d.cover.w && d.cover.h ? d.cover : null;
+    if (cv) {
+      text(M, y - 9, 'E V E N T   C O U T U R E', 'B', 7.5, GOLDT); text(PW - M - width('by Always Luxe', 'I', 9), y - 9, 'by Always Luxe', 'I', 9, GOLDT); y -= 18; rule(M, y, PW - M, GOLD, 0.8); y -= 16;
+      var bw = CW, bh = Math.round(CW * 0.8), bx = M, by = y - bh, sc = Math.max(bw / cv.w, bh / cv.h), iw = cv.w * sc, ih = cv.h * sc;
+      ops.push('q ' + [bx, by, bw, bh].map(function (v) { return v.toFixed(2); }).join(' ') + ' re W n ' + [iw, 0, 0, ih, bx - (iw - bw) / 2, by - (ih - bh) / 2].map(function (v) { return v.toFixed(2); }).join(' ') + ' cm /Im1 Do Q');
+      y = by;
+      if (cv.ai) { y -= 12; text(M, y, 'AI-generated inspiration, not a photo of your event', 'I', 8, MUTED); }
+      y -= 22; if (d.kicker) { text(M, y, String(d.kicker).toUpperCase(), 'R', 8.5, MUTED); y -= 6; }
+      wrap(d.title, 'S', 30, CW).forEach(function (ln) { y -= 33; text(M, y, ln, 'S', 30, PLUM); });
+      y -= 6; (d.lines || []).slice(0, 2).forEach(function (l, i) { para(l, 'R', i ? 9.5 : 11, i ? MUTED : TEXT); });
+      if ((d.palette || []).length) { y -= 22; d.palette.slice(0, 6).forEach(function (h, i) { dot(M + 10 + i * 26, y + 4, 10, h); }); y -= 10; }
+      text(M, M + 14, 'Prepared with Event Couture  \u00b7  eventcouture.app', 'I', 9, GOLDT);
+      page();
+    }
     /* masthead */
     text(M, y - 9, 'E V E N T   C O U T U R E', 'B', 7.5, GOLDT); text(PW - M - width('by Always Luxe', 'I', 9), y - 9, 'by Always Luxe', 'I', 9, GOLDT); y -= 18; rule(M, y, PW - M, GOLD, 0.8); y -= 30;
+    if (cv) { text(M, y, String(d.title || ''), 'S', 16, PLUM); y -= 4; (d.lines || []).slice(2).forEach(function (l) { para(l, 'R', 9.5, MUTED); }); }
+    else {
     if (d.kicker) { text(M, y, String(d.kicker).toUpperCase(), 'R', 8.5, MUTED); y -= 8; }
     wrap(d.title, 'S', 27, CW).forEach(function (ln) { y -= 30; text(M, y, ln, 'S', 27, PLUM); });
     y -= 4; (d.lines || []).forEach(function (l, i) { para(l, i ? 'R' : 'R', i ? 9.5 : 10.5, i ? MUTED : TEXT); });
     if ((d.palette || []).length) { y -= 18; d.palette.slice(0, 6).forEach(function (h, i) { dot(M + 8 + i * 22, y + 4, 8, h); }); y -= 8; }
+    }
     y -= 6;
     (d.sections || []).forEach(function (s) {
       need(64); y -= 34; text(M, y, s.h, 'S', 15, PLUM); y -= 7; rule(M, y, PW - M, GOLD, 0.5); y -= 4;
@@ -69,7 +87,9 @@
     /* assemble the file */
     var objs = [], fontIds = {}, n = 3;
     Object.keys(FONTS).forEach(function (k) { fontIds[k] = n; objs[n++] = '<< /Type /Font /Subtype /Type1 /BaseFont /' + FONTS[k] + ' /Encoding /WinAnsiEncoding >>'; });
-    var res = '<< /Font << ' + Object.keys(FONTS).map(function (k) { return '/' + k + ' ' + fontIds[k] + ' 0 R'; }).join(' ') + ' >> >>';
+    var img = '';
+    if (cv) { var bin = ''; for (var bi = 0; bi < cv.jpeg.length; bi++) bin += String.fromCharCode(cv.jpeg[bi]); var imId = n++; objs[imId] = '<< /Type /XObject /Subtype /Image /Width ' + cv.w + ' /Height ' + cv.h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + cv.jpeg.length + ' >>\nstream\n' + bin + '\nendstream'; img = ' /XObject << /Im1 ' + imId + ' 0 R >>'; }
+    var res = '<< /Font << ' + Object.keys(FONTS).map(function (k) { return '/' + k + ' ' + fontIds[k] + ' 0 R'; }).join(' ') + ' >>' + img + ' >>';
     var kids = [];
     pages.forEach(function (o) { var body = o.join('\n'); var cid = n++; objs[cid] = '<< /Length ' + body.length + ' >>\nstream\n' + body + '\nendstream'; var pid = n++; objs[pid] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PW + ' ' + PH + '] /Resources ' + res + ' /Contents ' + cid + ' 0 R >>'; kids.push(pid); });
     objs[1] = '<< /Type /Catalog /Pages 2 0 R >>';

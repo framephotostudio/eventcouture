@@ -34,6 +34,8 @@ export default {
     try {
       const inv = url.pathname.match(/^\/api\/inv\/([a-z0-9]{6,32})(?:\/(publish|rsvp|vote|bought|inbox|delete))?$/);
       if (inv) return await invite(req, env, inv[1], inv[2] || '', json);
+      const prp = url.pathname.match(/^\/api\/prop\/([a-f0-9]{16,32})(?:\/(publish|delete))?$/);
+      if (prp) return await proposal(req, env, prp[1], prp[2] || '', json);
       if (req.method === 'GET' && url.pathname === '/api/vendors') return await vendorSearch(env, url, json);
       const vp = url.pathname.match(/^\/api\/vendor\/([a-z0-9]{8,16})$/);
       if (req.method === 'GET' && vp) return await vendorProfile(env, vp[1], json);
@@ -546,4 +548,28 @@ async function optinExport(req, env, cors) {
   do { const l = await env.EC_KV.list({ prefix: 'optin:', cursor }); for (const k of l.keys) { const r = await env.EC_KV.get(k.name, 'json'); if (r) rows.push([r.email, r.at, r.type, r.date, r.city, r.guests, r.consent]); } cursor = l.list_complete ? null : l.cursor; } while (cursor);
   const csv = rows.map(r => r.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',')).join('\n');
   return new Response(csv, { headers: { ...cors, 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
+}
+
+// View-only plan links (#/p/<id>): the host publishes a snapshot of the finished plan; anyone with the link can read it.
+// The host owns it with a random key (only its hash is stored). Kept for 180 days after the last publish.
+const PROP_MAX = 1500000;
+async function proposal(req, env, id, action, json) {
+  if (!env.EC_KV) return json({ error: 'Sharing is not connected yet.' }, 503);
+  const k = 'prop:' + id, rec = await env.EC_KV.get(k, 'json');
+  if (req.method === 'GET' && !action) return rec ? json({ plan: rec.plan, at: rec.at }) : json({ error: 'This plan link isn\u2019t available. Ask the host for a new one.' }, 404);
+  if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
+  if (+(req.headers.get('content-length') || 0) > PROP_MAX + 4000) return json({ error: 'That plan is too large to share. Remove a few photos and try again.' }, 413);
+  const body = await req.json().catch(() => ({}));
+  if (!body.key || String(body.key).length < 20) return json({ error: 'Missing key' }, 400);
+  const kh = await sha(body.key);
+  if (rec && rec.kh !== kh) return json({ error: 'Not allowed' }, 403);
+  if (action === 'delete') { if (rec) await env.EC_KV.delete(k); return json({ ok: true }); }
+  if (action === 'publish') {
+    if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown'))) return json({ error: 'Please wait a few minutes and try again.' }, 429);
+    const text = JSON.stringify(body.plan || {});
+    if (text.length > PROP_MAX) return json({ error: 'That plan is too large to share. Remove a few photos and try again.' }, 413);
+    await env.EC_KV.put(k, JSON.stringify({ kh, plan: JSON.parse(text), at: Date.now() }), { expirationTtl: 180 * 86400 });
+    return json({ ok: true, id });
+  }
+  return json({ error: 'Not found' }, 404);
 }

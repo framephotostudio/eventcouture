@@ -311,6 +311,7 @@
       if (p[0] === 'g') return guestPage(p[1]);
       if (p[0] === 'booked') return cqThanks();
       if (p[0] === 'unsubscribe') return unsubscribePage();
+      if (p[0] === 'p' && p[1]) return proposalPage(p[1]);
       if (p[0] === 'admin' && p[1] === 'emails') return emailExportPage();
       if (p[0] === 'cq' && p[1]) return cqRequest(p[1]);
       if (p[0] === 'vendors' && p[1] === 'requests') { if (CFG.app) { location.replace('#/'); return; } return vendorRequests(); }
@@ -1159,10 +1160,11 @@
     var go = '#/e/' + ev.id + '/';
     var sec = function (h, inner, edit) { return '<section class="ps-sec"><div class="ps-h"><h3>' + h + '</h3>' + (edit && !ev.sample ? '<a class="ps-edit link small" href="' + go + edit[0] + '">' + edit[1] + '</a>' : '') + '</div>' + inner + '</section>'; };
     return '<div class="stack plan-sheet">' +
-      '<div class="panel plan-save"><div><b>Save your plan</b><p class="small muted">Keep a copy as a PDF, email it to yourself or send it to a co-host. ' + (ev.sample ? '' : 'Don\u2019t love something? Tap Change or Replace next to it.') + '</p></div><div class="row plan-actions"><button class="btn gold small" id="pdfPlan">Save as PDF</button><button class="btn ghost small" id="mailPlan">Email it to me</button><button class="btn ghost small" id="sharePlan">Share</button>' + (window.ECNative && window.ECNative.isNative ? '' : '<button class="btn ghost small" id="printPlan">Print</button>') + '</div></div>' +
+      '<div class="panel plan-save"><div><b>Save your plan</b><p class="small muted">Keep a copy as a PDF, email it to yourself or send it to a co-host. ' + (ev.sample ? '' : 'Don\u2019t love something? Tap Change or Replace next to it.') + '</p></div><div class="row plan-actions"><button class="btn gold small" id="pdfPlan">Save as PDF</button><button class="btn ghost small" id="mailPlan">Email it to me</button><button class="btn ghost small" id="sharePlan">Share</button>' + (CFG.apiUrl && !ev.sample ? '<button class="btn ghost small" id="linkPlan">View-only link</button>' : '') + '' + (window.ECNative && window.ECNative.isNative ? '' : '<button class="btn ghost small" id="printPlan">Print</button>') + '</div></div>' +
       optinPanel(ev) +
+      planCover(ev) +
       '<div class="ps-head"><span class="small muted">' + esc(E.typeName(ev)) + '</span><h2>' + esc(ev.name) + '</h2><p>' + (ev.date ? esc(fmtDate(ev.date)) + (ev.time ? ' at ' + esc(fmtTime(ev.time)) : '') : 'Date to be set') + ' \u00b7 ' + esc(whereText(ev)) + ' \u00b7 ' + esc(settingName(ev)) + ' \u00b7 ' + plural(ev.guests, 'guest') + '</p><p class="small muted">Dress code: ' + esc(E.dressCode(ev, ev.tier)) + '</p>' + (ev.sample ? '' : '<button class="ps-edit link small" data-plan-when>' + (ev.date || ev.dateFrom ? 'Change date' : 'Set your date') + '</button>') + '</div>' +
-      sec('Your look', dots(c.palette, c.styleName + ' colors') + '<p><b>' + esc(c.styleName) + '.</b> ' + esc(moodFor(c, ev)) + '</p><ul class="incl">' + decorFor(c, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>', ['concepts', 'Choose a different look']) +
+      sec('Your look', moodBoard(ev, c) + '<p><b>' + esc(c.styleName) + '.</b> ' + esc(moodFor(c, ev)) + '</p><ul class="incl">' + decorFor(c, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>', ['concepts', 'Choose a different look']) +
       sec('Budget, ' + esc(tierName(b.tier.id)), '<details class="ps-more"><summary>' + money(b.total) + ' estimated total \u00b7 see every line</summary><div class="table-wrap"><table class="qty"><thead><tr><th>Item</th><th>Status</th><th>Amount</th></tr></thead><tbody>' + b.items.map(function (i) { var st = statusOf(ev, i.id); var oo = (ev.overrides || {})[i.id]; return '<tr><td>' + esc(i.name) + '</td><td class="small muted">' + (st === 'booked' ? (oo && oo.amount > 0 ? 'Booked' : 'Booked, estimate') : st === 'quote' ? 'Quote' : 'Estimate') + '</td><td class="n">' + money(i.mid) + '</td></tr>'; }).join('') + '<tr><td><b>Estimated total</b></td><td class="small muted">' + (ev.budget ? 'Budget ' + money(ev.budget) : '') + '</td><td class="n"><b>' + money(b.total) + '</b></td></tr></tbody></table></div></details><p class="small muted">Includes tax, service' + (tipsHere(ev) ? ', tips' : '') + ' and a 10% cushion. Amounts marked Quote or Booked are the prices you entered.</p>', ['budget', 'Change level or prices']) +
       sec('Venue and vendors', '<div class="list">' + vend.map(function (id) { var it = b.items.find(function (x) { return x.id === id; }), n = savedFor(ev, id).length; return '<div class="it"><span class="grow"><b>' + esc(catName(id, ev)) + '</b><span class="small muted"> ' + esc(stTxt(id)) + '</span></span><span class="num">' + money(it.mid) + '</span>' + (ev.sample ? '' : '<button class="ps-edit link small" data-plan-replace="' + id + '">' + (n > 1 ? 'Compare or replace' : n ? 'Replace' : 'Find one') + '</button>') + '</div>'; }).join('') + '</div>') +
       sec(ev.setting === 'restaurant' ? 'Look for these on the menu' : 'Menu', '<ul class="incl">' + menuItems(ev).map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul>', ['food', 'Change menu']) +
@@ -1217,8 +1219,105 @@
     out.push(d.foot); return out.join('\n');
   }
   function fileName(ev) { return (String(ev.name || 'Event plan').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60) || 'Event-plan') + '-plan.pdf'; }
+  /* Finished plan, proposal style: a cover with the event photo, then a mood board of the host's own photos and the colors. */
+  function planCover(ev) {
+    var ph = eventPhoto(ev); if (!ph) return '';
+    return '<figure class="ps-cover"><img src="' + esc(srcOf(ph.src)) + '" alt="' + esc(ph.alt || 'Event inspiration') + '" loading="lazy"><figcaption><span class="eyebrow">Event Couture proposal</span>' +
+      (ph.ai ? '<span class="small">AI-generated inspiration, not a photo of your event</span>' : '<span class="small">Your inspiration</span>') + '</figcaption></figure>';
+  }
+  function moodBoard(ev, c) {
+    var pal = (Array.isArray(c.palette) ? c.palette : []).filter(function (h) { return /^#[0-9a-f]{6}$/i.test(h); }).slice(0, 6);
+    var own = ((ev.inspiration && ev.inspiration.photos) || []).filter(function (p) { return p && p.src; }).slice(0, 6);
+    var pics = own.map(function (p) { return { src: p.src, alt: 'Your inspiration photo' }; });
+    var sw = pal.map(function (h) { var nm = hexName(h); return '<span class="mb-sw"><i style="background:' + h + '"></i><span class="small">' + esc(nm ? nm.charAt(0).toUpperCase() + nm.slice(1) : h) + '</span></span>'; }).join('');
+    return '<div class="moodboard' + (pics.length > 1 ? ' many' : '') + '">' + (pics.length ? '<div class="mb-pics">' + pics.map(function (p) { return '<img src="' + esc(srcOf(p.src)) + '" alt="' + esc(p.alt || '') + '" loading="lazy">'; }).join('') + '</div>' : '') +
+      (sw ? '<div class="mb-swatches" role="list" aria-label="' + esc(c.styleName) + ' colors">' + sw + '</div>' : '') +
+      (!own.length ? '<p class="small muted">Your colors. Add your own inspiration photos and they\u2019ll show here as your mood board.</p>' : '') + '</div>';
+  }
+  /* View-only plan link (#/p/<id>): a snapshot of the finished plan for a partner, family or co-host. Photos are shrunk on
+     the phone first; the budget is included only if the host leaves the box ticked. */
+  function shrinkPhoto(src, max) {
+    return new Promise(function (ok) {
+      if (!/^data:/.test(src)) return ok(/^https?:/.test(src) ? src : siteBase().replace(/[^/]*$/, '') + src);
+      var im = new Image(); im.onload = function () { try { var k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)), w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k), cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(im, 0, 0, w, h); ok(cv.toDataURL('image/jpeg', 0.8)); } catch (e) { ok(''); } };
+      im.onerror = function () { ok(''); }; im.src = src;
+    });
+  }
+  function proposalSheet(ev) {
+    var shared = !!ev.propId;
+    sheet('<h3>View-only link</h3><p class="small muted">Anyone with the link can see this plan, but can\u2019t change it. Great for a partner, family or co-host. The link stays for 180 days after your last update.</p>' +
+      '<label class="check small"><input type="checkbox" id="propBudget"' + (ev.propBudget === false ? '' : ' checked') + '> Include the budget</label>' +
+      '<button class="btn gold block" id="propGo">' + (shared ? 'Update and copy the link' : 'Create and copy the link') + '</button>' + (shared ? '<button class="btn ghost block" id="propStop">Stop sharing this link</button>' : '') + '<button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
+      $('#propGo', el).addEventListener('click', function () {
+        var go = this; go.disabled = true; go.textContent = 'Preparing your link\u2026';
+        ev.propBudget = $('#propBudget', el).checked;
+        if (!ev.propId) ev.propId = randKey().slice(0, 32); if (!ev.propKey) ev.propKey = randKey();
+        var d = planData(ev), c = ev.concept || {}, ph = eventPhoto(ev), own = ((ev.inspiration && ev.inspiration.photos) || []).filter(function (p) { return p && p.src; }).slice(0, 4);
+        if (!ev.propBudget) d.sections = d.sections.filter(function (x) { return !/^Budget/.test(x.h); }).map(function (x) { var y = Object.assign({}, x); delete y.total; if (y.rows) y.rows = y.rows.map(function (r2) { return [r2[0], r2[1], '']; }); return y; });
+        Promise.all([ph ? shrinkPhoto(ph.src, 1100) : Promise.resolve('')].concat(own.map(function (p) { return shrinkPhoto(p.src, 520); }))).then(function (imgs) {
+          var snap = { v: 1, kicker: d.kicker, title: d.title, lines: d.lines, palette: (c.palette || []).filter(function (h) { return /^#[0-9a-f]{6}$/i.test(h); }).slice(0, 6), style: c.styleName || '', cover: imgs[0] ? { src: imgs[0], ai: !!(ph && ph.ai) } : null, mood: imgs.slice(1).filter(Boolean), sections: d.sections, budget: ev.propBudget };
+          return fetch(CFG.apiUrl + '/api/prop/' + ev.propId + '/publish', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: ev.propKey, plan: snap }) });
+        }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || 'Couldn\u2019t create the link. Try again.'); }); })
+          .then(function () { saveEvent(ev); T('plan_link_shared', { event_type: ev.type, budget: ev.propBudget ? 'yes' : 'no' }); close(); linkReady(ev, siteBase() + '#/p/' + ev.propId); })
+          .catch(function (e) { go.disabled = false; go.textContent = 'Try again'; toast(e.message); });
+      });
+      var stop = $('#propStop', el); if (stop) stop.addEventListener('click', function () {
+        fetch(CFG.apiUrl + '/api/prop/' + ev.propId + '/delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: ev.propKey }) }).then(function (r) { if (!r.ok) throw new Error(); delete ev.propId; delete ev.propKey; saveEvent(ev); close(); toast('The link no longer works'); }).catch(function () { toast('Couldn\u2019t stop sharing right now. Try again.'); });
+      });
+    });
+  }
+  function linkReady(ev, url) {
+    sheet('<h3>Your view-only link is ready</h3><input class="input" id="propUrl" readonly value="' + esc(url) + '"><button class="btn gold block" id="propCopy">Copy link</button>' + (navigator.share ? '<button class="btn ghost block" id="propShare">Share\u2026</button>' : '') + '<button class="btn ghost block" data-close>Done</button>', function (el) {
+      $('#propCopy', el).addEventListener('click', function () { copyText(url, 'Link'); });
+      var sh = $('#propShare', el); if (sh) sh.addEventListener('click', function () { navigator.share({ title: ev.name, url: url }).catch(function () {}); });
+      $('#propUrl', el).addEventListener('focus', function () { this.select(); });
+    });
+  }
+  function proposalPage(id) {
+    frame('<div class="stack"><p class="muted">Opening the plan\u2026</p></div>');
+    if (!/^[a-f0-9]{16,32}$/.test(id) || !CFG.apiUrl) return frame('<div class="stack"><h2>This plan link isn\u2019t available</h2><p class="muted">Ask the host for a new link.</p></div>');
+    fetch(CFG.apiUrl + '/api/prop/' + id).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j.plan; }); }).then(function (d) {
+      var safeImg = function (u) { return /^(data:image\/(jpeg|png|webp);base64,|https:\/\/)/.test(u || '') ? u : ''; };
+      var cov = d.cover && safeImg(d.cover.src);
+      var sw = (d.palette || []).filter(function (h) { return /^#[0-9a-f]{6}$/i.test(h); }).map(function (h) { var nm = hexName(h); return '<span class="mb-sw"><i style="background:' + h + '"></i><span class="small">' + esc(nm ? nm.charAt(0).toUpperCase() + nm.slice(1) : h) + '</span></span>'; }).join('');
+      var mood = (d.mood || []).map(safeImg).filter(Boolean);
+      var secs = (d.sections || []).map(function (x) {
+        return '<section class="ps-sec"><h3>' + esc(x.h) + '</h3>' + (x.p ? '<p>' + esc(x.p) + '</p>' : '') +
+          ((x.bullets || []).length ? '<ul class="incl">' + x.bullets.map(function (b2) { return '<li>' + esc(b2) + '</li>'; }).join('') + '</ul>' : '') +
+          ((x.rows || []).length ? '<div class="list">' + x.rows.map(function (r2) { return '<div class="it"><span class="grow"><b>' + esc(r2[0]) + '</b>' + (r2[1] ? '<br><span class="small muted">' + esc(r2[1]) + '</span>' : '') + '</span>' + (r2[2] ? '<span class="num">' + esc(r2[2]) + '</span>' : '') + '</div>'; }).join('') + '</div>' : '') +
+          ((x.times || []).length ? '<ol class="plain">' + x.times.map(function (t2) { return '<li><b>' + esc(t2[0]) + '</b> ' + esc(t2[1]) + '</li>'; }).join('') + '</ol>' : '') +
+          (x.total ? '<p><b>' + esc(x.total[0]) + ': ' + esc(x.total[1]) + '</b></p>' : '') + '</section>';
+      }).join('');
+      frame('<div class="plan-sheet proposal stack">' +
+        (cov ? '<figure class="ps-cover"><img src="' + esc(cov) + '" alt="Event inspiration"><figcaption><span class="eyebrow">Event Couture proposal</span>' + (d.cover.ai ? '<span class="small">AI-generated inspiration, not a photo of the event</span>' : '') + '</figcaption></figure>' : '') +
+        '<div class="ps-head"><span class="small muted">' + esc(d.kicker || '') + '</span><h2>' + esc(d.title || 'Event plan') + '</h2>' + (d.lines || []).map(function (l) { return '<p class="small">' + esc(l) + '</p>'; }).join('') + '</div>' +
+        (mood.length || sw ? '<section class="ps-sec"><h3>Mood board' + (d.style ? ': ' + esc(d.style) : '') + '</h3><div class="moodboard' + (mood.length > 1 ? ' many' : '') + '">' + (mood.length ? '<div class="mb-pics">' + mood.map(function (u) { return '<img src="' + esc(u) + '" alt="Inspiration photo" loading="lazy">'; }).join('') + '</div>' : '') + (sw ? '<div class="mb-swatches">' + sw + '</div>' : '') + '</div></section>' : '') +
+        secs + '<p class="small muted">View-only plan shared by the host. Prices are estimates unless marked Quote or Booked.</p>' +
+        '<div class="panel stack"><b>Planned with Event Couture</b><p class="small muted">Plan your own event free: share one photo and get the look, a budget for your city, vendors, a checklist and invitations.</p><div><a class="btn gold" href="#/new">Plan my event</a></div></div></div>', { noRibbon: true });
+      T('plan_link_opened', {});
+    }).catch(function (e) { frame('<div class="stack"><h2>This plan link isn\u2019t available</h2><p class="muted">' + esc(e.message || 'Ask the host for a new link.') + '</p></div>'); });
+  }
+  /* The PDF cover photo: the host's own inspiration photo, or the labeled AI inspiration photo. Prepared as soon as the
+     finished plan opens, so Save as PDF stays instant (phones only allow sharing right after a tap). */
+  var COVER = {};
+  function prepCover(ev) {
+    var ph = eventPhoto(ev); if (!ph || !ph.src) return;
+    var key = ev.id + '|' + ph.src.slice(0, 80) + ph.src.length; if (COVER[ev.id] && COVER[ev.id].key === key) return;
+    COVER[ev.id] = { key: key };
+    var im = new Image(); im.decoding = 'async';
+    im.onload = function () {
+      try {
+        var w = im.naturalWidth, h = im.naturalHeight, k = Math.min(1, 1400 / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k);
+        var cv = document.createElement('canvas'); cv.width = w; cv.height = h; var cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h); cx.drawImage(im, 0, 0, w, h);
+        var b64 = cv.toDataURL('image/jpeg', 0.86).split(',')[1], bin = atob(b64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+        if (COVER[ev.id] && COVER[ev.id].key === key) COVER[ev.id] = { key: key, jpeg: u, w: w, h: h, ai: !!ph.ai };
+      } catch (e) {}
+    };
+    im.src = srcOf(ph.src);
+  }
   function savePlanPdf(ev) {
-    var bytes; try { bytes = window.ECPDF.plan(planData(ev)); } catch (e) { return toast('Could not make the PDF. Try Print instead.'); }
+    var pd = planData(ev), cvr = COVER[ev.id]; if (cvr && cvr.jpeg) pd.cover = cvr;
+    var bytes; try { bytes = window.ECPDF.plan(pd); } catch (e) { return toast('Could not make the PDF. Try Print instead.'); }
     var name = fileName(ev);
     T('plan_pdf_saved', { event_type: ev.type });
     if (window.ECNative && window.ECNative.shareFile) { var bin = ''; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return window.ECNative.shareFile(name, btoa(bin), 'application/pdf', ev.name).catch(function () { toast('Could not open the share sheet. Try again.'); }); }
@@ -1248,9 +1347,11 @@
   TAB_BIND.plan = function (ev, save, rerender) {
     bindDelete(ev);
     if (!$('#pdfPlan')) return;
-    ['#pdfPlan', '#mailPlan', '#sharePlan', '#printPlan'].forEach(function (sel) { var el = $(sel); if (el) el.addEventListener('click', function (e) { if (ev.sample || isKept(ev)) return; e.stopImmediatePropagation(); keepSheet(ev, 'Keep your plan to save or share it', function () { rerender(); }); }); });
+    ['#pdfPlan', '#mailPlan', '#sharePlan', '#printPlan', '#linkPlan'].forEach(function (sel) { var el = $(sel); if (el) el.addEventListener('click', function (e) { if (ev.sample || isKept(ev)) return; e.stopImmediatePropagation(); keepSheet(ev, 'Keep your plan to save or share it', function () { rerender(); }); }); });
     $('#pdfPlan').addEventListener('click', function () { savePlanPdf(ev); });
+    prepCover(ev);
     bindOptin(ev);
+    var lp = $('#linkPlan'); if (lp) lp.addEventListener('click', function () { if (ev.sample || !isKept(ev)) return; proposalSheet(ev); });
     $('#mailPlan').addEventListener('click', function () {
       var d = planData(ev), body = planText(d, true) + '\n\nTip: tap Save as PDF in Event Couture for the full plan with your schedule and shopping list.';
       var subj = 'My Event Couture plan: ' + ev.name, enc = function (t) { return encodeURIComponent(t).length; };
@@ -2240,7 +2341,7 @@
   }
   /* The theme in plain search words: a motif for kids' parties (unicorn, princess), otherwise the look's two main colors. */
   var KID_MOTIF = /\b(unicorn|princess|space|rainbow|mermaid|dinosaur|safari|superhero|fairy|pirate|carnival|jungle|under the sea|butterfly|construction|cowboy)\b/i;
-  var HEX_NAMES = [['red', 200, 30, 40], ['burgundy', 122, 14, 27], ['gold', 212, 175, 55], ['pink', 247, 198, 217], ['blush', 236, 196, 190], ['lavender', 200, 182, 255], ['light blue', 184, 224, 246], ['navy', 20, 30, 80], ['blue', 40, 90, 200], ['sage', 156, 175, 136], ['emerald', 10, 110, 70], ['green', 60, 150, 60], ['silver', 192, 192, 200], ['black', 17, 17, 17], ['white', 250, 250, 248], ['ivory', 247, 241, 227], ['orange', 240, 140, 40], ['yellow', 245, 215, 60], ['purple', 110, 40, 140], ['teal', 20, 130, 130], ['brown', 110, 70, 40]];
+  var HEX_NAMES = [['red', 200, 30, 40], ['burgundy', 122, 14, 27], ['gold', 212, 175, 55], ['pink', 247, 198, 217], ['blush', 236, 196, 190], ['lavender', 200, 182, 255], ['light blue', 184, 224, 246], ['navy', 20, 30, 80], ['blue', 40, 90, 200], ['sage', 156, 175, 136], ['emerald', 10, 110, 70], ['green', 60, 150, 60], ['silver', 192, 192, 200], ['black', 17, 17, 17], ['white', 250, 250, 248], ['ivory', 247, 241, 227], ['orange', 240, 140, 40], ['yellow', 245, 215, 60], ['purple', 110, 40, 140], ['teal', 20, 130, 130], ['brown', 110, 70, 40], ['dusty rose', 201, 139, 146], ['mauve', 175, 130, 155], ['rose gold', 183, 110, 121], ['champagne', 231, 210, 175], ['peach', 250, 200, 165], ['terracotta', 200, 100, 70], ['plum', 90, 30, 70], ['cream', 252, 246, 236], ['nude', 225, 190, 165], ['antique gold', 184, 138, 90], ['soft pink', 247, 218, 220]];
   function hexName(h) { var m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if (!m) return ''; var n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255, best = '', d = 1e9; HEX_NAMES.forEach(function (c) { var e = (r - c[1]) * (r - c[1]) + (g - c[2]) * (g - c[2]) + (b - c[3]) * (b - c[3]); if (e < d) { d = e; best = c[0]; } }); return best; }
   function themeWords(ev) {
     var c = ev.concept || {}; if (c.shop) return String(c.shop).replace(/ party$/, '');
@@ -2987,9 +3088,9 @@
     if (ev.sample || !CFG.apiUrl) return '';
     if (ev.optin) return '<p class="small muted optin-done">Planning tips and reminders will go to ' + esc(ev.optin.email) + '. <a href="#/unsubscribe">Stop emails</a></p>';
     return '<form class="panel optin" id="optin" novalidate><div><b>Get planning tips and reminders</b><p class="small muted">A short email when it\u2019s time to book each vendor, plus ideas for your ' + esc(E.typeName(ev).toLowerCase()) + '. No spam; stop anytime.</p></div>' +
-      '<div class="row optin-row"><label class="sr-only" for="optEmail">Email</label><input id="optEmail" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" maxlength="120">' +
+      '<div class="row optin-row"><label class="sr-only" for="optEmail">Email</label><input class="input" id="optEmail" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" maxlength="120">' +
       '<button class="btn gold small" type="submit">Sign me up</button></div>' +
-      '<label class="check small"><input type="checkbox" id="optOk"> Yes, email me planning tips and reminders for this event. I can unsubscribe anytime (<a href="#/privacy">Privacy</a>).</label></form>';
+      '<label class="check small"><input type="checkbox" id="optOk"><span>Yes, email me planning tips and reminders for this event. I can unsubscribe anytime (<a href="#/privacy">Privacy</a>).</span></label></form>';
   }
   function bindOptin(ev) {
     var f = $('#optin'); if (!f) return;
@@ -3006,7 +3107,7 @@
     });
   }
   function unsubscribePage() {
-    frame('<div class="wizard stack-lg"><h2>Stop planning emails</h2><p class="muted">Enter the email you signed up with and we\u2019ll remove it right away.</p><form id="unsub" class="stack" novalidate><label for="unEmail">Email</label><input id="unEmail" type="email" autocomplete="email" maxlength="120"><div><button class="btn primary" type="submit">Remove my email</button></div></form></div>');
+    frame('<div class="wizard stack-lg"><h2>Stop planning emails</h2><p class="muted">Enter the email you signed up with and we\u2019ll remove it right away.</p><form id="unsub" class="stack" novalidate><label for="unEmail">Email</label><input class="input" id="unEmail" type="email" autocomplete="email" maxlength="120"><div><button class="btn primary" type="submit">Remove my email</button></div></form></div>');
     $('#unsub').addEventListener('submit', function (e) {
       e.preventDefault(); var em = ($('#unEmail').value || '').trim(); if (!/@/.test(em)) return toast('Enter your email address');
       fetch(CFG.apiUrl + '/api/optin/remove', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: em }) })
@@ -3016,7 +3117,7 @@
   }
   /* Owner only: download the email list. The admin code is typed each time and never saved. */
   function emailExportPage() {
-    frame('<div class="wizard stack-lg"><h2>Email list</h2><form id="exp" class="stack" novalidate><label for="admCode">Admin code</label><input id="admCode" type="password" autocomplete="off"><div><button class="btn primary" type="submit">Download CSV</button></div></form></div>', { noRibbon: true });
+    frame('<div class="wizard stack-lg"><h2>Email list</h2><form id="exp" class="stack" novalidate><label for="admCode">Admin code</label><input class="input" id="admCode" type="password" autocomplete="off"><div><button class="btn primary" type="submit">Download CSV</button></div></form></div>', { noRibbon: true });
     $('#exp').addEventListener('submit', function (e) {
       e.preventDefault();
       fetch(CFG.apiUrl + '/api/optin/export', { headers: { 'x-admin-code': $('#admCode').value } })
