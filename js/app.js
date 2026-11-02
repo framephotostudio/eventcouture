@@ -309,7 +309,7 @@
       if (p[0] === 'e' && p[2] === 'concepts') return conceptsView(p[1]);
       if (p[0] === 'e') { var ev = getEvent(p[1]); if (!ev) return frame('<div class="stack"><h2>This plan isn\u2019t here</h2><p class="muted">It may have been deleted, or it was made on another device.</p><div><a class="btn" href="#/events">Go to My events</a></div></div>'); return planView(ev, p[2] || 'overview'); }
       if (p[0] === 'g') return guestPage(p[1]);
-      if (p[0] === 'booked') return cqThanks();
+      if (p[0] === 'booked') return cqThanks(p[1]);
       if (p[0] === 'unsubscribe') return unsubscribePage();
       if (p[0] === 'p' && p[1]) return proposalPage(p[1]);
       if (p[0] === 'admin' && p[1] === 'emails') return emailExportPage();
@@ -1809,7 +1809,9 @@
   function cqCfg() { return CFG.concierge || {}; }
   var CQ_PROMISE = [['Nothing is booked without your OK', 'You approve every vendor and price first.'], ['Quick turnaround on vendor options', 'Your first vendor choices come to you fast.'], ['Weekly updates until everything is booked', 'You always know what is booked and what is next.'], ['Free replacement if a vendor cancels', 'We find you another at no extra fee.'], ['Your money never passes through us', 'You pay each vendor directly, under their own contract.'], ['Secure card payment by Stripe', 'We never see or store your card.']];
   function cqPromise(short) { return short ? '<ul class="cq-ticks small">' + CQ_PROMISE.slice(0, 3).map(function (p) { return '<li>' + esc(p[0]) + '</li>'; }).join('') + '</ul>' : '<div class="cq-promise"><p class="eyebrow">Our booking promise</p><ul class="cq-ticks">' + CQ_PROMISE.map(function (p) { return '<li><b>' + esc(p[0]) + '.</b> <span class="muted">' + esc(p[1]) + '</span></li>'; }).join('') + '</ul></div>'; }
-  function cqOn(ev) { var c = cqCfg(), l = c.links || {}; return !ev.sample && !!CFG.apiUrl && E.countryOf(ev.city || '').id === 'US' && CQ_TIERS.some(function (t) { return l[t.id]; }); }
+  /* A package can be bought when card checkout is on (cqCfg().stripe, set by deploy once the Stripe key is saved) or it has a payment link. */
+  function cqLive(id) { var c = cqCfg(); return c.stripe === true || !!(c.links || {})[id]; }
+  function cqOn(ev) { return !ev.sample && !!CFG.apiUrl && E.countryOf(ev.city || '').id === 'US' && CQ_TIERS.some(function (t) { return cqLive(t.id); }); }
   function cqPrice(t) { return cqCfg().founding !== false ? t.founding : t.price; }
   function cqBest(ev, n) { if (ev.type === 'wedding' || ev.culture) return CQ_TIERS[2]; return CQ_TIERS.find(function (t) { return n <= t.max; }) || CQ_TIERS[2]; }
   function conciergeCard(ev, cats) {
@@ -1827,6 +1829,13 @@
   }
   function cqPay(ev) {
     var c = cqCfg(), cq = ev.concierge || {}, link = (c.links || {})[cq.tier];
+    if (c.stripe === true) {
+      T('concierge_checkout', { tier: cq.tier, event_type: ev.type });
+      T('begin_checkout', { currency: 'USD', value: cq.price || 0, item_name: 'Concierge ' + (cq.tierName || cq.tier), event_type: ev.type });
+      return fetch(CFG.apiUrl + '/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ref: cq.ref }) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (j.paid) { ev.concierge.paid = true; saveEvent(ev); location.hash = '#/booked/' + cq.ref; return; } if (!r.ok || !j.url) throw new Error(j.error || 'Card payment couldn\u2019t start. Try again.'); if (window.ECNative && window.ECNative.openUrl) return window.ECNative.openUrl(j.url); location.href = j.url; }); })
+        .catch(function (e) { toast(e.message); });
+    }
     if (!link) return toast('Payments for this option open soon.');
     var u = link + (link.indexOf('?') < 0 ? '?' : '&') + 'client_reference_id=' + encodeURIComponent(cq.ref) + (cq.email ? '&prefilled_email=' + encodeURIComponent(cq.email) : '');
     T('concierge_checkout', { tier: cq.tier, event_type: ev.type });
@@ -1838,7 +1847,7 @@
     var b = E.budget(ev, ev.tier), n = pkgCats(ev, b).length, best = cqBest(ev, n), fnd = cqCfg().founding !== false, links = cqCfg().links || {};
     sheet('<h3>Event Couture books it for you</h3><p class="muted small">You choose. The founder of Event Couture calls you within 1 business day, then contacts, negotiates and books each vendor and marks them Booked in your plan. Vendors send you their own contracts, and you pay them directly.</p>' +
       (fnd ? '<p class="cq-badge">Founding client price \u00b7 first 10 clients \u00b7 in exchange for a review and event photos</p>' : '') +
-      '<div class="cq-tiers" role="radiogroup" aria-label="Choose a booking package">' + CQ_TIERS.map(function (t) { var off = n > t.max || !links[t.id]; return '<button type="button" class="cq-tier' + (t === best ? ' best' : '') + '" role="radio" aria-checked="' + (t === best) + '" data-cqt="' + t.id + '"' + (off ? ' disabled' : '') + '>' + (t === best ? '<span class="cq-rec">Best for your plan</span>' : t.top ? '<span class="cq-rec top">Most complete</span>' : '') + '<b>' + esc(t.name) + '</b><span class="cq-price num">' + (fnd ? '<s>$' + t.price.toLocaleString('en-US') + (t.from ? '+' : '') + '</s> ' : '') + '$' + cqPrice(t).toLocaleString('en-US') + '</span><span class="small">' + esc(t.what) + '</span><span class="small muted">' + (n > t.max ? 'Your package has ' + n + ' vendors' : esc(t.fit)) + '</span></button>'; }).join('') + '</div>' +
+      '<div class="cq-tiers" role="radiogroup" aria-label="Choose a booking package">' + CQ_TIERS.map(function (t) { var off = n > t.max || !cqLive(t.id); return '<button type="button" class="cq-tier' + (t === best ? ' best' : '') + '" role="radio" aria-checked="' + (t === best) + '" data-cqt="' + t.id + '"' + (off ? ' disabled' : '') + '>' + (t === best ? '<span class="cq-rec">Best for your plan</span>' : t.top ? '<span class="cq-rec top">Most complete</span>' : '') + '<b>' + esc(t.name) + '</b><span class="cq-price num">' + (fnd ? '<s>$' + t.price.toLocaleString('en-US') + (t.from ? '+' : '') + '</s> ' : '') + '$' + cqPrice(t).toLocaleString('en-US') + '</span><span class="small">' + esc(t.what) + '</span><span class="small muted">' + (n > t.max ? 'Your package has ' + n + ' vendors' : esc(t.fit)) + '</span></button>'; }).join('') + '</div>' +
       cqPromise(false) +
       '<div class="grid2"><label class="field"><span>Your name</span><input class="input" id="cqName" autocomplete="name" maxlength="80" value="' + esc((ev.concierge || {}).name || '') + '"></label><label class="field"><span>Phone</span><input class="input" id="cqPhone" type="tel" autocomplete="tel" maxlength="30" value="' + esc((ev.concierge || {}).phone || '') + '"></label><label class="field"><span>Email</span><input class="input" id="cqEmail" type="email" autocomplete="email" maxlength="120" value="' + esc((ev.concierge || {}).email || '') + '"></label><label class="field"><span>Best time to call</span><select class="input" id="cqWhen"><option>Morning</option><option>Afternoon</option><option>Evening</option></select></label></div>' +
       '<button class="btn gold block" id="cqGo">Continue to secure payment</button>' + (cqCfg().call ? '<a class="btn ghost block" target="_blank" rel="noopener" href="' + esc(cqCfg().call) + '" id="cqCall">Prefer to talk first? Book a free 15-minute call</a>' : '') +
@@ -1861,9 +1870,25 @@
     });
   }
   /* Back from Stripe: the payment went through, so the latest saved request is marked paid. */
-  function cqThanks() {
+  function cqThanks(ref) {
+    /* Card checkout: the server confirms the payment (from Stripe's signed message) before the booking shows as paid. */
+    if (ref && cqCfg().stripe === true && /^[a-f0-9]{24}$/.test(ref)) {
+      var evr = Object.values(events()).find(function (e) { return e && e.concierge && e.concierge.ref === ref; }), tries = 0;
+      frame('<div class="wizard stack-lg" style="text-align:center;justify-items:center"><img src="img/brand/ec-mark-128.png" alt="" width="64" height="64"><h2>Confirming your payment\u2026</h2><p class="muted">This takes a few seconds.</p></div>');
+      var poll = function () {
+        fetch(CFG.apiUrl + '/api/concierge/' + ref).then(function (r) { return r.json(); }).then(function (j) {
+          if (j.request && j.request.paid) { if (evr && !evr.concierge.paid) { evr.concierge.paid = true; evr.concierge.paidAt = j.request.paidAt; saveEvent(evr); T('concierge_paid', { tier: evr.concierge.tier, event_type: evr.type }); T('purchase', { currency: 'USD', value: (j.request.amountPaid || 0) / 100, transaction_id: ref, item_name: 'Concierge ' + (evr.concierge.tierName || evr.concierge.tier), event_type: evr.type }); } return cqThanksPage(evr); }
+          if (++tries < 8) return setTimeout(poll, 2000);
+          frame('<div class="wizard stack-lg" style="text-align:center;justify-items:center"><img src="img/brand/ec-mark-128.png" alt="" width="64" height="64"><h2>Thank you, your payment is being confirmed</h2><p class="muted">Stripe will email your receipt. If you were charged, your booking is safe; we\u2019ll confirm it shortly. Questions: ' + esc(CFG.supportEmail || '') + '</p>' + (evr ? '<a class="btn primary" href="#/e/' + esc(evr.id) + '/budget">Back to my plan</a>' : '') + '</div>');
+        }).catch(function () { if (++tries < 8) setTimeout(poll, 2000); });
+      };
+      return poll();
+    }
     var ev = Object.values(events()).filter(function (e) { return e && e.concierge && e.concierge.ref; }).sort(function (a, b) { return (b.concierge.at || '').localeCompare(a.concierge.at || ''); })[0];
     if (ev && !ev.concierge.paid) { ev.concierge.paid = true; ev.concierge.paidAt = new Date().toISOString(); saveEvent(ev); T('concierge_paid', { tier: ev.concierge.tier, event_type: ev.type }); T('purchase', { currency: 'USD', value: ev.concierge.price || 0, transaction_id: ev.concierge.ref, item_name: 'Concierge ' + (ev.concierge.tierName || ev.concierge.tier), event_type: ev.type }); }
+    cqThanksPage(ev);
+  }
+  function cqThanksPage(ev) {
     frame('<div class="wizard stack-lg" style="text-align:center;justify-items:center"><img src="img/brand/ec-mark-128.png" alt="" width="64" height="64"><h2>You\u2019re booked with Event Couture</h2><p class="muted">Thank you' + (ev ? ', ' + esc(String(ev.concierge.name || '').split(' ')[0]) : '') + '. The founder of Event Couture will call you within 1 business day to confirm your details and start booking your vendors. A receipt is on its way to your email.</p>' + (ev ? '<a class="btn primary" href="#/e/' + esc(ev.id) + '/budget">Back to my plan</a>' : '<a class="btn primary" href="#/events">My events</a>') + '</div>');
   }
   /* Demah's view of one request: the link (with its private code) comes from the Stripe payment. */

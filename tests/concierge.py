@@ -18,7 +18,7 @@ LINKS="concierge: { links: { essentials: 'https://buy.stripe.com/test_ess', sign
 def cfg(links):
     def f(route):
         r=route.fetch(); t=r.text().replace("apiUrl: ''","apiUrl: 'http://api.test'")
-        if links: t=t.replace("concierge: { links: { essentials: '', signature: '', full: '', allin: '' }, call: '', founding: true }", LINKS)
+        if links: t=t.replace("concierge: { links: { essentials: '', signature: '', full: '', allin: '' }, call: '', founding: true, stripe: false }", LINKS)
         route.fulfill(response=r, body=t)
     return f
 def stripe(route): PAID.append(route.request.url); route.fulfill(status=200, content_type='text/html', body='<h1>Stripe test checkout</h1>')

@@ -58,6 +58,11 @@ jobs:
           echo "url=$url" >> $GITHUB_OUTPUT
           printf '%s' "${{ secrets.GEMINI_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put GEMINI_KEY
           printf '%s' "${{ secrets.GOOGLE_MAPS_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put GOOGLE_MAPS_KEY
+          if [ -n "${{ secrets.STRIPE_SECRET_KEY }}" ] && [ -n "${{ secrets.STRIPE_WEBHOOK_SECRET }}" ]; then
+            printf '%s' "${{ secrets.STRIPE_SECRET_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put STRIPE_SECRET_KEY
+            printf '%s' "${{ secrets.STRIPE_WEBHOOK_SECRET }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put STRIPE_WEBHOOK_SECRET
+            echo "STRIPE_ON=yes" >> $GITHUB_ENV
+          else echo "Stripe secrets not saved yet: card checkout stays off."; fi
           if [ -n "${{ secrets.ADMIN_CODE }}" ]; then printf '%s' "${{ secrets.ADMIN_CODE }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put ADMIN_CODE; else echo "No ADMIN_CODE secret yet: the email list download stays off."; fi
       - name: Bot check for forms (Cloudflare Turnstile, free; skipped if the token can't manage Turnstile)
         if: env.SERVER == 'yes'
@@ -77,6 +82,7 @@ jobs:
         if: env.SERVER == 'yes'
         run: |
           sed -i "s#apiUrl: ''#apiUrl: '${{ steps.worker.outputs.url }}'#" js/config.js
+          [ "$STRIPE_ON" = "yes" ] && sed -i "s#founding: true, stripe: false#founding: true, stripe: true#" js/config.js || true
           [ -n "$TS_SITEKEY" ] && sed -i "s#turnstile: ''#turnstile: '$TS_SITEKEY'#" js/config.js || true   # stays in preview mode for payments until real checkout exists
           cat js/config.js
       - name: Package site

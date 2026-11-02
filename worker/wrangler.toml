@@ -8,6 +8,8 @@ ALLOWED_ORIGINS = "https://eventcouture.app,https://www.eventcouture.app,https:/
 # About $20 a month across AI and venue lookups; calls stop for the day once reached
 DAILY_CAP_USD = "0.66"
 GEMINI_MODEL = "gemini-2.5-flash"
+# Concierge founding-client prices ("1") or regular prices ("0")
+CQ_FOUNDING = "1"
 
 # Create once with: wrangler kv namespace create EC_KV   (then paste the id below)
 [[kv_namespaces]]
@@ -17,3 +19,4 @@ id = "REPLACE_WITH_KV_ID"
 # Secrets (never stored in this file):
 #   wrangler secret put GEMINI_KEY
 #   wrangler secret put GOOGLE_MAPS_KEY
+#   wrangler secret put STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, ADMIN_CODE, TURNSTILE_SECRET (set by deploy from GitHub secrets)

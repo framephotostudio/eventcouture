@@ -46,6 +46,7 @@ export default {
       }
       if (req.method === 'GET' && url.pathname === '/api/optin/export') return await optinExport(req, env, cors);
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
+      if (url.pathname === '/api/stripe/webhook') return await stripeWebhook(req, env, json);
       // Per-visitor rate limit (free, best effort): 40 requests an hour per IP across AI and search.
       if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown'))) return json({ error: 'You\u2019ve made a lot of requests. Please wait a few minutes and try again. Nothing was charged.' }, 429);
       if (+(req.headers.get('content-length') || 0) > 12e6) return json({ error: 'Those photos are too large. Try fewer or smaller photos.' }, 413);
@@ -55,6 +56,7 @@ export default {
       if (human && env.TURNSTILE_SECRET && !(await turnstileOk(env, body.ts, req.headers.get('cf-connecting-ip')))) return json({ error: 'Please confirm you\u2019re not a robot and try again.', code: 'turnstile' }, 403);
       delete body.ts;
       if (url.pathname === '/api/optin' || url.pathname === '/api/optin/remove') { if (!env.EC_KV) return json({ error: 'Email sign-up is not connected yet.' }, 503); return await optin(env, url.pathname.endsWith('remove'), body, json); }
+      if (url.pathname === '/api/checkout') { if (!env.EC_KV || !env.STRIPE_SECRET_KEY) return json({ error: 'Card payments are not switched on yet.' }, 503); return await checkout(env, body, url, json); }
       if (url.pathname === '/api/concierge/new') { if (!env.EC_KV) return json({ error: 'Booking requests are not connected yet.' }, 503); const cr = await conciergeNew(env, body); return cr.error ? json(cr, 400) : json(cr); }
       const mk = url.pathname.match(/^\/api\/(vendor\/save|vendor\/report|req\/new|req\/list|req\/reply|req\/inbox|req\/delete)$/);
       if (mk) { if (!env.EC_KV) return json({ error: 'Vendor listings are not connected yet.' }, 503); return await market(env, mk[1], body, req.headers.get('cf-connecting-ip') || 'unknown', json); }
@@ -501,12 +503,15 @@ async function market(env, action, body, ip, json) {
 /* Always Luxe Concierge Booking: one request per checkout. The private code in its link lets only Demah
    (from the Stripe payment) and the client open it. Kept a year; no card details ever pass through here. */
 const CQ_TIERS = { essentials: 1, signature: 1, full: 1, allin: 1 };
+// Concierge prices in US dollars, set here on the server (never trusted from the browser): [founding-client price, regular price].
+const CQ_PRICES = { essentials: [249, 349, 'Essentials'], signature: [599, 899, 'Signature'], full: [1299, 1800, 'Full Concierge'], allin: [2499, 3500, 'Couture All-Inclusive'] };
+const cqPriceOf = (env, tier) => CQ_PRICES[tier] ? CQ_PRICES[tier][env.CQ_FOUNDING === '0' ? 1 : 0] : 0;
 async function conciergeNew(env, b) {
   const t = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u000b-\u001f]/g, '').slice(0, n).trim();
   if (!CQ_TIERS[b.tier]) return { error: 'Choose a booking package.' };
   const a = new Uint8Array(12); crypto.getRandomValues(a);
   const ref = Array.from(a, x => x.toString(16).padStart(2, '0')).join('');
-  const rec = { ref, tier: b.tier, tierName: t(b.tierName, 40), price: Math.max(0, Math.min(100000, +b.price || 0)), founding: !!b.founding,
+  const rec = { ref, tier: b.tier, tierName: CQ_PRICES[b.tier][2], price: cqPriceOf(env, b.tier), founding: env.CQ_FOUNDING !== '0',
     name: t(b.name, 80), phone: t(b.phone, 30), email: t(b.email, 120), when: t(b.when, 20), type: t(b.type, 60), date: t(b.date, 10),
     city: t(b.city, 80), guests: Math.max(0, Math.min(100000, +b.guests || 0)), vendors: Math.max(0, Math.min(99, +b.vendors || 0)), summary: t(b.summary, 8000), at: Date.now() };
   if (!rec.name || !rec.phone || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rec.email)) return { error: 'Add your name, phone and email.' };
@@ -573,3 +578,68 @@ async function proposal(req, env, id, action, json) {
   }
   return json({ error: 'Not found' }, 404);
 }
+
+// ---------- Payments: Stripe Checkout for Event Couture's own fees (the concierge booking packages) ----------
+// The price comes from CQ_PRICES on the server. The booking is marked paid only by Stripe's signed webhook.
+const SITE = 'https://eventcouture.app/';
+async function checkout(env, b, url, json) {
+  const ref = String(b.ref || '');
+  if (!/^[a-f0-9]{24}$/.test(ref)) return json({ error: 'That booking request wasn\u2019t found.' }, 400);
+  const rec = await env.EC_KV.get('cq:' + ref, 'json');
+  if (!rec) return json({ error: 'That booking request wasn\u2019t found.' }, 404);
+  if (rec.paid) return json({ error: 'This booking is already paid.', paid: true }, 409);
+  const price = cqPriceOf(env, rec.tier); if (!price) return json({ error: 'Choose a booking package.' }, 400);
+  const f = new URLSearchParams();
+  f.set('mode', 'payment'); f.set('client_reference_id', ref); f.set('customer_email', rec.email);
+  f.set('line_items[0][quantity]', '1'); f.set('line_items[0][price_data][currency]', 'usd'); f.set('line_items[0][price_data][unit_amount]', String(price * 100));
+  f.set('line_items[0][price_data][product_data][name]', 'Event Couture Concierge: ' + CQ_PRICES[rec.tier][2]);
+  f.set('line_items[0][price_data][product_data][description]', 'Booking service fee. Vendor prices are separate and paid to each vendor.');
+  f.set('metadata[ref]', ref); f.set('metadata[tier]', rec.tier); f.set('payment_intent_data[metadata][ref]', ref);
+  f.set('phone_number_collection[enabled]', 'true');
+  f.set('success_url', SITE + '#/booked/' + ref); f.set('cancel_url', SITE + '#/cq/' + ref);
+  f.set('expires_at', String(Math.floor(Date.now() / 1000) + 3600));
+  const r = await fetch('https://api.stripe.com/v1/checkout/sessions', { method: 'POST', headers: { authorization: 'Bearer ' + env.STRIPE_SECRET_KEY, 'content-type': 'application/x-www-form-urlencoded', 'idempotency-key': 'cq-' + ref + '-' + rec.tier + '-' + Math.floor(Date.now() / 3600000) }, body: f.toString() });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.url) return json({ error: 'Card payment couldn\u2019t start. Please try again in a minute.' }, 502);
+  rec.session = j.id; await env.EC_KV.put('cq:' + ref, JSON.stringify(rec), { expirationTtl: 60 * 60 * 24 * 366 });
+  return json({ url: j.url });
+}
+function hex(buf) { return [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+function sameText(a, b) { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
+async function stripeSignatureOk(secret, header, payload, nowSec) {
+  if (!secret || !header) return false;
+  const parts = Object.create(null), v1 = [];
+  for (const kv of header.split(',')) { const i = kv.indexOf('='); if (i < 0) continue; const k = kv.slice(0, i).trim(), v = kv.slice(i + 1).trim(); if (k === 'v1') v1.push(v); else parts[k] = v; }
+  const t = +parts.t; if (!t || !v1.length || Math.abs((nowSec || Date.now() / 1000) - t) > 300) return false;
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const want = hex(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(t + '.' + payload)));
+  return v1.some(sig => sameText(sig, want));
+}
+async function stripeWebhook(req, env, json) {
+  if (!env.STRIPE_WEBHOOK_SECRET || !env.EC_KV) return json({ error: 'Not set up' }, 503);
+  const payload = await req.text();
+  if (payload.length > 512000) return json({ error: 'Too large' }, 413);
+  if (!(await stripeSignatureOk(env.STRIPE_WEBHOOK_SECRET, req.headers.get('stripe-signature'), payload))) return json({ error: 'Bad signature' }, 400);
+  let ev; try { ev = JSON.parse(payload); } catch (e) { return json({ error: 'Bad JSON' }, 400); }
+  if (!ev || !/^evt_/.test(String(ev.id || ''))) return json({ error: 'Bad event' }, 400);
+  if (await env.EC_KV.get('sevt:' + ev.id)) return json({ received: true, duplicate: true });   // each Stripe event is handled once
+  const o = (ev.data && ev.data.object) || {};
+  if ((ev.type === 'checkout.session.completed' || ev.type === 'checkout.session.async_payment_succeeded') && o.payment_status === 'paid') {
+    const ref = String(o.client_reference_id || (o.metadata && o.metadata.ref) || '');
+    const rec = /^[a-f0-9]{24}$/.test(ref) ? await env.EC_KV.get('cq:' + ref, 'json') : null;
+    if (rec && !rec.paid) {
+      const expected = cqPriceOf(env, rec.tier) * 100;
+      rec.paid = o.amount_total === expected || o.amount_total === CQ_PRICES[rec.tier][0] * 100 || o.amount_total === CQ_PRICES[rec.tier][1] * 100;
+      rec.paidAt = new Date().toISOString(); rec.amountPaid = o.amount_total; rec.session = o.id; rec.paymentIntent = o.payment_intent || '';
+      if (!rec.paid) rec.paymentProblem = 'Amount ' + o.amount_total + ' did not match the package price';
+      await env.EC_KV.put('cq:' + ref, JSON.stringify(rec), { expirationTtl: 60 * 60 * 24 * 366 });
+    }
+  }
+  if (ev.type === 'charge.refunded' && o.metadata && /^[a-f0-9]{24}$/.test(o.metadata.ref || '')) {
+    const rec = await env.EC_KV.get('cq:' + o.metadata.ref, 'json');
+    if (rec) { rec.refunded = true; rec.refundedAt = new Date().toISOString(); await env.EC_KV.put('cq:' + o.metadata.ref, JSON.stringify(rec), { expirationTtl: 60 * 60 * 24 * 366 }); }
+  }
+  await env.EC_KV.put('sevt:' + ev.id, '1', { expirationTtl: 60 * 60 * 24 * 30 });
+  return json({ received: true });
+}
+export { stripeSignatureOk };
