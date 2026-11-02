@@ -261,14 +261,14 @@ function nearCity(list, km = 70) {
 /* Every Google search is remembered for a week (the same search from anyone costs nothing again),
    and only the monthly free allowance is ever used: past it, searches stop until next month and the app offers Google Maps links instead. */
 async function googleSearch(env, body) {
-  const key = 'g:' + await sha(JSON.stringify(body));
+  const key = 'g2:' + await sha(JSON.stringify(body));   // g2: results now include the business phone
   const hit = env.EC_KV && await env.EC_KV.get(key, 'json').catch(() => null);
   if (Array.isArray(hit)) return hit;
   if (!(await freePlaces(env))) throw new Error('limit');
   const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': env.GOOGLE_MAPS_KEY,
-      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.regularOpeningHours.weekdayDescriptions,places.businessStatus,places.types,places.primaryType,places.location' },
+      'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.websiteUri,places.nationalPhoneNumber,places.internationalPhoneNumber,places.regularOpeningHours.weekdayDescriptions,places.businessStatus,places.types,places.primaryType,places.location' },
     body: JSON.stringify(body)
   });
   if (!r.ok) throw new Error('places');
@@ -301,7 +301,7 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
     .sort((a, b) => b.score - a.score).map(x => x.p)
     .slice(0, 8)
     .map(p => ({ id: p.id, name: p.displayName?.text, address: p.formattedAddress, rating: p.rating, reviews: p.userRatingCount,
-      priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, hours: p.regularOpeningHours?.weekdayDescriptions || [], restaurant: /restaurant|steak|bistro|brasserie|grill|dining/.test(String(p.primaryType || '')), bar: /\b(bar|night_club|pub|wine_bar|cocktail_bar|brewery|liquor_store)\b/.test([p.primaryType || ''].concat(p.types || []).join(' ')), source: 'Google' }));
+      priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, phone: p.nationalPhoneNumber || p.internationalPhoneNumber || '', hours: p.regularOpeningHours?.weekdayDescriptions || [], restaurant: /restaurant|steak|bistro|brasserie|grill|dining/.test(String(p.primaryType || '')), bar: /\b(bar|night_club|pub|wine_bar|cocktail_bar|brewery|liquor_store)\b/.test([p.primaryType || ''].concat(p.types || []).join(' ')), source: 'Google' }));
 }
 
 /* ---------- drive times (Routes API) ---------- */

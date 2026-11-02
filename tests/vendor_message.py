@@ -2,6 +2,8 @@
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'culture_pkg.py')).read().split('with sync_playwright() as p:')[0])
 from playwright.sync_api import sync_playwright
+_B = B
+def B(name, i=0): d = _B(name, i); d['phone'] = '(713) 555-01%02d' % i; return d   # Google now returns the business phone
 with sync_playwright() as p:
     b = p.chromium.launch()
     for w, h, n in [(390, 844, 'phone'), (1280, 900, 'desktop')]:
@@ -15,6 +17,7 @@ with sync_playwright() as p:
         pg.goto(U + base + '/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.wait_for_timeout(800)
         pg.click('[data-pkmsg="catering"] >> nth=0'); pg.wait_for_selector('#vmsg')
         msg = pg.input_value('#vmsg'); check(n, msg.startswith('Hi ') and '150 guests' in msg and 'Houston' in msg and 'catering' in msg and 'I found you on Event Couture (eventcouture.app)' in msg, 'inquiry is written for her: ' + msg[:120])
+        check(n, pg.query_selector('[data-vsms]') is not None and pg.query_selector('.sheet a[href^="tel:"]') is not None, 'businesses with a phone get Send as a text and Call')
         pg.fill('#vmsg', msg + ' Thanks!'); pg.click('[data-vcopy]'); pg.wait_for_timeout(300)
         clip = pg.evaluate('navigator.clipboard.readText()'); check(n, clip.endswith('Thanks!'), 'Copy copies her edited message')
         pg.click('.sheet [data-close]'); pg.wait_for_timeout(200)

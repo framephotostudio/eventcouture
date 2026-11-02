@@ -1497,7 +1497,7 @@
   function statusBadge(ev, cat) { var st = statusOf(ev, cat); return '<span class="badge st-' + st + '" data-stbadge="' + cat + '">' + STATUS_TXT[st] + (st === 'short' ? ' (' + savedFor(ev, cat).length + ')' : '') + '</span>'; }
   function saveBtn(ev, p, cat) {
     var key = cat + '|' + p.id;
-    FOUND[key] = { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '' };
+    FOUND[key] = { id: p.id, name: p.name, cat: cat, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', phone: p.phone || undefined, price: p.priceLevel || '' };
     var on = (ev.shortlist || []).some(function (x) { return x.id === p.id && x.cat === cat; });
     var pks = ev.packages || [], k = Math.min(ev.pkgView || 0, pks.length - 1), inPk = pks.length && pks[k].items[cat] === p.id;
     return '<button class="btn small' + (on ? ' gold' : ' ghost') + '" data-short="' + esc(key) + '" aria-pressed="' + on + '">' + (on ? 'Saved' : 'Save') + '</button>' +
@@ -1700,7 +1700,7 @@
     backups = backups.slice(0, 1);   /* one backup search at most, to save Google searches */
     return ask(c.q).then(function (l) { add(l); return more(); }).then(settle);
   }
-  function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rec: p.rec || undefined, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', price: p.priceLevel || '', reservable: p.reservable || undefined }; }
+  function asOption(p, cat) { return { id: p.id, name: p.name, cat: cat, rec: p.rec || undefined, rating: p.rating || 0, reviews: p.reviews || 0, url: p.website || p.mapsUrl || '', site: p.website || '', maps: p.mapsUrl || '', address: p.address || '', phone: p.phone || undefined, price: p.priceLevel || '', reservable: p.reservable || undefined }; }
   function usedIn(ev, cat, id, except) { return (ev.packages || []).some(function (pk, k) { return k !== except && pk.items[cat] === id; }); }
   /* "Message this vendor": a ready-to-send inquiry she sends herself (text, Instagram, email), written from her plan and package.
      It carries a private reply link: the vendor answers in a minute, sharing only what they want, and the answer lands in her plan.
@@ -1727,7 +1727,7 @@
       '<p class="small muted" id="vlinknote">' + (o.link ? 'Includes your private reply link.' : CFG.apiUrl && !ev.sample ? 'Adding your private reply link…' : '') + '</p>' +
       '<div class="stack" style="margin-top:8px"><button class="btn gold block" data-vcopy>Copy message</button>' +
       (ig ? '<button class="btn ghost block" data-vgo="https://ig.me/m/' + esc(ig) + '">Copy and open Instagram</button>' : '') +
-      (phone ? '<a class="btn ghost block" data-vsms href="#">Send as a text</a>' : '') +
+      (phone ? '<a class="btn ghost block" data-vsms href="#">Send as a text</a><a class="btn ghost block" href="tel:' + esc(phone.replace(/[^\d+]/g, '')) + '">Call ' + esc(phone) + '</a>' : '') +
       (!ig && site && !/google\.[a-z.]+\/maps/.test(site) ? '<button class="btn ghost block" data-vgo="' + esc(site) + '">Copy and open their website</button>' : '') +
       '<button class="btn ghost block" data-close>Close</button></div>', function (el, close) {
       var ta = el.querySelector('#vmsg'), edited = false;
