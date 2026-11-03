@@ -7,7 +7,7 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else '/tmp/ec-shots'
 os.makedirs(OUT, exist_ok=True)
 BASE = 'http://localhost:8765/'
 HERE = os.path.dirname(os.path.abspath(__file__))
-TABS = ['overview', 'budget', 'places', 'vendors', 'food', 'style', 'timeline', 'guests', 'votes', 'invite', 'after', 'extras']
+TABS = ['overview', 'budget', 'places', 'vendors', 'food', 'style', 'timeline', 'guests', 'votes', 'invite', 'registry', 'after', 'extras']
 problems = []
 
 def run(p, name, viewport, scheme):
@@ -74,7 +74,7 @@ def run(p, name, viewport, scheme):
         if t == 'votes':
             page.fill('#pq', 'Which date works best?'); page.fill('#po', 'Dec 19\nDec 20'); page.click('#addp button')
             page.click('[data-vote="0:0"]')
-        if t == 'invite':
+        if t == 'registry':   # the gift registry has its own page
             if page.query_selector('#giftOn'): page.click('#giftOn'); page.wait_for_timeout(300)   # gift lists are optional for birthdays
             page.fill('[data-pay="venmo"]', 'maya-host'); page.click('#savePay')
             page.fill('#rn', 'Champagne flutes'); page.fill('#rp', '40'); page.click('#radd button')

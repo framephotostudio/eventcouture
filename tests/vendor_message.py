@@ -21,7 +21,7 @@ with sync_playwright() as p:
         pg.fill('#vmsg', msg + ' Thanks!'); pg.click('[data-vcopy]'); pg.wait_for_timeout(300)
         clip = pg.evaluate('navigator.clipboard.readText()'); check(n, clip.endswith('Thanks!'), 'Copy copies her edited message')
         pg.click('.sheet [data-close]'); pg.wait_for_timeout(200)
-        rec = pg.query_selector('.pkg-cmp a[href^="#/vendors/claim/"]')
+        rec = next((a for a in pg.query_selector_all('.pkg-cmp a[href^="#/vendors/claim/"]') if a.get_attribute('href').count('/') >= 4), None)   # a Recommended pick with an Instagram
         check(n, rec is not None, 'a Recommended pick shows "Your business?"')
         if rec:
             rb = pg.evaluate("(a) => a.closest('tr').getAttribute('data-pkrow')", rec)

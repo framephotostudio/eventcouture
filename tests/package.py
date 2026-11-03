@@ -85,7 +85,7 @@ with sync_playwright() as p:
         check(n, d['pkgChosen']==1 and all(any(x['cat']==c and x['id']==d['packages'][1]['items'][c] and x.get('pick') for x in d['shortlist']) for c in d['packages'][1]['items']), 'choosing package 2 makes its picks the front-runners')
         check(n, d.get('pkgConfirmed') and 'Book' in pg.inner_text('.pkg-steps li.on') and 'next up' in pg.inner_text('.pkg-next').lower() and '1 of' in pg.inner_text('.pkg-next .eyebrow').lower(), 'step 3 starts with the first vendor')
         pg.evaluate("document.querySelector('#pkg').scrollIntoView({block:'start'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/pkg3_{n}.png', full_page=False)
-        pg.click('.pkg-next [data-pkcopy]'); pg.wait_for_timeout(200); check(n, 'copied' in pg.inner_text('body').lower(), 'copy my message works')
+        pg.click('.pkg-next [data-pkcopy]'); pg.wait_for_selector('#vmsg'); check(n, 'I found you on Event Couture' in pg.input_value('#vmsg'), 'Write my message opens the vendor message'); pg.click('.sheet [data-close]'); pg.wait_for_timeout(200)
         # book the venue from the Next up card
         first=pg.get_attribute('.pkg-next','data-pkrow')
         pg.click('.pkg-next [data-pkbook]'); pg.wait_for_selector('#pamt'); pg.fill('#pamt','4500'); pg.click('#psave'); pg.wait_for_timeout(200); pg.query_selector('.sheet [data-close]') and pg.click('.sheet [data-close]'); pg.wait_for_timeout(400)
