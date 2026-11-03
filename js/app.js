@@ -2190,9 +2190,11 @@
   function bindPackage(ev, save, rerender) {
     var build = function (btn) {
       if (lockSample(ev) || PKG_BUSY) return; PKG_BUSY = true; setTimeout(function () { PKG_BUSY = false; }, 60000); btn.disabled = true; var msg = $('#pkgMsg');
-      buildPackage(ev, function (d, n) { if (msg) msg.textContent = 'Finding top-rated picks\u2026 ' + d + ' of ' + n; }).then(function (k) {
+      var start = (ev.packages || []).length, want = start ? start + 1 : 3;   /* the first tap builds all 3 packages at once, side by side */
+      var one = function () { var i = (ev.packages || []).length + 1; return buildPackage(ev, function (d, n) { msg = $('#pkgMsg') || msg; if (msg) msg.textContent = (want - start > 1 ? 'Building package ' + i + ' of ' + want + ': ' : 'Finding top-rated picks\u2026 ') + d + ' of ' + n; }).then(function (k) { save(); return (ev.packages || []).length < want ? one() : k; }); };
+      one().then(function (k) {
         setTimeout(function () { PKG_BUSY = false; }, 450); var m = ev.packages[k].miss || []; rerender();   /* a double tap's second tap doesn't start another package */
-        toast('Package ' + (k + 1) + ' is ready' + (m.length ? (LIVE_RESTING ? '. Live search is resting until next month: tap Search on Google Maps on each line.' : '. ' + plural(m.length, 'item') + ' had no top-rated match; tap See options there.') : ''));
+        toast((want - start > 1 ? 'Your 3 packages are ready' : 'Package ' + (k + 1) + ' is ready') + (m.length ? (LIVE_RESTING ? '. Live search is resting until next month: tap Search on Google Maps on each line.' : '. ' + plural(m.length, 'item') + ' had no top-rated match; tap See options there.') : ''));
         var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' });
       });
     };

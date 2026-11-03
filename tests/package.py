@@ -36,19 +36,17 @@ with sync_playwright() as p:
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=15000); pg.wait_for_timeout(600)
         check(n, pg.url.endswith('/budget'), 'Create my package on the Summary starts it right away')
         rows=pg.query_selector_all('tr[data-pkrow]'); filled=pg.query_selector_all('tr[data-pkrow] td > b')
-        check(n, len(rows)>=8 and len(filled)==len(rows), f'package fills venue and every vendor in one tap: {len(filled)}/{len(rows)}')
+        check(n, len(rows)>=8 and len(filled)==len(rows)*3 and len(ev()['packages'])==3, f'one tap builds all 3 packages, every line filled: {len(filled)}/{len(rows)*3}')
         first_calls=calls[0]
         check(n, 'River Oaks' in pg.inner_text('.pkg-area') and cities and any(c.startswith('River Oaks, Houston') for c in cities) and sum(1 for c in cities if c.startswith('River Oaks'))==1 and all(c.startswith('Houston') for c in cities if not c.startswith('River Oaks')), 'the venue is searched in her area, vendors across the whole city')
         check(n, 'Venue' in pg.inner_text('tr[data-pkrow] >> nth=0'), 'venue first')
         d=ev(); check(n, all(any(x['cat']==c and x.get('pick') for x in d['shortlist']) for c in d['packages'][0]['items']), 'package 1 picks are the front-runners')
         pg.screenshot(path=f'{OUT}/pkg1_{n}.png', full_page=True)
-        pg.evaluate("(()=>{const b=document.querySelector('#pkgMore'); b.click(); setTimeout(()=>{const c=document.querySelector('#pkgMore'); if(c) c.click();},20);})()")
-        pg.wait_for_selector('th:has-text("Package 2")', timeout=15000); pg.wait_for_timeout(1200)
-        check(n, len(ev()['packages'])==2, 'double-tapping Create package 2 makes only one package: '+str(len(ev()['packages'])))
+        check(n, pg.query_selector('#pkgMore') is None and 'Package 3' in pg.inner_text('.pkg-cmp'), 'all 3 packages show side by side, no extra taps')
         d=ev(); p1,p2=d['packages'][0]['items'],d['packages'][1]['items']
         check(n, all(p1[c]!=p2.get(c) for c in p1), 'package 2 has different picks for every item')
-        check(n, calls[0]==first_calls, f'second package needed no new searches ({calls[0]-first_calls})')
-        check(n, not d.get('pkgConfirmed') and len(pg.query_selector_all('[data-pkuse]'))==2 and 'Compare your packages' in pg.inner_text('#pkg') and 'I booked it' not in pg.inner_text('#pkg'), 'step 2: choose first, no booking buttons yet')
+        
+        check(n, not d.get('pkgConfirmed') and len(pg.query_selector_all('[data-pkuse]'))==3 and 'Compare your packages' in pg.inner_text('#pkg') and 'I booked it' not in pg.inner_text('#pkg'), 'step 2: choose first, no booking buttons yet')
         check(n, pg.get_attribute('.pkg-steps li.on','aria-current')=='step' and 'Choose' in pg.inner_text('.pkg-steps li.on'), 'step tracker shows Choose')
         pg.screenshot(path=f'{OUT}/pkg2_{n}.png', full_page=True)
         # swap one item in package 2
@@ -108,8 +106,8 @@ with sync_playwright() as p:
             pth=dl.value.path(); check(n, open(pth,'rb').read(5)==b'%PDF-' and dl.value.suggested_filename.endswith('-package.pdf'), 'package PDF downloads'); import shutil; shutil.copy(pth, f'{OUT}/package.pdf')
         pg.goto(U+base+'/plan'); pg.wait_for_timeout(400); t=pg.inner_text('#tab'); check(n, 'Booked:' in t and 'Front-runner:' in t, 'finished plan shows the package')
         # remove package 1
-        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkback]'); pg.wait_for_timeout(300); pg.click('[data-pkdel="0"]'); pg.wait_for_timeout(300); d=ev()
-        check(n, len(d['packages'])==1 and d['pkgChosen']==0, 'removing the other package keeps the chosen one')
+        pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkback]'); pg.wait_for_timeout(300); chosen_items=ev()['packages'][ev()['pkgChosen']]['items']; pg.click('[data-pkdel="0"]'); pg.wait_for_timeout(300); d=ev()
+        check(n, len(d['packages'])==2 and d['packages'][d['pkgChosen']]['items']==chosen_items, 'removing the other package keeps the chosen one')
         # finish: book everything left and land on Done
         pg.click('[data-pkuse="0"]'); pg.wait_for_timeout(300)
         for _ in range(40):

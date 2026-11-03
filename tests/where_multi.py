@@ -34,8 +34,8 @@ with sync_playwright() as p:
         pg.click('#setting [data-v=ballroom]'); pg.screenshot(path=f'{OUT}/where_both_{n}.png')
         base=go(pg)
         Q.clear(); pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=40000)
-        v1=[q['query'] for q in Q if not q.get('kind')]; pg.wait_for_timeout(700); Q.clear(); pg.click('#pkgMore'); pg.wait_for_selector('[data-pkuse="1"]', timeout=40000); v2=[q['query'] for q in Q if not q.get('kind')]
-        check(n, v1 and v2 and ('ballroom' in v1[0] or 'hotel' in v1[0]) != ('ballroom' in v2[0] or 'hotel' in v2[0]), 'one package has an event venue, the other a hotel ballroom: '+str(v1[:1])+' / '+str(v2[:1]))
+        vq=[q['query'] for q in Q if not q.get('kind')]; v1=[q for q in vq if 'ballroom' in q or 'hotel' in q][:1]; v2=[q for q in vq if not ('ballroom' in q or 'hotel' in q)][:1]   # all 3 packages build at once
+        check(n, bool(v1 and v2), 'one package has an event venue, the other a hotel ballroom: '+str(v1[:1])+' / '+str(v2[:1]))
         # venue and outdoors: compared
         start(pg); pg.click('#setting [data-v=indoor]'); pg.click('#setting [data-v=outdoor]'); base=go(pg)
         pg.goto(U+base+'/overview'); pg.wait_for_selector('.where-compare'); rows=pg.evaluate("[...document.querySelectorAll('.where-compare [data-pickwhere]')].map(b=>b.dataset.pickwhere)")

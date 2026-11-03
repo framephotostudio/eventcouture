@@ -17,7 +17,7 @@ def zaffe_picks(pg, city):
     pg.goto(U+'#/start/arabic-wedding/'+city); pg.wait_for_selector('#text'); pg.click('#next'); pg.wait_for_selector('#type'); pg.click('#setting [data-v=indoor]'); pg.click('#next')
     pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
     pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=40000); pg.wait_for_timeout(600)
-    for _ in range(2): pg.click('#pkgMore'); pg.wait_for_timeout(1500)
+    for _ in range(2): (pg.query_selector('#pkgMore') and pg.click('#pkgMore')); pg.wait_for_timeout(1500)
     return [x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')], pg.inner_html('tr[data-pkrow="zaffe"] td >> nth=0')
 with sync_playwright() as p:
     b=p.chromium.launch()

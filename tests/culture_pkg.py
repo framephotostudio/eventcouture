@@ -36,7 +36,7 @@ with sync_playwright() as p:
         pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
         base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
         pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=20000); pg.wait_for_timeout(600)
-        for _ in range(2): pg.click('#pkgMore'); pg.wait_for_timeout(1500)
+        for _ in range(2): (pg.query_selector('#pkgMore') and pg.click('#pkgMore')); pg.wait_for_timeout(1500)
         pg.wait_for_function("document.querySelectorAll('.pkg-cmp thead th.pk-colh').length>=3")
         cell=lambda cat: [x.inner_text() for x in pg.query_selector_all(f'tr[data-pkrow="{cat}"] td > b')]
         empties=[r.get_attribute('data-pkrow') for r in pg.query_selector_all('tr[data-pkrow]') if len(r.query_selector_all('td > b'))<3]
