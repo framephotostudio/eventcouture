@@ -775,6 +775,12 @@
       { name: 'Garson', maps: 'Garson Persian restaurant Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 50, note: 'Persian and Mediterranean restaurant with catering, Houston' },
       { name: 'Zafran', maps: 'Zafran Persian Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 45, note: 'Persian cuisine and catering, Houston' },
       { name: 'Aban Restaurant', maps: 'Aban Persian restaurant Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['persian'], weight: 58, note: 'Persian restaurant and catering, Houston' },
+      /* Houston (added Nov 2, 2026): South Asian catering, a Stafford banquet hall, and two decor and design houses */
+      { name: 'Mai Colachi', ig: 'maicolachi', cats: ['catering'], cities: ['Houston, TX'], cultures: ['pakistani', 'indian'], note: 'Authentic Pakistani fine dining and catering, 100% zabiha halal: karahi and grill. Sugar Land' },
+      { name: 'Kiran\u2019s', maps: 'Kiran\u2019s 2925 Richmond Ave Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['indian', 'pakistani'], note: 'Upscale modern Indian restaurant and catering on Richmond Ave, Houston' },
+      { name: 'Calista Ballroom', site: 'https://calistaballroom.com', maps: 'Calista Ballroom 869 Dulles Ave Stafford TX', cats: ['venue'], cities: ['Houston, TX'], note: 'Banquet hall in Stafford, close to Houston, with plenty of parking' },
+      { name: 'Divine Decor & Design', ig: 'divinedecordesign', cats: ['decor', 'coordinator'], cities: ['Houston, TX'], note: 'Wedding planning and event decor, from intimate gatherings to grand celebrations. Houston' },
+      { name: 'Dream Decors', ig: 'dreamdecorsdesignhouse', cats: ['decor', 'mandap'], cities: ['Houston, TX'], note: 'Full-scale luxury wedding and event design: receptions, weddings, mehndi and sangeet. Stafford' },
       { name: 'Cafe Layal', ig: 'cafelayal_richmond', cats: ['catering'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Mediterranean restaurant, lounge and catering for weddings and engagements, Houston area' },
       { name: 'Fadi\u2019s Mediterranean', ig: 'fadiscuisine', cats: ['catering'], cities: ['Houston, TX'], cultures: ['arabic'], note: 'Family-owned Lebanese and Mediterranean since 1996: catering and event space, 100% halal' },
       { name: 'Joseph\u2019s Fashion', ig: 'josephs_fashion', cats: ['attire'], states: ['MI'], note: 'Custom suits and tuxedos for men and women: weddings, prom and personal styling. Sterling Heights, Michigan' }
