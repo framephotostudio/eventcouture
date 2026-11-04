@@ -8,7 +8,7 @@ module.exports = function compare(ctx) {
   const CHECKED = 'November 2026';
   // Each cell: [level, text]. 2 = does it well, 1 = partly, 0 = not offered.
   const EC = {
-    photo: [2, 'One photo, a Pinterest or TikTok link, or a few words becomes three full looks'],
+    photo: [2, 'One photo, a Pinterest or TikTok link, or a few words becomes three full looks, plus three more free if you want'],
     budget: [2, `Priced for your city and guest count (${nCities} cities in ${nCountries} countries), at three spending levels`],
     events: [2, 'Weddings, birthdays, quinceañeras, showers, graduations, dinners, galas and more'],
     culture: [2, `${nCult} cultural wedding traditions with their own customs, food and music`],
@@ -26,7 +26,7 @@ module.exports = function compare(ctx) {
       intro: 'The Knot is one of the biggest wedding brands in the US, owned by The Knot Worldwide (the same company as WeddingWire). It is best known for its huge marketplace of wedding vendors with couple reviews.',
       row: { photo: [1, 'Its AI tool matches vendors to images you favorite; it does not build a full plan and budget from a photo'], budget: [1, 'Wedding budget tools'], events: [1, 'Weddings'], culture: [1, 'General wedding articles'], vendors: [2, 'A huge vendor marketplace with reviews: its biggest strength'], invites: [2, 'Wedding website, invitations and paper (paid designs)'], registry: [2, 'Registry services'], privacy: [1, 'Couples contact vendors through its marketplace'], app: [2, 'Yes'], price: [2, 'Free planning tools; paid invitations and paper'] },
       them: ['You mainly want to browse lots of wedding vendors and read reviews', 'You want a phone app today', 'You want printed invitations and a registry in one place'],
-      us: ['You have a photo you love and want to see the whole event designed', 'You want real numbers for your city before calling anyone', `It's not a wedding, or it's a cultural wedding (${nCult} traditions)`] },
+      us: ['You have a photo you love and want to see the whole event designed, with up to six looks to choose from', 'You want real numbers for your city before calling anyone', `It's not a wedding, or it's a cultural wedding (${nCult} traditions)`] },
     weddingwire: { name: 'WeddingWire', slug: 'weddingwire', pic: 'blush-wisteria-ballroom', tag: 'Scrolling vendor lists vs. seeing your event first',
       src: [['The Knot Worldwide (Wikipedia)', 'https://en.wikipedia.org/wiki/The_Knot_Worldwide']],
       intro: 'WeddingWire is owned by The Knot Worldwide, the same company as The Knot. Couples mostly use it to find wedding vendors and read their reviews.',
@@ -91,7 +91,7 @@ module.exports = function compare(ctx) {
 </style>`;
   const pages = [];
   const tiles = (list, up) => `<div class="cv-more">${list.map(x => `<a href="${up}${x.slug}/"><img src="${up}../img/inspo/${x.pic}.jpg" alt="" loading="lazy"><span>vs ${esc(x.name)}</span></a>`).join('')}</div>`;
-  const band = up => `<div class="cv-band"><b>See your event before you spend a dollar.</b><span>Upload one photo and get three looks, a budget for your city and vendors near you, in minutes.</span><a class="btn primary" href="${up}#/new/1">Start with a photo</a></div>`;
+  const band = up => `<div class="cv-band"><b>See your event before you spend a dollar.</b><span>Upload one photo and get up to six looks, a budget for your city and ready-to-book vendor packages, in minutes.</span><a class="btn primary" href="${up}#/new/1">Start with a photo</a></div>`;
   for (const k of Object.keys(S)) {
     const s = S[k], slug = `compare/${s.slug}`, h1 = `Event Couture vs ${s.name}`;
     const title = `Event Couture vs ${s.name}: Which Is Right for You? (${new Date().getFullYear()}) | Event Couture`;
@@ -105,9 +105,9 @@ module.exports = function compare(ctx) {
     const body = `${CSS}
 <section class="cv-hero"><img src="../../img/inspo/${s.pic}.jpg" alt="" fetchpriority="high"><div class="in"><h1 class="cv-vs">Event Couture <i>VS</i> ${esc(s.name)}</h1><p>${esc(s.tag)}.</p></div></section>
 <p class="lead">${esc(s.intro)} Here's how it stacks up against Event Couture, the AI planner that turns one inspiration photo into a complete event plan.</p>
-<div class="cv-stats"><div class="cv-stat"><b>3</b><span>looks from one photo</span></div><div class="cv-stat"><b>${nCities}</b><span>cities priced</span></div><div class="cv-stat"><b>${nCult}</b><span>cultural traditions</span></div><div class="cv-stat"><b>$0</b><span>to start planning</span></div></div>
+<div class="cv-stats"><div class="cv-stat"><b>6</b><span>looks to choose from</span></div><div class="cv-stat"><b>${nCities}</b><span>cities priced</span></div><div class="cv-stat"><b>${nCult}</b><span>cultural traditions</span></div><div class="cv-stat"><b>$0</b><span>to start planning</span></div></div>
 <h2>One photo in, a whole event out</h2>
-<div class="cv-looks"><div class="cv-step"><b>Drop in a photo you love</b><span>Event Couture designs three looks, then prices every line for your city.</span></div>${LOOKS.map((p, i) => `<figure><img src="../../img/inspo/${p}.jpg" alt="Sample look ${i + 1}" loading="lazy"><figcaption>Look ${i + 1}</figcaption></figure>`).join('')}</div>
+<div class="cv-looks"><div class="cv-step"><b>Drop in a photo you love</b><span>Get three looks (and three more, free), pick one, and Event Couture prices every line for your city and builds vendor packages you can compare.</span></div>${LOOKS.map((p, i) => `<figure><img src="../../img/inspo/${p}.jpg" alt="Sample look ${i + 1}" loading="lazy"><figcaption>Look ${i + 1}</figcaption></figure>`).join('')}</div>
 <div class="cta"><a class="btn primary" href="../../#/new/1">Try it free with your photo</a><a class="btn ghost" href="../../#/sample/4">See a finished sample plan</a></div>
 <h2>Side by side</h2>
 <div class="cv-score"><div><b>${a} / 20</b><div class="cv-bar"><i style="width:${a * 5}%"></i></div><span>Event Couture</span></div><div><b>${b} / 20</b><div class="cv-bar"><i style="width:${b * 5}%"></i></div><span>${esc(s.name)}</span></div></div>
