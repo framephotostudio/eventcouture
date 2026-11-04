@@ -4,15 +4,6 @@ jobs:
   d:
     runs-on: ubuntu-latest
     steps:
-      - env:
-          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          T=$(printf '%s' "$T" | tr -d '[:space:]')
-          echo "NS:"; dig +short NS eventcouture.app; echo "MX:"; dig +short MX eventcouture.app
-          z=$(curl -s -H "Authorization: Bearer $T" "https://api.cloudflare.com/client/v4/zones?name=eventcouture.app")
-          echo "$z" | jq '{success, count:(.result|length), errors, zone:(.result[0]|{name,status,id_present:(.id!=null)})}'
-          id=$(echo "$z" | jq -r '.result[0].id // empty')
-          if [ -n "$id" ]; then curl -s -H "Authorization: Bearer $T" "https://api.cloudflare.com/client/v4/zones/$id/email/routing" | jq '{success, errors, enabled:.result.enabled, status:.result.status}';
-            curl -s -H "Authorization: Bearer $T" "https://api.cloudflare.com/client/v4/zones/$id/email/routing/rules" | jq '{success, errors, n:(.result|length), rules:[.result[]?|{matchers, actions:[.actions[]?|{type, value}]}]}'; fi
-          a=$(curl -s -H "Authorization: Bearer $T" "https://api.cloudflare.com/client/v4/accounts" | jq -r '.result[0].id')
-          curl -s -H "Authorization: Bearer $T" "https://api.cloudflare.com/client/v4/accounts/$a/email/routing/addresses" | jq '{success, errors, addrs:[.result[]?|{email, verified:(.verified!=null)}]}'
+      - run: |
+          curl -s -m 30 -X POST -H 'content-type: application/json' -H 'origin: https://eventcouture.app' https://event-couture-api.facecouture.workers.dev/api/review -d '{"stars":5,"text":"TEST from Claude: please delete this review.","name":"Test","rel":"none","consent":true,"event":"Test","city":"Houston"}'
+          echo; curl -s -m 30 https://event-couture-api.facecouture.workers.dev/api/reviews
