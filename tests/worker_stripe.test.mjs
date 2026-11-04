@@ -18,6 +18,7 @@ assert.equal(r.status, 200); const ref = r.body.ref;
 assert.equal((await get('/api/concierge/' + ref)).body.request.price, 599, 'server sets the price');
 // checkout
 r = await post('/api/checkout', { ref }); assert.equal(r.status, 200); assert.ok(r.body.url.startsWith('https://checkout.stripe.com/'));
+{ const f = new URLSearchParams(calls[calls.length - 1].o.body); assert.equal(f.get('payment_intent_data[metadata][client]'), 'Sara Q'); assert.equal(f.get('payment_intent_data[metadata][city]'), 'Houston, TX'); assert.equal(f.get('metadata[phone]'), '713-555-0199'); assert.ok(/Sara Q/.test(f.get('payment_intent_data[description]'))); assert.ok([...f.keys()].filter(k => k.startsWith('metadata[')).length <= 50, 'Stripe allows 50 metadata keys'); }
 const form = new URLSearchParams(calls[0].o.body);
 assert.equal(form.get('line_items[0][price_data][unit_amount]'), '59900'); assert.equal(form.get('client_reference_id'), ref); assert.equal(form.get('mode'), 'payment');
 assert.ok(calls[0].o.headers['idempotency-key'].startsWith('cq-' + ref), 'idempotency key on the Stripe call');
@@ -50,4 +51,8 @@ req = (await get('/api/concierge/' + ref2)).body.request; assert.equal(req.paid,
 // switched off without the secrets
 const off = await src.default.fetch(new Request('https://w/api/checkout', { method: 'POST', headers: { origin: 'https://x', 'content-type': 'application/json' }, body: JSON.stringify({ ref }) }), { EC_KV: kv, ALLOWED_ORIGINS: 'https://x' });
 assert.equal(off.status, 503, 'checkout off without the Stripe key');
+{ const r2 = await post('/api/concierge/new', { tier: 'signature', name: 'Long P', phone: '713-555-0101', email: 'l@example.com', city: 'Houston, TX', summary: 'x'.repeat(8000) });
+  assert.equal((await post('/api/checkout', { ref: r2.body.ref })).status, 200);
+  const f = new URLSearchParams(calls[calls.length - 1].o.body), mk = [...f.keys()].filter(k => k.startsWith('metadata[')), pk = [...f.keys()].filter(k => k.startsWith('payment_intent_data[metadata]['));
+  assert.ok(mk.length <= 50 && pk.length <= 50, 'within 50 keys'); assert.ok([...f.values()].every(v => v.length <= 1000)); assert.equal(mk.filter(k => k.includes('plan_')).map(k => f.get(k)).join('').length, 8000, 'whole plan summary kept'); }
 console.log('stripe worker tests passed');

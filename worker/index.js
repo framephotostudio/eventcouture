@@ -691,6 +691,11 @@ async function checkout(env, b, url, json) {
   f.set('line_items[0][price_data][product_data][name]', 'Event Couture Concierge: ' + CQ_PRICES[rec.tier][2]);
   f.set('line_items[0][price_data][product_data][description]', 'Booking service fee. Vendor prices are separate and paid to each vendor.');
   f.set('metadata[ref]', ref); f.set('metadata[tier]', rec.tier); f.set('payment_intent_data[metadata][ref]', ref);
+  // The client's request goes with the payment, so the owner sees everything on the payment's page in the Stripe Dashboard.
+  const info = [['client', rec.name], ['phone', rec.phone], ['email', rec.email], ['event', rec.type], ['date', rec.date], ['call_time', rec.when], ['city', rec.city], ['guests', rec.guests ? String(rec.guests) : ''], ['package_vendors', rec.vendors ? String(rec.vendors) : '']];
+  const sum = String(rec.summary || ''); for (let i = 0; i * 480 < sum.length && i < 17; i++) info.push(['plan_' + String(i + 1).padStart(2, '0'), sum.slice(i * 480, i * 480 + 480)]);
+  for (const [k, v] of info) if (v) { f.set('metadata[' + k + ']', String(v).slice(0, 490)); f.set('payment_intent_data[metadata][' + k + ']', String(v).slice(0, 490)); }
+  f.set('payment_intent_data[description]', ('Concierge ' + CQ_PRICES[rec.tier][2] + ' \u00b7 ' + [rec.name, rec.type, rec.city, rec.date].filter(Boolean).join(' \u00b7 ')).slice(0, 900));
   f.set('phone_number_collection[enabled]', 'true');
   f.set('success_url', SITE + '#/booked/' + ref); f.set('cancel_url', SITE + '#/cq/' + ref);
   f.set('expires_at', String(Math.floor(Date.now() / 1000) + 3600));
