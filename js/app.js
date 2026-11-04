@@ -508,7 +508,7 @@
     var lastEv = Object.values(events()).filter(function (e) { return e && e.id && !e.sample; }).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); })[0];
     frame(
       (lastEv ? '<a class="resume-bar" href="#/e/' + esc(lastEv.id) + ((lastEv.packages || []).length ? '/budget' : '') + '"><span>Welcome back. <b>Continue planning ' + esc(lastEv.name || 'your event') + '</b></span><span aria-hidden="true">\u2192</span></a>' : '') +
-      (CFG.app ? '' : '<div class="app-soon-bar"><img src="img/brand/ec-mark-128.png" alt="" width="30" height="30"><span><b>The Event Couture app is coming soon</b> to iPhone and Android. Plan, book and invite from your phone.' + (isInstalled() ? '' : '<button type="button" class="link small" data-install>Add Event Couture to your home screen now</button>') + '</span></div>') +
+      (CFG.app ? '' : '<div class="app-soon-bar"><img src="img/brand/ec-mark-128.png" alt="" width="30" height="30"><span><b><span class="asb-long">The Event Couture app is coming soon</span><span class="asb-short">App coming soon</span></b><span class="asb-long"> to iPhone and Android. Plan, book and invite from your phone.</span>' + (isInstalled() ? '' : '<span class="asb-short" aria-hidden="true"> \u00b7 </span><button type="button" class="link small" data-install><span class="asb-long">Add Event Couture to your home screen now</span><span class="asb-short">Add to home screen</span></button>') + '</span></div>') +
       '<section class="hero"><div class="hero-copy"><p class="hero-tag">Your inspiration. A beautifully planned event.</p><h1>Plan your whole event in minutes</h1>' +
       '<p class="lead">Share a photo or a few words. AI designs the look, and you get a budget estimate for your city, top-rated vendors, a checklist and invitations. Free to plan.</p>' +
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div>' +
@@ -533,11 +533,20 @@
       '<div class="samples" id="moreSamples" hidden>' + SAMPLES.map(function (s, i) { return FEATURED.indexOf(i) >= 0 ? '' : sampleCard(s, i); }).join('') + '</div>' +
       '<div><button class="btn ghost" id="allSamples" aria-expanded="false" aria-controls="moreSamples">See all ' + SAMPLES.length + ' sample plans</button></div></section>' +
       '<section id="reviews" class="stack section" hidden></section>' +
+      '<a class="btn primary sticky-plan" href="#/new" aria-hidden="true" tabindex="-1">Plan my event</a>' +
       '<section class="stack section" style="text-align:center;justify-items:center"><h2>Ready when you are</h2><p class="muted">Start with a photo, a few words or just your colors.</p><div><a class="btn primary" href="#/new">Plan my event</a></div></section>'
     );
     $$('[data-scroll]').forEach(function (b) { b.addEventListener('click', function () { var t = document.getElementById(b.dataset.scroll); if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }); });
     $$('[data-hchip]').forEach(function (a) { a.addEventListener('click', function () { T('quick_start', { occasion: a.dataset.hchip, from: 'hero' }); }); });
     homeReviews();
+    /* Phones: a "Plan my event" button follows you down the page once the main one scrolls away, and steps aside near the last one. */
+    (function () {
+      var sp = $('.sticky-plan'), top = $('.hero .btn.primary'); if (!sp || !top || !('IntersectionObserver' in window)) return;
+      var seen = { top: true, end: false };
+      var upd = function () { var on = !seen.top && !seen.end; sp.classList.toggle('on', on); sp.setAttribute('aria-hidden', on ? 'false' : 'true'); sp.tabIndex = on ? 0 : -1; };
+      new IntersectionObserver(function (es) { es.forEach(function (e) { seen[e.target === top ? 'top' : 'end'] = e.isIntersecting; }); upd(); }).observe(top);
+      var last = $$('.btn.primary[href="#/new"]').filter(function (x) { return x !== sp && x !== top; }).pop(); if (last) { top !== last && new IntersectionObserver(function (es) { seen.end = es[0].isIntersecting; upd(); }).observe(last); }
+    })();
     var hots = $$('.hot');
     hots.forEach(function (h) { h.addEventListener('click', function () { var open = h.getAttribute('aria-expanded') === 'true'; hots.forEach(function (o) { o.setAttribute('aria-expanded', 'false'); }); h.setAttribute('aria-expanded', open ? 'false' : 'true'); }); });
     $('#showBudget').addEventListener('click', function () { var l = $('#demoLines'), open = l.hidden; l.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Hide example budget' : 'See example budget'; });
