@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1000px;height:1500px;background:#2E0B20;overflow:hidden}
+.photo{position:absolute;left:0;top:0;width:1000px;height:860px;background-size:cover;background-position:center}
+.photo:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(46,11,32,0) 60%,rgba(46,11,32,1) 100%)}
+.ai{position:absolute;left:28px;top:28px;font:500 20px Jost,sans-serif;color:#fff;background:rgba(0,0,0,.45);padding:6px 14px;border-radius:20px;z-index:2}
+.panel{position:absolute;left:0;top:800px;width:1000px;height:700px;background:linear-gradient(180deg,#2E0B20,#4A1534);padding:30px 80px 0;text-align:center}
+.kick{font:600 24px Jost,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#D8B26E}
+h1{font-family:'Bodoni Moda',serif;font-weight:500;font-size:76px;line-height:1.08;color:#FBF3E6;margin:22px 0 26px}
+.num{font-family:'Bodoni Moda',serif;font-weight:600;font-size:66px;color:#F0D49A;margin-bottom:10px}
+.sub{font:400 30px/1.4 Jost,sans-serif;color:#EAD9C6}
+.foot{position:absolute;left:0;bottom:44px;width:1000px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.foot img{height:74px}
+.url{font:500 26px Jost,sans-serif;letter-spacing:.08em;color:#D8B26E}
+.rule{width:120px;height:2px;background:#D8B26E;margin:0 auto 26px;opacity:.7}
+</style></head><body>
+<div class="photo" id="ph"><span class="ai">AI-generated inspiration</span></div>
+<div class="panel"><div class="kick" id="k"></div><h1 id="t"></h1><div class="num" id="n"></div><div class="sub" id="s"></div></div>
+<div class="foot"><div class="rule"></div><img src="pin_logo.png" alt=""><div class="url">EVENTCOUTURE.APP</div></div>
+<script>
+const q=new URLSearchParams(location.search);
+document.getElementById('ph').style.backgroundImage='url('+q.get('img')+')';
+document.getElementById('k').textContent=q.get('k')||'';document.getElementById('t').textContent=q.get('t')||'';
+const n=q.get('n');document.getElementById('n').textContent=n||'';if(!n)document.getElementById('n').style.display='none';
+document.getElementById('s').textContent=q.get('s')||'';
+</script></body></html>
