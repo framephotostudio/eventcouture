@@ -90,7 +90,7 @@ jobs:
           [ -n "$TS_SITEKEY" ] && sed -i "s#turnstile: ''#turnstile: '$TS_SITEKEY'#" js/config.js || true   # stays in preview mode for payments until real checkout exists
           cat js/config.js
       - name: Package site
-        run: mkdir _site && cp -r index.html manifest.json sw.js css js img _site/
+        run: mkdir _site && cp -r index.html manifest.json sw.js css js img _site/ && cp 771dde2b31eb04ce5f6043427b2a7cc9.txt _site/
       - name: Planning guides for search engines (one page per city and per occasion, plus a sitemap)
         run: node tools/seo.cjs _site
       - name: Serve the brand fonts from our own site (faster first paint)
@@ -109,6 +109,12 @@ jobs:
         with: { path: _site }
       - id: pages
         uses: actions/deploy-pages@v4
+      - name: Tell Bing and other IndexNow search engines about the pages (free, no account)
+        continue-on-error: true
+        run: |
+          grep -o '<loc>[^<]*' _site/sitemap.xml | sed 's/<loc>//' | python3 -c "import sys,json;print(json.dumps({'host':'eventcouture.app','key':'771dde2b31eb04ce5f6043427b2a7cc9','keyLocation':'https://eventcouture.app/771dde2b31eb04ce5f6043427b2a7cc9.txt','urlList':[l.strip() for l in sys.stdin if l.strip()]}))" > indexnow.json
+          sleep 30
+          curl -s -o /dev/null -w "IndexNow: %{http_code}\n" -X POST -H "Content-Type: application/json; charset=utf-8" --data @indexnow.json https://api.indexnow.org/indexnow
       - name: Check the server answers
         if: env.SERVER == 'yes'
         run: curl -s "${{ steps.worker.outputs.url }}/api/status"
