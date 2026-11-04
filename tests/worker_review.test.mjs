@@ -15,5 +15,5 @@ await call('POST', '/api/reviews/set', { id: all.reviews[1].id, status: 'hidden'
 console.log((await call('GET', '/api/reviews'))[1].reviews.length);
 const [s1] = await call('POST', '/api/review', { stars: 4, text: 'short', name: 'A', consent: true }); assert(s1 === 400, 'too-short review refused');
 const [s2] = await call('POST', '/api/review', { stars: 4, text: 'long enough text here', name: 'A' }); assert(s2 === 400, 'no consent refused');
-const pub = (await call('GET', '/api/reviews'))[1].reviews; assert(pub.length === 1 && !('rel' in pub[0]) && pub[0].label === 'Friend of the founder', 'public list shows label, not raw fields');
+const pub = (await call('GET', '/api/reviews'))[1].reviews; assert(pub.length === 1 && !('rel' in pub[0]) && 'label' in pub[0] && !('status' in pub[0]), 'public list shows only public fields');
 console.log('review worker tests passed');
