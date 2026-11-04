@@ -21,6 +21,8 @@ module.exports = function ideas(ctx) {
     ['graduation', 'graduation-party-themes', 'Graduation party', 'graduation party themes', 'Celebrate the grad with a party that feels as big as the moment.'],
   ];
   const byType = {}; INSPO.forEach(p => p.types.forEach(t => { (byType[t] = byType[t] || []).push(p); }));
+  /* Looks made for this occasion first (it is listed earlier in their types), so the top photo fits the page. */
+  Object.keys(byType).forEach(t => { byType[t] = byType[t].map((p, i) => [p, i]).sort((x, y) => (x[0].types.indexOf(t) - y[0].types.indexOf(t)) || (x[1] - y[1])).map(x => x[0]); });
   const pages = LIST.filter(([t]) => (byType[t] || []).length >= 5 && occ(t));
   const CSS = `<style>
 .ti-hero{position:relative;border-radius:var(--r-lg);overflow:hidden;min-height:300px;display:flex;align-items:flex-end;color:#fff;background:#4B1235}
