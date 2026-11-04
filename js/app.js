@@ -3456,7 +3456,7 @@
   /* Owner only: approve reviews. The admin code is typed each time and kept only on this page. */
   function reviewsAdminPage() {
     var code = '';
-    frame('<div class="wizard stack-lg"><h2>Reviews</h2><p class="small muted">Approve every honest review, including low ratings. Hide only spam, abuse or private details. Choosing reviews by their rating is not allowed under the FTC rule on reviews.</p><form id="rvLogin" class="stack" novalidate><label for="admCode">Admin code</label><input class="input" id="admCode" type="password" autocomplete="off"><div><button class="btn primary" type="submit">Show reviews</button></div></form><div id="rvList" class="stack"></div></div>', { noRibbon: true });
+    frame('<div class="wizard stack-lg"><h2>Reviews</h2><p class="small muted">Approve every honest review, including low ratings. Hide only spam, abuse or private details. Choosing reviews by their rating is not allowed under the FTC rule on reviews.</p><form id="rvLogin" class="stack" novalidate><input type="text" name="username" value="Event Couture admin" autocomplete="username" hidden><label for="admCode">Admin code</label><input class="input" id="admCode" name="password" type="password" autocomplete="current-password"><div><button class="btn primary" type="submit">Show reviews</button></div></form><div id="rvList" class="stack"></div></div>', { noRibbon: true });
     function load() {
       fetch(CFG.apiUrl + '/api/reviews/all', { headers: { 'x-admin-code': code } })
         .then(function (r) { if (!r.ok) throw new Error(r.status === 403 ? 'Wrong code' : 'Not available'); return r.json(); })
