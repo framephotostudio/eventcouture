@@ -2000,7 +2000,10 @@
   var CQ_PROMISE = [['Nothing is booked without your OK', 'You approve every vendor and price first.'], ['Quick turnaround on vendor options', 'Your first vendor choices come to you fast.'], ['Weekly updates until everything is booked', 'You always know what is booked and what is next.'], ['Free replacement if a vendor cancels', 'We find you another at no extra fee.'], ['Your money never passes through us', 'You pay each vendor directly, under their own contract.'], ['Secure card payment by Stripe', 'We never see or store your card.']];
   function cqPromise(short) { return short ? '<ul class="cq-ticks small">' + CQ_PROMISE.slice(0, 3).map(function (p) { return '<li>' + esc(p[0]) + '</li>'; }).join('') + '</ul>' : '<div class="cq-promise"><p class="eyebrow">Our booking promise</p><ul class="cq-ticks">' + CQ_PROMISE.map(function (p) { return '<li><b>' + esc(p[0]) + '.</b> <span class="muted">' + esc(p[1]) + '</span></li>'; }).join('') + '</ul></div>'; }
   /* A package can be bought when card checkout is on (cqCfg().stripe, set by deploy once the Stripe key is saved) or it has a payment link. */
-  function cqLive(id) { var c = cqCfg(); return c.stripe === true || !!(c.links || {})[id]; }
+  /* Stripe test (sandbox) key: the offer shows only on a device that opened the site with ?cqtest=1 (?cqtest=0 turns it off). */
+  var CQ_TEST = (function () { try { var m = location.search.match(/[?&]cqtest=([01])/); if (m) localStorage.setItem('ec_cqtest', m[1]); return localStorage.getItem('ec_cqtest') === '1'; } catch (e) { return /[?&]cqtest=1/.test(location.search); } })();
+  function cqCard() { var c = cqCfg(); return c.stripe === true || (c.stripe === 'test' && CQ_TEST); }
+  function cqLive(id) { return cqCard() || !!(cqCfg().links || {})[id]; }
   function cqOn(ev) { return !ev.sample && !!CFG.apiUrl && E.countryOf(ev.city || '').id === 'US' && CQ_TIERS.some(function (t) { return cqLive(t.id); }); }
   function cqPrice(t) { return cqCfg().founding !== false ? t.founding : t.price; }
   function cqBest(ev, n) { if (ev.type === 'wedding' || ev.culture) return CQ_TIERS[2]; return CQ_TIERS.find(function (t) { return n <= t.max; }) || CQ_TIERS[2]; }
@@ -2019,7 +2022,7 @@
   }
   function cqPay(ev) {
     var c = cqCfg(), cq = ev.concierge || {}, link = (c.links || {})[cq.tier];
-    if (c.stripe === true) {
+    if (cqCard()) {
       T('concierge_checkout', { tier: cq.tier, event_type: ev.type });
       T('begin_checkout', { currency: 'USD', value: cq.price || 0, item_name: 'Concierge ' + (cq.tierName || cq.tier), event_type: ev.type });
       return fetch(CFG.apiUrl + '/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ref: cq.ref }) })
@@ -2062,7 +2065,7 @@
   /* Back from Stripe: the payment went through, so the latest saved request is marked paid. */
   function cqThanks(ref) {
     /* Card checkout: the server confirms the payment (from Stripe's signed message) before the booking shows as paid. */
-    if (ref && cqCfg().stripe === true && /^[a-f0-9]{24}$/.test(ref)) {
+    if (ref && cqCard() && /^[a-f0-9]{24}$/.test(ref)) {
       var evr = Object.values(events()).find(function (e) { return e && e.concierge && e.concierge.ref === ref; }), tries = 0;
       frame('<div class="wizard stack-lg" style="text-align:center;justify-items:center"><img src="img/brand/ec-mark-128.png" alt="" width="64" height="64"><h2>Confirming your payment\u2026</h2><p class="muted">This takes a few seconds.</p></div>');
       var poll = function () {
