@@ -1034,10 +1034,13 @@ footer.site nav.foot-guides { gap: 6px 14px; font-size: .8rem; margin-top: 4px; 
 .save-line { margin: -4px 0 0; }
 
 /* Hero: one-tap occasion chips and a sample plan link, so visitors can start in one tap */
-.hero-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.hero-chips .chip { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 15px; text-decoration: none; cursor: pointer; font-family: inherit; }
+.hero-copy { min-width: 0; }
+.hero-chips { min-width: 0; width: 100%; max-width: 100%; box-sizing: border-box; display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin-top: -4px; }
+.hero-chips::-webkit-scrollbar { display: none; }
+@media (max-width: 700px) { .hero-chips { width: calc(100% + 32px); max-width: none; margin-left: -16px; margin-right: -16px; padding: 0 16px 2px; } }
+@media (min-width: 701px) { .hero-chips { flex-wrap: wrap; overflow: visible; } }
+.hero-chips .chip { flex: none; white-space: nowrap; display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 14px; text-decoration: none; cursor: pointer; font-family: inherit; }
 .hero-chips .chip:hover, .hero-chips .chip:focus-visible { border-color: var(--champagne); }
-.hero-sample { margin-top: -4px; }
 
 /* Reviews: the "How was your plan?" box, the home-page reviews and the owner's approval page */
 .rv-card .check { border-top: 0; padding: 0; }

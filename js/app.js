@@ -512,10 +512,9 @@
       '<section class="hero"><div class="hero-copy"><p class="hero-tag">Your inspiration. A beautifully planned event.</p><h1>Plan your whole event in minutes</h1>' +
       '<p class="lead">Share a photo or a few words. AI designs the look, and you get a budget estimate for your city, top-rated vendors, a checklist and invitations. Free to plan.</p>' +
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div>' +
-      '<div class="hero-chips" aria-label="Start with your occasion"><span class="small muted">Or start with:</span>' +
+      '<div class="hero-chips" aria-label="Start with your occasion">' +
       [['wedding', 'Wedding'], ['birthday', 'Birthday'], ['baby-shower', 'Baby shower'], ['quince', 'Quincea\u00f1era']].map(function (c) { var q = QUICK.find(function (x) { return x[0] === c[0]; }); return q ? '<a class="chip" href="#/start/' + q[0] + '/-/' + q[2] + '" data-hchip="' + q[0] + '">' + c[1] + '</a>' : ''; }).join('') +
-      '<button type="button" class="chip" data-scroll="cultural">Cultural wedding</button></div>' +
-      '<a class="link small hero-sample" href="#/sample/4">See a finished sample plan \u2192</a></div>' +
+      '<button type="button" class="chip" data-scroll="cultural">Cultural wedding</button></div></div>' +
       '<figure class="hero-photo"><div class="scene">' +
       '<img src="' + srcOf(HERO_IMG) + '"' + (window.EC_EMBED ? '' : ' srcset="img/hero-480.webp 480w, img/hero-720.webp 720w, img/hero-960.webp 960w" sizes="(min-width: 900px) 46vw, calc(100vw - 40px)"') + ' width="960" height="1200" fetchpriority="high" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
       tags.map(function (t) { return '<button class="hot' + (t[2] > 65 ? ' r' : t[2] < 30 ? ' l' : '') + '" style="left:' + t[2] + '%;top:' + t[3] + '%" aria-expanded="false" aria-label="' + esc(t[0]) + ', ' + money(t[1]) + '"><span class="dot" aria-hidden="true"></span><span class="lbl" aria-hidden="true"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span></button>'; }).join('') +
