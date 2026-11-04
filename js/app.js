@@ -315,6 +315,7 @@
       if (p[0] === 'unsubscribe') return unsubscribePage();
       if (p[0] === 'p' && p[1]) return proposalPage(p[1]);
       if (p[0] === 'admin' && p[1] === 'emails') return emailExportPage();
+      if (p[0] === 'admin' && p[1] === 'reviews') return reviewsAdminPage();
       if (p[0] === 'cq' && p[1]) return cqRequest(p[1]);
       if (p[0] === 'vendors' && p[1] === 'requests') { if (CFG.app) { location.replace('#/'); return; } return vendorRequests(); }
       if (p[0] === 'r' && /^[a-f0-9]{20}$/.test(p[1] || '')) return vendorReply(p[1]);
@@ -532,10 +533,12 @@
       FEATURED.map(function (i) { return sampleCard(SAMPLES[i], i); }).join('') + '</div>' +
       '<div class="samples" id="moreSamples" hidden>' + SAMPLES.map(function (s, i) { return FEATURED.indexOf(i) >= 0 ? '' : sampleCard(s, i); }).join('') + '</div>' +
       '<div><button class="btn ghost" id="allSamples" aria-expanded="false" aria-controls="moreSamples">See all ' + SAMPLES.length + ' sample plans</button></div></section>' +
+      '<section id="reviews" class="stack section" hidden></section>' +
       '<section class="stack section" style="text-align:center;justify-items:center"><h2>Ready when you are</h2><p class="muted">Start with a photo, a few words or just your colors.</p><div><a class="btn primary" href="#/new">Plan my event</a></div></section>'
     );
     $$('[data-scroll]').forEach(function (b) { b.addEventListener('click', function () { var t = document.getElementById(b.dataset.scroll); if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }); });
     $$('[data-hchip]').forEach(function (a) { a.addEventListener('click', function () { T('quick_start', { occasion: a.dataset.hchip, from: 'hero' }); }); });
+    homeReviews();
     var hots = $$('.hot');
     hots.forEach(function (h) { h.addEventListener('click', function () { var open = h.getAttribute('aria-expanded') === 'true'; hots.forEach(function (o) { o.setAttribute('aria-expanded', 'false'); }); h.setAttribute('aria-expanded', open ? 'false' : 'true'); }); });
     $('#showBudget').addEventListener('click', function () { var l = $('#demoLines'), open = l.hidden; l.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Hide example budget' : 'See example budget'; });
@@ -1469,10 +1472,10 @@
         g.swaps.map(function (s, i) { return '<div class="it"><span class="grow">' + esc(s.text) + '</span>' + (s.save ? '<span class="num muted">saves about ' + money(s.save) + '</span>' : '') + '<button class="btn small ghost" data-swap="' + i + '">Apply</button></div>'; }).join('') + '</div></div>' : '') +
       '<div class="panel stack"><h3>Ask the concierge</h3><p class="muted small">Type a change in plain words, like “make it 25 guests”, “budget ' + money(niceAmount(b.total * 0.9)) + '”, “move it outdoors”, “skip the photographer” or “add a photo booth”.</p>' +
       '<div class="chat" id="chat"></div><form id="ask" class="row"><input class="input" aria-label="Change to your plan" id="q" style="flex:1 1 220px" placeholder="What would you like to change?" autocomplete="off"><button class="btn">Send</button></form></div>' +
-      '<div class="panel stack"><h3>Your look</h3>' + dots(ev.concept.palette, ev.concept.styleName + ' colors') + '<p>' + esc(moodFor(ev.concept, ev)) + '</p><ul class="incl">' + decorFor(ev.concept, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' + dressBlock(ev, 'muted small') + (ev.sample ? '' : '<div><a class="btn ghost small" href="#/e/' + ev.id + '/concepts">Change look</a></div>') + '</div>';
+      '<div class="panel stack"><h3>Your look</h3>' + dots(ev.concept.palette, ev.concept.styleName + ' colors') + '<p>' + esc(moodFor(ev.concept, ev)) + '</p><ul class="incl">' + decorFor(ev.concept, ev).map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' + dressBlock(ev, 'muted small') + (ev.sample ? '' : '<div><a class="btn ghost small" href="#/e/' + ev.id + '/concepts">Change look</a></div>') + '</div>' + reviewCard(ev);
   };
   TAB_BIND.overview = function (ev, save, rerender) {
-    bindCulture(ev, save, rerender);
+    bindCulture(ev, save, rerender); bindReview(ev, save);
     var ps = $('#pkgStart'); if (ps) ps.addEventListener('click', function () { if (lockSample(ev)) return; AUTO_PKG = true; location.hash = '#/e/' + ev.id + '/budget'; });
     bindWhere(ev, rerender); bindSteps(ev, rerender);
     var cl = $('#cmpLevels'); if (cl) cl.addEventListener('click', function () {
@@ -3402,6 +3405,76 @@
       fetch(CFG.apiUrl + '/api/optin/remove', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: em }) })
         .then(function (r) { if (!r.ok) throw new Error(); Object.values(events()).forEach(function (x) { if (x && x.optin && x.optin.email.toLowerCase() === em.toLowerCase()) { delete x.optin; saveEvent(x); } }); T('email_optout', {}); frame('<div class="wizard stack-lg"><h2>You\u2019re unsubscribed</h2><p class="muted">We won\u2019t send planning emails to that address.</p><div><a class="btn primary" href="#/">Back to Event Couture</a></div></div>'); })
         .catch(function () { toast('Couldn\u2019t remove it right now. Email ' + (CFG.supportEmail || 'us') + ' and we\u2019ll do it.'); });
+    });
+  }
+  /* ---------- Reviews of Event Couture ----------
+     A host can rate her plan from the overview. Nothing shows on the site until the owner approves it at #/admin/reviews.
+     People who know the founder say so, and the site shows that label beside their words (FTC rule on reviews). */
+  var REV_LABEL = { friend: 'Friend of the founder', family: 'Family of the founder' };
+  function starsText(n) { return '★★★★★'.slice(0, n) + '<span class="rv-off">' + '★★★★★'.slice(n) + '</span>'; }
+  function reviewCard(ev) {
+    if (ev.sample || !CFG.apiUrl || ev.reviewHidden) return '';
+    if (ev.reviewed) return '<div class="panel rv-card rv-done"><b>Thank you for your review</b><p class="small muted">We read every one. Once it’s approved, it can appear on Event Couture with your first name.</p></div>';
+    return '<form class="panel stack rv-card" id="rvForm" novalidate><div class="row" style="justify-content:space-between;align-items:baseline"><h3>How was your plan?</h3><button type="button" class="link small quiet" id="rvLater">Not now</button></div>' +
+      '<p class="small muted">Your honest review helps other hosts, good or bad. Approved reviews may appear on Event Couture with your first name.</p>' +
+      '<div class="rv-stars" role="radiogroup" aria-label="Your rating">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" role="radio" aria-checked="false" data-star="' + n + '" aria-label="' + n + ' star' + (n > 1 ? 's' : '') + '">★</button>'; }).join('') + '</div>' +
+      '<label class="field"><span>Your review</span><textarea class="input" id="rvText" rows="3" maxlength="600" placeholder="What did you like? What could be better?"></textarea></label>' +
+      '<div class="rv-two"><label class="field"><span>First name</span><input class="input" id="rvName" maxlength="40" autocomplete="given-name"></label>' +
+      '<label class="field"><span>Do you know the founder?</span><select class="input" id="rvRel"><option value="none">No, I found Event Couture myself</option><option value="friend">Yes, I’m a friend</option><option value="family">Yes, I’m family</option></select></label></div>' +
+      '<label class="check small"><input type="checkbox" id="rvOk"> <span>Event Couture may show my review with my first name, my event type and my city.</span></label>' +
+      '<div><button class="btn gold" type="submit">Send my review</button></div></form>';
+  }
+  function bindReview(ev, save) {
+    var f = $('#rvForm'); if (!f) return; var stars = 0;
+    $('#rvLater').addEventListener('click', function () { ev.reviewHidden = true; save(); f.remove(); });
+    $$('[data-star]', f).forEach(function (b) { b.addEventListener('click', function () { stars = +b.dataset.star; $$('[data-star]', f).forEach(function (x) { x.setAttribute('aria-checked', String(+x.dataset.star === stars)); x.classList.toggle('on', +x.dataset.star <= stars); }); }); });
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var text = $('#rvText').value.trim(), name = $('#rvName').value.trim();
+      if (!stars) return toast('Choose a star rating');
+      if (text.length < 10) return toast('Write a few words about your plan');
+      if (!name) return toast('Add your first name');
+      if (!$('#rvOk').checked) return toast('Tick the box so we can show your review');
+      var btn = f.querySelector('[type=submit]'); btn.disabled = true;
+      tsToken().then(function (ts) { return fetch(CFG.apiUrl + '/api/review', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ts: ts, stars: stars, text: text, name: name, rel: $('#rvRel').value, consent: true, event: E.typeName(ev), city: (ev.city || '').split(',')[0] }) }); })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || 'Couldn’t send it right now. Try again in a minute.'); }); })
+        .then(function () { ev.reviewed = true; save(); T('review_sent', { stars: stars }); f.outerHTML = reviewCard(ev); })
+        .catch(function (er) { btn.disabled = false; toast(er.message || 'Couldn’t send it right now. Try again in a minute.'); });
+    });
+  }
+  /* Home page: approved reviews only. The section stays hidden until there is at least one. */
+  function homeReviews() {
+    var box = document.getElementById('reviews'); if (!box || !CFG.apiUrl) return;
+    fetch(CFG.apiUrl + '/api/reviews').then(function (r) { return r.ok ? r.json() : { reviews: [] }; }).then(function (j) {
+      var list = (j.reviews || []).slice(0, 6); if (!list.length || !document.body.contains(box)) return;
+      box.innerHTML = '<h2>What hosts are saying</h2><p class="muted">Real reviews from people who planned with Event Couture.</p><div class="rv-grid">' + list.map(function (r) {
+        return '<figure class="panel rv-item"><div class="rv-st" aria-label="' + r.stars + ' out of 5 stars">' + starsText(r.stars) + '</div><blockquote>' + esc(r.text) + '</blockquote><figcaption><b>' + esc(r.name) + '</b>' + (r.event || r.city ? '<span class="small muted"> · ' + esc([r.event, r.city].filter(Boolean).join(', ')) + '</span>' : '') + (r.label ? '<span class="rv-tag">' + esc(r.label) + '</span>' : '') + '</figcaption></figure>';
+      }).join('') + '</div>';
+      box.hidden = false;
+    }).catch(function () {});
+  }
+  /* Owner only: approve reviews. The admin code is typed each time and kept only on this page. */
+  function reviewsAdminPage() {
+    var code = '';
+    frame('<div class="wizard stack-lg"><h2>Reviews</h2><p class="small muted">Approve every honest review, including low ratings. Hide only spam, abuse or private details. Choosing reviews by their rating is not allowed under the FTC rule on reviews.</p><form id="rvLogin" class="stack" novalidate><label for="admCode">Admin code</label><input class="input" id="admCode" type="password" autocomplete="off"><div><button class="btn primary" type="submit">Show reviews</button></div></form><div id="rvList" class="stack"></div></div>', { noRibbon: true });
+    function load() {
+      fetch(CFG.apiUrl + '/api/reviews/all', { headers: { 'x-admin-code': code } })
+        .then(function (r) { if (!r.ok) throw new Error(r.status === 403 ? 'Wrong code' : 'Not available'); return r.json(); })
+        .then(function (j) {
+          $('#rvLogin').hidden = true; var L = j.reviews || [];
+          $('#rvList').innerHTML = L.length ? L.map(function (r) {
+            return '<div class="panel stack rv-adm"><div class="row" style="justify-content:space-between"><span class="rv-st">' + starsText(r.stars) + '</span><span class="badge' + (r.status === 'approved' ? ' ok' : '') + '">' + esc(r.status === 'approved' ? 'Showing on the site' : r.status === 'hidden' ? 'Hidden' : 'Waiting for you') + '</span></div><p>' + esc(r.text) + '</p><p class="small muted"><b>' + esc(r.name) + '</b> · ' + esc([r.event, r.city].filter(Boolean).join(', ')) + (REV_LABEL[r.rel] ? ' · ' + REV_LABEL[r.rel] : '') + ' · ' + esc(fmtDate((r.at || '').slice(0, 10))) + '</p><div class="row">' +
+              (r.status !== 'approved' ? '<button class="btn small gold" data-rv="approved" data-id="' + esc(r.id) + '">Approve</button>' : '') + (r.status !== 'hidden' ? '<button class="btn small ghost" data-rv="hidden" data-id="' + esc(r.id) + '">Hide</button>' : '') + '<button class="btn small ghost" data-rv="deleted" data-id="' + esc(r.id) + '">Delete</button></div></div>';
+          }).join('') : '<p class="muted">No reviews yet.</p>';
+        })
+        .catch(function (er) { toast(er.message || 'Not available'); });
+    }
+    $('#rvLogin').addEventListener('submit', function (e) { e.preventDefault(); code = $('#admCode').value; load(); });
+    $('#rvList').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-rv]'); if (!b) return; b.disabled = true;
+      fetch(CFG.apiUrl + '/api/reviews/set', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-code': code }, body: JSON.stringify({ id: b.dataset.id, status: b.dataset.rv }) })
+        .then(function (r) { if (!r.ok) throw new Error(); toast(b.dataset.rv === 'approved' ? 'Approved. It’s on the site now.' : b.dataset.rv === 'hidden' ? 'Hidden' : 'Deleted'); load(); })
+        .catch(function () { b.disabled = false; toast('Couldn’t save that. Try again.'); });
     });
   }
   /* Owner only: download the email list. The admin code is typed each time and never saved. */

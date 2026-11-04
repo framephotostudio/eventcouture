@@ -50,6 +50,8 @@ export default {
         return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env) });
       }
       if (req.method === 'GET' && url.pathname === '/api/optin/export') return await optinExport(req, env, cors);
+      if (req.method === 'GET' && url.pathname === '/api/reviews') { if (!env.EC_KV) return json({ reviews: [] }); return json({ reviews: (await env.EC_KV.get('revs:approved', 'json')) || [] }); }
+      if (req.method === 'GET' && url.pathname === '/api/reviews/all') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await reviewsAll(env, json); }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
       if (url.pathname === '/api/stripe/webhook') return await stripeWebhook(req, env, json);
       // Per-visitor rate limit (free, best effort): 40 requests an hour per IP across AI and search.
@@ -57,10 +59,12 @@ export default {
       if (+(req.headers.get('content-length') || 0) > 12e6) return json({ error: 'Those photos are too large. Try fewer or smaller photos.' }, 413);
       const body = await req.json().catch(() => ({}));
       // Bot check (Cloudflare Turnstile) for new booking requests, quote requests and new vendor listings, once TURNSTILE_SECRET is set.
-      const human = url.pathname === '/api/concierge/new' || url.pathname === '/api/req/new' || url.pathname === '/api/optin' || (url.pathname === '/api/vendor/save' && !body.id);
+      const human = url.pathname === '/api/concierge/new' || url.pathname === '/api/req/new' || url.pathname === '/api/optin' || url.pathname === '/api/review' || (url.pathname === '/api/vendor/save' && !body.id);
       if (human && env.TURNSTILE_SECRET && !(await turnstileOk(env, body.ts, req.headers.get('cf-connecting-ip')))) return json({ error: 'Please confirm you\u2019re not a robot and try again.', code: 'turnstile' }, 403);
       delete body.ts;
       if (url.pathname === '/api/optin' || url.pathname === '/api/optin/remove') { if (!env.EC_KV) return json({ error: 'Email sign-up is not connected yet.' }, 503); return await optin(env, url.pathname.endsWith('remove'), body, json); }
+      if (url.pathname === '/api/review') { if (!env.EC_KV) return json({ error: 'Reviews are not connected yet.' }, 503); return await reviewNew(env, body, json); }
+      if (url.pathname === '/api/reviews/set') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await reviewSet(env, body, json); }
       if (url.pathname === '/api/checkout') { if (!env.EC_KV || !env.STRIPE_SECRET_KEY) return json({ error: 'Card payments are not switched on yet.' }, 503); return await checkout(env, body, url, json); }
       if (url.pathname === '/api/concierge/new') { if (!env.EC_KV) return json({ error: 'Booking requests are not connected yet.' }, 503); const cr = await conciergeNew(env, body); return cr.error ? json(cr, 400) : json(cr); }
       const mk = url.pathname.match(/^\/api\/(vendor\/save|vendor\/report|req\/new|req\/list|req\/reply|req\/inbox|req\/delete)$/);
@@ -548,6 +552,48 @@ async function optin(env, remove, body, json) {
   const clip = (v, n) => String(v || '').replace(/[\r\n]+/g, ' ').slice(0, n);
   const rec = { email, consent: 'Yes, email me planning tips and reminders for this event. I can unsubscribe anytime.', at: new Date().toISOString(), type: clip(body.type, 60), date: /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? body.date : '', city: clip(body.city, 80), guests: Math.max(0, Math.min(100000, +body.guests || 0)) };
   await env.EC_KV.put(key, JSON.stringify(rec));
+  return json({ ok: true });
+}
+/* The owner's code, compared in constant time. Never stored anywhere but the server's secrets. */
+function adminOk(req, env) {
+  const code = req.headers.get('x-admin-code') || '';
+  if (!env.ADMIN_CODE || !env.EC_KV || !code) return false;
+  const a = new TextEncoder().encode(code), b = new TextEncoder().encode(env.ADMIN_CODE);
+  let same = a.length === b.length ? 0 : 1; for (let i = 0; i < Math.max(a.length, b.length); i++) same |= (a[i] || 0) ^ (b[i] || 0);
+  return same === 0;
+}
+
+// ---------- Reviews of Event Couture: hosts write them after planning; none show until the owner approves them ----------
+// People who know the founder pick that when they write, and the site shows it beside their review (FTC rule on reviews).
+const REV_REL = { none: '', friend: 'Friend of the founder', family: 'Family of the founder' };
+async function reviewNew(env, body, json) {
+  const stars = Math.round(+body.stars || 0);
+  if (!(stars >= 1 && stars <= 5)) return json({ error: 'Choose from 1 to 5 stars.' }, 400);
+  const text = aclip(body.text, 600), name = aclip(body.name, 40);
+  if (text.length < 10) return json({ error: 'Write a few words about your plan.' }, 400);
+  if (!name) return json({ error: 'Add your first name.' }, 400);
+  if (body.consent !== true) return json({ error: 'Tick the box so we can show your review.' }, 400);
+  const id = Date.now().toString(36) + [...crypto.getRandomValues(new Uint8Array(5))].map(b => b.toString(16).padStart(2, '0')).join('');
+  const rec = { id, stars, text, name, event: aclip(body.event, 60), city: aclip(body.city, 60), rel: Object.prototype.hasOwnProperty.call(REV_REL, body.rel) ? body.rel : 'none', status: 'pending', at: new Date().toISOString() };
+  await env.EC_KV.put('rev:' + id, JSON.stringify(rec));
+  return json({ ok: true });
+}
+async function reviewsAll(env, json) {
+  const out = []; let cursor;
+  do { const l = await env.EC_KV.list({ prefix: 'rev:', cursor }); for (const k of l.keys) { const r = await env.EC_KV.get(k.name, 'json'); if (r) out.push(r); } cursor = l.list_complete ? null : l.cursor; } while (cursor);
+  out.sort((x, y) => (y.at || '').localeCompare(x.at || ''));
+  return json({ reviews: out });
+}
+async function reviewSet(env, body, json) {
+  const id = String(body.id || ''); if (!/^[a-z0-9]{12,30}$/.test(id)) return json({ error: 'Not found' }, 404);
+  const k = 'rev:' + id, r = await env.EC_KV.get(k, 'json'); if (!r) return json({ error: 'Not found' }, 404);
+  if (body.status === 'deleted') await env.EC_KV.delete(k);
+  else if (body.status === 'approved' || body.status === 'hidden') { r.status = body.status; await env.EC_KV.put(k, JSON.stringify(r)); }
+  else return json({ error: 'Choose approve, hide or delete.' }, 400);
+  /* The public list is one stored key, rebuilt only when the owner changes something, so showing reviews costs one read. */
+  let list = ((await env.EC_KV.get('revs:approved', 'json')) || []).filter(x => x.id !== id);
+  if (body.status === 'approved') list.unshift({ id: r.id, stars: r.stars, text: r.text, name: r.name, event: r.event, city: r.city, label: REV_REL[r.rel] || '', at: r.at });
+  await env.EC_KV.put('revs:approved', JSON.stringify(list.slice(0, 60)));
   return json({ ok: true });
 }
 async function optinExport(req, env, cors) {
