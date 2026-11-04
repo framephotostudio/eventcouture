@@ -657,7 +657,28 @@ async function movePlan(req, env, id, json) {
 // ---------- Payments: Stripe Checkout for Event Couture's own fees (the concierge booking packages) ----------
 // The price comes from CQ_PRICES on the server. The booking is marked paid only by Stripe's signed webhook.
 const SITE = 'https://eventcouture.app/';
+// Webhook signing secret: from the STRIPE_WEBHOOK_SECRET setting if one was saved, otherwise created automatically.
+// The first checkout with a Stripe key registers this server's webhook with Stripe (once per test/live key) and keeps the
+// signing secret in KV, so the owner only has to save STRIPE_SECRET_KEY.
+const WH_EVENTS = ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'charge.refunded'];
+function keyMode(env) { return /_live_/.test(String(env.STRIPE_SECRET_KEY || '')) ? 'live' : 'test'; }
+async function webhookSecret(env) { return env.STRIPE_WEBHOOK_SECRET || (env.EC_KV ? await env.EC_KV.get('cfg:whsec:' + keyMode(env)) : null); }
+async function ensureWebhook(env, origin) {
+  if (env.STRIPE_WEBHOOK_SECRET || await env.EC_KV.get('cfg:whsec:' + keyMode(env))) return true;
+  const hookUrl = origin + '/api/stripe/webhook', auth = { authorization: 'Bearer ' + env.STRIPE_SECRET_KEY };
+  try {   // remove an earlier endpoint for this URL whose secret we no longer have, so Stripe never sends duplicates
+    const l = await (await fetch('https://api.stripe.com/v1/webhook_endpoints?limit=100', { headers: auth })).json();
+    for (const w of (l && l.data) || []) if (w.url === hookUrl) await fetch('https://api.stripe.com/v1/webhook_endpoints/' + w.id, { method: 'DELETE', headers: auth });
+  } catch (e) {}
+  const f = new URLSearchParams(); f.set('url', hookUrl); f.set('description', 'Event Couture payments (created automatically)'); WH_EVENTS.forEach((e, i) => f.set('enabled_events[' + i + ']', e));
+  const r = await fetch('https://api.stripe.com/v1/webhook_endpoints', { method: 'POST', headers: Object.assign({ 'content-type': 'application/x-www-form-urlencoded' }, auth), body: f.toString() });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !/^whsec_/.test(String(d.secret || ''))) return false;
+  await env.EC_KV.put('cfg:whsec:' + keyMode(env), d.secret);
+  return true;
+}
 async function checkout(env, b, url, json) {
+  if (!(await ensureWebhook(env, url.origin))) return json({ error: 'Card payments couldn\u2019t be set up. Please try again in a minute.' }, 502);
   const ref = String(b.ref || '');
   if (!/^[a-f0-9]{24}$/.test(ref)) return json({ error: 'That booking request wasn\u2019t found.' }, 400);
   const rec = await env.EC_KV.get('cq:' + ref, 'json');
@@ -691,10 +712,11 @@ async function stripeSignatureOk(secret, header, payload, nowSec) {
   return v1.some(sig => sameText(sig, want));
 }
 async function stripeWebhook(req, env, json) {
-  if (!env.STRIPE_WEBHOOK_SECRET || !env.EC_KV) return json({ error: 'Not set up' }, 503);
+  const whsec = env.EC_KV ? await webhookSecret(env) : null;
+  if (!whsec) return json({ error: 'Not set up' }, 503);
   const payload = await req.text();
   if (payload.length > 512000) return json({ error: 'Too large' }, 413);
-  if (!(await stripeSignatureOk(env.STRIPE_WEBHOOK_SECRET, req.headers.get('stripe-signature'), payload))) return json({ error: 'Bad signature' }, 400);
+  if (!(await stripeSignatureOk(whsec, req.headers.get('stripe-signature'), payload))) return json({ error: 'Bad signature' }, 400);
   let ev; try { ev = JSON.parse(payload); } catch (e) { return json({ error: 'Bad JSON' }, 400); }
   if (!ev || !/^evt_/.test(String(ev.id || ''))) return json({ error: 'Bad event' }, 400);
   if (await env.EC_KV.get('sevt:' + ev.id)) return json({ received: true, duplicate: true });   // each Stripe event is handled once

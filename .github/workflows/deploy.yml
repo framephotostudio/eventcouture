@@ -58,9 +58,10 @@ jobs:
           echo "url=$url" >> $GITHUB_OUTPUT
           printf '%s' "${{ secrets.GEMINI_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put GEMINI_KEY
           printf '%s' "${{ secrets.GOOGLE_MAPS_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put GOOGLE_MAPS_KEY
-          if [ -n "${{ secrets.STRIPE_SECRET_KEY }}" ] && [ -n "${{ secrets.STRIPE_WEBHOOK_SECRET }}" ]; then
+          if [ -n "${{ secrets.STRIPE_SECRET_KEY }}" ]; then
             printf '%s' "${{ secrets.STRIPE_SECRET_KEY }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put STRIPE_SECRET_KEY
-            printf '%s' "${{ secrets.STRIPE_WEBHOOK_SECRET }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put STRIPE_WEBHOOK_SECRET
+            # the webhook is registered with Stripe automatically on the first checkout; a saved STRIPE_WEBHOOK_SECRET still wins
+            if [ -n "${{ secrets.STRIPE_WEBHOOK_SECRET }}" ]; then printf '%s' "${{ secrets.STRIPE_WEBHOOK_SECRET }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put STRIPE_WEBHOOK_SECRET; fi
             echo "STRIPE_ON=yes" >> $GITHUB_ENV
           else echo "Stripe secrets not saved yet: card checkout stays off."; fi
           if [ -n "${{ secrets.ADMIN_CODE }}" ]; then printf '%s' "${{ secrets.ADMIN_CODE }}" | tr -d '[:space:]' | npx -y wrangler@3 secret put ADMIN_CODE; else echo "No ADMIN_CODE secret yet: the email list download stays off."; fi
