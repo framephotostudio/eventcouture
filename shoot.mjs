@@ -1,8 +1,7 @@
 import { chromium } from 'playwright'; import fs from 'node:fs'; import path from 'node:path';
 fs.mkdirSync('showcase',{recursive:true}); const b=await chromium.launch();
-const pins=[
- ['pin-houston-wedding',{img:'pin_w.jpg',k:'Houston · 2026 costs',t:'What a wedding really costs in Houston',n:'$21K – $93K',s:'Typical for 120 guests, line by line. Plan yours free in minutes.'}],
- ['pin-quinceanera',{img:'pin_q.jpg',k:'Quinceañera planning',t:'Your quinceañera budget, made simple',n:'$14K – $72K',s:'See what each part costs and plan the whole day free.'}],
- ['pin-ai-planner',{img:'pin_h.jpg',k:'Free AI event planner',t:'Plan your whole event from one photo',n:'',s:'The look, budget, top-rated vendors, checklist and invitations, ready in minutes. Free.'}]];
-for (const [n,o] of pins){ const p=await b.newPage({viewport:{width:1000,height:1500},deviceScaleFactor:1}); await p.goto('file://'+path.resolve('posts/pin.html')+'?'+new URLSearchParams(o)); await p.evaluate(()=>document.fonts.ready); await p.waitForTimeout(1500); await p.screenshot({path:'showcase/'+n+'.png'}); await p.close(); }
+const pins=JSON.parse(fs.readFileSync('pins.json','utf8'));
+for (const o of pins){ const p=await b.newPage({viewport:{width:1000,height:1500},deviceScaleFactor:1});
+  await p.goto('file://'+path.resolve('posts/pin.html')+'?'+new URLSearchParams({img:'pimg/'+o.img+'.jpg',k:o.k,t:o.t,n:o.n,s:o.s}));
+  await p.evaluate(()=>document.fonts.ready); await p.waitForTimeout(800); await p.screenshot({path:'showcase/pin-'+o.id+'.jpg',type:'jpeg',quality:88}); await p.close(); }
 await b.close(); process.exit(0);
