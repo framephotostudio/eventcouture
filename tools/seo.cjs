@@ -109,7 +109,8 @@ ${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2><div class="co
     ld = [{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }];
   }
   const fullBody = true ? body.replace(`${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2>`, `${local}${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2>`) : body;
-  const title = `Event & Wedding Costs in ${cityShort} (${YEAR}): Local Planning Guide | Event Couture`;
+  const shortTaken = CITIES.filter(x => x.name.split(',')[0] === cityShort).length > 1;   /* two cities share a name (Birmingham, AL and UK): say which */
+  const title = `Event & Wedding Costs in ${shortTaken ? c.name : cityShort} (${YEAR}): Local Planning Guide | Event Couture`;
   let html = page({ rel: 2, title, h1: `Planning an event in ${c.name}: ${YEAR} costs and local tips`, desc: true ? `${YEAR} costs for weddings, quinceañeras, birthdays and showers in ${c.name}, cultural wedding budgets, local vendor rates, the best areas for venues and when to book.` : `Typical ${YEAR} costs for weddings, quinceañeras, birthdays, showers and more in ${c.name}, with local vendor rates and the best areas for venues.`, body: fullBody, canonical: `${BASE}plan/${c.slug}/`, ld });
   write(`plan/${c.slug}/index.html`, html);
   urls.push(`${BASE}plan/${c.slug}/`);
