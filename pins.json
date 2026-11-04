@@ -362,5 +362,70 @@
   "desc": "Enter your event, city and guest count and see a realistic budget, line by line, with three spending levels. Free from Event Couture.",
   "kw": "event budget calculator, party budget, wedding budget calculator, event cost, party planning",
   "board": "Party Planning Ideas"
+ },
+ {
+  "id": "compare-the-knot",
+  "img": "ivory-chandelier-ballroom",
+  "k": "Planning app showdown",
+  "t": "The Knot or Event Couture?",
+  "n": "",
+  "s": "See your wedding before you book. Compared side by side.",
+  "link": "https://eventcouture.app/compare/the-knot/",
+  "title": "The Knot vs Event Couture: which wedding planner is right for you?",
+  "desc": "Compare The Knot and Event Couture side by side: design ideas, real budgets for your city, vendor packages, cultural weddings and price. Event Couture turns one inspiration photo into up to six looks and a full plan, free.",
+  "kw": "The Knot alternative, The Knot vs, wedding planning app, wedding planner app, free wedding planner",
+  "board": "Wedding Planning & Budgets"
+ },
+ {
+  "id": "compare-weddingwire",
+  "img": "burgundy-roses-courtyard",
+  "k": "Planning app showdown",
+  "t": "WeddingWire or Event Couture?",
+  "n": "",
+  "s": "See your wedding before you book. Compared side by side.",
+  "link": "https://eventcouture.app/compare/weddingwire/",
+  "title": "WeddingWire vs Event Couture: which wedding planner is right for you?",
+  "desc": "Compare WeddingWire and Event Couture side by side: design ideas, real budgets for your city, vendor packages, cultural weddings and price. Event Couture turns one inspiration photo into up to six looks and a full plan, free.",
+  "kw": "WeddingWire alternative, WeddingWire vs, wedding planning app, wedding vendors, free wedding planner",
+  "board": "Wedding Planning & Budgets"
+ },
+ {
+  "id": "compare-zola",
+  "img": "blush-wisteria-ballroom",
+  "k": "Planning app showdown",
+  "t": "Zola or Event Couture?",
+  "n": "",
+  "s": "See your wedding before you book. Compared side by side.",
+  "link": "https://eventcouture.app/compare/zola/",
+  "title": "Zola vs Event Couture: which wedding planner is right for you?",
+  "desc": "Compare Zola and Event Couture side by side: design ideas, real budgets for your city, vendor packages, cultural weddings and price. Event Couture turns one inspiration photo into up to six looks and a full plan, free.",
+  "kw": "Zola alternative, Zola vs, wedding planning app, wedding website, free wedding planner",
+  "board": "Wedding Planning & Budgets"
+ },
+ {
+  "id": "compare-joy",
+  "img": "candlelit-sweetheart-garden",
+  "k": "Planning app showdown",
+  "t": "Joy or Event Couture?",
+  "n": "",
+  "s": "See your wedding before you book. Compared side by side.",
+  "link": "https://eventcouture.app/compare/joy/",
+  "title": "Joy vs Event Couture: which wedding planner is right for you?",
+  "desc": "Compare Joy and Event Couture side by side: design ideas, real budgets for your city, vendor packages, cultural weddings and price. Event Couture turns one inspiration photo into up to six looks and a full plan, free.",
+  "kw": "Joy wedding app alternative, wedding website, wedding planning app, RSVP app, free wedding planner",
+  "board": "Wedding Planning & Budgets"
+ },
+ {
+  "id": "compare-partiful",
+  "img": "disco-velvet-lounge",
+  "k": "Planning app showdown",
+  "t": "Partiful or Event Couture?",
+  "n": "",
+  "s": "Don't just invite. Plan the whole party. Compared side by side.",
+  "link": "https://eventcouture.app/compare/partiful/",
+  "title": "Partiful vs Event Couture: which party planner is right for you?",
+  "desc": "Compare Partiful and Event Couture side by side. Partiful sends the invite; Event Couture also plans the party: the look, a budget for your city, vendors, a checklist and invitations with RSVPs, free.",
+  "kw": "Partiful alternative, party invitation app, party planning app, birthday party planner, free party planner",
+  "board": "Party Planning Ideas"
  }
 ]
