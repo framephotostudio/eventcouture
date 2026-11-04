@@ -1032,3 +1032,9 @@ footer.site nav.foot-guides { gap: 6px 14px; font-size: .8rem; margin-top: 4px; 
 .vreply .vr-d { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
 .vreply .vr-d dt { color: var(--muted); font-size: .9rem; } .vreply .vr-d dd { margin: 0; font-weight: 500; }
 .save-line { margin: -4px 0 0; }
+
+/* Hero: one-tap occasion chips and a sample plan link, so visitors can start in one tap */
+.hero-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hero-chips .chip { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 15px; text-decoration: none; cursor: pointer; font-family: inherit; }
+.hero-chips .chip:hover, .hero-chips .chip:focus-visible { border-color: var(--champagne); }
+.hero-sample { margin-top: -4px; }

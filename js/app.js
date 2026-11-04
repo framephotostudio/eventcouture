@@ -510,7 +510,11 @@
       (CFG.app ? '' : '<div class="app-soon-bar"><img src="img/brand/ec-mark-128.png" alt="" width="30" height="30"><span><b>The Event Couture app is coming soon</b> to iPhone and Android. Plan, book and invite from your phone.' + (isInstalled() ? '' : '<button type="button" class="link small" data-install>Add Event Couture to your home screen now</button>') + '</span></div>') +
       '<section class="hero"><div class="hero-copy"><p class="hero-tag">Your inspiration. A beautifully planned event.</p><h1>Plan your whole event in minutes</h1>' +
       '<p class="lead">Share a photo or a few words. AI designs the look, and you get a budget estimate for your city, top-rated vendors, a checklist and invitations. Free to plan.</p>' +
-      '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div></div>' +
+      '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div>' +
+      '<div class="hero-chips" aria-label="Start with your occasion"><span class="small muted">Or start with:</span>' +
+      [['wedding', 'Wedding'], ['birthday', 'Birthday'], ['baby-shower', 'Baby shower'], ['quince', 'Quincea\u00f1era']].map(function (c) { var q = QUICK.find(function (x) { return x[0] === c[0]; }); return q ? '<a class="chip" href="#/start/' + q[0] + '/-/' + q[2] + '" data-hchip="' + q[0] + '">' + c[1] + '</a>' : ''; }).join('') +
+      '<button type="button" class="chip" data-scroll="cultural">Cultural wedding</button></div>' +
+      '<a class="link small hero-sample" href="#/sample/4">See a finished sample plan \u2192</a></div>' +
       '<figure class="hero-photo"><div class="scene">' +
       '<img src="' + srcOf(HERO_IMG) + '"' + (window.EC_EMBED ? '' : ' srcset="img/hero-480.webp 480w, img/hero-720.webp 720w, img/hero-960.webp 960w" sizes="(min-width: 900px) 46vw, calc(100vw - 40px)"') + ' width="960" height="1200" fetchpriority="high" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
       tags.map(function (t) { return '<button class="hot' + (t[2] > 65 ? ' r' : t[2] < 30 ? ' l' : '') + '" style="left:' + t[2] + '%;top:' + t[3] + '%" aria-expanded="false" aria-label="' + esc(t[0]) + ', ' + money(t[1]) + '"><span class="dot" aria-hidden="true"></span><span class="lbl" aria-hidden="true"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span></button>'; }).join('') +
@@ -531,6 +535,7 @@
       '<section class="stack section" style="text-align:center;justify-items:center"><h2>Ready when you are</h2><p class="muted">Start with a photo, a few words or just your colors.</p><div><a class="btn primary" href="#/new">Plan my event</a></div></section>'
     );
     $$('[data-scroll]').forEach(function (b) { b.addEventListener('click', function () { var t = document.getElementById(b.dataset.scroll); if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }); });
+    $$('[data-hchip]').forEach(function (a) { a.addEventListener('click', function () { T('quick_start', { occasion: a.dataset.hchip, from: 'hero' }); }); });
     var hots = $$('.hot');
     hots.forEach(function (h) { h.addEventListener('click', function () { var open = h.getAttribute('aria-expanded') === 'true'; hots.forEach(function (o) { o.setAttribute('aria-expanded', 'false'); }); h.setAttribute('aria-expanded', open ? 'false' : 'true'); }); });
     $('#showBudget').addEventListener('click', function () { var l = $('#demoLines'), open = l.hidden; l.hidden = !open; this.setAttribute('aria-expanded', open); this.textContent = open ? 'Hide example budget' : 'See example budget'; });
