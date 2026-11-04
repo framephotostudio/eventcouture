@@ -63,7 +63,7 @@
 
     terms:
       '<h2>Terms of Use</h2><p class="muted small">Event Couture by ' + NAME + ' · Last updated ' + UPDATED + '</p>' +
-      '<p>These terms are an agreement between you and ' + NAME + ' (“we”, “us”, “our”), which includes its owner, operator, employees, contractors and agents, for using Event Couture, the website and apps (the “Service”). By using the Service you agree to them. If you don’t agree, please don’t use the Service.</p>' +
+      '<p>These terms are an agreement between you and ' + NAME + ', the business name under which Event Couture’s owner runs it (“we”, “us”, “our”, which includes its owner, employees, contractors and agents), for using Event Couture, the website and apps (the “Service”). By using the Service you agree to them. If you don’t agree, please don’t use the Service.</p>' +
 
       '<h3>1. Who can use it</h3><p>You must be at least 18, or the age of majority where you live, to plan events or buy anything on Event Couture. Guests of any age may view an invitation a host shares with them.</p>' +
 
