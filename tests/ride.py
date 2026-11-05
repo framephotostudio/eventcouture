@@ -36,7 +36,7 @@ with sync_playwright() as p:
         pg.goto(U+lb+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=40000)
         if pg.query_selector('.pkg-cmp [data-pkaddnow=transport]'): pg.click('.pkg-cmp [data-pkaddnow=transport]'); pg.wait_for_timeout(2500)
         tr=pg.evaluate("(()=>{const r=document.querySelector('tr[data-pkrow=transport]');return r?r.innerText:''})()")
-        check(n, 'Fady Youssef' not in tr and 'Recommended' not in tr, 'Los Angeles: no Recommended transportation pick: '+tr[:80].replace('\n',' '))
+        check(n, 'Fady Youssef' not in tr and 'Founder\u2019s Pick' not in tr, 'Los Angeles: no Recommended transportation pick: '+tr[:80].replace('\n',' '))
         base=plan(pg, 'Unicorn party for my daughter', 'kids-birthday')
         check(n, pg.query_selector('[data-pkaddnow]') is not None, 'kids birthday: the limo option is there too')
         check(n, not e, 'no page errors '+str(e[:2])); check(n, pg.evaluate('document.documentElement.scrollWidth')<=w, 'no sideways scroll')

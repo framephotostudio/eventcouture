@@ -26,7 +26,7 @@ with sync_playwright() as p:
         check(n, 'Chris Hawat' in cmp and 'Price on request' in cmp and '$' not in cmp, 'compare: singer row has no estimate: '+cmp.replace('\n',' ')[:90])
         pg.goto(U+base+'/budget'); pg.wait_for_selector('[data-pkuse="0"]'); pg.click('[data-pkuse="0"]'); pg.wait_for_selector('#pkgSum')
         rows=pg.evaluate("[...document.querySelectorAll('.pkg-sum-r')].map(r=>r.innerText.replace(/\\s+/g,' '))")
-        perf=[r for r in rows if 'Recommended' in r and any(r.startswith(c) for c in ['Wedding singer','DJ','Zaffe'])]
+        perf=[r for r in rows if 'Founder\u2019s Pick' in r and any(r.startswith(c) for c in ['Wedding singer','DJ','Zaffe'])]
         check(n, len(perf)>=3 and all('Price on request' in r and '$' not in r for r in perf), 'singer, DJ and zaffe say Price on request: '+str(perf))
         other=[r for r in rows if r.startswith('Catering')]; check(n, other and '$' in other[0], 'other lines keep their estimate: '+str(other[:1]))
         check(n, not e, 'no page errors '+str(e[:2]))
