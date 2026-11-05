@@ -2051,7 +2051,7 @@
         '<div class="pk-swap" data-pkswapbox="' + next.cat + '"></div></div>' +
       summary + (more ? '</div>' + more + '<!--more--><div class="panel stack pkg pkg-list">' : '') + all + back + '</div>';
   }
-  /* ---------- Always Luxe Concierge Booking: Demah books the package for a flat fee. Clients pay vendors directly. ---------- */
+  /* ---------- Always Luxe Concierge Booking: Event Couture books the package for a flat fee. Clients pay vendors directly. ---------- */
   var CQ_TIERS = [
     { id: 'essentials', name: 'Essentials', max: 5, price: 349, founding: 249, what: 'Your venue and up to 4 vendors', fit: 'Birthdays, showers and small parties' },
     { id: 'signature', name: 'Signature', max: 10, price: 899, founding: 599, what: 'Up to 10 vendors', fit: 'Engagements, quincea\u00f1eras, galas and big parties' },
@@ -2147,7 +2147,7 @@
   function cqThanksPage(ev) {
     frame('<div class="wizard stack-lg" style="text-align:center;justify-items:center"><img src="img/brand/ec-mark-128.png" alt="" width="64" height="64"><h2>You\u2019re booked with Event Couture</h2><p class="muted">Thank you' + (ev ? ', ' + esc(String(ev.concierge.name || '').split(' ')[0]) : '') + '. Event Couture will call you within 1 business day to confirm your details and start booking your vendors. A receipt is on its way to your email.</p>' + (ev ? '<a class="btn primary" href="#/e/' + esc(ev.id) + '/budget">Back to my plan</a>' : '<a class="btn primary" href="#/events">My events</a>') + '</div>');
   }
-  /* Demah's view of one request: the link (with its private code) comes from the Stripe payment. */
+  /* The owner's view of one request: the link (with its private code) comes from the Stripe payment. */
   function cqRequest(ref) {
     frame('<div class="wizard stack"><h2>Booking request</h2><p class="muted" id="cqLoad">Loading\u2026</p><div id="cqBox"></div></div>');
     if (!CFG.apiUrl || !/^[a-z0-9]{16,40}$/.test(ref)) { $('#cqLoad').textContent = 'This request isn\u2019t available.'; return; }
