@@ -23,14 +23,16 @@ jobs:
           if [ -z "$n" ]; then echo "Could not read reviews."; exit 0; fi
           vbody=$(curl -s -m 30 -H "x-admin-code: $CODE" "$API/api/vendors/pending") || vbody='{}'
           v=$(printf '%s' "$vbody" | jq '[.vendors[]?] | length' 2>/dev/null || echo 0); n=$((n + ${v:-0}))   # new vendor listings wait for approval too
+          rbody=$(curl -s -m 30 -H "x-admin-code: $CODE" "$API/api/reports") || rbody='{}'
+          rp=$(printf '%s' "$rbody" | jq '[.reports[]?] | length' 2>/dev/null || echo 0); n=$((n + ${rp:-0}))   # reports from hosts: act within 24 hours
           echo "Waiting: $n"
           gh label create review-alert --color B69A68 --description "A review is waiting for approval" --force >/dev/null
           open=$(gh issue list --label review-alert --state open --json number,title --jq '.[0] // empty')
           num=$(printf '%s' "$open" | jq -r '.number // empty'); was=$(printf '%s' "$open" | jq -r '.title // ""' | grep -oE '^[0-9]+' || echo 0)
-          word() { [ "$1" = 1 ] && echo "review or listing is" || echo "reviews or listings are"; }
+          word() { [ "$1" = 1 ] && echo "review, listing or report is" || echo "reviews, listings or reports are"; }
           msg="@framephotostudio $n new $(word $n) waiting for your approval on Event Couture.
 
-          Open https://eventcouture.app/#/admin/reviews and type your admin code to read and approve reviews and new vendor listings. Approve every honest review, including low ratings.
+          Open https://eventcouture.app/#/admin/reviews and type your admin code to approve reviews and new vendor listings and to handle reports. Act on reports within 24 hours. Approve every honest review, including low ratings.
 
           This message closes by itself once nothing is waiting."
           msg=$(printf '%s' "$msg" | sed 's/^          //')

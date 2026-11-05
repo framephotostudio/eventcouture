@@ -36,7 +36,7 @@ export default {
       if (inv) return await invite(req, env, inv[1], inv[2] || '', json);
       const prp = url.pathname.match(/^\/api\/prop\/([a-f0-9]{16,32})(?:\/(publish|delete))?$/);
       if (prp) return await proposal(req, env, prp[1], prp[2] || '', json);
-      const ask = url.pathname.match(/^\/api\/ask\/([a-f0-9]{20})(?:\/(reply|delete))?$/);
+      const ask = url.pathname.match(/^\/api\/ask\/([a-f0-9]{20})(?:\/(reply|delete|report))?$/);
       if (ask) return await askVendor(req, env, ask[1], ask[2] || '', json);
       if (url.pathname === '/api/ask/new') return await askVendor(req, env, '', 'new', json);
       const mv = url.pathname.match(/^\/api\/move\/(new|[a-f0-9]{24})$/);
@@ -51,6 +51,7 @@ export default {
       }
       if (req.method === 'GET' && url.pathname === '/api/optin/export') return await optinExport(req, env, cors);
       if (req.method === 'GET' && url.pathname === '/api/reviews') { if (!env.EC_KV) return json({ reviews: [] }); return json({ reviews: (await env.EC_KV.get('revs:approved', 'json')) || [] }); }
+      if (req.method === 'GET' && url.pathname === '/api/reports') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return json({ reports: await kvGet(env, 'reports', []) }); }
       if (req.method === 'GET' && url.pathname === '/api/vendors/pending') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await vendorsPending(env, json); }
       if (req.method === 'GET' && url.pathname === '/api/reviews/all') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await reviewsAll(env, json); }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
@@ -65,9 +66,10 @@ export default {
       if (human && !fromApp && env.TURNSTILE_SECRET && !(await turnstileOk(env, body.ts, req.headers.get('cf-connecting-ip')))) return json({ error: 'Please confirm you\u2019re not a robot and try again.', code: 'turnstile' }, 403);
       delete body.ts;
       // A basic word filter on text other people will read (vendor listings and replies, guest RSVPs and votes, reviews). App Store 1.2.
-      if (/^\/api\/(vendor\/save|req\/reply|review|inv\/[^/]+\/(rsvp|vote)|prop\/[^/]+\/(reply|vote))$/.test(url.pathname) && rude(JSON.stringify(body))) return json({ error: 'Please keep it friendly: that message has words we don\u2019t allow.', code: 'words' }, 400);
+      if (/^\/api\/(vendor\/save|req\/reply|req\/new|review|inv\/[^/]+\/(rsvp|vote)|prop\/[^/]+\/(reply|vote))$/.test(url.pathname) && rude(JSON.stringify(body))) return json({ error: 'Please keep it friendly: that message has words we don\u2019t allow.', code: 'words' }, 400);
       if (url.pathname === '/api/optin' || url.pathname === '/api/optin/remove') { if (!env.EC_KV) return json({ error: 'Email sign-up is not connected yet.' }, 503); return await optin(env, url.pathname.endsWith('remove'), body, json); }
       if (url.pathname === '/api/review') { if (!env.EC_KV) return json({ error: 'Reviews are not connected yet.' }, 503); return await reviewNew(env, body, json); }
+      if (url.pathname === '/api/reports/clear') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); await env.EC_KV.put('reports', '[]'); return json({ ok: true }); }
       if (url.pathname === '/api/vendors/set') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await vendorSet(env, body, json); }
       if (url.pathname === '/api/reviews/set') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await reviewSet(env, body, json); }
       if (url.pathname === '/api/checkout') { if (!env.EC_KV || !env.STRIPE_SECRET_KEY) return json({ error: 'Card payments are not switched on yet.' }, 503); return await checkout(env, body, url, json); }
@@ -471,6 +473,7 @@ async function market(env, action, body, ip, json) {
     const who = (await sha('r' + ip)).slice(0, 16); rec.reports = rec.reports || [];
     if (!rec.reports.includes(who)) rec.reports.push(who);
     if (rec.reports.length >= REPORTS_HIDE) rec.hidden = true;
+    await addReport(env, { kind: 'vendor', id, note: String(body.why || '').slice(0, 40), text: rec.l ? rec.l.name : '' });
     await env.EC_KV.put('vend:' + id, JSON.stringify(rec));
     return json({ ok: true });
   }
@@ -588,6 +591,8 @@ async function reviewNew(env, body, json) {
   await env.EC_KV.put('rev:' + id, JSON.stringify(rec));
   return json({ ok: true });
 }
+// Reports from hosts: kept for the owner, who is emailed within the hour and acts within 24 hours.
+async function addReport(env, r) { if (!env.EC_KV) return; const l = await kvGet(env, 'reports', []); l.unshift({ ...r, at: new Date().toISOString() }); await env.EC_KV.put('reports', JSON.stringify(l.slice(0, 200))); }
 async function vendorsPending(env, json) {
   if (!env.EC_KV) return json({ vendors: [] });
   const ids = await kvGet(env, 'vpend', []), out = [];
@@ -686,7 +691,9 @@ async function askVendor(req, env, id, action, json) {
   if (!(await rateOk(env, ip))) return json({ error: 'Please wait a few minutes and try again.' }, 429);
   const b = await req.json().catch(() => ({}));
   if (action === 'delete') { if (!b.key || await sha(b.key) !== rec.kh) return json({ error: 'Not allowed' }, 403); await env.EC_KV.delete(k); return json({ ok: true }); }   // the customer removes her request
+  if (action === 'report') { if (!b.key || await sha(b.key) !== rec.kh) return json({ error: 'Not allowed' }, 403); await addReport(env, { kind: 'vendor message', id, note: String(b.why || '').slice(0, 40), text: rec.reply ? String(rec.reply.note || '').slice(0, 300) : '' }); return json({ ok: true }); }   // the host reports a reply (App Store 1.2)
   if (action !== 'reply') return json({ error: 'Not found' }, 404);
+  if (rude(JSON.stringify(b))) return json({ error: 'Please keep it friendly: that message has words we don\u2019t allow.', code: 'words' }, 400);
   if (!askOk(ip, 'r', 20)) return json({ error: 'Please wait a few minutes and try again.' }, 429);
   // The first reply gets a private edit token; only that browser can change the answer, a few times at most.
   if (rec.reply && (!b.vt || await sha(b.vt) !== rec.reply.vth)) return json({ error: 'This request already has a reply.', code: 'replied' }, 409);

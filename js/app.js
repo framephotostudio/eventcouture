@@ -431,6 +431,14 @@
   document.addEventListener('click', function (e) {
     var rb = e.target.closest && e.target.closest('[data-vrep]'), bb = e.target.closest && e.target.closest('[data-vblock]');
     if (rb) { apiMarket('vendor/report', { id: rb.dataset.vrep, why: 'reply' }).catch(function () {}); rb.textContent = 'Reported'; rb.disabled = true; }
+    var ar = e.target.closest && e.target.closest('[data-arep],[data-ablock]');
+    if (ar) {   /* a reply to "Message this vendor": report it to Event Couture, or block it on this device (and report it) */
+      var m = (location.hash || '').match(/^#\/e\/([^/]+)/), aev = m && getEvent(m[1]), k = ar.dataset.arep || ar.dataset.ablock, a = aev && (aev.asks || {})[k];
+      if (!a) return;
+      if (CFG.apiUrl) fetch(CFG.apiUrl + '/api/ask/' + a.id + '/report', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: a.key, why: ar.dataset.ablock ? 'blocked' : 'reported' }) }).catch(function () {});
+      if (ar.dataset.ablock) { a.blocked = true; saveEvent(aev); var st = ar.closest('.ask-st'); if (st) st.outerHTML = '<span class="small muted ask-st">Reply hidden</span>'; }
+      else { ar.textContent = 'Reported'; ar.disabled = true; }
+    }
     if (bb) { var l = store.get('blockedVendors', []); if (l.indexOf(bb.dataset.vblock) < 0) l.push(bb.dataset.vblock); store.set('blockedVendors', l); apiMarket('vendor/report', { id: bb.dataset.vblock, why: 'blocked' }).catch(function () {}); var it = bb.closest('.it'); if (it) it.remove(); }
   });
   window.addEventListener('hashchange', function () { if (NEWER) { location.reload(); return; } checkNewer(); });
@@ -811,7 +819,7 @@
         '<div class="panel inspo-chosen">' + thumb({ src: INSPO_IMG + 'sm/' + ip.id + '.jpg', alt: ip.alt, ai: true }) + '<div class="stack"><b>' + esc(E.inspoName(ip, draft.type)) + '</b><span class="muted small">' + esc(ip.mood) + '</span><div class="row"><a class="btn ghost small" id="swapInspo" href="#/inspiration/' + esc(draft.type || 'all') + '/' + draft.id + '">Choose a different photo</a><button type="button" class="link small" id="noInspo">Remove</button></div></div></div>'
         : '<div class="stack"><h2>Tell us about your ' + esc(E.culture(draft) ? E.typeName(draft) : 'event') + '</h2><p class="muted">A few words or a photo is all it takes. You can add more later.</p></div>') +
         '<div class="field"><span>' + (ip ? 'Anything you\u2019d change or add? (optional)' : 'What are you celebrating?') + '</span><textarea class="input" id="text" placeholder="' + (ip ? 'Example: same look in navy and silver, 40 guests, at home, under $5,000' : 'Example: pink and gold girls’ brunch for 10, chic and girly, under $2,000') + '">' + esc(draft.inspiration.text) + '</textarea>' +
-        '<div class="row"><button type="button" class="btn ghost small" id="speak" aria-pressed="false">' + MIC + '<span>Speak it</span></button><span class="muted small" id="speakHint">Talk about your colors, vibe, guests and budget.</span></div></div>' +
+        (CFG.app ? '' : '<div class="row"><button type="button" class="btn ghost small" id="speak" aria-pressed="false">' + MIC + '<span>Speak it</span></button><span class="muted small" id="speakHint">Talk about your colors, vibe, guests and budget.</span></div>') + '</div>' +
         '<label class="drop" id="drop"><input type="file" id="files" accept="image/*" multiple class="sr"><b>Add inspiration photos</b><span class="muted small">Tap to choose, or drop photos here</span></label>' +
         '<div class="photos" id="photos"></div>' +
         (ip ? '' : '<div class="panel row inspo-nudge"><span class="grow"><b>No inspiration yet?</b> <span class="muted small">Browse AI-generated photos by occasion and start from one you love.</span></span><a class="btn small" id="browseInspo" href="#/inspiration/' + esc(draft.type || 'all') + '/' + draft.id + '">Browse inspiration</a></div>') +
@@ -853,7 +861,7 @@
         });
       });
       $$('[data-vibe]').forEach(function (b) { b.addEventListener('click', function () { var on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); var v = b.dataset.vibe; draft.inspiration.vibes = (draft.inspiration.vibes || []).filter(function (x) { return x !== v; }); if (on) draft.inspiration.vibes.push(v); persist(); }); });
-      setupSpeak($('#speak'), $('#text'), $('#speakHint'));
+      if ($('#speak')) setupSpeak($('#speak'), $('#text'), $('#speakHint'));   /* the app uses the keyboard's own microphone */
       var t1; ['#text', '#links'].forEach(function (sel) { $(sel).addEventListener('input', function () { clearTimeout(t1); t1 = setTimeout(function () { if (!$('#text') || !$('#links')) return; draft.inspiration.text = $('#text').value.trim(); draft.inspiration.links = $('#links').value.split(/\s+/).filter(function (x) { return /^https?:\/\//.test(x); }); if (draft.inspiration.text || draft.inspiration.links.length || drafts()[draft.id]) persist(); }, 300); }); });
       window.addEventListener('pagehide', function () { if (!$('#text')) return; draft.inspiration.text = $('#text').value.trim(); if (draft.inspiration.text || drafts()[draft.id]) persist(); }, { once: true });
       ['#browseInspo', '#swapInspo'].forEach(function (sel) { if ($(sel)) $(sel).addEventListener('click', function () { draft.inspiration.text = $('#text').value.trim(); draft.inspiration.links = $('#links').value.split(/\s+/).filter(function (x) { return /^https?:\/\//.test(x); }); persist(); }); });
@@ -1006,7 +1014,7 @@
     ];
     frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>Does this look right?</h2><p class="muted">Your looks, prices and timeline are built from these details. Fix anything before we start.</p></div>' +
       '<div class="panel confirm">' + rowsHtml.map(function (r) { return '<div class="crow"><span class="muted small">' + r[0] + '</span><span>' + r[1] + '</span></div>'; }).join('') + '</div>' +
-      '<p class="muted small">' + (CFG.app ? 'Planning and keeping your plan are free in the app.' : CFG.launchFree ? 'Planning and keeping your plan are free during our launch.' : 'Planning is free. You only pay if you want to keep your plan and share it with guests.') + '</p>' +
+      '<p class="muted small">' + (CFG.app ? 'Planning and keeping your plan are free.' : CFG.launchFree ? 'Planning and keeping your plan are free during our launch.' : 'Planning is free. You only pay if you want to keep your plan and share it with guests.') + '</p>' +
       '<div class="wiz-act"><button class="btn gold" id="go">Create my looks</button><a class="btn ghost" href="' + W + '2/' + draft.id + '">Edit details</a>' + laterBtn() + '</div></div>');
     $('#later').addEventListener('click', function () { persist(); location.hash = '#/events'; setTimeout(function () { toast('Saved. Pick it up anytime from My events.'); }, 80); });
     if (AI.live && !(CFG.app && store.get('aiConsent', '') !== 'yes')) AI.concepts(draft, []);   /* start the AI now; it's usually ready by the time the host taps Create */
@@ -1087,7 +1095,7 @@
   function keepSheet(ev, why, onDone) {
     var pass = E.passFor(ev.guests), FREE = CFG.app || CFG.launchFree;
     /* In the iPhone and Android apps, keeping a plan is free until in-app purchase is connected, so no prices are shown there. */
-    sheet('<h3>' + esc(why || 'Keep your plan') + '</h3><p class="muted">' + (FREE ? 'Keeping ' + esc(ev.name) + ' is free ' + (CFG.app ? 'in the app' : 'during our launch') + '. Guests never pay to view, RSVP or vote.' : 'One payment for ' + esc(ev.name) + ', ' + esc(pass.label.toLowerCase()) + '. No subscription. Guests never pay to view, RSVP or vote.') + '</p>' +
+    sheet('<h3>' + esc(why || 'Keep your plan') + '</h3><p class="muted">' + (FREE ? 'Keeping ' + esc(ev.name) + ' is free' + (CFG.app ? '' : ' during our launch') + '. Guests never pay to view, RSVP or vote.' : 'One payment for ' + esc(ev.name) + ', ' + esc(pass.label.toLowerCase()) + '. No subscription. Guests never pay to view, RSVP or vote.') + '</p>' +
       (FREE ? '' : '<div class="price-big num">$' + pass.price.toFixed(2) + '</div>') +
       '<ul class="incl"><li><span>Send your invitation, collect RSVPs and save your finished plan as a PDF</span></li><li><span>Saved with every edit until <b>' + esc(accessUntil(ev)) + '</b></span></li><li><span>Guest list, RSVPs' + (ev.setting === 'restaurant' ? '' : ', seating') + ', voting' + (hasRegistry(ev) ? ' and registry' : '') + (canSplit(ev) ? ' and cost splitting' : '') + '</span></li><li><span>Checklist with due dates and your day-of schedule</span></li></ul>' +
       (SHARING ? '<p class="muted small">Your plan is saved on this ' + (CFG.app ? 'phone' : 'device') + '. Guests RSVP from your invitation link on their own phones.</p>' : CFG.app ? '<p class="muted small">Your plan is saved on this phone. Send your invitation from the Invitation page.</p>' : CFG.preview ? '<p class="muted small">Right now your plan is saved on this device. Sending your invitation to guests on their own phones turns on when accounts launch.</p>' : '') +
@@ -1130,6 +1138,7 @@
   function tierName(id) { if (id === 'F') return 'Your budget plan'; var t = D.TIERS.find(function (x) { return x.id === id; }); return t ? t.name : id; }
   function groupOf(tab) { if (tab === 'places' || tab === 'vendors') return 1; if (tab === 'extras') return 0; for (var i = 0; i < TAB_GROUPS.length; i++) if (TAB_GROUPS[i][1].some(function (t) { return t[0] === tab; })) return i; return 0; }
   function planView(ev, tab) {
+    if (CFG.app && !ev.sample && !ev.paid) { var fp = E.passFor(ev.guests || 1); ev.paid = { price: 0, max: fp.max, at: new Date().toISOString(), app: true }; saveEvent(ev); }   /* in the app every plan is kept automatically: nothing to unlock */
     E.useCountry(ev.city); SHOP_COUNTRY = E.countryOf(ev.city);
     if (!ev.concept) { location.hash = '#/e/' + ev.id + '/concepts'; return; }
     var base = ev.sample ? '#/sample/' + ev.id.split('-')[1] : '#/e/' + ev.id;
@@ -1300,7 +1309,7 @@
   function planSettings(ev) {
     if (ev.sample || !(CFG.app || CFG.launchFree)) return '';
     return '<details class="plan-settings"><summary>Plan settings</summary><div class="stack" style="padding-top:10px">' +
-      (isKept(ev) ? '<p class="small muted">Your plan is kept. Every edit is saved' + (ev.paid && ev.paid.at ? ', available until ' + esc(accessUntil(ev, ev.paid.at)) : '') + '.</p>' : '<div class="row" style="justify-content:space-between"><span class="small">Keep your plan to save every edit and share it with guests. Free' + (CFG.app ? ' in the app' : ' during our launch') + '.</span><button class="btn small" data-keep>Keep my plan</button></div>') +
+      (isKept(ev) ? '<p class="small muted">Your plan is kept. Every edit is saved' + (ev.paid && ev.paid.at && !CFG.app ? ', available until ' + esc(accessUntil(ev, ev.paid.at)) : '') + '.</p>' : '<div class="row" style="justify-content:space-between"><span class="small">Keep your plan to save every edit and share it with guests. Free' + (CFG.app ? ' in the app' : ' during our launch') + '.</span><button class="btn small" data-keep>Keep my plan</button></div>') +
       '<div class="row" style="justify-content:space-between"><span class="small">Your plan saves on this device. Keep working on your phone or another computer, or keep a backup file.</span><span class="acts"><button class="btn small ghost" data-move>Continue on another device</button><button class="btn small ghost" data-backup>Download a backup</button></span></div>' +
       '<div class="row" style="justify-content:space-between"><span class="small muted">Delete removes the plan, guest list and photos from this device.</span><button class="btn small ghost" id="del" style="color:var(--bad)">Delete event</button></div></div></details>';
   }
@@ -1885,9 +1894,9 @@
   /* Under a business in her package: what they answered (or that she asked). Answers are checked when the plan opens. */
   function askLine(ev, cat, biz) {
     var a = biz && askOf(ev, cat, biz); if (!a) return '';
-    var r = a.reply; if (!r) return a.sent ? '<span class="small muted ask-st">Messaged · waiting for a reply</span>' : '';
+    var r = a.reply; if (r && a.blocked) return '<span class="small muted ask-st">Reply hidden</span>'; if (!r) return a.sent ? '<span class="small muted ask-st">Messaged · waiting for a reply</span>' : '';
     var bits = [r.avail === 'yes' ? 'Available' : r.avail === 'no' ? 'Not available' : r.avail === 'check' ? 'Checking the date' : '', r.priceMode === 'price' && r.price ? 'from ' + money(r.price) + (r.priceNote ? ' ' + esc(r.priceNote) : '') : r.priceMode === 'direct' ? 'prefers to share pricing directly' : '', r.phone ? '<a class="link" href="tel:' + esc(r.phone.replace(/[^\d+]/g, '')) + '">' + esc(r.phone) + '</a>' : ''].filter(Boolean);
-    return '<span class="small ask-st ask-ok"><b>Replied:</b> ' + bits.join(' · ') + (r.note ? ' <span class="muted">“' + esc(r.note.slice(0, 140)) + (r.note.length > 140 ? '…' : '') + '”</span>' : '') + '</span>';
+    return '<span class="small ask-st ask-ok"><b>Replied:</b> ' + bits.join(' · ') + (r.note ? ' <span class="muted">“' + esc(r.note.slice(0, 140)) + (r.note.length > 140 ? '…' : '') + '”</span>' : '') + ' <button class="link quiet small" data-arep="' + esc(cat + '|' + biz.id) + '">Report</button> \u00b7 <button class="link quiet small" data-ablock="' + esc(cat + '|' + biz.id) + '">Block</button></span>';
   }
   var ASK_CHECKED = {};
   function checkAsks(ev, after) {
@@ -2269,7 +2278,11 @@
       var start = (ev.packages || []).length, want = start ? start + 1 : 3;   /* the first tap builds all 3 packages at once, side by side */
       btn.textContent = want - start > 1 ? 'Building your 3 packages\u2026' : 'Building package ' + want + '\u2026';
       var here = function () { return location.hash.indexOf('#/e/' + ev.id + '/budget') === 0; };   /* she may have gone back or to another page while it builds */
-      var one = function () { var i = (ev.packages || []).length + 1; return buildPackage(ev, function (d, n) { msg = $('#pkgMsg') || msg; if (msg) msg.textContent = (want - start > 1 ? 'Building package ' + i + ' of ' + want + ': ' : 'Finding top-rated picks\u2026 ') + d + ' of ' + n; }).then(function (k) { save(); return (ev.packages || []).length < want ? one() : k; }); };
+      var one = function () { var i = (ev.packages || []).length + 1; return buildPackage(ev, function (d, n) { msg = $('#pkgMsg') || msg; if (msg) msg.textContent = (want - start > 1 ? 'Building package ' + i + ' of ' + want + ': ' : 'Finding top-rated picks\u2026 ') + d + ' of ' + n; }).then(function (k) {
+        /* Live search busy (few or no results): a package that mostly repeats an earlier one is dropped, so she never sees copies */
+        var pk = ev.packages[k], keys = Object.keys(pk.items), same = k > 0 && ev.packages.slice(0, k).some(function (q) { var n = keys.filter(function (c) { return q.items[c] === pk.items[c]; }).length; return !keys.length || n >= keys.length * 0.7; });   /* mostly the same picks: not worth a second package */
+        if (same) { ev.packages.splice(k, 1); ev.pkgView = 0; save(); return k - 1; }
+        save(); return (ev.packages || []).length < want ? one() : k; }); };
       one().then(function (k) {
         setTimeout(function () { PKG_BUSY = false; }, 450); var m = ev.packages[k].miss || []; if (!here()) return; rerender();   /* a double tap's second tap doesn't start another package; built while she was elsewhere: saved, shown when she comes back */
         toast((want - start > 1 ? 'Your 3 packages are ready' : 'Package ' + (k + 1) + ' is ready') + (m.length ? (LIVE_RESTING ? '. Live search is resting until next month: tap Search on Google Maps on each line.' : '. ' + plural(m.length, 'item') + ' had no top-rated match; tap See options there.') : ''));
@@ -3295,6 +3308,7 @@
   /* Every guest who opens an invitation sees, once, how it was made: the event's best way to bring in new hosts. */
   /* Hair and makeup: try the glam look first on Face Couture, the sister app. */
   var FC_LINK = '<a class="fc-try small" href="https://facecouture.app/" target="_blank" rel="noopener" data-fc>\u2728 Try your glam look first on Face Couture</a>';
+  if (CFG.app) FC_LINK = '';   /* the app never sends people to the website of another app */;
   /* After the party: the photos get their finish on Face Couture, the sister app. */
   function fcFinish(guest) {
     if (CFG.app && !CFG.faceCoutureApp) return '';   /* in the app, only once Face Couture is in the App Store */
@@ -3426,7 +3440,7 @@
     if (!ev.sample && !isKept(ev)) return '<div class="stack"><h3>' + (CFG.app ? 'Plan details' : 'Your Event Pass') + '</h3><div class="panel stack"><p>Your plan isn\u2019t kept yet. Keep it to save every edit and share it with guests.</p>' + (CFG.app || CFG.launchFree ? '<p class="muted small">Free' + (CFG.app ? ' in the app' : ' during our launch') + '.</p>' : '<div class="price-big num">$' + E.passFor(ev.guests).price.toFixed(2) + '</div><p class="muted small">' + esc(E.passFor(ev.guests).label) + ', one time, no subscription.</p>') + '<div><button class="btn" id="keepX">Keep my plan</button></div></div></div>' +
       '<div class="stack"><h3>Delete this event</h3><p class="muted small">Removes the plan, guest list and photos from this device.</p><div><button class="btn small ghost" id="del" style="color:var(--bad)">Delete event</button></div></div>';
     return '<div class="stack"><h3>' + (CFG.app ? 'Plan details' : 'Your Event Pass') + '</h3><div class="panel stack"><div class="row" style="justify-content:space-between"><span>' + (ev.sample ? 'Sample plan' : esc(E.passFor(ev.paid.max || ev.guests).label)) + '</span><span class="badge ok">Active</span></div>' + (ev.sample ? '' : '<p class="small muted">Available until ' + esc(accessUntil(ev, ev.paid && ev.paid.at)) + '.</p>') +
-      (CFG.app || CFG.launchFree ? '<p class="muted small">Inviting more people? Tap the guest count at the top of your plan to change it; it\u2019s free' + (CFG.app ? ' in the app' : ' during our launch') + '.</p></div></div>' : '<p class="muted small">Inviting more people? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>') +
+      (CFG.app || CFG.launchFree ? '<p class="muted small">Inviting more people? Tap the guest count at the top of your plan to change it; it\u2019s free' + (CFG.app ? '' : ' during our launch') + '.</p></div></div>' : '<p class="muted small">Inviting more people? Moving up to ' + esc(nextPass.label.toLowerCase()) + ' costs the difference, ' + money(Math.max(0, nextPass.price - (ev.paid ? ev.paid.price : 0))) + '.</p><div><button class="btn small ghost" id="upg">Move up a size</button></div></div></div>') +
       (!SELL_EXTRAS ? '' : '<div class="stack"><div class="row" style="justify-content:space-between"><h3>AI credits</h3><span class="num">' + w.credits + ' credits</span></div><p class="muted small">For extra AI work beyond what your pass includes. The exact credit cost is shown before every action, and credits never top up automatically.</p><div class="packs">' +
       D.CREDIT_PACKS.map(function (p, i) { return '<button class="tier" data-pack="' + i + '"><span class="amt num">' + p.credits + '</span><span class="muted">credits</span><b class="num">$' + p.price.toFixed(2) + '</b></button>'; }).join('') + '</div></div>' +
       '<div class="stack"><h3>Creative packages</h3><div class="list panel">' + D.PACKAGES.map(function (p, i) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + esc(p.desc) + '</div></div><span class="num">$' + p.price.toFixed(2) + '</span><button class="btn small" data-pkg="' + i + '">Choose</button></div>'; }).join('') + '</div></div>' +
@@ -3631,7 +3645,7 @@
   function reviewCard(ev) {
     if (ev.sample || !CFG.apiUrl || ev.reviewHidden) return '';
     if (ev.reviewed) return '<div class="panel rv-card rv-done"><b>Thank you for your review</b><p class="small muted">We read every one. Once it’s approved, it can appear on Event Couture with your first name.</p></div>';
-    return '<form class="panel stack rv-card" id="rvForm" novalidate><div class="row" style="justify-content:space-between;align-items:baseline"><h3>How was your plan?</h3><button type="button" class="link small quiet" id="rvLater">Not now</button></div>' +
+    return '<form class="panel stack rv-card" id="rvForm" novalidate><div class="row" style="justify-content:space-between;align-items:baseline"><h3>' + (CFG.app ? 'Share feedback' : 'How was your plan?') + '</h3><button type="button" class="link small quiet" id="rvLater">Not now</button></div>' +
       '<p class="small muted">Your honest review helps other hosts, good or bad. Approved reviews may appear on Event Couture with your first name.</p>' +
       '<div class="rv-stars" role="radiogroup" aria-label="Your rating">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" role="radio" aria-checked="false" data-star="' + n + '" aria-label="' + n + ' star' + (n > 1 ? 's' : '') + '">★</button>'; }).join('') + '</div>' +
       '<label class="field"><span>Your review</span><textarea class="input" id="rvText" rows="3" maxlength="600" placeholder="What did you like? What could be better?"></textarea></label>' +
@@ -3682,6 +3696,11 @@
             return '<div class="panel stack rv-adm"><div class="row" style="justify-content:space-between"><span class="rv-st">' + starsText(r.stars) + '</span><span class="badge' + (r.status === 'approved' ? ' ok' : '') + '">' + esc(r.status === 'approved' ? 'Showing on the site' : r.status === 'hidden' ? 'Hidden' : 'Waiting for you') + '</span></div><p>' + esc(r.text) + '</p><p class="small muted"><b>' + esc(r.name) + '</b> · ' + esc([r.event, r.city].filter(Boolean).join(', ')) + (REV_LABEL[r.rel] ? ' · ' + REV_LABEL[r.rel] : '') + ' · ' + esc(fmtDate((r.at || '').slice(0, 10))) + '</p><div class="row">' +
               (r.status !== 'approved' ? '<button class="btn small gold" data-rv="approved" data-id="' + esc(r.id) + '">Approve</button>' : '') + (r.status !== 'hidden' ? '<button class="btn small ghost" data-rv="hidden" data-id="' + esc(r.id) + '">Hide</button>' : '') + '<button class="btn small ghost" data-rv="deleted" data-id="' + esc(r.id) + '">Delete</button></div></div>';
           }).join('') : '<p class="muted">No reviews yet.</p>';
+          fetch(CFG.apiUrl + '/api/reports', { headers: { 'x-admin-code': code } }).then(function (r) { return r.ok ? r.json() : { reports: [] }; }).then(function (v) {
+            var P = v.reports || [];   /* reports from hosts: act within 24 hours (hide the vendor or listing), then clear */
+            $('#rpList').innerHTML = '<h3>Reports</h3>' + (P.length ? P.map(function (x) { return '<div class="panel small"><b>' + esc(x.kind) + '</b> ' + esc(x.note || '') + ' \u00b7 ' + esc(String(x.at || '').slice(0, 16).replace('T', ' ')) + (x.text ? '<div class="muted">' + esc(x.text) + '</div>' : '') + '<div class="muted">ID ' + esc(x.id || '') + '</div>' + (x.kind === 'vendor' ? '<button class="btn small ghost" data-vd="hidden" data-id="' + esc(x.id) + '">Hide this vendor</button>' : '') + '</div>'; }).join('') + '<button class="btn small ghost" id="rpClear">I handled these, clear the list</button>' : '<p class="muted">No reports.</p>');
+            var c = $('#rpClear'); if (c) c.addEventListener('click', function () { fetch(CFG.apiUrl + '/api/reports/clear', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-code': code }, body: '{}' }).then(load); });
+          });
           return fetch(CFG.apiUrl + '/api/vendors/pending', { headers: { 'x-admin-code': code } }).then(function (r) { return r.ok ? r.json() : { vendors: [] }; }).then(function (v) {
             var V = v.vendors || [];   /* new vendor listings wait here until she approves them */
             $('#vdList').innerHTML = '<h3>Vendor listings waiting</h3>' + (V.length ? V.map(function (x) { return '<div class="panel stack"><b>' + esc(x.name || 'No name') + '</b><span class="small muted">' + esc((x.cats || []).join(', ')) + ' \u00b7 ' + esc((x.cities || []).join(', ')) + (x.ig ? ' \u00b7 @' + esc(x.ig) : '') + '</span>' + (x.bio ? '<p class="small">' + esc(x.bio) + '</p>' : '') + '<div class="row"><button class="btn small gold" data-vd="approved" data-id="' + esc(x.id) + '">Approve</button><button class="btn small ghost" data-vd="hidden" data-id="' + esc(x.id) + '">Hide</button></div></div>'; }).join('') : '<p class="muted">None waiting.</p>');
@@ -3689,7 +3708,8 @@
         })
         .catch(function (er) { toast(er.message || 'Not available'); });
     }
-    $('#rvList').insertAdjacentHTML('afterend', '<div class="stack" id="vdList"></div>');
+    $('#rvList').insertAdjacentHTML('afterend', '<div class="stack" id="vdList"></div><div class="stack" id="rpList"></div>');
+    $('#rpList').addEventListener('click', function (e) { var b = e.target.closest('[data-vd]'); if (!b) return; b.disabled = true; fetch(CFG.apiUrl + '/api/vendors/set', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-code': code }, body: JSON.stringify({ id: b.dataset.id, status: 'hidden' }) }).then(function () { b.textContent = 'Hidden'; }); });
     $('#vdList').addEventListener('click', function (e) {
       var b = e.target.closest('[data-vd]'); if (!b) return; b.disabled = true;
       fetch(CFG.apiUrl + '/api/vendors/set', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-code': code }, body: JSON.stringify({ id: b.dataset.id, status: b.dataset.vd }) })
@@ -3871,7 +3891,7 @@
   FAQ = FAQ.concat([
     ['Which countries does it work in?', 'Over 60, including the UK, Europe, the Middle East, India, Asia, Australia, Mexico, Latin America and Africa. Choose your country, then your city. Prices are estimated in your local currency with local tax, drive distances are in kilometres (miles in the UK), and venues and vendors are searched in your city. Tips are only added in the US and Canada.', 'country countries international abroad worldwide dubai uae london uk europe india mexico australia jordan saudi currency'],
     ['Does it work in Canada?', 'Yes. Choose Canada, then your city. Prices are estimated in Canadian dollars with your province\u2019s GST, HST, PST or QST, drive distances are in kilometres (miles in the UK), and venue and vendor searches stay in Canada.', 'canada canadian cad toronto vancouver montreal calgary ottawa province hst gst'],
-    ['How do I get quotes from vendors?', 'Open your plan, then Budget & bookings, Vendors, and tap See options on what you need. Tap Get quotes from vendors: Event Couture vendors in your city see your date, guest count, theme and budget, never your name or contact, and reply with prices right there. Found someone on Instagram? Add their handle and message them your request in one tap.', 'quote quotes vendor request price instagram singer dj'],
+    ['How do I get quotes from vendors?', 'Open your package under Budget & bookings and tap Message on any vendor. Your request is written for you, with your date, city, guest count and look, never your name or contact. Send it by text, email or Instagram; the vendor answers from a private link and the reply shows on that line, with Report and Block next to it.', 'quote quotes vendor request price instagram singer dj'],
     ['Can I get a refund?', 'Planning is free, so you see your whole plan before you pay. If something you paid for doesn\u2019t work, contact us and we\u2019ll make it right. Purchases made in the iPhone or Android app are refunded through Apple or Google from your purchase history.', 'refund money back cancel charged'],
     ['How do I contact you?', CFG.supportEmail ? 'Email us at ' + CFG.supportEmail + '. We reply within one business day.' : 'Start with the answers on this page. If you still need help, use the contact details on the Event Couture website.', 'contact support email phone talk person help reach'],
     ['Is my data safe?', 'Yes. Your plans, guest lists and photos stay on your device. To create your looks, your details and inspiration go through our server to Google\u2019s AI and aren\u2019t kept by Event Couture. We never sell your data, and guest details are never shown to vendors. Google Analytics counts visits and which buttons are tapped, never names, photos or what you type. See Privacy for the details.', 'safe secure privacy data private sell share'],
@@ -3900,10 +3920,10 @@
     return q;
   });
   if (CFG.app) FAQ = FAQ.map(function (q) {   /* the app is free for now, so its help answers carry no prices */
-    if (/^Is there a subscription/.test(q[0])) return [q[0], 'No. Planning and keeping your plan are free in the app. Nothing renews automatically.', q[2]];
-    if (/^How much does it cost/.test(q[0])) return [q[0], 'Planning and keeping your plan are free in the app. Guests never pay to view, RSVP or vote.', q[2]];
-    if (/^What if my guest list grows/.test(q[0])) return [q[0], 'Tap the guest count at the top of your plan to change it. In the app it\u2019s free, and your plan stays exactly as it is.', q[2]];
-    if (/^Can I get a refund/.test(q[0])) return [q[0], 'There are no purchases in the app right now. If anything doesn\u2019t work, contact us and we\u2019ll make it right.', q[2]];
+    if (/^Is there a subscription/.test(q[0])) return [q[0], 'No. Planning and keeping your plan are free. Nothing renews automatically.', q[2]];
+    if (/^How much does it cost/.test(q[0])) return [q[0], 'Planning and keeping your plan are free. Guests never pay to view, RSVP or vote.', q[2]];
+    if (/^What if my guest list grows/.test(q[0])) return [q[0], 'Tap the guest count at the top of your plan to change it. Your plan stays exactly as it is.', q[2]];
+    if (/^Can I get a refund/.test(q[0])) return [q[0], 'There\u2019s nothing to buy. If anything doesn\u2019t work, contact us and we\u2019ll make it right.', q[2]];
     if (SHARING && /^(Do my guests need the app|How do I invite guests|Can guests add photos)/.test(q[0])) return q;   /* the shared-invitation answers below apply */
     if (/^Do my guests need the app/.test(q[0])) return [q[0], 'No. Tap Send invitation on the Invitation page to send the details by text, email or any app. Guests reply to you to RSVP, and you add their answers under Guests.', q[2]];
     if (/^How do I invite guests/.test(q[0])) return [q[0], 'Open your plan, then Guests & invitations, Invitation. Tap Send invitation to share the date, place and dress code by text, email or any app. Guests reply to you, and you track RSVPs under Guests.', q[2]];
