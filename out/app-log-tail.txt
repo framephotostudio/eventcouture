@@ -1,0 +1,233 @@
+: I/QHF.02
+2026-11-05 18:10:38.580 Df App[14644:b6c2] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039b04e0] I/QHF.04 called
+2026-11-05 18:10:38.580 Df App[14644:b5e4] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039b0340] I/QHF.02 called
+2026-11-05 18:10:38.580 Df App[14644:b6c2] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> itemfig_Invalidate: <0x110060a00|I/QHF.04> called
+2026-11-05 18:10:38.581 Df App[14644:b6c2] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x600003905450] I/QHF.03 called
+2026-11-05 18:10:38.582 Df App[14644:b6c2] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> itemfig_Invalidate: <0x10e840000|I/QHF.03> called
+2026-11-05 18:10:38.583 Df App[14644:b6c2] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlayer_Invalidate: [0x600003500840] P/FS called
+2026-11-05 18:10:38.585 Df App[14644:b6c2] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_Invalidate: [0x10f03c520] P/FS
+2026-11-05 18:10:38.586 Df App[14644:b6c2] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_RemoveFromPlayQueue: [0x10f03c520] P/FS item 0x0
+2026-11-05 18:10:38.588 Df App[14644:b5e4] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: called
+2026-11-05 18:10:38.590 Df App[14644:b5e4] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: I/QHF.04
+2026-11-05 18:10:38.591 Df App[14644:b5e4] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x6000039b04e0] I/QHF.04 called
+2026-11-05 18:10:38.592 Df App[14644:b5e4] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: called
+2026-11-05 18:10:38.592 Df App[14644:b5e4] [com.apple.coremedia:] <<<< AVPlayerItem >>>> -[AVPlayerItem dealloc]: currentItem KVO: I/QHF.03
+2026-11-05 18:10:38.594 Df App[14644:b5e4] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlaybackItem_Invalidate: [0x600003905450] I/QHF.03 called
+2026-11-05 18:10:38.595 Df App[14644:b5e4] [com.apple.coremedia:] <<< URLAsset >>> URLAssetFinalize: Called for asset 0x60000173e380
+2026-11-05 18:10:38.595 Df App[14644:b5e4] [com.apple.coremedia:] <<<< FigCustomURLHandling >>>> curll_invalidate: 0x60000293f1e0 called
+2026-11-05 18:10:38.604 Df App[14644:b612] [com.apple.coremedia:player] <<<< FigPlayerSurrogate >>>> surrogatePlayer_Finalize: [0x600003500840] P/FS called
+2026-11-05 18:10:38.630 Df App[14644:b5e4] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient beginRemoteTextInputSessionWithID:options:documentTraits:initialDocumentState:]_block_invoke  Connection to service with mach name com.apple.rti-screencontinuity was invalidated. Attempting to create a new connection.
+2026-11-05 18:10:38.630 Df App[14644:b5e4] [com.apple.xpc:connection] [0x10d418fb0] activating connection: mach=true listener=false peer=false name=com.apple.rti-screencontinuity
+2026-11-05 18:10:38.631 Df App[14644:b5e4] [com.apple.xpc:connection] [0x10d418fb0] failed to do a bootstrap look-up: xpc_error=[3: No such process]
+2026-11-05 18:10:38.632 Df App[14644:b5e4] [com.apple.xpc:connection] [0x10d418fb0] invalidated after a failed init
+2026-11-05 18:10:38.632 Df App[14644:b615] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient _configureConnection:withMachName:]_block_invoke  Client connection to service was invalidated: <NSXPCConnection: 0x60000330d0e0> connection to service named com.apple.rti-screencontinuity
+2026-11-05 18:10:38.633 Df App[14644:b5e4] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient _beginSessionWithID:forServices:force:]  Begin text input session. sessionID = 9B50E4FC-5BDF-4A72-8C4D-DD09B32AA469, options = <RTISessionOptions: 0x6000002a0b40; shouldResign = NO; animated = YES; offscreenDirection = 0; enhancedWindowingModeEnabled = NO
+2026-11-05 18:10:38.651 Df App[14644:b612] [com.apple.coremedia:player] <<<< FigFilePlayer >>>> playerfig_Invalidate: [0x10f03c520] P/FS
+2026-11-05 18:10:38.787 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e000d00 - [PID=14673, throttler=0x11e0019b0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-05 18:10:38.787 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e000d60 - [PID=14673, throttler=0x11e0019b0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-05 18:10:38.910 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e000dc0 - [PID=14673, throttler=0x11e0019b0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-05 18:10:38.973 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didFinishDocumentLoadForFrame: frameID=14, isMainFrame=1
+2026-11-05 18:10:38.981 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e000d00 - [PID=14673, throttler=0x11e0019b0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-05 18:10:38.981 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e000d60 - [PID=14673, throttler=0x11e0019b0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-05 18:10:38.981 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e000dc0 - [PID=14673, throttler=0x11e0019b0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-05 18:10:39.042 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didFinishLoadForFrame: frameID=14, isMainFrame=1
+2026-11-05 18:10:39.042 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e005730 - NavigationState will release its process network assertion soon because the page load completed
+2026-11-05 18:10:39.042 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e003f30 - [PID=14673, throttler=0x11e0019b0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'Client navigation'
+2026-11-05 18:10:39.043 E  App[14644:b5e4] [com.apple.WebKit:ResourceLoadStatistics] Failed to request restricted opener domains from WebPrivacy
+2026-11-05 18:10:39.043 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e000d60 - [PID=14673, throttler=0x11e0019b0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-05 18:10:39.094 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e000d60 - [PID=14673, throttler=0x11e0019b0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-05 18:10:39.743 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:39.925 Df App[14644:b5e4] [com.apple.WebKit:Process] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::stopMakingViewBlankDueToLackOfRenderingUpdateIfNecessary:
+2026-11-05 18:10:39.925 Df App[14644:b5e4] [com.apple.WebKit:ViewState] 0x10e020600 (pageProxyID=10) -[WKWebView _didCommitLayerTree:] - received a commit (2) while deferring visible content rect updates (dynamicViewportUpdateMode 0, needsResetViewStateAfterCommitLoadForMainFrame 1 (wants commit 2), sizeChangedSinceLastVisibleContentRectUpdate 0, [_scrollView isZoomBouncing] 0, currentlyAdjustingScrollViewInsetsForKeyboard 0)
+2026-11-05 18:10:39.927 Df App[14644:b5e4] [com.apple.WebKit:ViewState] 0x10e020600 (pageProxyID=10) -[WKWebView _updateVisibleContentRects:] - performing first visible content rect update after deferring updates
+2026-11-05 18:10:40.773 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:40.785 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:41.046 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:41.286 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:41.905 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:41.905 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:42.042 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e005730 NavigationState is releasing background process assertion because a page load completed
+2026-11-05 18:10:42.042 Df App[14644:b5e4] [com.apple.WebKit:ProcessSuspension] 0x11e003f60 - [PID=14673, throttler=0x11e0019b0] ProcessThrottler::Activity::invalidate: Ending background activity / 'Page Load'
+2026-11-05 18:10:42.341 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:42.446 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:45.034 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:45.294 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:45.957 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:47.535 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:49.209 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:49.210 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:49.210 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:49.210 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:49.210 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:49.210 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:49.210 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:49.297 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:49.298 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:51.717 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:52.336 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:52.469 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:53.534 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:53.602 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:53.720 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=33
+2026-11-05 18:10:53.721 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize
+2026-11-05 18:10:53.721 A  App[14644:b5e4] (AppSSO) canPerformAuthorizationWithURL
+2026-11-05 18:10:53.722 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:10:53.722 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:10:53.723 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:10:53.724 Df App[14644:b5e4] [com.apple.authkit:siwa] Should process URL called
+2026-11-05 18:10:53.724 Df App[14644:b5e4] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-11-05 18:10:53.727 Df App[14644:b5e4] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-11-05 18:10:53.728 Df App[14644:b5e4] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-11-05 18:10:53.728 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-11-05 18:10:53.729 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=33, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-11-05 18:10:53.729 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=33, policyAction=0
+2026-11-05 18:10:53.730 Df App[14644:b5e4] [com.apple.WebKit:ProcessSwapping] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: keep using process 14673 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-11-05 18:10:53.730 Df App[14644:b5e4] [com.apple.WebKit:Process] 0x11e001920 - [PID=14673] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-11-05 18:10:53.730 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-11-05 18:10:53.731 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-11-05 18:10:53.731 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-11-05 18:10:53.860 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:54.907 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:54.907 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:54.907 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:55.340 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:55.531 Df App[14644:b5e4] [com.apple.WebKit:ViewState] 0x10e020600 (pageProxyID=10) -[WKWebView _didCommitLayerTree:] - finally received commit 14.86s after visible content rect update request; transactionID 6
+2026-11-05 18:10:57.496 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:57.497 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:10:57.620 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:11:08.734 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=33
+2026-11-05 18:11:08.735 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize
+2026-11-05 18:11:08.735 A  App[14644:b5e4] (AppSSO) canPerformAuthorizationWithURL
+2026-11-05 18:11:08.735 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:08.736 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:08.736 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:08.737 Df App[14644:b5e4] [com.apple.authkit:siwa] Should process URL called
+2026-11-05 18:11:08.737 Df App[14644:b5e4] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-11-05 18:11:08.740 Df App[14644:b5e4] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-11-05 18:11:08.740 Df App[14644:b5e4] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-11-05 18:11:08.741 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-11-05 18:11:08.742 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-11-05 18:11:08.743 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-11-05 18:11:08.744 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-11-05 18:11:08.745 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=33
+2026-11-05 18:11:08.745 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=33, policyAction=2, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-11-05 18:11:08.746 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=33, policyAction=2
+2026-11-05 18:11:08.747 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize
+2026-11-05 18:11:08.747 A  App[14644:b5e4] (AppSSO) canPerformAuthorizationWithURL
+2026-11-05 18:11:08.748 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:08.749 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:08.750 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:08.751 Df App[14644:b5e4] [com.apple.authkit:siwa] Should process URL called
+2026-11-05 18:11:08.752 Df App[14644:b5e4] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-11-05 18:11:08.757 Df App[14644:b5e4] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-11-05 18:11:08.758 Df App[14644:b5e4] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-11-05 18:11:08.759 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-11-05 18:11:08.760 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-11-05 18:11:08.760 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-11-05 18:11:08.761 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-11-05 18:11:08.762 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=33, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-11-05 18:11:08.762 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=33, policyAction=0
+2026-11-05 18:11:08.763 Df App[14644:b5e4] [com.apple.WebKit:ProcessSwapping] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: keep using process 14673 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-11-05 18:11:08.763 Df App[14644:b5e4] [com.apple.WebKit:Process] 0x11e001920 - [PID=14673] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-11-05 18:11:16.488 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:11:16.899 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:11:17.226 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:11:23.757 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=33
+2026-11-05 18:11:23.775 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize
+2026-11-05 18:11:23.776 A  App[14644:b5e4] (AppSSO) canPerformAuthorizationWithURL
+2026-11-05 18:11:23.785 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:23.790 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:23.791 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:23.794 Df App[14644:b5e4] [com.apple.authkit:siwa] Should process URL called
+2026-11-05 18:11:23.794 Df App[14644:b5e4] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-11-05 18:11:23.801 Df App[14644:b5e4] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-11-05 18:11:23.802 Df App[14644:b5e4] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-11-05 18:11:23.802 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-11-05 18:11:23.804 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-11-05 18:11:23.804 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-11-05 18:11:23.804 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=33, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-11-05 18:11:23.807 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=33, policyAction=0
+2026-11-05 18:11:23.810 Df App[14644:b5e4] [com.apple.WebKit:ProcessSwapping] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: keep using process 14673 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-11-05 18:11:23.814 Df App[14644:b5e4] [com.apple.WebKit:Process] 0x11e001920 - [PID=14673] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-11-05 18:11:23.814 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-11-05 18:11:26.615 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:11:30.399 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:11:35.155 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:11:38.794 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=33
+2026-11-05 18:11:38.794 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize
+2026-11-05 18:11:38.794 A  App[14644:b5e4] (AppSSO) canPerformAuthorizationWithURL
+2026-11-05 18:11:38.795 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:38.796 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:38.796 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:38.796 Df App[14644:b5e4] [com.apple.authkit:siwa] Should process URL called
+2026-11-05 18:11:38.797 Df App[14644:b5e4] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-11-05 18:11:38.802 Df App[14644:b5e4] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-11-05 18:11:38.802 Df App[14644:b5e4] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-11-05 18:11:38.802 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-11-05 18:11:38.803 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-11-05 18:11:38.803 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-11-05 18:11:38.804 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=33, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-11-05 18:11:38.804 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=33, policyAction=0
+2026-11-05 18:11:38.805 Df App[14644:b5e4] [com.apple.WebKit:ProcessSwapping] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: keep using process 14673 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-11-05 18:11:38.805 Df App[14644:b5e4] [com.apple.WebKit:Process] 0x11e001920 - [PID=14673] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-11-05 18:11:38.806 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-11-05 18:11:41.166 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:11:47.449 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:11:49.372 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:11:53.799 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: frameID=14, isMainFrame=1, navigationID=33
+2026-11-05 18:11:53.802 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize
+2026-11-05 18:11:53.803 A  App[14644:b5e4] (AppSSO) canPerformAuthorizationWithURL
+2026-11-05 18:11:53.804 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:53.804 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:53.805 A  App[14644:b5e4] (AppSSOCore) canPerformAuthorizationWithURL
+2026-11-05 18:11:53.805 Df App[14644:b5e4] [com.apple.authkit:siwa] Should process URL called
+2026-11-05 18:11:53.805 Df App[14644:b5e4] [com.apple.authkit:siwa] Fetching native takeover URLs
+2026-11-05 18:11:53.819 Df App[14644:b5e4] [com.apple.authkit:siwa] Native takeover URLs fetched
+2026-11-05 18:11:53.819 Df App[14644:b5e4] [com.apple.authkit:siwa] URL shouldn't be processed
+2026-11-05 18:11:53.820 Df App[14644:b5e4] [com.apple.WebKit:AppSSO] 0x11e000a50 - SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+2026-11-05 18:11:53.821 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didNavigateWithNavigationDataShared:
+2026-11-05 18:11:53.822 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrameViaJS: frameID=14, isMainFrame=1, type=3
+2026-11-05 18:11:53.824 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=14, isMainFrame=1, navigationID=33, policyAction=0, safeBrowsingWarning=0, isAppBoundDomain=0, wasNavigationIntercepted=0
+2026-11-05 18:11:53.827 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=14, isMainFrame=1, navigationID=33, policyAction=0
+2026-11-05 18:11:53.835 Df App[14644:b5e4] [com.apple.WebKit:ProcessSwapping] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::decidePolicyForNavigationAction: keep using process 14673 for navigation, reason=Navigation within the same non-HTTP(s) protocol
+2026-11-05 18:11:53.835 Df App[14644:b5e4] [com.apple.WebKit:Process] 0x11e001920 - [PID=14673] WebProcessProxy::canTerminateAuxiliaryProcess: returns false (pageCount=1, provisionalPageCount=0, suspendedPageCount=0, m_isInProcessCache=0, m_shutdownPreventingScopeCounter=0)
+2026-11-05 18:11:53.836 Df App[14644:b5e4] [com.apple.WebKit:Loading] 0x10e80ea20 - [pageProxyID=10, webPageID=11, PID=14673] WebPageProxy::didSameDocumentNavigationForFrame: frameID=14, isMainFrame=1, type=0
+2026-11-05 18:12:01.152 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:02.180 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:12.870 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:13.015 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:16.269 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:18.693 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:19.791 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:19.864 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:22.007 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:23.448 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:24.769 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:29.218 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:29.278 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:30.923 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:31.675 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:40.170 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:40.218 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:40.581 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:12:40.803 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:13:02.501 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:13:06.345 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:13:07.341 A  App[14644:d0d3] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-11-05 18:13:07.404 A  App[14644:d0d3] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-11-05 18:13:07.405 A  App[14644:d0d3] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-11-05 18:13:07.615 A  App[14644:d0d3] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-11-05 18:13:08.483 A  App[14644:d79f] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-11-05 18:13:08.483 A  App[14644:d79f] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-11-05 18:13:08.488 A  App[14644:d79f] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-11-05 18:13:08.673 A  App[14644:d7a3] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-11-05 18:13:09.236 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:13:26.635 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:13:27.398 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:13:27.890 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:13:28.768 E  App[14644:b6e9] [com.apple.coreaudio:AMCP]  73735          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-05 18:13:36.433 Df App[14644:d7a3] [com.apple.Safari.SafeBrowsing:Database] Service did finish database update with protection type 1 and provider 1
+2026-11-05 18:13:36.433 Df App[14644:d7a3] [com.apple.Safari.SafeBrowsing:Database] Service did finish database update with protection type 1 and provider 1
+2026-11-05 18:14:20.314 A  App[14644:edd8] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-11-05 18:14:20.322 A  App[14644:edd8] (CoreFoundation) Loading Preferences From User Session CFPrefsD
+2026-11-05 18:14:20.430 A  App[14644:edd8] (CoreFoundation) Loading Preferences From User Session CFPrefsD
