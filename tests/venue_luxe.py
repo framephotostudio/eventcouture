@@ -11,6 +11,8 @@ LA=[P(1,'Hilton Los Angeles Airport',4.5,6000,'PRICE_LEVEL_EXPENSIVE','5711 W Ce
     P(5,'Waldorf Astoria Beverly Hills',4.6,1300,'PRICE_LEVEL_VERY_EXPENSIVE','9850 Wilshire Blvd, Beverly Hills, CA'),
     P(6,'Grand Plaza Banquet Hall',4.8,900,'PRICE_LEVEL_MODERATE','100 Main St, Los Angeles, CA'),
     P(7,'Vibiana Event Venue',4.7,700,'PRICE_LEVEL_EXPENSIVE','214 S Main St, Los Angeles, CA'),
+    P(9,'InterContinental Los Angeles Century City',4.5,2600,'PRICE_LEVEL_EXPENSIVE','2151 Avenue of the Stars, Los Angeles, CA'),
+    P(10,'The Beverly Hilton',4.4,5200,'PRICE_LEVEL_EXPENSIVE','9876 Wilshire Blvd, Beverly Hills, CA'),
     P(8,'Convention Center Event Hall',4.6,4000,'PRICE_LEVEL_MODERATE','1201 S Figueroa St, Los Angeles, CA')]
 REQ=[]
 def api(route):
@@ -33,12 +35,14 @@ def venues(pg):
 with sync_playwright() as p:
     b=p.chromium.launch()
     for w,h,n in [(390,844,'phone'),(1280,900,'desktop')]:
-        for kind in ['ballroom','indoor']:
+        for kind in ['ballroom','indoor','tight','low']:
+            budget = {'tight':'55000','low':'25000'}.get(kind,''); kind0 = kind; kind = 'ballroom' if kind in ('tight','low') else kind
             REQ.clear()
             ctx=b.new_context(viewport={'width':w,'height':h}); pg=ctx.new_page(); e=[]; pg.on('pageerror',lambda x:e.append(str(x)))
             pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
             pg.goto(U+'#/new/1'); pg.wait_for_timeout(300); pg.fill('#text','ivory and gold black tie wedding'); pg.click('#next'); pg.wait_for_timeout(250)
             pg.select_option('#type','wedding'); pg.fill('#guests','150'); pg.fill('#expected','150'); pg.select_option('#city','Los Angeles, CA')
+            if budget: pg.fill('#budget', budget)
             labels=pg.inner_text('#setting')
             if kind=='ballroom': check(n, 'Hotel ballroom' in labels and 'banquet' not in labels.split('Hotel ballroom')[1].split('\n')[0], 'chip reads Hotel ballroom on its own'); check(n, 'Event venue or banquet hall' in labels, 'chip reads Event venue or banquet hall')
             pg.click(f'#setting [data-v={kind}]'); pg.screenshot(path=f'{OUT}/{n}-{kind}-where.png') if kind=='ballroom' else None
@@ -49,10 +53,13 @@ with sync_playwright() as p:
             if kind=='ballroom': check(n, all('hotel ballroom' in r['query'] and 'banquet' not in r['query'] for r in vq), f'ballroom search is hotels only {[r["query"] for r in vq]}')
             else: check(n, all('hotel' not in r['query'] for r in vq), f'event venue search has no hotels {[r["query"] for r in vq]}')
             txt=pg.inner_text('body'); vs=venues(pg); print('   venues:', vs)
-            if kind=='ballroom': check(n, len(vs)>=1 and all(any(x in (v or '') for x in ['Peninsula','Four Seasons','Waldorf']) for v in vs[:3]), 'packages use the luxury Beverly Hills hotels')
-            else: check(n, len(vs)>=1 and not any('Hotel' in (v or '') or 'Hilton' in (v or '') or 'Four Seasons' in (v or '') for v in vs), 'event venue packages have no hotels')
+            LUX=['Peninsula','Four Seasons','Waldorf']; FOUR=['InterContinental','Beverly Hilton']
+            if kind0=='ballroom': check(n, len(vs)>=1 and any(any(x in (v or '') for x in LUX) for v in vs), 'no budget: the lavish package uses a luxury Beverly Hills hotel')
+            if kind0=='low': check(n, len(vs)>=2 and not any(x in ' '.join(vs[:2]) for x in LUX), '$25,000 for 150: no 5-star hotel first')
+            if kind0=='tight': check(n, len(vs)>=2 and any(x in vs[0] for x in FOUR) and any(x in vs[1] for x in FOUR), f'$55,000 for 150: packages 1 and 2 use nice 4-star hotels that fit')
+            if kind0=='indoor': check(n, len(vs)>=1 and not any('Hotel' in (v or '') or 'Hilton' in (v or '') or 'Four Seasons' in (v or '') for v in vs), 'event venue packages have no hotels')
             check(n, 'Airport' not in ' '.join(vs) and 'LAX' not in ' '.join(vs), 'no airport hotels picked')
-            check(n, 'starting with Beverly Hills' in txt, 'venue area line says Beverly Hills first')
+            pg.screenshot(path=f'{OUT}/{n}-{kind0}-packages.png'); check(n, 'starting with Beverly Hills' in txt, 'venue area line says Beverly Hills first')
             pg.screenshot(path=f'{OUT}/{n}-{kind}-packages.png', full_page=False)
             sw=pg.evaluate('document.documentElement.scrollWidth - innerWidth'); check(n, sw<=1, f'no sideways scroll ({sw})')
             check(n, not e, f'no page errors {e[:2]}')

@@ -1778,7 +1778,7 @@
   function pkgSearch(ev, c) {
     if (c.kind === 'venue') { var vr = c.cat === 'venue' && ev.setting === 'indoor' && !/hotel/i.test(c.type || '') ? recFor(ev, 'venue') : [], wantHotel = ev.setting === 'indoor' ? /hotel/i.test(c.type || '') : null, vc = venueCity(ev);
       var whole = function (l) { return l.length >= 3 || vc === ev.city ? l : findPlaces(ev, { query: c.q, level: c.lvl, city: ev.city }).catch(function () { return []; }).then(function (m) { return l.concat(m.filter(function (x) { return !l.some(function (y) { return y.id === x.id; }); })); }); };   /* too few in the nicer area: add the rest of the city */
-      return findPlaces(ev, { query: c.q, level: c.lvl, city: vc }).catch(function (e) { if (vr.length || vc !== ev.city) return []; throw e; }).then(whole).then(function (l) { if (!l.length && !vr.length) throw new Error('none'); l = luxRank(ev, l, wantHotel); return vr.concat(l.filter(function (x) { return !vr.some(function (r) { return E.lc(r.name) === E.lc(x.name); }); })); }); }   /* a recommended venue leads, for an event-venue plan */
+      return findPlaces(ev, { query: c.q, level: c.lvl, city: vc }).catch(function (e) { if (vr.length || vc !== ev.city) return []; throw e; }).then(whole).then(function (l) { if (!l.length && !vr.length) throw new Error('none'); l = luxRank(ev, l, wantHotel, c.lvl); return vr.concat(l.filter(function (x) { return !vr.some(function (r) { return E.lc(r.name) === E.lc(x.name); }); })); }); }   /* a recommended venue leads, for an event-venue plan */
     var ask = function (q) { return findPlaces(ev, { query: q, level: c.lvl, kind: 'vendor', cat: c.cat, hint: occasionHint(ev), city: ev.city }).catch(function () { return []; }); };
     var backups = (PKG_FALLBACK[c.cat] || []).concat([VENDOR_SEARCH[c.cat] || '']).filter(function (q, i, a) { return q && q !== c.q && a.indexOf(q) === i; }), got = [];
     var add = function (list) { var seen = got.map(function (x) { return x.id; }); got = got.concat(rankLine(ev, c.cat, list).filter(function (x) { return seen.indexOf(x.id) < 0; })); };
@@ -2521,13 +2521,25 @@
   /* Nicer venues first: luxury brands and top price levels move up; airport, convention and budget hotels move down.
      hotel: a hotel ballroom plan wants hotels first; an event venue plan wants venues and banquet halls first. */
   var NOT_FANCY = /airport|\bLAX\b|\bIAH\b|\bDFW\b|\bJFK\b|\bSFO\b|o\u2019?'?hare|convention cent|\bexpress\b|\bmotel\b|\bby the airport/i;
-  function luxRank(ev, list, hotel) {
+  /* How nice a place her budget reaches: 3 = 5-star luxury, 2 = upscale 4-star, 1 = a nice standard place.
+     With her own budget, compare her money per guest with what each hotel class charges per guest in her city (food and room are about half a budget). */
+  function budgetCap(ev, lvl) {
+    if (ev.tier === 'F' || (ev.budget && lvl !== 'U')) {
+      var tot = +ev.budget || 0, g = Math.max(1, +ev.guests || 1); if (!tot) return lvl === 'U' ? 3 : 2;
+      var k = ((E.cityOf(ev.city) || {}).index || 1) / 0.96, pp = tot / g * 0.55;
+      return pp >= 212 * k ? 3 : pp >= 137 * k ? 2 : 1;   /* the middle of each class's published package price per guest */
+    }
+    return lvl === 'L' ? 2 : 3;   /* no budget given: the nicest first; the lighter level starts at upscale */
+  }
+  function luxRank(ev, list, hotel, lvl) {
+    /* Budget first: the nicest place this package can afford leads; a place far above it moves down. lvl L lighter, S her budget, U lavish. */
+    var RANK = { mid: 1, upper: 2, lux: 3 }, cap = budgetCap(ev, lvl);
     var up = String((D.UPSCALE_AREAS || {})[ev.city] || ev.area || '').split(/ and |, /).map(function (w) { return w.replace(/^the /i, '').trim().toLowerCase(); }).filter(Boolean);
     var score = function (p) {
       var n = String(p.name || ''), ad = String(p.address || '').toLowerCase(), pl = String(p.priceLevel || p.price || ''), m = 1;
-      m *= /VERY_EXPENSIVE/.test(pl) ? 1.3 : /(^|_)EXPENSIVE$/.test(pl) ? 1.12 : /INEXPENSIVE/.test(pl) ? 0.8 : 1;
-      m *= E.HOTEL_LUX5.test(n) ? 1.45 : E.HOTEL_MID.test(n) ? 0.7 : E.HOTEL_LUX4.test(n) ? 1.05 : 1;
-      if (NOT_FANCY.test(n + ' ' + ad)) m *= 0.55;
+      var isH = E.hotelClass(n) !== 'hall', r = isH ? RANK[E.hotelClass(n, pl, p.rating)] : (/VERY_EXPENSIVE/.test(pl) ? 3 : /(^|_)EXPENSIVE$/.test(pl) ? 2 : /INEXPENSIVE/.test(pl) ? 0 : /MODERATE/.test(pl) ? 1 : 2);
+      m *= r > cap ? (r - cap > 1 ? 0.3 : 0.6) : r === cap ? 1.35 : r === cap - 1 ? 0.95 : 0.6;   /* above budget: later; the nicest that fits: first */
+      if (NOT_FANCY.test(n + ' ' + ad)) m *= 0.15;   /* airport and convention hotels: only when nothing else is left */
       if (up.some(function (w) { return ad.indexOf(w) >= 0; })) m *= 1.15;
       var isHotel = E.hotelClass(n) !== 'hall';
       if (hotel != null) m *= isHotel === hotel ? 1.6 : 0.5;   /* the right kind of place before the other kind */
@@ -2550,7 +2562,7 @@
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; }); ev.lastVenue = btn.dataset.live;
       var box = document.querySelector('.live-res[data-for="' + btn.dataset.live.replace(/"/g, '') + '"]') || $('#live'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding venues\u2026</p>';
       findPlaces(ev, { query: btn.dataset.q || btn.dataset.live, level: btn.dataset.level || 'S', city: venueCity(ev) })
-        .then(function (list) { list = luxRank(ev, list, ev.setting === 'indoor' ? /hotel/i.test(btn.dataset.live) : null);
+        .then(function (list) { list = luxRank(ev, list, ev.setting === 'indoor' ? /hotel/i.test(btn.dataset.live) : null, btn.dataset.level || venueLevel(ev));
           if (!list.length) { box.innerHTML = '<p class="muted">No well-reviewed matches nearby for this type. Try another venue type, or switch to a different spending level.</p>'; return; }
           var placesAll = list.length; list = cut(list, 3, ev);
           var ids = list.map(function (p) { return p.id; });
