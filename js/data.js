@@ -803,6 +803,9 @@
       /* Houston (added Nov 2, 2026): South Asian catering, a Stafford banquet hall, and two decor and design houses */
       { name: 'Mai Colachi', ig: 'maicolachi', cats: ['catering'], cities: ['Houston, TX'], cultures: ['pakistani', 'indian'], note: 'Authentic Pakistani fine dining and catering, 100% zabiha halal: karahi and grill. Sugar Land' },
       { name: 'Kiran\u2019s', maps: 'Kiran\u2019s 2925 Richmond Ave Houston TX', cats: ['catering'], cities: ['Houston, TX'], cultures: ['indian', 'pakistani'], note: 'Upscale modern Indian restaurant and catering on Richmond Ave, Houston' },
+      /* Arabic weddings, engagement parties and other Arabic events in Houston: these two banquet halls lead */
+      { name: 'Fadi\u2019s Mediterranean Banquet Hall', maps: 'Fadi\u2019s Mediterranean Banquet Hall 2000 S Texas 6 Houston TX 77077', cats: ['venue'], cities: ['Houston, TX'], cultures: ['arabic'], weight: 300, note: 'Banquet hall from Fadi\u2019s Mediterranean in west Houston, with Lebanese and Mediterranean catering' },
+      { name: 'Layal Banquet Hall', maps: 'Cafe Layal banquet hall Houston TX', cats: ['venue'], cities: ['Houston, TX'], cultures: ['arabic'], weight: 290, note: 'Banquet hall from Layal, Houston\u2019s Lebanese and Middle Eastern restaurant' },
       { name: 'Calista Ballroom', site: 'https://calistaballroom.com', maps: 'Calista Ballroom 869 Dulles Ave Stafford TX', cats: ['venue'], cities: ['Houston, TX'], note: 'Banquet hall in Stafford, close to Houston, with plenty of parking' },
       { name: 'Divine Decor & Design', ig: 'divinedecordesign', cats: ['decor', 'coordinator'], cities: ['Houston, TX'], note: 'Wedding planning and event decor, from intimate gatherings to grand celebrations. Houston' },
       { name: 'Dream Decors', ig: 'dreamdecorsdesignhouse', cats: ['decor', 'mandap'], cities: ['Houston, TX'], note: 'Full-scale luxury wedding and event design: receptions, weddings, mehndi and sangeet. Stafford' },
