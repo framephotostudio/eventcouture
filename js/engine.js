@@ -58,7 +58,18 @@
     return null;
   }
   var MUSIC_CATS = ['dj', 'liveMusic', 'singer', 'zaffe', 'dhol', 'dabke', 'qawwali', 'mariachi', 'lionDance', 'flamenco', 'dakka', 'gospel', 'secondLine', 'davul'];
-  function musicOf(ev) { var cu = culture(ev); if (!cu) return []; var ok = cu.music.map(function (m) { return m[0]; }); var m = (Array.isArray(ev.music) ? ev.music : cu.musicDefault).filter(function (x) { return ok.indexOf(x) >= 0; }); return m; }
+  /* A wedding singer and a band are one booking: one category, "Wedding singer and band". Each culture's own band (banda, bouzouki, highlife) joins its singer. */
+  function oneBand(cu) {
+    if (!cu || !cu.music || cu.oneBand) return; cu.oneBand = true;
+    var hadSinger = cu.music.some(function (m) { return m[0] === 'singer'; }), lab = cu.labels || (cu.labels = {}), se = cu.search || (cu.search = {});
+    cu.music = cu.music.filter(function (m) { return m[0] !== 'liveMusic' || !hadSinger; }).map(function (m) { return m[0] === 'singer' ? ['singer', /band/i.test(m[1]) ? m[1] : 'Singer and band'] : m[0] === 'liveMusic' ? ['singer', m[1] + ' and singer'] : m; });
+    if (cu.musicDefault) cu.musicDefault = cu.musicDefault.map(function (x) { return x === 'liveMusic' ? 'singer' : x; }).filter(function (x, i, a) { return a.indexOf(x) === i; });
+    if (lab.singer) { if (!/band/i.test(lab.singer)) lab.singer = lab.singer.replace(/singer/i, 'singer and band'); }
+    else if (lab.liveMusic) lab.singer = lab.liveMusic.replace(/(\s*\(|$)/, ' and singer$1');
+    if (se.singer) { if (!/band/i.test(se.singer)) se.singer += ' and band'; } else if (se.liveMusic) se.singer = se.liveMusic;
+  }
+  Object.keys(D.CULTURES || {}).forEach(function (k) { oneBand(D.CULTURES[k]); oneBand(D.CULTURES[k].engagement); });
+  function musicOf(ev) { var cu = culture(ev); if (!cu) return []; var ok = cu.music.map(function (m) { return m[0]; }); var m = (Array.isArray(ev.music) ? ev.music : cu.musicDefault).map(function (x) { return x === 'liveMusic' ? 'singer' : x; }).filter(function (x, i, a) { return ok.indexOf(x) >= 0 && a.indexOf(x) === i; }); return m; }
   function typeName(ev) { var cu = culture(ev); return cu ? cu.name : typeOf(ev && ev.type).name; }
   function categoriesFor(ev) {
     var t = typeOf(ev.type);
@@ -93,6 +104,7 @@
     var cu = culture(ev);
     if (cu) list = list.filter(function (c) { return MUSIC_CATS.indexOf(c) < 0 || (ev.priorities || []).indexOf(c) >= 0 && musicOf(ev).indexOf(c) >= 0; }).concat(musicOf(ev), cu.add);
     list = list.concat((ev.include || []).filter(function (c) { return D.CATEGORIES[c]; }));   /* an add-on she chose is always a line */
+    if (ev.type === 'wedding') list = list.map(function (c) { return c === 'liveMusic' ? 'singer' : c; });   /* at a wedding, live music is the singer and band line */
     var seen = {};
     return list.filter(function (c) { if (seen[c] || (ev.exclude || []).indexOf(c) >= 0) return false; seen[c] = 1; return true; });
   }
