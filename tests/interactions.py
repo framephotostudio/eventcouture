@@ -54,7 +54,7 @@ with sync_playwright() as p:
         t = pg.inner_text('#tab'); check(all(x in t for x in ['Ava Stone', 'Ben', 'Cara', 'Dee']), n + ': guests not added')
         pg.fill('#cn', 'Maya'); pg.select_option('#cr', index=2); pg.click('#addc button'); pg.wait_for_timeout(250)
         check('Maya' in pg.inner_text('#tab'), n + ': co-host not added')
-        pg.select_option('[data-st] >> nth=0', 'yes'); pg.wait_for_timeout(250); pg.click('#seat'); pg.wait_for_timeout(250); check('Table 1' in pg.inner_text('#tab'), n + ': seating not done')
+        pg.select_option('[data-st] >> nth=0', 'yes'); pg.wait_for_timeout(250); pg.click('#stAuto'); pg.wait_for_timeout(250); check('Table 1' in pg.inner_text('#tab'), n + ': seating not done')
         # cost splitting
         go(base + '/invite'); t = pg.inner_text('#tab')
         check('Cost splitting' in t, n + ': splitting missing when the host chose splitting')

@@ -59,7 +59,7 @@ module.exports = function ideas(ctx) {
     const o = occ(t), looks = byType[t], tot = totals(o, NAT), n = looks.length;
     const title = `${n} ${plural.replace(/(^|\s)\S/g, c => c.toUpperCase()).replace(' And ', ' and ')} and Ideas (${YEAR}) | Event Couture`;
     const desc = `${n} ${plural} with colors, decor and a typical budget for each. ${hook} Tap any look to plan it free.`;
-    const h1 = `${n} ${plural} you can plan in one tap`;
+    const h1 = `${n} ${plural} ready to plan`;
     const cards = looks.map((p, i) => `<figure class="ti-card"><div class="ph"><img src="../../img/inspo/sm/${p.id}.jpg" alt="${esc(p.alt || p.name)}, AI-generated inspiration" loading="${i < 2 ? 'eager' : 'lazy'}"><span class="no">${i + 1}</span></div><div class="in"><h3>${esc(p.name)}</h3><div class="ti-sw" aria-label="Colors">${(p.palette || []).slice(0, 5).map(c => `<i style="background:${esc(c)}"></i>`).join('')}</div><p class="small">${esc(p.mood || '')}</p><ul>${(p.decor || []).slice(0, 3).map(d => `<li>${esc(d)}</li>`).join('')}</ul><a class="btn small primary" href="../../#/start/${esc(t)}/-/${esc(p.id)}">Plan this look</a></div></figure>`).join('');
     const items = [
       [`How much does ${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name.toLowerCase()} cost?`, `For about ${o.guests} guests in an average US city, plan on around ${money(tot[0], NAT)} for a budget-friendly version, ${money(tot[1], NAT)} for mid-range and ${money(tot[2], NAT)} for full luxury, including tax and tips. Prices change a lot by city.`],
@@ -82,7 +82,7 @@ module.exports = function ideas(ctx) {
     write(`ideas/${slug}/index.html`, html.replace(`<div class="stack"><h1>${esc(h1)}</h1></div>`, ''));
     urls.push(`${BASE}ideas/${slug}/`); out.push('ideas/' + slug);
   });
-  const idx = `${CSS}<section class="ti-hero"><img src="../img/inspo/${byType.wedding[0].id}.jpg" alt="" fetchpriority="high"><div class="in"><span class="ti-kick">Theme ideas · ${YEAR}</span><h1>Party and wedding theme ideas</h1><p>${INSPO.length} looks with their colors, decor and budgets. Pick one and plan it in one tap.</p></div></section>${tiles('', '')}`;
+  const idx = `${CSS}<section class="ti-hero"><img src="../img/inspo/${byType.wedding[0].id}.jpg" alt="" fetchpriority="high"><div class="in"><span class="ti-kick">Theme ideas · ${YEAR}</span><h1>Party and wedding theme ideas</h1><p>${INSPO.length} looks with their colors, decor and budgets. Pick one and start planning it, free.</p></div></section>${tiles('', '')}`;
   write('ideas/index.html', page({ rel: 1, title: `Party and Wedding Theme Ideas (${YEAR}) | Event Couture`, desc: `Theme ideas for weddings, quinceañeras, sweet 16s, birthdays, baby and bridal showers and more, each with its colors, decor and a typical budget.`, h1: 'Party and wedding theme ideas', body: idx, canonical: `${BASE}ideas/`, crumb: 'Theme ideas', image: `${BASE}img/inspo/${byType.wedding[0].id}.jpg` }).replace('<div class="stack"><h1>Party and wedding theme ideas</h1></div>', '').replace(/src="\.\.\/\.\.\/img/g, 'src="../img'));
   urls.push(`${BASE}ideas/`);
   return out;

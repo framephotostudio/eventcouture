@@ -70,7 +70,7 @@ def run(p, name, viewport, scheme):
             for n in ['Ava', 'Bri', 'Cam']:
                 page.fill('#gn', n); page.fill('#gp', '1'); page.click('#addg button')
             page.select_option('[data-st]', 'yes')
-            page.click('#seat')
+            page.click('#stAuto')
         if t == 'votes':
             page.fill('#pq', 'Which date works best?'); page.fill('#po', 'Dec 19\nDec 20'); page.click('#addp button')
             page.click('[data-vote="0:0"]')

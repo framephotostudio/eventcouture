@@ -105,7 +105,7 @@ module.exports = function compare(ctx) {
     const body = `${CSS}
 <section class="cv-hero"><img src="../../img/inspo/${s.pic}.jpg" alt="" fetchpriority="high"><div class="in"><h1 class="cv-vs">Event Couture <i>VS</i> ${esc(s.name)}</h1><p>${esc(s.tag)}.</p></div></section>
 <p class="lead">${esc(s.intro)} Here's how it stacks up against Event Couture, the AI planner that turns one inspiration photo into a complete event plan.</p>
-<div class="cv-stats"><div class="cv-stat"><b>6</b><span>looks to choose from</span></div><div class="cv-stat"><b>${nCities}</b><span>cities priced</span></div><div class="cv-stat"><b>${nCult}</b><span>cultural traditions</span></div><div class="cv-stat"><b>$0</b><span>to start planning</span></div></div>
+<div class="cv-stats"><div class="cv-stat"><b>6</b><span>looks for every plan</span></div><div class="cv-stat"><b>${nCities}</b><span>cities priced</span></div><div class="cv-stat"><b>${nCult}</b><span>cultural traditions</span></div><div class="cv-stat"><b>$0</b><span>to start planning</span></div></div>
 <h2>One photo in, a whole event out</h2>
 <div class="cv-looks"><div class="cv-step"><b>Drop in a photo you love</b><span>Get three looks (and three more, free), pick one, and Event Couture prices every line for your city and builds vendor packages you can compare.</span></div>${LOOKS.map((p, i) => `<figure><img src="../../img/inspo/${p}.jpg" alt="Sample look ${i + 1}" loading="lazy"><figcaption>Look ${i + 1}</figcaption></figure>`).join('')}</div>
 <div class="cta"><a class="btn primary" href="../../#/new/1">Try it free with your photo</a><a class="btn ghost" href="../../#/sample/4">See a finished sample plan</a></div>

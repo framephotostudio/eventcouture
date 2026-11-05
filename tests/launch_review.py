@@ -30,7 +30,7 @@ with sync_playwright() as p:
         go(pg, base + '/guests'); pg.click('#bulk'); pg.fill('.sheet #names', '\n'.join('G%d' % i for i in range(30))); pg.click('.sheet #ok'); pg.wait_for_timeout(300)
         check('waitlist' not in pg.inner_text('.toast') if pg.query_selector('.toast') else True, t + '#1 upgrade added no places')
         check(('30 of 75 places' in pg.inner_text('#tab')) if paid else ('30' in pg.inner_text('#tab')), t + '#1 places: ' + pg.inner_text('#tab')[:80])
-        pg.select_option('[data-st] >> nth=0', 'yes'); pg.select_option('[data-st] >> nth=1', 'yes'); pg.wait_for_timeout(150); pg.click('#seat'); pg.wait_for_timeout(200)
+        pg.select_option('[data-st] >> nth=0', 'yes'); pg.select_option('[data-st] >> nth=1', 'yes'); pg.wait_for_timeout(150); pg.click('#stAuto'); pg.wait_for_timeout(200)
         check('Table 1' in pg.inner_text('#tab') and 'Table 2' not in pg.inner_text('#tab'), t + '#13 seating starts at table 1')
         base2 = plan(pg, keep=False); go(pg, base2 + '/extras'); check(pg.query_selector('#del') is not None, t + '#2 no delete for unkept plan')
         base3 = plan(pg, budget=4000); go(pg, base3); pg.click('#cmpLevels'); pg.click('.sheet [data-pick=U]'); pg.wait_for_timeout(300); ov = pg.inner_text('#tab')
