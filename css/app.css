@@ -1131,3 +1131,9 @@ footer.site nav.foot-guides { gap: 6px 14px; font-size: .8rem; margin-top: 4px; 
 
 .psteps .ps-go { color: inherit; text-decoration: none; padding: 0; background: none; border: 0; font: inherit; text-align: left; cursor: pointer; }
 .psteps .ps-go:hover b, .psteps .ps-go:focus-visible b { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Venue price tag: dollar signs and whether it fits her budget (an estimate) */
+.badge.fit-ok { color: var(--good); border-color: currentColor; }
+.badge.fit-over { color: var(--warn); border-color: currentColor; }
+.badge.fit-est { color: var(--muted); }
+.pkg-cmp .badge { white-space: normal; max-width: 100%; line-height: 1.3; border-radius: 12px; }   /* long badges wrap inside the narrow package columns on phones */

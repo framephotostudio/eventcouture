@@ -58,6 +58,12 @@ with sync_playwright() as p:
             if kind0=='low': check(n, len(vs)>=2 and not any(x in ' '.join(vs[:2]) for x in LUX), '$25,000 for 150: no 5-star hotel first')
             if kind0=='tight': check(n, len(vs)>=2 and any(x in vs[0] for x in FOUR) and any(x in vs[1] for x in FOUR), f'$55,000 for 150: packages 1 and 2 use nice 4-star hotels that fit')
             if kind0=='indoor': check(n, len(vs)>=1 and not any('Hotel' in (v or '') or 'Hilton' in (v or '') or 'Four Seasons' in (v or '') for v in vs), 'event venue packages have no hotels')
+            tbl = pg.inner_text('.pkg-cmp')
+            if kind0=='tight': check(n, 'Fits your budget' in tbl and 'Above your budget' in tbl, 'price tags: 4-star fits, Four Seasons is above the budget')
+            if kind0=='ballroom': check(n, '$$$$' in tbl and 'your budget' not in tbl, 'no budget: dollar signs only')
+            if kind0 in ('tight','ballroom'):
+                el = pg.locator('.pkg-cmp tr', has_text='Venue').first if pg.locator('.pkg-cmp tr', has_text='Venue').count() else pg.locator('.pkg-cmp')
+                el.scroll_into_view_if_needed(); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/{n}-{kind0}-tags.png')
             check(n, 'Airport' not in ' '.join(vs) and 'LAX' not in ' '.join(vs), 'no airport hotels picked')
             pg.screenshot(path=f'{OUT}/{n}-{kind0}-packages.png'); check(n, 'starting with Beverly Hills' in txt, 'venue area line says Beverly Hills first')
             pg.screenshot(path=f'{OUT}/{n}-{kind}-packages.png', full_page=False)
