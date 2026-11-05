@@ -869,7 +869,7 @@
         areaField(draft.city, draft.area || '', ['area', 'areaOther']) +
         '<label class="field"><span>Guests invited <span class="muted small">(count plus-ones and yourself)</span></span><input class="input num" type="number" min="1" max="20000" id="guests" value="' + draft.guests + '"></label>' +
         '<label class="field"><span id="budgetLbl">Your total budget (' + E.currency() + ')</span><input class="input num" type="number" min="0" step="50" id="budget" value="' + (draft.budget || '') + '" placeholder="e.g. 25000"><span class="small muted">We build your plan to fit it, then show a lighter and a more lavish option beside it. Not sure yet? Leave it blank to see typical prices.</span></label>' +
-        '</div>' + '<div class="stack" id="musicBox"' + (draft.culture && D.CULTURES[draft.culture] ? '' : ' hidden') + '>' + musicChips(draft) + '</div>' + '<div class="stack"><h3 id="whereLbl">Where is it? <span class="muted small" style="font-family:var(--body)">(required)</span></h3><span class="muted small">Not sure yet? Pick it and we\u2019ll compare every option for you.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + ((draft.settingChoices || []).length ? draft.settingChoices.indexOf(st.id) >= 0 : draft.setting === st.id && !draft.settingOpen && !(st.id === 'indoor' && draft.venueKind === 'ballroom')) + '">' + esc(st.name) + '</button>' + (st.id === 'indoor' ? '<button type="button" class="chip" data-v="ballroom" aria-pressed="' + ((draft.settingChoices || []).length ? draft.settingChoices.indexOf('ballroom') >= 0 : draft.setting === 'indoor' && (draft.venueKind === 'ballroom' || draft.venueKind === 'both') && !draft.settingOpen) + '">Hotel ballroom or banquet hall</button>' : ''); }).join('') + '<button type="button" class="chip" data-v="unsure" aria-pressed="' + !!(draft.settingOpen && !(draft.settingChoices || []).length) + '">Not sure yet</button>' + '</div>' +
+        '</div>' + '<div class="stack" id="musicBox"' + (draft.culture && D.CULTURES[draft.culture] ? '' : ' hidden') + '>' + musicChips(draft) + '</div>' + '<div class="stack"><h3 id="whereLbl">Where is it? <span class="muted small" style="font-family:var(--body)">(required)</span></h3><span class="muted small">Not sure yet? Pick it and we\u2019ll compare every option for you.</span><div class="chips" id="setting" role="group" aria-labelledby="whereLbl">' + D.SETTINGS.map(function (st) { return '<button type="button" class="chip" data-v="' + st.id + '" aria-pressed="' + ((draft.settingChoices || []).length ? draft.settingChoices.indexOf(st.id) >= 0 : draft.setting === st.id && !draft.settingOpen && !(st.id === 'indoor' && draft.venueKind === 'ballroom')) + '">' + esc(st.name) + '</button>' + (st.id === 'indoor' ? '<button type="button" class="chip" data-v="ballroom" aria-pressed="' + ((draft.settingChoices || []).length ? draft.settingChoices.indexOf('ballroom') >= 0 : draft.setting === 'indoor' && (draft.venueKind === 'ballroom' || draft.venueKind === 'both') && !draft.settingOpen) + '">Hotel ballroom</button>' : ''); }).join('') + '<button type="button" class="chip" data-v="unsure" aria-pressed="' + !!(draft.settingOpen && !(draft.settingChoices || []).length) + '">Not sure yet</button>' + '</div>' +
         '<div class="row wiz-checks"><label class="row small"><input type="checkbox" id="kids"' + (draft.kids ? ' checked' : '') + '> Children will attend</label><label class="row small"><input type="checkbox" id="alc"' + ((draft.alcoholTouched ? draft.alcohol : defaultAlcohol(draft.type, draft.inspiration && draft.inspiration.text)) !== 'none' ? ' checked' : '') + '> Serve alcohol</label></div></div>' +
         '<details class="more"' + (draft.date || draft.timeTouched || draft.alcoholTouched || draft.mustsTouched || draft.payer && draft.payer !== 'host' ? ' open' : '') + '><summary class="link">More details: date, time, drinks, must-haves (optional)</summary><div class="stack" style="margin-top:12px">' +
         '<div class="panel stack"><label class="field"><span>Name your event</span><input class="input" id="name" maxlength="100" value="' + esc(draft.name) + '" placeholder="Name it, or tap an idea below"></label><span class="muted small">Ideas from your inspiration</span><div class="chips" id="names"></div><span class="muted small">Your event saves under this name in My events, so you can come back and finish anytime.</span></div>' +
@@ -1158,7 +1158,7 @@
       });
     });
     var wh = $('#where'); if (wh) wh.addEventListener('click', function () {
-      sheet('<h3>Where is it?</h3><p class="muted">Prices, venues, checklist and timeline update to match.</p><div class="stack">' + D.SETTINGS.concat([{ id: 'ballroom', name: 'Hotel ballroom or banquet hall (catering included)' }]).map(function (st) { return '<button class="btn ' + ((st.id === 'ballroom' ? ev.venueKind === 'ballroom' : st.id === (ev.setting || 'indoor') && !(st.id === 'indoor' && ev.venueKind === 'ballroom')) ? 'gold' : 'ghost') + ' block" data-set="' + st.id + '"' + (tooBigFor(st.id, ev.guests) ? ' aria-disabled="true" style="opacity:.5"' : '') + '>' + esc(st.name) + (tooBigFor(st.id, ev.guests) ? ' <span class="small">(up to ' + tooBigFor(st.id, ev.guests) + ')</span>' : '') + '</button>'; }).join('') + '</div><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
+      sheet('<h3>Where is it?</h3><p class="muted">Prices, venues, checklist and timeline update to match.</p><div class="stack">' + D.SETTINGS.concat([{ id: 'ballroom', name: 'Hotel ballroom (catering included)' }]).map(function (st) { return '<button class="btn ' + ((st.id === 'ballroom' ? ev.venueKind === 'ballroom' : st.id === (ev.setting || 'indoor') && !(st.id === 'indoor' && ev.venueKind === 'ballroom')) ? 'gold' : 'ghost') + ' block" data-set="' + st.id + '"' + (tooBigFor(st.id, ev.guests) ? ' aria-disabled="true" style="opacity:.5"' : '') + '>' + esc(st.name) + (tooBigFor(st.id, ev.guests) ? ' <span class="small">(up to ' + tooBigFor(st.id, ev.guests) + ')</span>' : '') + '</button>'; }).join('') + '</div><button class="btn ghost block" data-close>Cancel</button>', function (el, close) {
         el.addEventListener('click', function (e) { var bt = e.target.closest('[data-set]'); if (!bt) return; var sv = bt.dataset.set === 'ballroom' ? 'indoor' : bt.dataset.set; var lim = tooBigFor(sv, ev.guests); if (lim) return toast(tooBigText(sv, ev.guests, lim)); var bf = snap(ev); ev.setting = sv; ev.venueKind = bt.dataset.set === 'ballroom' ? 'ballroom' : ''; ev.settingOpen = false; delete ev.settingChoices; if (ev.setting === 'restaurant' && ev.hours > 3) ev.hours = 2; save(); close(); planView(ev, tab); undoToast(ev, bf, 'Updated for ' + settingName(ev).toLowerCase(), function () { planView(ev, tab); }); });
       });
     });
@@ -1170,9 +1170,9 @@
     var g = ev.guests || 0;
     var opts = [['restaurant', 'Restaurant, ordering from the menu', 'No venue, catering or setup; simplest and often cheapest.', 'Table decor only; group size limits.', g <= 40],
       ['privateRoom', 'Private room at a restaurant', 'Food, service and a room in one booking.', 'Food and drink minimums and a set end time.', g <= 150],
-      ['indoor', 'Event venue', 'Full control of decor, music and dancing.', 'You book catering, rentals and setup.', true],
+      ['indoor', 'Event venue or banquet hall', 'Full control of decor, music and dancing; many banquet halls cater in-house.', 'You book catering, rentals and setup.', true],
       ['outdoor', 'Outdoors', 'Big, beautiful space and great photos.', 'Needs a tent, restrooms, power and a rain plan.', true],
-      ['ballroom', 'Hotel ballroom or banquet hall', 'Food, staff, tables, chairs and linens come in one package; hotels add rooms for guests.', 'Set catering menus and food-and-drink minimums.', !!(ev.settingChoices || []).length],
+      ['ballroom', 'Hotel ballroom', 'Food, staff, tables, chairs and linens come in one package, and guests can book rooms upstairs.', 'Set catering menus and food-and-drink minimums.', !!(ev.settingChoices || []).length],
       ['home', 'At home', 'No venue cost and the most personal.', 'Setup, cleanup and parking fall on you.', g <= 150]].filter(function (o) { return o[4] && (!(ev.settingChoices || []).length || ev.settingChoices.indexOf(o[0]) >= 0); });
     var rows = opts.map(function (o) { var t = Object.assign({}, ev, { setting: o[0] === 'ballroom' ? 'indoor' : o[0], venueKind: o[0] === 'ballroom' ? 'ballroom' : '', shortlist: o[0] === 'ballroom' && ev.venueKind !== 'ballroom' ? (ev.shortlist || []).filter(function (x) { return x.cat !== 'venue'; }) : ev.shortlist });   /* a venue she saved for another kind of place doesn't price the hotel */ return { id: o[0], name: o[1], pro: o[2], con: o[3], total: E.budget(t, t.tier).total }; }).sort(function (a, b) { return a.total - b.total; });
     return '<div class="panel stack where-compare"><h3>Where should you host it?</h3><p class="muted small">' + ((ev.settingChoices || []).length ? 'You picked more than one, so here is this same plan priced in each. Your plan is priced for ' + ({ indoor: 'an event venue', ballroom: 'a hotel ballroom', outdoor: 'outdoors', home: 'your home', privateRoom: 'a private room' }[ev.settingChoices[0]] || 'an event venue') + ' until you choose.' : 'You haven\u2019t decided yet, so here is this same plan priced in each kind of place. Your plan uses an event venue until you choose.') + '</p><div class="list">' +
@@ -1185,7 +1185,7 @@
   var SETTING_MAX = { restaurant: 40, privateRoom: 150, home: 150 };
   function tooBigFor(setting, guests) { var m = SETTING_MAX[setting]; return m && guests > m ? m : 0; }
   function tooBigText(setting, guests, m) { return { restaurant: 'Ordering from the menu works for groups up to about 40', privateRoom: 'Private dining rooms hold up to about 150', home: 'Home events work for up to about 150 people' }[setting] + '. Choose an event venue or outdoors for ' + guests.toLocaleString('en-US') + '.'; }
-  function settingName(ev) { if (ev.settingOpen) return (ev.settingChoices || []).length ? 'Deciding' : 'Not decided yet'; if (ev.venueKind === 'ballroom' && ev.setting === 'indoor') return 'Hotel ballroom or banquet hall'; if (ev.venueKind === 'both' && ev.setting === 'indoor') return 'Event venue or hotel ballroom'; var st = D.SETTINGS.find(function (x) { return x.id === (ev.setting || 'indoor'); }); return st ? st.short : 'Event venue'; }
+  function settingName(ev) { if (ev.settingOpen) return (ev.settingChoices || []).length ? 'Deciding' : 'Not decided yet'; if (ev.venueKind === 'ballroom' && ev.setting === 'indoor') return 'Hotel ballroom'; if (ev.venueKind === 'both' && ev.setting === 'indoor') return 'Event venue or hotel ballroom'; var st = D.SETTINGS.find(function (x) { return x.id === (ev.setting || 'indoor'); }); return st ? st.short : 'Event venue'; }
 
   function lockSample(ev) { if (ev.sample) { toast('This is a sample. Start your own plan to make changes.'); return true; } return false; }
 
@@ -1760,7 +1760,8 @@
   var PKG_K = 0;   /* which package is being built */
   function themeVenue(ev, types) {
     if (ev.venueKind === 'both') { var wantBall = PKG_K % 2 === 1, own = themeVenue(Object.assign({}, ev, { venueKind: '' }), types), ownBall = /ballroom|hotel/i.test(own); if (wantBall === ownBall) return own; if (wantBall) return themeVenue(Object.assign({}, ev, { venueKind: 'ballroom' }), types); return themeVenue(Object.assign({}, ev, { venueKind: '' }), types.filter(function (v) { return !/ballroom|hotel/i.test(v); })) || own; }   /* one package with each */
-    if (ev.venueKind === 'ballroom') { var hb = types.find(function (v) { return /ballroom|banquet/i.test(v); }) || types.find(function (v) { return /hotel/i.test(v); }); return hb || 'Hotel ballroom'; }
+    if (ev.venueKind === 'ballroom') return 'Hotel ballroom';   /* a hotel ballroom plan always searches hotels */
+    if (ev.setting === 'indoor') { types = types.map(function (v) { return /hotel ballroom/i.test(v) ? 'Banquet hall' : v; }).filter(function (v, i, a) { return !/hotel/i.test(v) && a.indexOf(v) === i; }); if (!types.length) types = ['Banquet hall']; }   /* an event venue plan: venues and banquet halls, never a hotel */
     var c = ev.concept || {}, t = [c.name, c.styleName, c.mood, (c.decor || []).join(' '), (c.outline || []).join(' '), ev.inspiration && ev.inspiration.text].join(' ').toLowerCase();
     var best = types[0], bs = 0;
     types.forEach(function (v, i) { var sc = VENUE_CUES.reduce(function (a, cue) { return a + (cue[0].test(t) && cue[1].test(v) ? (t.match(new RegExp(cue[0].source, 'g')) || []).length : 0); }, 0) - i * 0.01; if (sc > bs) { bs = sc; best = v; } });
@@ -1775,7 +1776,9 @@
       .filter(function (r, i, a) { return a.findIndex(function (o) { return o.id === r.id; }) === i; });   /* one person listed twice (top in their state, and everywhere) shows once */
   }
   function pkgSearch(ev, c) {
-    if (c.kind === 'venue') { var vr = c.cat === 'venue' && ev.setting === 'indoor' ? recFor(ev, 'venue') : []; return findPlaces(ev, { query: c.q, level: c.lvl, city: (ev.area ? ev.area + ', ' : '') + ev.city }).catch(function (e) { if (vr.length) return []; throw e; }).then(function (l) { return vr.concat(l.filter(function (x) { return !vr.some(function (r) { return E.lc(r.name) === E.lc(x.name); }); })); }); }   /* a recommended venue leads, for an event-venue plan */
+    if (c.kind === 'venue') { var vr = c.cat === 'venue' && ev.setting === 'indoor' && !/hotel/i.test(c.type || '') ? recFor(ev, 'venue') : [], wantHotel = ev.setting === 'indoor' ? /hotel/i.test(c.type || '') : null, vc = venueCity(ev);
+      var whole = function (l) { return l.length >= 3 || vc === ev.city ? l : findPlaces(ev, { query: c.q, level: c.lvl, city: ev.city }).catch(function () { return []; }).then(function (m) { return l.concat(m.filter(function (x) { return !l.some(function (y) { return y.id === x.id; }); })); }); };   /* too few in the nicer area: add the rest of the city */
+      return findPlaces(ev, { query: c.q, level: c.lvl, city: vc }).catch(function (e) { if (vr.length || vc !== ev.city) return []; throw e; }).then(whole).then(function (l) { if (!l.length && !vr.length) throw new Error('none'); l = luxRank(ev, l, wantHotel); return vr.concat(l.filter(function (x) { return !vr.some(function (r) { return E.lc(r.name) === E.lc(x.name); }); })); }); }   /* a recommended venue leads, for an event-venue plan */
     var ask = function (q) { return findPlaces(ev, { query: q, level: c.lvl, kind: 'vendor', cat: c.cat, hint: occasionHint(ev), city: ev.city }).catch(function () { return []; }); };
     var backups = (PKG_FALLBACK[c.cat] || []).concat([VENDOR_SEARCH[c.cat] || '']).filter(function (q, i, a) { return q && q !== c.q && a.indexOf(q) === i; }), got = [];
     var add = function (list) { var seen = got.map(function (x) { return x.id; }); got = got.concat(rankLine(ev, c.cat, list).filter(function (x) { return seen.indexOf(x.id) < 0; })); };
@@ -1938,7 +1941,7 @@
   var HOWTO_PKG = '<ol class="howto"><li><b>Create</b> your package: a top-rated pick for everything, in one tap</li><li><b>Change</b> anything, or make a second package to compare</li><li><b>Book</b>: contact them and tap I booked it</li></ol>';
   var AUTO_PKG = false, PKG_BUSY = false;   /* PKG_BUSY: a second tap while a package is being made is ignored */
   function AREA_LINE(ev) { if (ev.setting === 'home' && !ev.settingOpen) return '';   /* at home: no venue to place */
-    return '<p class="small pkg-area">Venue area: <b>' + esc(ev.area || 'Anywhere in ' + ev.city.split(',')[0]) + '</b>' + (ev.sample ? '' : ' <button class="link small" id="pkgArea">Change area</button>') + '</p>'; }
+    return '<p class="small pkg-area">Venue area: <b>' + esc(ev.area || 'Anywhere in ' + ev.city.split(',')[0]) + '</b>' + (!ev.area && (D.UPSCALE_AREAS || {})[ev.city] ? ', starting with ' + esc(D.UPSCALE_AREAS[ev.city]) : '') + (ev.sample ? '' : ' <button class="link small" id="pkgArea">Change area</button>') + '</p>'; }
   function packagePanel(ev, b, more) {
     var cats = pkgCats(ev, b), pks = ev.packages || [];
     if (!cats.length) return bookingsPanel(ev, b);
@@ -2456,10 +2459,10 @@
   }
   /* Turn a venue type into a search that finds polished places at the plan's level, never budget chains. */
   var VENUE_SEARCH = {
-    'Hotel ballroom': 'hotel ballroom or banquet hall', 'Hotel tea room': 'hotel afternoon tea room', 'Private dining room': 'restaurant private dining room',
+    'Hotel ballroom': 'hotel ballroom', 'Hotel tea room': 'hotel afternoon tea room', 'Private dining room': 'restaurant private dining room',
     'Rooftop restaurant': 'rooftop restaurant', 'Wine bar with a private space': 'wine bar private event space', 'Event loft': 'event loft venue',
     'Garden venue': 'garden event venue', 'Tea room or bistro': 'tea room', 'Community or clubhouse room': 'clubhouse event room', 'Rooftop lounge': 'rooftop lounge private events',
-    'Restaurant buyout': 'restaurant private events buyout', 'Banquet hall': 'banquet hall', 'Museum or gallery': 'museum event venue', 'Historic mansion': 'historic mansion event venue',
+    'Restaurant buyout': 'restaurant private events buyout', 'Banquet hall': 'banquet hall event venue', 'Museum or gallery': 'museum event venue', 'Historic mansion': 'historic mansion event venue',
     'Estate or garden venue': 'estate wedding venue', 'Vineyard or barn': 'vineyard wedding venue', 'Rooftop with skyline views': 'rooftop event venue skyline view',
     'Upscale brunch or lunch spot': 'brunch restaurant', 'Park pavilion or picnic area': 'park pavilion rental', 'Event lawn or estate grounds': 'outdoor event lawn venue', 'Rooftop terrace': 'rooftop terrace event space', 'Beach or waterfront venue': 'waterfront event venue', 'Kids party venue or play space': 'kids party venue', 'Family-friendly restaurant for kids parties': 'family friendly restaurant for kids birthday parties', 'Pizza or party restaurant with a party room': 'kids birthday party restaurant with party room', 'Hotel brunch or afternoon tea': 'hotel brunch afternoon tea', 'Garden cafe or patio': 'garden cafe patio restaurant', 'Cocktail lounge or speakeasy': 'cocktail lounge private room', 'Steakhouse or chophouse': 'steakhouse', 'Wine bar or bistro': 'wine bar bistro', 'Trendy dinner spot with a large table': 'trendy restaurant large groups'
   };
@@ -2513,6 +2516,26 @@
   function kidsParty(ev) { return !!(ev && (ev.type === 'kids-birthday' || ev.kids && /birthday/.test(ev.type || ''))); }
   var ADULT_PLACE = /\b(bar|pub|tavern|lounge|brewery|brewing|taproom|saloon|cocktail|speakeasy|wine|winery|club|hookah|cigar|ice house|beer)\b/i;
   function kidsOk(ev, list) { return kidsParty(ev) ? list.filter(function (p) { return !p.bar && !ADULT_PLACE.test(p.name || ''); }) : list; }
+  /* Where venues are searched: her area if she picked one; otherwise the city's most polished area first. */
+  function venueCity(ev) { var up = !ev.area && (D.UPSCALE_AREAS || {})[ev.city]; return (ev.area || up ? (ev.area || up) + ', ' : '') + ev.city; }
+  /* Nicer venues first: luxury brands and top price levels move up; airport, convention and budget hotels move down.
+     hotel: a hotel ballroom plan wants hotels first; an event venue plan wants venues and banquet halls first. */
+  var NOT_FANCY = /airport|\bLAX\b|\bIAH\b|\bDFW\b|\bJFK\b|\bSFO\b|o\u2019?'?hare|convention cent|\bexpress\b|\bmotel\b|\bby the airport/i;
+  function luxRank(ev, list, hotel) {
+    var up = String((D.UPSCALE_AREAS || {})[ev.city] || ev.area || '').split(/ and |, /).map(function (w) { return w.replace(/^the /i, '').trim().toLowerCase(); }).filter(Boolean);
+    var score = function (p) {
+      var n = String(p.name || ''), ad = String(p.address || '').toLowerCase(), pl = String(p.priceLevel || p.price || ''), m = 1;
+      m *= /VERY_EXPENSIVE/.test(pl) ? 1.3 : /(^|_)EXPENSIVE$/.test(pl) ? 1.12 : /INEXPENSIVE/.test(pl) ? 0.8 : 1;
+      m *= E.HOTEL_LUX5.test(n) ? 1.45 : E.HOTEL_MID.test(n) ? 0.7 : E.HOTEL_LUX4.test(n) ? 1.05 : 1;
+      if (NOT_FANCY.test(n + ' ' + ad)) m *= 0.55;
+      if (up.some(function (w) { return ad.indexOf(w) >= 0; })) m *= 1.15;
+      var isHotel = E.hotelClass(n) !== 'hall';
+      if (hotel != null) m *= isHotel === hotel ? 1.6 : 0.5;   /* the right kind of place before the other kind */
+      return (p.rating || 4.3) * Math.log10(10 + (p.reviews || 0)) * m;
+    };
+    if (hotel != null) { var right = list.filter(function (p) { return p.rec || (E.hotelClass(p.name) !== 'hall') === hotel; }); if (right.length) list = right; }   /* a hotel ballroom plan shows only hotels; an event venue plan never shows a hotel */
+    return list.map(function (p, i) { return { p: p, s: p.rec ? 1e9 - i : score(p) }; }).sort(function (a, b) { return b.s - a.s; }).map(function (x) { return x.p; });
+  }
   function findPlaces(ev, body) {
     var key = JSON.stringify(['v4', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
     if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(kidsOk(ev, hit.places));
@@ -2526,8 +2549,8 @@
     $$('[data-live]').forEach(function (btn) { btn.addEventListener('click', function () {
       $$('.live-res').forEach(function (x) { x.innerHTML = ''; }); ev.lastVenue = btn.dataset.live;
       var box = document.querySelector('.live-res[data-for="' + btn.dataset.live.replace(/"/g, '') + '"]') || $('#live'); box.innerHTML = '<p class="muted small" style="padding:8px 0">Finding venues\u2026</p>';
-      findPlaces(ev, { query: btn.dataset.q || btn.dataset.live, level: btn.dataset.level || 'S', city: (ev.area ? ev.area + ', ' : '') + ev.city })
-        .then(function (list) {
+      findPlaces(ev, { query: btn.dataset.q || btn.dataset.live, level: btn.dataset.level || 'S', city: venueCity(ev) })
+        .then(function (list) { list = luxRank(ev, list, ev.setting === 'indoor' ? /hotel/i.test(btn.dataset.live) : null);
           if (!list.length) { box.innerHTML = '<p class="muted">No well-reviewed matches nearby for this type. Try another venue type, or switch to a different spending level.</p>'; return; }
           var placesAll = list.length; list = cut(list, 3, ev);
           var ids = list.map(function (p) { return p.id; });

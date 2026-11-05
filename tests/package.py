@@ -104,7 +104,7 @@ with sync_playwright() as p:
         if n=='desktop':
             with pg.expect_download() as dl: pg.click('[data-pksum="pdf"]')
             pth=dl.value.path(); check(n, open(pth,'rb').read(5)==b'%PDF-' and dl.value.suggested_filename.endswith('-package.pdf'), 'package PDF downloads'); import shutil; shutil.copy(pth, f'{OUT}/package.pdf')
-        pg.goto(U+base+'/plan'); pg.wait_for_timeout(400); t=pg.inner_text('#tab'); check(n, 'Booked:' in t and 'Front-runner:' in t, 'finished plan shows the package')
+        pg.goto(U+base+'/plan'); pg.wait_for_timeout(400); t=pg.inner_text('#tab'); check(n, 'Booked:' in t and ('Front-runner:' in t or 'In your package:' in t), 'finished plan shows the package')
         # remove package 1
         pg.goto(U+base+'/budget'); pg.wait_for_timeout(300); pg.click('[data-pkback]'); pg.wait_for_timeout(300); chosen_items=ev()['packages'][ev()['pkgChosen']]['items']; pg.click('[data-pkdel="0"]'); pg.wait_for_timeout(300); d=ev()
         check(n, len(d['packages'])==2 and d['packages'][d['pkgChosen']]['items']==chosen_items, 'removing the other package keeps the chosen one')
