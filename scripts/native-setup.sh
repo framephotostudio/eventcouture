@@ -12,11 +12,14 @@ if [ "$PLATFORM" = "ios" ]; then
   setstr() { pb "Delete :$1"; pb "Add :$1 string $2"; }
   setstr NSPhotoLibraryUsageDescription "Event Couture opens the inspiration photos you choose so it can plan your event around them. Photos stay on your phone."
   setstr NSCameraUsageDescription "Event Couture can use the camera so you can snap inspiration, like a cake or a centerpiece you love. Photos stay on your phone."
+  setstr NSCalendarsWriteOnlyAccessUsageDescription "Event Couture adds your event date to your calendar when you tap Add to Calendar."
+  setstr NSCalendarsUsageDescription "Event Couture adds your event date to your calendar when you tap Add to Calendar."
   setstr CFBundleDisplayName "Event Couture"
   pb "Delete :ITSAppUsesNonExemptEncryption"; pb "Add :ITSAppUsesNonExemptEncryption bool false"
   pb "Delete :UIRequiresFullScreen"; pb "Add :UIRequiresFullScreen bool true"
   pb "Delete :UISupportedInterfaceOrientations"; pb "Add :UISupportedInterfaceOrientations array"; pb "Add :UISupportedInterfaceOrientations:0 string UIInterfaceOrientationPortrait"
-  pb "Delete :UIStatusBarStyle"; pb "Add :UIStatusBarStyle string UIStatusBarStyleDarkContent"
+  pb "Delete :UIStatusBarStyle"; pb "Add :UIStatusBarStyle string UIStatusBarStyleLightContent"   # white clock and battery on the plum header
+  pb "Delete :UIUserInterfaceStyle"; pb "Add :UIUserInterfaceStyle string Light"   # the cream design stays light; system pickers and sheets match it
   pb "Delete :UIViewControllerBasedStatusBarAppearance"; pb "Add :UIViewControllerBasedStatusBarAppearance bool true"
   sed -i '' 's/TARGETED_DEVICE_FAMILY = "1,2";/TARGETED_DEVICE_FAMILY = 1;/g' ios/App/App.xcodeproj/project.pbxproj
   if [ -n "${APP_VERSION:-}" ]; then

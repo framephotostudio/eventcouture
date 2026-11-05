@@ -9,7 +9,9 @@ let cfg = fs.readFileSync(path.join(SITE, 'js/config.js'), 'utf8');
 const api = process.env.EC_API_URL || 'https://event-couture-api.facecouture.workers.dev';
 cfg = cfg.replace(/apiUrl:\s*'[^']*'/, "apiUrl: '" + api + "'");
 if (!/apiUrl: 'https/.test(cfg)) throw new Error('apiUrl not set in app config');
-cfg += "\nwindow.EC_CONFIG.siteUrl = 'https://eventcouture.app/';\nwindow.EC_CONFIG.app = true;\nwindow.EC_CONFIG.appVersion = " + JSON.stringify(process.env.APP_VERSION || '1.0.0') + ";\n";
+cfg += "\nwindow.EC_CONFIG.siteUrl = 'https://eventcouture.app/';\nwindow.EC_CONFIG.app = true;\nwindow.EC_CONFIG.appVersion = " + JSON.stringify(process.env.APP_VERSION || '1.0.0') + ";\n" +
+  // store-safe, whatever the website's settings are: no web payments, no checkout, no concierge offer, no web bot check (App Store 3.1.1)
+  "window.EC_CONFIG.preview = true;\nwindow.EC_CONFIG.launchFree = true;\nwindow.EC_CONFIG.turnstile = '';\nwindow.EC_CONFIG.concierge = { links: {}, call: '', founding: false, stripe: false };\n";
 fs.writeFileSync(path.join(OUT, 'js/config.js'), cfg);
 let html = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8');
 // fonts are bundled into the app so it looks right offline
@@ -27,6 +29,9 @@ try {
 { const i = html.indexOf('</head>'); html = html.slice(0, i) + '<link rel="stylesheet" href="app.css">' + html.slice(i); }
 { const i = html.lastIndexOf('</body>'); html = html.slice(0, i) + '<script src="app.js" defer></script>' + html.slice(i); }
 html = html.replace(/<link rel="manifest"[^>]*>\s*/, '');
+// an app, not a web page: no search-engine metadata, no social preview tags, no web-only fallback links
+html = html.replace(/<title>[^<]*<\/title>/, '<title>Event Couture</title>').replace(/<meta (name="(description|robots|keywords)"|property="og:[^"]*"|name="twitter:[^"]*")[^>]*>\s*/g, '')
+  .replace(/<link rel="(canonical|alternate)"[^>]*>\s*/g, '').replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\s*/g, '').replace(/<noscript>[\s\S]*?<\/noscript>\s*/g, '');
 fs.writeFileSync(path.join(OUT, 'index.html'), html);
 if (process.env.EC_SHOT_TOUR === '1') {   /* simulator screenshots only, never in store builds */
   html = html.replace('</body>', "<script>(function(){var r=['#/inspiration/all','#/new','#/sample/1','#/sample/1/style','#/events'],i=0;setTimeout(function n(){if(i<r.length){location.hash=r[i++];setTimeout(n,15000)}},15000)})()</script></body>");

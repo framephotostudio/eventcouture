@@ -32,6 +32,6 @@
   try { Object.defineProperty(navigator, 'share', { value: nativeShare, configurable: true }); Object.defineProperty(navigator, 'canShare', { value: function () { return true; }, configurable: true }); } catch (e) {}
   /* light haptic on choices */
   document.addEventListener('click', function (ev) { var el = ev.target && ev.target.closest && ev.target.closest('.chip,.btn,.icard,.tab-ec a,[data-pick],[data-i]'); if (el) tap(el.classList.contains('gold') ? 'MEDIUM' : 'LIGHT'); }, true);
-  try { if (P.StatusBar) { P.StatusBar.setStyle({ style: 'LIGHT' }); if (P.StatusBar.setBackgroundColor) P.StatusBar.setBackgroundColor({ color: '#FAF8F4' }); } } catch (e) {}
+  try { if (P.StatusBar) { P.StatusBar.setStyle({ style: 'DARK' }); if (P.StatusBar.setBackgroundColor) P.StatusBar.setBackgroundColor({ color: '#36091F' });   /* white status text over the plum header */ } } catch (e) {}
   try { if (P.SplashScreen) setTimeout(function () { P.SplashScreen.hide(); }, 350); } catch (e) {}
 })();

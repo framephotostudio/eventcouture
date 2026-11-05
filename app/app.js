@@ -37,6 +37,41 @@
   document.body.appendChild(note);
   function net(on) { note.hidden = !!on; }
   try { if (P.Network) { P.Network.getStatus().then(function (s) { net(s.connected); }); P.Network.addListener('networkStatusChange', function (s) { net(s.connected); }); } else { window.addEventListener('online', function () { net(true); }); window.addEventListener('offline', function () { net(false); }); } } catch (e) {}
+  /* On the plan's overview: Add to Calendar (the phone's own event sheet) and reminders before the event (local notifications). */
+  function planNow() { var m = (location.hash || '').match(/^#\/e\/([^/]+)(?:\/overview)?$/); if (!m) return null; try { return JSON.parse(localStorage.getItem('ec.events') || '{}')[m[1]] || null; } catch (e) { return null; } }
+  function startOf(ev) { var p = String(ev.date).split('-'), t = String(ev.time || '18:00').split(':'); return new Date(+p[0], +p[1] - 1, +p[2], +t[0] || 18, +t[1] || 0); }
+  function remKey(ev) { return 'ec.remind.' + ev.id; }
+  function addNative() {
+    var ev = planNow(), main = document.getElementById('main');
+    if (!ev || !ev.date || ev.sample || !main || main.querySelector('.native-ec')) return;
+    var cal = !!P.CapacitorCalendar, rem = !!P.LocalNotifications; if (!cal && !rem) return;
+    var on = false; try { on = !!localStorage.getItem(remKey(ev)); } catch (e) {}
+    var box = document.createElement('div'); box.className = 'panel native-ec';
+    box.innerHTML = '<div><b>On your phone</b><p class="small muted">Put the date in your calendar and get a reminder before the big day.</p></div><div class="row">' +
+      (cal ? '<button class="btn small" data-ncal>Add to Calendar</button>' : '') + (rem ? '<button class="btn small ghost" data-nrem>' + (on ? 'Reminders on' : 'Remind me') + '</button>' : '') + '</div>';
+    var first = main.querySelector('.panel'); if (first && first.parentNode) first.parentNode.insertBefore(box, first.nextSibling); else main.appendChild(box);
+    var cb = box.querySelector('[data-ncal]'); if (cb) cb.addEventListener('click', function () {
+      var st = startOf(ev), en = new Date(st.getTime() + (ev.hours || 5) * 36e5);
+      P.CapacitorCalendar.createEventWithPrompt({ title: ev.name || 'My event', location: ev.area ? ev.area + ', ' + ev.city : ev.city, startDate: st.getTime(), endDate: en.getTime(), isAllDay: !ev.time, description: 'Planned with Event Couture' }).then(function () { if (N.haptic) N.haptic(); }).catch(function () {});
+    });
+    var rb = box.querySelector('[data-nrem]'); if (rb) rb.addEventListener('click', function () {
+      var base = 8000 + (Math.abs(String(ev.id).split('').reduce(function (h, c) { return (h * 31 + c.charCodeAt(0)) | 0; }, 7)) % 90000) * 10;
+      var ids = [0, 1, 2, 3].map(function (i) { return { id: base + i }; });
+      if (on) { P.LocalNotifications.cancel({ notifications: ids }).catch(function () {}); try { localStorage.removeItem(remKey(ev)); } catch (e) {} on = false; rb.textContent = 'Remind me'; return; }
+      P.LocalNotifications.requestPermissions().then(function (r) {
+        if (r.display !== 'granted') { rb.textContent = 'Turn on notifications in Settings'; return; }
+        var st = startOf(ev), now = Date.now(), n = ev.name || 'your event';
+        var list = [[30, 'One month to go', n + ' is in 30 days. See what’s left on your checklist.'], [14, 'Two weeks to go', n + ' is in two weeks. Confirm your vendors and your guest count.'], [7, 'One week to go', n + ' is next week. Check your timeline and send any reminders.'], [1, 'Tomorrow is the day', n + ' is tomorrow. Everything you need is in your plan.']]
+          .map(function (x, i) { var at = new Date(st.getFullYear(), st.getMonth(), st.getDate() - x[0], 10, 0); return { id: base + i, title: x[1], body: x[2], schedule: { at: at }, extra: { hash: '#/e/' + ev.id } }; })
+          .filter(function (x) { return x.schedule.at.getTime() > now; });
+        if (!list.length) { rb.textContent = 'Your event is very soon'; return; }
+        return P.LocalNotifications.schedule({ notifications: list }).then(function () { try { localStorage.setItem(remKey(ev), '1'); } catch (e) {} on = true; rb.textContent = 'Reminders on'; if (N.haptic) N.haptic(); });
+      }).catch(function () {});
+    });
+  }
+  try { if (P.LocalNotifications) P.LocalNotifications.addListener('localNotificationActionPerformed', function (a) { var h = a && a.notification && a.notification.extra && a.notification.extra.hash; if (h) location.hash = h; }); } catch (e) {}
+  var mo = new MutationObserver(function () { addNative(); }); var mm = function () { var m = document.getElementById('main'); if (m) mo.observe(document.getElementById('app') || document.body, { childList: true, subtree: false }); };
+  window.addEventListener('hashchange', function () { setTimeout(addNative, 60); }); setTimeout(function () { mm(); addNative(); }, 400);
   /* Ask for a store rating once, after a host keeps her third plan (never on first use). */
   document.addEventListener('click', function (e) {
     if (!e.target.closest || !e.target.closest('#keepPay')) return;

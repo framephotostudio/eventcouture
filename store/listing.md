@@ -4,8 +4,8 @@
 **Subtitle (iPhone, 30 max):** Plan any party from one photo
 **Short description (Google Play, 80 max):** Turn an inspiration photo into a full party plan, budget, venues and shopping list.
 **Category:** Lifestyle (secondary: Productivity)
-**Age rating:** 4+ / Everyone
-**Price:** Free (no in-app purchases in version 1.0; a paid Event Pass can come later through Apple and Google in-app purchase)
+**Age rating:** 18+ (Apple questionnaire: Alcohol, Tobacco or Drug Use or References = Infrequent/Mild, for drinks planning; User-Generated Content and Messaging = Yes, for vendor replies; Unrestricted Web Access = No). Google Play: answer the same way. 18+ also matches Google's Gemini API terms, the same as Face Couture.
+**Price:** Free. No in-app purchases in version 1.0.
 **Support URL:** https://eventcouture.app/#/help
 **Privacy Policy URL:** https://eventcouture.app/#/privacy
 **Marketing URL:** https://eventcouture.app/
@@ -29,9 +29,8 @@ Event Couture by Always Luxe turns inspiration into a complete plan:
 
 Not sure where to start? Browse inspiration by occasion: birthdays, kids' themed birthdays, showers, weddings, quinceañeras, Sweet 16s, graduations, holiday parties, corporate events and more. Inspiration photos are AI-generated samples, clearly labeled.
 
-Planning and keeping your plan are free. No subscription.
+Free, with no sign-in. Put your date in your calendar and get reminders before the big day.
 
-Also from Always Luxe: Face Couture, for photo-ready glam.
 
 ## Keywords (iPhone, 100 max)
 party planner,event planner,wedding,birthday,baby shower,quinceanera,budget,venue,invitation,cultural
@@ -40,7 +39,22 @@ party planner,event planner,wedding,birthday,baby shower,quinceanera,budget,venu
 Plan any celebration from an inspiration photo: concepts, budget, venues, shopping list and more.
 
 ## App Review notes (paste into App Store Connect > App Review Information > Notes)
-No sign-in is needed and there are no purchases in this version. To try the app: tap Plan, type "black and gold 30th birthday for 40 guests in Houston", tap Next, choose a city and where it is, then Create my concepts and choose one. Every section is open. Under Budget & bookings, tap Create package 1 to get top-rated venues and vendors from Google, then Create package 2 to compare them side by side, and Choose one to start the booking checklist. Get quotes from vendors sends an anonymous request (no name or contact) that listed vendors can answer. Your finished plan has Save as PDF, Email it to me and Share. Sample plans are on the Home screen. Inspiration photos are AI-generated and labeled as such. To see sharing: open Guests & invitations > Invitation and tap Send invitation; the link opens the guest page in any browser. Plans are stored on the device; only shared invitations, guests' RSVPs and anonymous quote requests are stored on our server.
+Event Couture is an original event-planning app by Always Luxe. It is a separate product from our other app, Face Couture (photo editing), with its own code for planning, budgets and vendor packages.
+
+No sign-in is needed and there are no purchases in this version.
+
+To try it:
+1. Tap Plan. Type "black and gold 30th birthday for 40 guests in Houston", tap Next, choose a city and where it is, then tap Create my looks. The first time, the app asks before anything is sent to Google's Gemini AI. Choose Allow (or Not now to use the built-in style library).
+2. Choose a look. Under Budget & bookings, the app builds 3 packages of top-rated venues and vendors (from Google Maps) to compare side by side. Choose one to start the booking checklist.
+3. Get quotes from vendors sends an anonymous request (no name or contact) that listed vendors can answer. Each vendor reply has Report and Block.
+4. On the plan's overview, tap Add to Calendar (the system event sheet) and Remind me (local notifications 30, 14, 7 and 1 day before the event).
+5. Your finished plan has Save as PDF and Share (the system share sheet). Guests & invitations > Invitation > Send invitation shares the guest link.
+
+Native features: tab bar, system share sheet, PDF and backup files through the share sheet, Add to Calendar, local reminder notifications, haptics, offline notice with plans still available offline, in-app browser for links, Android back button.
+
+Privacy: plans are stored on the device. Only shared invitations, guests' RSVPs, anonymous quote requests and reviews (approved by hand before they show) are stored on our server. No analytics, ads or tracking in the app. Inspiration photos are AI-generated and labeled as such. Recommended businesses are chosen by the founder and are not paid placement.
+
+Contact: hello@eventcouture.app
 
 ## Screenshots
 Made from the real app screens by the "Store screenshots" job: store/shots/iphone-6.9 (App Store, required size), store/shots/iphone-6.5 and store/shots/android-phone (Google Play). Upload 1.png to 6.png in order.

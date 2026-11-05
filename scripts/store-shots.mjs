@@ -42,6 +42,7 @@ for (const size of SIZES) {
   fs.mkdirSync(path.join(OUT, size.name), { recursive: true }); planBase = '';
   const ctx = await browser.newContext({ viewport: { width: size.w, height: size.h }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
   await ctx.route('**/api/**', r => r.request().url().endsWith('/api/status') ? r.fulfill({ status: 200, contentType: 'application/json', body: '{"ai":false,"places":false}', headers: { 'access-control-allow-origin': '*' } }) : r.fulfill({ status: 503, body: '{}', headers: { 'access-control-allow-origin': '*' } }));
+  await ctx.addInitScript(() => { try { localStorage.setItem('ec.aiConsent', JSON.stringify('yes')); } catch (e) {} });   // the one-time AI question was answered
   const pg = await ctx.newPage();
   for (let i = 0; i < SHOTS.length; i++) {
     await SHOTS[i].go(pg); await pg.waitForTimeout(900);
