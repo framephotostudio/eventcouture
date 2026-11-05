@@ -90,7 +90,7 @@
     permits:      { name: 'Permits', group: 'Outdoor', fixed: [50, 450], tier: 'LSU', outdoor: true },
     /* Cultural weddings: traditions with their own vendors. "flat" prices don't grow with the guest count. */
     zaffe:        { name: 'Zaffe and dabke group (drums, dancers and the grand entrance)', group: 'Music and fun', fixed: [945, 2839], flat: true, tier: 'LSU', tip: true },
-    singer:       { name: 'Wedding singer', group: 'Music and fun', fixed: [900, 3500], flat: true, tier: 'LSU', tip: true },
+    singer:       { name: 'Wedding singer and band', group: 'Music and fun', fixed: [1500, 6500], flat: true, tier: 'LSU', tip: true },   /* one booking: a singer with their band */
     dabke:        { name: 'Dabke dance troupe', group: 'Music and fun', fixed: [600, 1800], flat: true, tier: 'U', tip: true },
     kosha:        { name: 'Kosha (the couple\u2019s stage and seating)', group: 'Style', fixed: [900, 4000], flat: true, tier: 'LSU', taxable: true },
     dhol:         { name: 'Dhol player', group: 'Music and fun', fixed: [300, 900], flat: true, tier: 'LSU', tip: true },
@@ -134,7 +134,7 @@
     shower:  ['venue', 'catering', 'bar', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'photographer', 'entertainment', 'favors', 'invitations', 'cleanup', 'attire', 'hairMakeup', 'hair', 'photoBooth', 'lighting'],
     party:   ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'dj', 'photographer', 'photoBooth', 'entertainment', 'favors', 'invitations', 'cleanup', 'attire', 'hairMakeup', 'hair', 'lighting', 'videographer', 'mc', 'insurance', 'security', 'transport', 'parking'],
     gala:    ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'lighting', 'dj', 'liveMusic', 'mc', 'photographer', 'videographer', 'photoBooth', 'entertainment', 'favors', 'invitations', 'attire', 'hairMakeup', 'hair', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
-    wedding: ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'florals', 'lighting', 'dj', 'singer', 'liveMusic', 'mc', 'photographer', 'videographer', 'photoBooth', 'favors', 'invitations', 'attire', 'hairMakeup', 'hair', 'officiant', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
+    wedding: ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'florals', 'lighting', 'dj', 'singer', 'mc', 'photographer', 'videographer', 'photoBooth', 'favors', 'invitations', 'attire', 'hairMakeup', 'hair', 'officiant', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
     /* Where the event happens can override the event type. */
     restaurant:  ['restaurantFood', 'restaurantDrinks', 'cake', 'cakeFee', 'tableDecor', 'photographer', 'favors'],
     privateRoom: ['privateDining', 'cake', 'cakeFee', 'decor', 'florals', 'balloons', 'photographer', 'favors', 'invitations']
@@ -168,7 +168,7 @@
     arabic: {
       name: 'Arabic wedding', guests: 250, hours: 6, menu: 'arabic', blurb: 'Zaffe entrance, live band and singer, the kosha, dabke and a mezze-to-knafeh menu.', pre: 'With the blessing of God and their families',
       music: [['zaffe', 'Zaffe and dabke group'], ['singer', 'Singer with live band'], ['dj', 'DJ']], musicDefault: ['zaffe', 'singer', 'dj'],   /* an Arabic singer comes with their own band: one line, one booking */
-      scale: { singer: 2.5 },   /* a singer with a full band costs more than a solo singer */
+      scale: { singer: 1.6 },   /* an Arabic singer's full band and zaffe-ready sound costs more */
       add: ['kosha'],
       labels: { singer: 'Arabic singer with live band', officiant: 'Officiant (sheikh or priest)', catering: 'Middle Eastern catering', cake: 'Wedding cake and Arabic sweets', dj: 'DJ (Arabic and international music)' },
       search: { singer: 'arabic wedding singer and band', dj: 'arabic wedding DJ', zaffe: 'zaffe group wedding', dabke: 'dabke dance group', kosha: 'wedding kosha stage decor', catering: 'middle eastern mediterranean catering', officiant: 'sheikh imam or priest wedding officiant' },
