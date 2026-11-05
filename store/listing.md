@@ -55,7 +55,7 @@ Native features: tab bar, system share sheet for PDFs and backup files, Add to C
 
 User content: new vendor listings are approved by us before they show; rude words are filtered in vendor replies, listings, RSVPs and reviews; every vendor reply has Report and Block; reports reach us within the hour and are handled within 24 hours. Reviews of the app are approved by hand.
 
-Privacy: plans stay on the device. Only shared invitations, guests' RSVPs, vendor requests and replies, and reviews are stored on our server. No analytics, ads or tracking in the app. Inspiration photos are AI-generated and labeled. Recommended businesses are chosen by the founder and are not paid placement.
+Privacy: plans stay on the device. Only shared invitations, guests' RSVPs, vendor requests and replies, and reviews are stored on our server. No analytics, ads or tracking in the app. Inspiration photos are AI-generated and labeled. Founder’s Pick businesses are chosen by the founder and are not paid placement.
 
 Contact: hello@eventcouture.app
 
