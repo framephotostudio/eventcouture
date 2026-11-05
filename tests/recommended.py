@@ -39,7 +39,7 @@ with sync_playwright() as p:
             hr=[x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="hair"] td > b')]
             check(n, hm[:1]==['Makeup by Richard'] and 'Hammoudeh Alex' not in hm, city+': makeup: Makeup by Richard first, no hair stylist: '+str(hm[:3]))
             check(n, (hr[:1]==['Hammoudeh Alex']) == city.startswith('Orange') and 'Makeup by Richard' not in hr, city+': hair: Hammoudeh Alex first only in Orange County: '+str(hr[:3]))
-            check(n, dj[:2]==(['DJ Mosses','DJ Roy'] if city.startswith('San Diego') else ['DJ Mosses','DJ L\u2019Rythm']) and 'Recommended' in cellt, city+': DJ Mosses first; then DJ L\u2019Rythm in OC and LA, DJ Roy in San Diego: '+str(dj))
+            check(n, dj[:2]==(['DJ Mosses','DJ Roy'] if city.startswith('San Diego') else ['DJ Mosses','DJ L\u2019Rythm']) and 'Event Couture Pick' in cellt, city+': DJ Mosses first; then DJ L\u2019Rythm in OC and LA, DJ Roy in San Diego: '+str(dj))
             if city.startswith('Orange'):
                 pg.evaluate("document.querySelector('tr[data-pkrow=\"dj\"]').scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/rec_pkg_{n}.png')
         base=plan(pg, 'Detroit, MI')

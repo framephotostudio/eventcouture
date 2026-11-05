@@ -26,7 +26,7 @@ with sync_playwright() as p:
         pg.route('**/js/config.js*', cfg); pg.route('http://api.test/**', api)
         for city, ig in [('New York, NY','dalouna_events'), ('Newark, NJ','dalouna_events'), ('Dallas, TX','dalouna_dallas'), ('Austin, TX','dalouna_dallas')]:
             z, cell = zaffe_picks(pg, city)
-            check(n, z[:1]==['Dalouna Events'] and ig in cell and 'Founder\u2019s Pick' in cell, city+': Dalouna first, linking @'+ig+': '+str(z))
+            check(n, z[:1]==['Dalouna Events'] and ig in cell and 'Event Couture Pick' in cell, city+': Dalouna first, linking @'+ig+': '+str(z))
         z, cell = zaffe_picks(pg, 'Houston, TX')
         check(n, 'Dalouna Events' not in z[:3] and z[:2]==['Turáth Folkoholic Dance Theatre','Watan Zaffe & Dabke Group'], 'Houston keeps its top 3, Dalouna after: '+str(z))
         z, cell = zaffe_picks(pg, 'Los Angeles, CA')
