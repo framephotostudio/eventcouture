@@ -1747,7 +1747,7 @@
         else if (t.id === 'psave' && cur) {
           var a = +$('#pamt', box).value || 0;
           if (mode.kind === 'quote') { if (!(a > 0)) return toast('Enter the quoted amount'); cur.quote = a; syncPrice(ev, cat); toast('Quote saved'); }
-          else { if (!(a > 0) && cat !== 'restaurantFood') return toast('Enter the amount you agreed to'); ev.overrides = ev.overrides || {}; ev.overrides[cat] = { amount: a > 0 ? a : 0, source: 'booking', note: cur.name, opt: cur.id }; setPick(ev, cat, cur.id); toast(cur.name + ' is booked' + (a > 0 ? '. Totals updated.' : '')); }
+          else { if (!(a > 0) && cat !== 'restaurantFood') return toast('Enter the amount you agreed to'); ev.overrides = ev.overrides || {}; ev.overrides[cat] = { amount: a > 0 ? a : 0, source: 'booking', note: cur.name, opt: cur.id }; T('vendor_booked', { category: cat, event_type: ev.type, from_package: inChosen(ev, cat, cur) ? 'yes' : 'no', booked_count: Object.keys(ev.overrides).filter(function (c) { return ev.overrides[c] && ev.overrides[c].source === 'booking'; }).length }); var cpk = (ev.packages || [])[ev.pkgChosen || 0]; if (cpk && Object.keys(cpk.items).length && Object.keys(cpk.items).every(function (c) { return ev.overrides[c] && ev.overrides[c].source === 'booking'; })) T('package_completed', { event_type: ev.type, items: Object.keys(cpk.items).length });   /* every line of her package is booked */ setPick(ev, cat, cur.id); toast(cur.name + ' is booked' + (a > 0 ? '. Totals updated.' : '')); }
           saveEvent(ev); if (direct && mode.kind === 'book') { t.disabled = true; return close(); } mode = null; again();
         }
         else if (t.id === 'punbook' && cur) { delete ev.overrides[cat]; syncPrice(ev, cat); saveEvent(ev); toast('Marked as not booked'); if (direct) return close(); mode = null; again(); }
@@ -2284,7 +2284,8 @@
         if (same) { ev.packages.splice(k, 1); ev.pkgView = 0; save(); return k - 1; }
         save(); return (ev.packages || []).length < want ? one() : k; }); };
       one().then(function (k) {
-        setTimeout(function () { PKG_BUSY = false; }, 450); var m = ev.packages[k].miss || []; if (!here()) return; rerender();   /* a double tap's second tap doesn't start another package; built while she was elsewhere: saved, shown when she comes back */
+        setTimeout(function () { PKG_BUSY = false; }, 450); var m = ev.packages[k].miss || [];
+        T('packages_built', { packages: ev.packages.length, items_found: Object.keys(ev.packages[k].items).length, items_missing: m.length, event_type: ev.type, setting: ev.setting, country: E.countryOf(ev.city).id }); if (!here()) return; rerender();   /* a double tap's second tap doesn't start another package; built while she was elsewhere: saved, shown when she comes back */
         toast((want - start > 1 ? 'Your 3 packages are ready' : 'Package ' + (k + 1) + ' is ready') + (m.length ? (LIVE_RESTING ? '. Live search is resting until next month: tap Search on Google Maps on each line.' : '. ' + plural(m.length, 'item') + ' had no top-rated match; tap See options there.') : ''));
         var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' });
       });
@@ -2316,7 +2317,7 @@
     if (more) more.addEventListener('click', function () { build(more); });
     $$('[data-pkview]').forEach(function (bt) { bt.addEventListener('click', function () { ev.pkgView = +bt.dataset.pkview; save(); rerender(); }); });
     $$('[data-pkuse]').forEach(function (bt) { bt.addEventListener('click', function () {
-      if (lockSample(ev)) return; var k = +bt.dataset.pkuse, pk = ev.packages[k]; ev.pkgChosen = k; ev.pkgView = k; ev.pkgConfirmed = true; ev.pkgSkipped = [];
+      if (lockSample(ev)) return; var k = +bt.dataset.pkuse, pk = ev.packages[k]; T('package_chosen', { package: k + 1, of: ev.packages.length, event_type: ev.type }); ev.pkgChosen = k; ev.pkgView = k; ev.pkgConfirmed = true; ev.pkgSkipped = [];
       Object.keys(pk.items).forEach(function (cat) { if (!savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, pk.items[cat]); syncPrice(ev, cat); });
       save(); rerender(); var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' }); var first = !ev.nextShown; ev.nextShown = true; save(); if (first) nextSheet(ev, k); else toast('Package ' + (k + 1) + ' it is. Now let\u2019s book it, one at a time.');
     }); });
