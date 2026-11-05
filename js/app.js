@@ -122,7 +122,15 @@
   function fmtTime(t) { if (!t) return ''; var p = t.split(':'); var h = +p[0]; return ((h + 11) % 12 + 1) + ':' + p[1] + (h < 12 ? ' AM' : ' PM'); }
   function plural(n, w) { return (typeof n === 'number' ? n.toLocaleString('en-US') : n) + ' ' + w + (n === 1 ? '' : 's'); }
   function clearToasts() { $$('.toast').forEach(function (t) { t.remove(); }); }
+  /* Pop-ups only when something needs her attention: a missing field, a limit or an error. Confirmations ("Saved", "Added",
+     "Your packages are ready") never pop up; the page itself shows the change. A copy shows "Copied" on the button she tapped. */
+  var TOAST_QUIET = /^(Added|Saved|Removed|Package|Your (3 packages|plan|venue|wording|visits)|Done\.|Downloaded|Event deleted|Gift removed|Head table added|Link copied|Message copied|Marked as not booked|Music updated|Payment links saved|Quote (saved|removed)|Replaced\.|Reply sent|Request sent|Seating chart cleared|Tables now seat|Thanks\.|You\u2019re signed up|Change undone|Back to our wording|Backup saved|Area saved|Finding a|Venues (near|anywhere)|Updated|Seated|Approved\.|Hidden$|Deleted$|\d[\d,]* new )|( added| removed.*| is booked.*| is in package \d.*| saved to your options| is your front-runner.*| is on this device now| is off the chart| is at .*| added to your registry| added\. Add your payment links.*| replied to your message| sent you a message)$/;
   function toast(msg) {
+    msg = String(msg || '');
+    if (TOAST_QUIET.test(msg) && !/more guests than|is more than|over your/.test(msg)) {
+      var bt = document.activeElement; if (/copied/i.test(msg) && bt && bt.tagName === 'BUTTON' && !bt.dataset.was) { bt.dataset.was = bt.innerHTML; bt.textContent = 'Copied'; setTimeout(function () { if (bt.dataset.was != null) { bt.innerHTML = bt.dataset.was; delete bt.dataset.was; } }, 1800); }
+      return;
+    }
     clearToasts();
     var t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
     document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600);
@@ -131,6 +139,7 @@
   var UNDO_KEYS = ['dateFrom', 'dateTo', 'tier', 'exclude', 'include', 'overrides', 'hours', 'guests', 'expected', 'budget', 'alcohol', 'setting', 'city', 'shortlist', 'date', 'time', 'ros', 'settingOpen', 'settingChoices', 'venueKind', 'culture', 'music'];
   function snap(ev) { var o = {}; UNDO_KEYS.forEach(function (k) { o[k] = ev[k] === undefined ? undefined : JSON.parse(JSON.stringify(ev[k])); }); return o; }
   function undoToast(ev, before, msg, rerender) {
+    return;   /* no pop-up after a change: the page shows it, and every change can be set back from the same place */
     clearToasts();
     var t = document.createElement('div'); t.className = 'toast undo'; t.setAttribute('role', 'status');
     t.innerHTML = '<span>' + esc(msg) + '</span><button type="button">Undo</button>';
@@ -1772,7 +1781,7 @@
   function recFor(ev, cat) {
     return (D.RECOMMENDED || []).filter(function (r) { var st = (ev.city || '').split(', ')[1] || ''; return r.cats.indexOf(cat) >= 0 && ((ev.guests || 0) <= (r.maxGuests || (cat === 'venue' ? 600 : 1e9))) && (!r.cities || r.cities.indexOf(ev.city) >= 0) && (!r.states || r.states.indexOf(st) >= 0) && (!r.notCities || r.notCities.indexOf(ev.city) < 0) && (!r.notStates || r.notStates.indexOf(st) < 0) && (!r.onlyCities || r.onlyCities.indexOf(ev.city) >= 0) && (!r.country || E.countryOf(ev.city).id === r.country) && (r.cities || r.states || r.country || r.everywhere || ['US', 'CA'].indexOf(E.countryOf(ev.city).id) >= 0)   /* no place given: the US and Canada; everywhere: every country */ && (!r.cultures || r.cultures.indexOf(ev.culture || '') >= 0 || r.cultures.indexOf('parties') >= 0 && ev.type !== 'wedding' || r.types && r.types.indexOf(ev.type) >= 0); })
       .sort(function (a, b) { var w = function (r) { return r.weight != null ? r.weight : (r.first ? 100 : 0) + (r.cities ? 20 : r.states ? 10 : 0) + (r.top ? 5 : 0); }; return w(b) - w(a); })   /* this city first, then this state, then everywhere */
-      .map(function (r) { var mp = !r.ig && 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.maps || r.name); return { id: r.ig ? 'ig:' + r.ig : 'rec:' + r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: r.name, website: r.ig ? 'https://instagram.com/' + r.ig : r.site || mp, mapsUrl: !r.ig && r.site ? mp : undefined, rec: true, note: r.note, ig: r.ig, late: !!(r.notTop && r.notTop.indexOf(ev.city) >= 0) }; })
+      .map(function (r) { var mp = !r.ig && 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.maps || r.name); return { id: r.ig ? 'ig:' + r.ig : 'rec:' + r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: r.name, website: r.ig ? 'https://instagram.com/' + r.ig : r.site || mp, mapsUrl: !r.ig && r.site ? mp : undefined, rec: true, note: r.note, ig: r.ig, priceLevel: r.priceLevel || undefined, late: !!(r.notTop && r.notTop.indexOf(ev.city) >= 0) }; })
       .filter(function (r, i, a) { return a.findIndex(function (o) { return o.id === r.id; }) === i; });   /* one person listed twice (top in their state, and everywhere) shows once */
   }
   function pkgSearch(ev, c) {

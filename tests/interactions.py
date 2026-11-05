@@ -38,7 +38,7 @@ with sync_playwright() as p:
         go(base); before = head()
         pg.click('#cmpLevels'); pg.click('.sheet [data-pick=U]'); pg.wait_for_timeout(300)
         check('Ultra' in head() or 'Estimated total' in head(), n + ': level switch failed')
-        pg.click('.toast.undo button'); pg.wait_for_timeout(300); check(head() == before, n + ': undo after level switch did not restore')
+        check(not pg.query_selector('.toast'), n + ': a pop-up showed after a level switch (confirmations no longer pop up)')
         # budget: remove a line, add it back; add and clear a price
         go(base + '/budget'); lines = len(pg.query_selector_all('[data-drop]'))
         pg.click('[data-drop] >> nth=-1'); pg.wait_for_timeout(300)
