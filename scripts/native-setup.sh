@@ -10,9 +10,11 @@ if [ "$PLATFORM" = "ios" ]; then
   PL=ios/App/App/Info.plist
   pb() { /usr/libexec/PlistBuddy -c "$1" "$PL" 2>/dev/null || true; }
   setstr() { pb "Delete :$1"; pb "Add :$1 string $2"; }
-  setstr NSPhotoLibraryUsageDescription "Event Couture opens the inspiration photos you choose so it can plan your event around them. Photos stay on your phone."
-  setstr NSCameraUsageDescription "Event Couture can use the camera so you can snap inspiration, like a cake or a centerpiece you love. Photos stay on your phone."
+  setstr NSPhotoLibraryUsageDescription "Event Couture opens the inspiration photos you choose so it can plan your event around them. With AI looks turned on, they are sent to Google Gemini to read their colors and style."
+  setstr NSCameraUsageDescription "Event Couture can use the camera so you can snap inspiration, like a cake or a centerpiece you love. With AI looks turned on, the photo is sent to Google Gemini to read its colors and style."
   setstr NSCalendarsWriteOnlyAccessUsageDescription "Event Couture adds your event date to your calendar when you tap Add to Calendar."
+  setstr NSCalendarsFullAccessUsageDescription "Event Couture adds your event date to your calendar when you tap Add to Calendar."
+  setstr NSPhotoLibraryAddUsageDescription "Event Couture saves the images you choose to save, like your invitation, to your photos."
   setstr NSCalendarsUsageDescription "Event Couture adds your event date to your calendar when you tap Add to Calendar."
   setstr CFBundleDisplayName "Event Couture"
   pb "Delete :ITSAppUsesNonExemptEncryption"; pb "Add :ITSAppUsesNonExemptEncryption bool false"

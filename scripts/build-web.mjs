@@ -31,7 +31,8 @@ try {
 html = html.replace(/<link rel="manifest"[^>]*>\s*/, '');
 // an app, not a web page: no search-engine metadata, no social preview tags, no web-only fallback links
 html = html.replace(/<title>[^<]*<\/title>/, '<title>Event Couture</title>').replace(/<meta (name="(description|robots|keywords)"|property="og:[^"]*"|name="twitter:[^"]*")[^>]*>\s*/g, '')
-  .replace(/<link rel="(canonical|alternate)"[^>]*>\s*/g, '').replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\s*/g, '').replace(/<noscript>[\s\S]*?<\/noscript>\s*/g, '');
+  .replace(/<link rel="(canonical|alternate)"[^>]*>\s*/g, '').replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\s*/g, '').replace(/<noscript>[\s\S]*?<\/noscript>\s*/g, '')
+  .replace(/<div class="app-soon-bar">(?:(?!<div)[\s\S])*?<\/span><\/div>/, '');   // the website's "app coming soon" bar
 fs.writeFileSync(path.join(OUT, 'index.html'), html);
 if (process.env.EC_SHOT_TOUR === '1') {   /* simulator screenshots only, never in store builds */
   html = html.replace('</body>', "<script>(function(){var r=['#/inspiration/all','#/new','#/sample/1','#/sample/1/style','#/events'],i=0;setTimeout(function n(){if(i<r.length){location.hash=r[i++];setTimeout(n,15000)}},15000)})()</script></body>");

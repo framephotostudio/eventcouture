@@ -1,2 +1,2 @@
 Event Couture iPhone build for TestFlight
-Requested 2026-11-01 by Demah
+Requested 2026-11-05 by Demah (App Store review fixes)

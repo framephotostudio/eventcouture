@@ -4,7 +4,7 @@
 **Subtitle (iPhone, 30 max):** Plan any party from one photo
 **Short description (Google Play, 80 max):** Turn an inspiration photo into a full party plan, budget, venues and shopping list.
 **Category:** Lifestyle (secondary: Productivity)
-**Age rating:** 18+ (Apple questionnaire: Alcohol, Tobacco or Drug Use or References = Infrequent/Mild, for drinks planning; User-Generated Content and Messaging = Yes, for vendor replies; Unrestricted Web Access = No). Google Play: answer the same way. 18+ also matches Google's Gemini API terms, the same as Face Couture.
+**Age rating:** 18+ (Apple questionnaire: Alcohol, Tobacco or Drug Use or References = Infrequent/Mild, for drinks planning; User-Generated Content and Messaging = Yes, for vendor replies; Unrestricted Web Access = Yes, because links to vendors' sites open in the in-app browser; Advertising = No until any Sponsored vendor listing is sold, then Yes). Google Play: answer the same way. 18+ also matches Google's Gemini API terms, the same as Face Couture.
 **Price:** Free. No in-app purchases in version 1.0.
 **Support URL:** https://eventcouture.app/#/help
 **Privacy Policy URL:** https://eventcouture.app/#/privacy
@@ -39,20 +39,23 @@ party planner,event planner,wedding,birthday,baby shower,quinceanera,budget,venu
 Plan any celebration from an inspiration photo: concepts, budget, venues, shopping list and more.
 
 ## App Review notes (paste into App Store Connect > App Review Information > Notes)
-Event Couture is an original event-planning app by Always Luxe. It is a separate product from our other app, Face Couture (photo editing), with its own code for planning, budgets and vendor packages.
+Event Couture plans a whole celebration from a description or inspiration photos: three looks, a budget sized to the city with local tax and service charges, three side-by-side packages of top-rated venues and vendors, cultural wedding traditions (Arabic, Indian, Pakistani, Persian, Mexican and more), invitations with guest RSVPs, a seating chart, checklist and day-of timeline.
 
-No sign-in is needed and there are no purchases in this version.
+No sign-in is needed and there is nothing to buy.
 
 To try it:
-1. Tap Plan. Type "black and gold 30th birthday for 40 guests in Houston", tap Next, choose a city and where it is, then tap Create my looks. The first time, the app asks before anything is sent to Google's Gemini AI. Choose Allow (or Not now to use the built-in style library).
-2. Choose a look. Under Budget & bookings, the app builds 3 packages of top-rated venues and vendors (from Google Maps) to compare side by side. Choose one to start the booking checklist.
-3. Get quotes from vendors sends an anonymous request (no name or contact) that listed vendors can answer. Each vendor reply has Report and Block.
-4. On the plan's overview, tap Add to Calendar (the system event sheet) and Remind me (local notifications 30, 14, 7 and 1 day before the event).
-5. Your finished plan has Save as PDF and Share (the system share sheet). Guests & invitations > Invitation > Send invitation shares the guest link.
+1. Tap Plan. Type "black and gold 30th birthday for 40 guests in Houston" and tap Continue. Choose the type of event, the city, the guest count and where it is (for example Event venue or banquet hall), then tap Create my looks.
+2. The first time, the app asks before anything is sent to Google's Gemini AI. Choose Allow (or Not now to use the built-in style library). Choose one of the three looks.
+3. The app opens Budget & bookings and builds three packages of top-rated venues and vendors from Google Maps, side by side. Tap Swap to change any line, or Choose to start the booking checklist.
+4. Tap Message on any vendor line to send them a request (no name or contact details). The vendor answers from a private link, and the reply shows on that line with Report and Block.
+5. On the plan's Overview (My events, then the plan), tap Add to Calendar (the system event sheet) and Remind me (local notifications 30, 14, 7 and 1 day before the event; an event date must be set).
+6. Your finished plan: Save as PDF and Share (the system share sheet). Guests & invitations, then Invitation and event page, then Send invitation shares the guest link.
 
-Native features: tab bar, system share sheet, PDF and backup files through the share sheet, Add to Calendar, local reminder notifications, haptics, offline notice with plans still available offline, in-app browser for links, Android back button.
+Native features: tab bar, system share sheet for PDFs and backup files, Add to Calendar, local reminder notifications, haptics, an offline notice with plans still available offline, an in-app browser for links, and the Android back button.
 
-Privacy: plans are stored on the device. Only shared invitations, guests' RSVPs, anonymous quote requests and reviews (approved by hand before they show) are stored on our server. No analytics, ads or tracking in the app. Inspiration photos are AI-generated and labeled as such. Recommended businesses are chosen by the founder and are not paid placement.
+User content: new vendor listings are approved by us before they show; rude words are filtered in vendor replies, listings, RSVPs and reviews; every vendor reply has Report and Block; reports reach us within the hour and are handled within 24 hours. Reviews of the app are approved by hand.
+
+Privacy: plans stay on the device. Only shared invitations, guests' RSVPs, vendor requests and replies, and reviews are stored on our server. No analytics, ads or tracking in the app. Inspiration photos are AI-generated and labeled. Recommended businesses are chosen by the founder and are not paid placement.
 
 Contact: hello@eventcouture.app
 
