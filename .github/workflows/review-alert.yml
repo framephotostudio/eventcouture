@@ -21,21 +21,23 @@ jobs:
           body=$(curl -s -m 30 -H "x-admin-code: $CODE" "$API/api/reviews/all") || { echo "Server not reachable"; exit 0; }
           n=$(printf '%s' "$body" | jq '[.reviews[]? | select(.status == "pending")] | length' 2>/dev/null || echo "")
           if [ -z "$n" ]; then echo "Could not read reviews."; exit 0; fi
+          vbody=$(curl -s -m 30 -H "x-admin-code: $CODE" "$API/api/vendors/pending") || vbody='{}'
+          v=$(printf '%s' "$vbody" | jq '[.vendors[]?] | length' 2>/dev/null || echo 0); n=$((n + ${v:-0}))   # new vendor listings wait for approval too
           echo "Waiting: $n"
           gh label create review-alert --color B69A68 --description "A review is waiting for approval" --force >/dev/null
           open=$(gh issue list --label review-alert --state open --json number,title --jq '.[0] // empty')
           num=$(printf '%s' "$open" | jq -r '.number // empty'); was=$(printf '%s' "$open" | jq -r '.title // ""' | grep -oE '^[0-9]+' || echo 0)
-          word() { [ "$1" = 1 ] && echo "review is" || echo "reviews are"; }
+          word() { [ "$1" = 1 ] && echo "review or listing is" || echo "reviews or listings are"; }
           msg="@framephotostudio $n new $(word $n) waiting for your approval on Event Couture.
 
-          Open https://eventcouture.app/#/admin/reviews and type your admin code to read and approve. Approve every honest review, including low ratings.
+          Open https://eventcouture.app/#/admin/reviews and type your admin code to read and approve reviews and new vendor listings. Approve every honest review, including low ratings.
 
           This message closes by itself once nothing is waiting."
           msg=$(printf '%s' "$msg" | sed 's/^          //')
           if [ "$n" -gt 0 ] && [ -z "$num" ]; then
-            gh issue create --title "$n new $(word $n | cut -d' ' -f1) waiting for approval" --label review-alert --body "$msg"
+            gh issue create --title "$n waiting for approval" --label review-alert --body "$msg"
           elif [ "$n" -gt 0 ] && [ "$n" -gt "${was:-0}" ]; then
-            gh issue edit "$num" --title "$n new $(word $n | cut -d' ' -f1) waiting for approval"
+            gh issue edit "$num" --title "$n waiting for approval"
             gh issue comment "$num" --body "$msg"
           elif [ "$n" -eq 0 ] && [ -n "$num" ]; then
             gh issue close "$num" --comment "All reviews are handled. Nothing is waiting."

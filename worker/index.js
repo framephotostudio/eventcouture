@@ -51,19 +51,24 @@ export default {
       }
       if (req.method === 'GET' && url.pathname === '/api/optin/export') return await optinExport(req, env, cors);
       if (req.method === 'GET' && url.pathname === '/api/reviews') { if (!env.EC_KV) return json({ reviews: [] }); return json({ reviews: (await env.EC_KV.get('revs:approved', 'json')) || [] }); }
+      if (req.method === 'GET' && url.pathname === '/api/vendors/pending') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await vendorsPending(env, json); }
       if (req.method === 'GET' && url.pathname === '/api/reviews/all') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await reviewsAll(env, json); }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
       if (url.pathname === '/api/stripe/webhook') return await stripeWebhook(req, env, json);
-      // Per-visitor rate limit (free, best effort): 40 requests an hour per IP across AI and search.
+      // Per-visitor rate limit (free, best effort): 150 requests an hour per IP across AI and search.
       if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown'))) return json({ error: 'You\u2019ve made a lot of requests. Please wait a few minutes and try again. Nothing was charged.' }, 429);
       if (+(req.headers.get('content-length') || 0) > 12e6) return json({ error: 'Those photos are too large. Try fewer or smaller photos.' }, 413);
       const body = await req.json().catch(() => ({}));
       // Bot check (Cloudflare Turnstile) for new booking requests, quote requests and new vendor listings, once TURNSTILE_SECRET is set.
       const human = url.pathname === '/api/concierge/new' || url.pathname === '/api/req/new' || url.pathname === '/api/optin' || url.pathname === '/api/review' || (url.pathname === '/api/vendor/save' && !body.id);
-      if (human && env.TURNSTILE_SECRET && !(await turnstileOk(env, body.ts, req.headers.get('cf-connecting-ip')))) return json({ error: 'Please confirm you\u2019re not a robot and try again.', code: 'turnstile' }, 403);
+      const fromApp = /^(capacitor:\/\/localhost|https?:\/\/localhost)$/.test(req.headers.get('origin') || '');   // the iPhone and Android apps can't show the web bot check; the rate limit still applies
+      if (human && !fromApp && env.TURNSTILE_SECRET && !(await turnstileOk(env, body.ts, req.headers.get('cf-connecting-ip')))) return json({ error: 'Please confirm you\u2019re not a robot and try again.', code: 'turnstile' }, 403);
       delete body.ts;
+      // A basic word filter on text other people will read (vendor listings and replies, guest RSVPs and votes, reviews). App Store 1.2.
+      if (/^\/api\/(vendor\/save|req\/reply|review|inv\/[^/]+\/(rsvp|vote)|prop\/[^/]+\/(reply|vote))$/.test(url.pathname) && rude(JSON.stringify(body))) return json({ error: 'Please keep it friendly: that message has words we don\u2019t allow.', code: 'words' }, 400);
       if (url.pathname === '/api/optin' || url.pathname === '/api/optin/remove') { if (!env.EC_KV) return json({ error: 'Email sign-up is not connected yet.' }, 503); return await optin(env, url.pathname.endsWith('remove'), body, json); }
       if (url.pathname === '/api/review') { if (!env.EC_KV) return json({ error: 'Reviews are not connected yet.' }, 503); return await reviewNew(env, body, json); }
+      if (url.pathname === '/api/vendors/set') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await vendorSet(env, body, json); }
       if (url.pathname === '/api/reviews/set') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await reviewSet(env, body, json); }
       if (url.pathname === '/api/checkout') { if (!env.EC_KV || !env.STRIPE_SECRET_KEY) return json({ error: 'Card payments are not switched on yet.' }, 503); return await checkout(env, body, url, json); }
       if (url.pathname === '/api/concierge/new') { if (!env.EC_KV) return json({ error: 'Booking requests are not connected yet.' }, 503); const cr = await conciergeNew(env, body); return cr.error ? json(cr, 400) : json(cr); }
@@ -100,7 +105,7 @@ const FREE_PLACES = 900;   // Google gives 1,000 free searches a month; stop at 
 async function freePlaces(env) {
   if (!env.EC_KV) return false;
   const key = 'places:' + new Date().toISOString().slice(0, 7), n = parseInt((await env.EC_KV.get(key)) || '0', 10);
-  if (n >= FREE_PLACES) return false;
+  if (n >= FREE_PLACES + (inReview(env) ? 150 : 0)) return false;   // review window: 150 more searches, about 50 beyond Google's free 1,000 (under $2)
   try { await env.EC_KV.put(key, String(n + 1), { expirationTtl: 60 * 60 * 24 * 40 }); } catch (e) { return false; }   // can't count it, so don't spend
   return true;
 }
@@ -111,7 +116,9 @@ async function freeMonthly(env, name, limit, n) {
   try { await env.EC_KV.put(key, String(used + n), { expirationTtl: 60 * 60 * 24 * 40 }); } catch (e) { return false; }   // can't count it, so don't spend
   return true;
 }
-function cap(env) { return Number(env.DAILY_CAP_USD || 0.66); }
+// App Store review window: a little more room so Apple's testers never hit the daily limit (worst case about $5 extra), then back to normal.
+function inReview(env) { return new Date().toISOString().slice(0, 10) <= String(env.REVIEW_UNTIL || ''); }
+function cap(env) { return Math.max(Number(env.DAILY_CAP_USD || 0.66), inReview(env) ? 1 : 0); }
 function dayKey() { return 'spend:' + new Date().toISOString().slice(0, 10); }
 async function spent(env) { return Number((await env.EC_KV?.get(dayKey())) || 0); }
 async function reserve(env, usd) {
@@ -126,6 +133,8 @@ async function reserve(env, usd) {
 // Per-visitor limit, kept in the server's memory (no storage writes, so it never uses up Cloudflare's free daily
 // write allowance). Best effort: 150 requests an hour per visitor; the daily dollar cap still protects spending.
 const RL = new Map();
+const RUDE = /\b(f+u+c+k\w*|sh[i1]t+\w*|bitch\w*|cunts?|c0ck\w*|cocksucker|dick(head|s)?|puss(y|ies)|assholes?|arsehole|whores?|sluts?|bastards?|motherf\w*|n[i1]gg\w*|fag(g?ot)?s?|retard(ed|s)?|porn\w*|nudes?|xxx|kys)\b/i;
+function rude(text) { return RUDE.test(String(text || '').replace(/https?:\/\/\S+/g, ' ')); }
 async function rateOk(env, ip) {
   const hour = new Date().toISOString().slice(0, 13), key = ip + ':' + hour, n = RL.get(key) || 0;
   if (n >= 150) return false;
@@ -424,13 +433,13 @@ async function vendorSearch(env, url, json) {
   if (!city) return json({ vendors: [] });
   const ids = await kvGet(env, 'vidx:' + city, []);
   const recs = await Promise.all(ids.slice(0, 60).map(id => kvGet(env, 'vend:' + id, null).then(r => r && [id, r])));
-  const out = recs.filter(x => x && x[1].live && !x[1].hidden && (!cat || x[1].l.cats.includes(cat)) && x[1].l.cities.some(c => cityKey(c) === city))
+  const out = recs.filter(x => x && x[1].live && !x[1].hidden && x[1].approved !== false && (!cat || x[1].l.cats.includes(cat)) && x[1].l.cities.some(c => cityKey(c) === city))
     .sort((a, b) => (isFeatured(b[1]) ? 1 : 0) - (isFeatured(a[1]) ? 1 : 0) || (b[1].founding ? 1 : 0) - (a[1].founding ? 1 : 0) || a[1].at - b[1].at).slice(0, 12).map(x => publicCard(x[0], x[1]));
   return json({ vendors: out });
 }
 async function vendorProfile(env, id, json) {
   const rec = env.EC_KV && await kvGet(env, 'vend:' + id, null);
-  if (!rec || !rec.live || rec.hidden) return json({ error: 'This vendor isn’t listed right now.' }, 404);
+  if (!rec || !rec.live || rec.hidden || rec.approved === false) return json({ error: 'This vendor isn’t listed right now.' }, 404);
   return json({ vendor: publicCard(id, rec) });
 }
 async function market(env, action, body, ip, json) {
@@ -441,7 +450,7 @@ async function market(env, action, body, ip, json) {
     let id = /^[a-z0-9]{8,16}$/.test(String(body.id || '')) ? String(body.id) : '';
     let rec = id ? await kvGet(env, 'vend:' + id, null) : null;
     if (rec && rec.kh !== await sha(key)) return json({ error: 'Not allowed' }, 403);
-    if (!rec) { id = rid().slice(0, 12); rec = { kh: await sha(key), at: Date.now(), reports: [] }; }
+    if (!rec) { id = rid().slice(0, 12); rec = { kh: await sha(key), at: Date.now(), reports: [], approved: false }; const pend = await kvGet(env, 'vpend', []); pend.push(id); await env.EC_KV.put('vpend', JSON.stringify(pend.slice(-500))); }   // a new listing waits for the owner's approval (App Store 1.2)
     const l = cleanListing(body.listing), email = clip(body.listing && body.listing.email, 120).trim();
     const old = rec.l ? rec.l.cities.map(cityKey) : [];
     rec.l = l; rec.email = email; rec.live = isLive(l, !!(body.listing && body.listing.agree)); rec.up = Date.now();
@@ -454,7 +463,7 @@ async function market(env, action, body, ip, json) {
     }
     if (rec.founding === undefined && rec.live) rec.founding = false;
     await env.EC_KV.put('vend:' + id, JSON.stringify(rec));
-    return json({ ok: true, id, live: rec.live, founding: !!rec.founding, missing: rec.live ? [] : ['name', 'cats', 'cities'].filter(k => !l[k].length).concat(l.site || l.ig ? [] : ['ig']).concat(body.listing && body.listing.agree ? [] : ['agree']) });
+    return json({ ok: true, id, live: rec.live, pending: rec.approved === false, founding: !!rec.founding, missing: rec.live ? [] : ['name', 'cats', 'cities'].filter(k => !l[k].length).concat(l.site || l.ig ? [] : ['ig']).concat(body.listing && body.listing.agree ? [] : ['agree']) });
   }
   if (action === 'vendor/report') {
     const id = String(body.id || ''); const rec = /^[a-z0-9]{8,16}$/.test(id) && await kvGet(env, 'vend:' + id, null);
@@ -493,6 +502,7 @@ async function market(env, action, body, ip, json) {
     const v = await vendorAuth(); if (!v) return json({ error: 'Not allowed' }, 403);
     const [vid, rec] = v; const id = String(body.id || ''); const q = /^[a-z0-9]{8,20}$/.test(id) && await kvGet(env, 'req:' + id, null);
     if (!q) return json({ error: 'This request has closed.' }, 404);
+    if (rec.approved === false) return json({ error: 'Your listing is waiting for approval. You can reply once it\u2019s approved, usually within a day.' }, 403);
     if (!rec.live || !rec.l.cats.includes(q.r.cat) || !rec.l.cities.some(c => cityKey(c) === cityKey(q.r.city))) return json({ error: 'This request isn’t in your category or city.' }, 403);
     const msg = clip(body.msg, 600).trim(); if (!msg) return json({ error: 'Write a short reply.' }, 400);
     const reps = (await kvGet(env, 'rep:' + id, [])).filter(p => p.vid !== vid); if (reps.length >= 20) return json({ error: 'This request already has the most replies it can take.' }, 409);
@@ -576,6 +586,20 @@ async function reviewNew(env, body, json) {
   const id = Date.now().toString(36) + [...crypto.getRandomValues(new Uint8Array(5))].map(b => b.toString(16).padStart(2, '0')).join('');
   const rec = { id, stars, text, name, event: aclip(body.event, 60), city: aclip(body.city, 60), rel: Object.prototype.hasOwnProperty.call(REV_REL, body.rel) ? body.rel : 'none', status: 'pending', at: new Date().toISOString() };
   await env.EC_KV.put('rev:' + id, JSON.stringify(rec));
+  return json({ ok: true });
+}
+async function vendorsPending(env, json) {
+  if (!env.EC_KV) return json({ vendors: [] });
+  const ids = await kvGet(env, 'vpend', []), out = [];
+  for (const id of ids) { const r = await kvGet(env, 'vend:' + id, null); if (r && r.approved === false && !r.hidden) out.push({ id, name: r.l && r.l.name, cats: r.l && r.l.cats, cities: r.l && r.l.cities, ig: r.l && r.l.ig, site: r.l && r.l.site, bio: r.l && r.l.bio, at: r.at, live: r.live }); }
+  return json({ vendors: out });
+}
+async function vendorSet(env, body, json) {
+  const id = String(body.id || ''); if (!/^[a-z0-9]{8,16}$/.test(id)) return json({ error: 'Not found' }, 404);
+  const r = await kvGet(env, 'vend:' + id, null); if (!r) return json({ error: 'Not found' }, 404);
+  if (body.status === 'approved') { r.approved = true; r.hidden = false; } else if (body.status === 'hidden') r.hidden = true; else return json({ error: 'Choose approve or hide.' }, 400);
+  await env.EC_KV.put('vend:' + id, JSON.stringify(r));
+  await env.EC_KV.put('vpend', JSON.stringify((await kvGet(env, 'vpend', [])).filter(x => x !== id)));
   return json({ ok: true });
 }
 async function reviewsAll(env, json) {

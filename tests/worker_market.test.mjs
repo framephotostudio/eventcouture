@@ -2,7 +2,8 @@
 import assert from 'assert';
 const src = await import('../worker/index.js');
 const store = new Map();
-const env = { EC_KV: { get: async k => store.has(k) ? store.get(k) : null, put: async (k, v) => { store.set(k, v); }, delete: async k => { store.delete(k); } }, ALLOWED_ORIGINS: 'https://x' };
+const env = { EC_KV: { get: async k => store.has(k) ? store.get(k) : null, put: async (k, v) => { store.set(k, v); }, delete: async k => { store.delete(k); } }, ALLOWED_ORIGINS: 'https://x', ADMIN_CODE: 'owner-code-1234' };
+const admin = async (path, body) => { const r = await src.default.fetch(new Request('https://w' + path, body ? { method: 'POST', headers: { origin: 'https://x', 'content-type': 'application/json', 'x-admin-code': 'owner-code-1234' }, body: JSON.stringify(body) } : { headers: { origin: 'https://x', 'x-admin-code': 'owner-code-1234' } }), env); return { status: r.status, body: await r.json() }; };
 let ip = 1;
 const call = async (path, body, method = 'POST', who) => { const r = await src.default.fetch(new Request('https://w' + path, method === 'GET' ? { headers: { origin: 'https://x' } } : { method, headers: { origin: 'https://x', 'content-type': 'application/json', 'cf-connecting-ip': who || '9.9.9.' + (ip++ % 200) }, body: JSON.stringify(body) }), env); return { status: r.status, body: await r.json() }; };
 const vkey = 'v'.repeat(24), hkey = 'h'.repeat(24);
@@ -15,6 +16,15 @@ assert.equal((await call('/api/vendors?city=Houston,%20TX&cat=singer', null, 'GE
 r = await call('/api/vendor/save', { key: vkey, id: vid, listing });
 assert.equal(r.body.live, true); assert.equal(r.body.founding, true, 'early vendors are founding vendors'); assert.equal(r.body.id, vid);
 assert.equal((await call('/api/vendor/save', { key: 'x'.repeat(24), id: vid, listing: { name: 'Hacked' } })).status, 403);
+// a new listing waits for the owner's approval
+assert.equal(r.body.pending, true);
+assert.equal((await call('/api/vendors?city=houston,%20tx&cat=singer', null, 'GET')).body.vendors.length, 0, 'hidden until approved');
+assert.equal((await call('/api/vendors/pending', null, 'GET')).status, 403, 'only the owner sees pending listings');
+assert.equal((await admin('/api/vendors/pending')).body.vendors[0].name, 'Layali Voice');
+assert.equal((await admin('/api/vendors/set', { id: vid, status: 'approved' })).status, 200);
+assert.equal((await admin('/api/vendors/pending')).body.vendors.length, 0);
+// rude words are refused
+assert.equal((await call('/api/vendor/save', { key: vkey, id: vid, listing: Object.assign({}, listing, { bio: 'best shit singer' }) })).status, 400);
 let found = (await call('/api/vendors?city=houston,%20tx&cat=singer', null, 'GET')).body.vendors;
 assert.equal(found.length, 1); assert.equal(found[0].ig, 'layali.voice'); assert.ok(!JSON.stringify(found).includes('layali@example.com'), 'email not public'); assert.ok(!JSON.stringify(found).includes('"kh"'));
 assert.equal((await call('/api/vendors?city=Houston,%20TX&cat=dj', null, 'GET')).body.vendors.length, 0, 'category filter');
@@ -45,6 +55,7 @@ assert.equal((await call('/api/req/delete', { key: hkey, ids: [qid] })).status, 
 assert.ok(!store.has('req:' + qid) && !store.has('rep:' + qid));
 // moving cities updates the index
 const v2 = (await call('/api/vendor/save', { key: 'w'.repeat(24), listing: Object.assign({}, listing, { name: 'Zaffe Stars', cats: ['zaffe'] }) })).body.id;
+await admin('/api/vendors/set', { id: v2, status: 'approved' });
 await call('/api/vendor/save', { key: 'w'.repeat(24), id: v2, listing: Object.assign({}, listing, { name: 'Zaffe Stars', cats: ['zaffe'], cities: ['Dallas, TX'] }) });
 assert.equal((await call('/api/vendors?city=Houston,%20TX&cat=zaffe', null, 'GET')).body.vendors.length, 0);
 assert.equal((await call('/api/vendors?city=Dallas,%20TX&cat=zaffe', null, 'GET')).body.vendors.length, 1);

@@ -237,7 +237,7 @@
       /* A chosen inspiration photo counts like the host's own photo; her own words come first, so they win. */
       var ip = E.inspoOf(ev); if (ip && !E.wordsDiffer(ev, ip)) { ip.palette.forEach(function (h) { colors.push(hexRgb(h)); }); text += ' ' + E.inspoText(ip).toLowerCase(); }
       var fin = function (list) { return E.withInspo(ev, list, skip, E.concepts(ev, colors, text, loves, (skip || []).concat((Array.isArray(list) ? list : []).map(function (c) { return c && c.id; })), 12)); };
-      if (AI.live) {
+      if (AI.live && !(CFG.app && store.get('aiConsent', '') !== 'yes')) {   /* the app asks once before anything goes to Google's AI */
         /* Started early on the review screen, so the concepts are usually ready when the host taps Create. */
         var key = JSON.stringify(slim(ev)).length + ':' + JSON.stringify([ev.inspiration.inspo || '', ev.type, ev.guests, ev.city, ev.budget, ev.setting, ev.time, ev.kids, ev.alcohol, ev.inspiration.text, ev.inspiration.vibes, (ev.inspiration.photos || []).length]);
         if (!(skip && skip.length) && AI.pre && AI.pre.key === key) return AI.pre.p;
@@ -254,6 +254,13 @@
       return Promise.resolve(fin(E.concepts(ev, colors, text, loves, skip)));
     }
   };
+  function aiAsk(then) {
+    sheet('<h3>Create your looks with AI?</h3><p class="muted">To design your looks, Event Couture sends your event details, your description and any inspiration photos you add to Google\u2019s Gemini AI through our server. Event Couture doesn\u2019t keep them. See Privacy for details.</p><p class="muted small">Not now: your looks come from our style library, made on your phone. You can change this anytime in Help.</p><div class="stack"><button class="btn gold block" id="aiYes">Allow</button><button class="btn ghost block" id="aiNo">Not now</button></div>', function (el, close) {
+      el.querySelector('#aiYes').addEventListener('click', function () { store.set('aiConsent', 'yes'); AI.pre = null; close(); then(); });
+      el.querySelector('#aiNo').addEventListener('click', function () { store.set('aiConsent', 'no'); AI.pre = null; close(); then(); });
+      el.parentNode.addEventListener('click', function (e) { if (e.target === el.parentNode && !store.get('aiConsent', '')) { store.set('aiConsent', 'no'); then(); } }, true);   /* closed without choosing: the style library */
+    });
+  }
   function slim(ev) { return { type: ev.type, guests: ev.guests, city: ev.city, budget: ev.budget, setting: ev.setting, time: ev.time, kids: !!ev.kids, alcohol: ev.alcohol || 'full', text: [ev.inspiration.text, E.inspoText(E.inspoOf(ev))].filter(Boolean).join(' '), vibes: ev.inspiration.vibes || [], links: ev.inspiration.links, photos: (ev.inspiration.photos || []).map(function (p) { return { image: p.src, loves: p.loves }; }) }; }
 
   /* ---------- layout ---------- */
@@ -275,7 +282,7 @@
       '<header class="topbar"><a class="brand logo-mark" href="#/" aria-label="Event Couture by Always Luxe, home"><img src="' + srcOf(BRAND.markGold) + '" alt="Event Couture" width="563" height="210"><span class="wordmark" aria-hidden="true">Event Couture</span><span class="by" aria-hidden="true">by Always Luxe</span></a>' +
       '<nav><a class="icon-btn" href="#/events" aria-label="My events" title="My events">' + ICON.events + '</a><a class="icon-btn" href="#/help" aria-label="Help" title="Help">' + ICON.help + '</a></nav></header>' +
       '<main id="main"' + (location.hash !== lastHash && !(lastHash === null && app.hasAttribute('data-pre')) ? ' class="fade"' : '') + '>' + inner + '</main>' +
-      '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a>' + (CFG.app ? '' : '<a href="plan/">Planning guides</a>') + (CFG.app ? '' : '<a href="#/pricing">Pricing</a>') + '' + (CFG.app ? '' : '<a href="#/vendors">For vendors</a>') + '<a href="#/privacy">Privacy</a><a href="#/terms">Terms</a>' + (CFG.app || isInstalled() ? '' : '<a href="#" data-install>Add to home screen</a>') + '</nav>' + (CFG.app ? '' : '<nav class="foot-guides" aria-label="Planning guides"><a href="ai-event-planner/">AI event planner</a><a href="wedding-planner/">Wedding planner</a><a href="birthday-party-planner/">Birthday party planner</a><a href="event-budget-calculator/">Budget calculator</a><a href="event-vendors/">Event vendors</a><a href="cultural-weddings/">Cultural weddings</a><a href="event-inspiration/">Inspiration</a></nav>') + '<div class="name">Event Couture by Always Luxe</div>' + (CFG.supportEmail ? '<div class="small">Questions? <a href="mailto:' + esc(CFG.supportEmail) + '">' + esc(CFG.supportEmail) + '</a></div>' : '') + (CFG.app ? '' : '<div class="small">iPhone and Android app coming soon</div>') + '<div class="small">Also from Always Luxe: <a href="https://facecouture.app/" target="_blank" rel="noopener">Face Couture</a></div></footer>';
+      (CFG.app ? '' : '<footer class="site"><img src="' + srcOf(BRAND.mark) + '" alt="" loading="lazy"><nav><a href="#/help">Help</a>' + (CFG.app ? '' : '<a href="plan/">Planning guides</a>') + (CFG.app ? '' : '<a href="#/pricing">Pricing</a>') + '' + (CFG.app ? '' : '<a href="#/vendors">For vendors</a>') + '<a href="#/privacy">Privacy</a><a href="#/terms">Terms</a>' + (CFG.app || isInstalled() ? '' : '<a href="#" data-install>Add to home screen</a>') + '</nav>' + (CFG.app ? '' : '<nav class="foot-guides" aria-label="Planning guides"><a href="ai-event-planner/">AI event planner</a><a href="wedding-planner/">Wedding planner</a><a href="birthday-party-planner/">Birthday party planner</a><a href="event-budget-calculator/">Budget calculator</a><a href="event-vendors/">Event vendors</a><a href="cultural-weddings/">Cultural weddings</a><a href="event-inspiration/">Inspiration</a></nav>') + '<div class="name">Event Couture by Always Luxe</div>' + (CFG.supportEmail ? '<div class="small">Questions? <a href="mailto:' + esc(CFG.supportEmail) + '">' + esc(CFG.supportEmail) + '</a></div>' : '') + (CFG.app ? '' : '<div class="small">iPhone and Android app coming soon</div>') + '<div class="small">Also from Always Luxe: <a href="https://facecouture.app/" target="_blank" rel="noopener">Face Couture</a></div></footer>');
     if (preHero) { var nh = app.querySelector('main .hero'); if (nh && nh.outerHTML === preHero.outerHTML) nh.parentNode.replaceChild(preHero, nh); }
     app.removeAttribute('data-pre');
     var ld = document.getElementById('loader'); if (ld && !ld.classList.contains('done')) { ld.classList.add('done'); setTimeout(function () { if (ld.parentNode) ld.parentNode.removeChild(ld); }, 450); }
@@ -321,6 +328,7 @@
       if (p[0] === 'e' && p[2] === 'concepts') return conceptsView(p[1]);
       if (p[0] === 'e') { var ev = getEvent(p[1]); if (!ev) return frame('<div class="stack"><h2>This plan isn\u2019t here</h2><p class="muted">It may have been deleted, or it was made on another device.</p><div><a class="btn" href="#/events">Go to My events</a></div></div>'); return planView(ev, p[2] || 'overview'); }
       if (p[0] === 'g') return guestPage(p[1]);
+      if (CFG.app && /^(booked|cq|admin)$/.test(p[0])) { location.replace('#/'); return; }   /* no checkout or admin screens in the app */
       if (p[0] === 'booked') return cqThanks(p[1]);
       if (p[0] === 'unsubscribe') return unsubscribePage();
       if (p[0] === 'p' && p[1]) return proposalPage(p[1]);
@@ -389,6 +397,8 @@
   function backupFile(ev) {
     planBlob(ev).then(function (plan) {
       var blob = new Blob([JSON.stringify({ eventCouture: 1, plan: plan })], { type: 'application/json' }), a = document.createElement('a');
+      var fname = (ev.name || 'event').replace(/[^\w -]+/g, '').trim().replace(/\s+/g, '-') + '-event-couture.json';
+      if (window.ECNative && window.ECNative.shareFile) { var txt = JSON.stringify({ eventCouture: 1, plan: plan }); return window.ECNative.shareFile(fname, btoa(unescape(encodeURIComponent(txt))), 'application/json', ev.name); }   /* the app: save it to Files or send it with the share sheet */
       a.href = URL.createObjectURL(blob); a.download = (ev.name || 'event').replace(/[^\w -]+/g, '').trim().replace(/\s+/g, '-') + '-event-couture.json'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
       toast('Backup saved. Open it from My events › Restore a backup on any device');
     });
@@ -416,6 +426,12 @@
     if (m.hasAttribute('data-restore-file')) { var f = document.createElement('input'); f.type = 'file'; f.accept = 'application/json,.json'; f.addEventListener('change', function () { var file = f.files[0]; if (!file) return; if (file.size > 8e6) return toast('That file is too large.'); var rd = new FileReader(); rd.onload = function () { try { var j = JSON.parse(rd.result); importPlan(j && j.plan); } catch (x) { toast('That isn’t an Event Couture backup file.'); } }; rd.readAsText(file); }); f.click(); return; }
     var id = (location.hash.match(/^#\/e\/([^/]+)/) || [])[1], ev = id && events()[id]; if (!ev) return;
     if (m.hasAttribute('data-move')) moveSheet(ev); else backupFile(ev);
+  });
+  /* Report or block a vendor who replied to her (App Store 1.2): a report goes to Event Couture to review; a block hides them on this device. */
+  document.addEventListener('click', function (e) {
+    var rb = e.target.closest && e.target.closest('[data-vrep]'), bb = e.target.closest && e.target.closest('[data-vblock]');
+    if (rb) { apiMarket('vendor/report', { id: rb.dataset.vrep, why: 'reply' }).catch(function () {}); rb.textContent = 'Reported'; rb.disabled = true; }
+    if (bb) { var l = store.get('blockedVendors', []); if (l.indexOf(bb.dataset.vblock) < 0) l.push(bb.dataset.vblock); store.set('blockedVendors', l); apiMarket('vendor/report', { id: bb.dataset.vblock, why: 'blocked' }).catch(function () {}); var it = bb.closest('.it'); if (it) it.remove(); }
   });
   window.addEventListener('hashchange', function () { if (NEWER) { location.reload(); return; } checkNewer(); });
   window.addEventListener('hashchange', function () { clearToasts(); $$('.sheet-back').forEach(function (x) { x.remove(); }); route(); });   /* pop-ups never follow you to another page */
@@ -595,7 +611,7 @@
 
   var MIC = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>';
   function setupSpeak(btn, ta, hint) {
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null;
+    var SR = CFG.app ? null : window.SpeechRecognition || window.webkitSpeechRecognition, rec = null;   /* in the app, the keyboard's own dictation: no microphone permission needed */
     btn.addEventListener('click', function () {
       if (!SR) { hint.textContent = 'Tap the microphone on your keyboard to speak, then talk about your event.'; ta.focus(); return; }
       if (rec) { rec.stop(); return; }
@@ -993,9 +1009,11 @@
       '<p class="muted small">' + (CFG.app ? 'Planning and keeping your plan are free in the app.' : CFG.launchFree ? 'Planning and keeping your plan are free during our launch.' : 'Planning is free. You only pay if you want to keep your plan and share it with guests.') + '</p>' +
       '<div class="wiz-act"><button class="btn gold" id="go">Create my looks</button><a class="btn ghost" href="' + W + '2/' + draft.id + '">Edit details</a>' + laterBtn() + '</div></div>');
     $('#later').addEventListener('click', function () { persist(); location.hash = '#/events'; setTimeout(function () { toast('Saved. Pick it up anytime from My events.'); }, 80); });
-    if (AI.live) AI.concepts(draft, []);   /* start the AI now; it's usually ready by the time the host taps Create */
+    if (AI.live && !(CFG.app && store.get('aiConsent', '') !== 'yes')) AI.concepts(draft, []);   /* start the AI now; it's usually ready by the time the host taps Create */
     $('#go').addEventListener('click', function () {
-      var btn = this; if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Starting…';   // no double submits
+      var btn = this; if (btn.disabled) return;
+      /* App Store 5.1.2(i): ask once before her words go to a third-party AI. Not now = looks from our style library, made on the phone. */
+      if (CFG.app && AI.live && !store.get('aiConsent', '')) return aiAsk(function () { btn.click(); }); btn.disabled = true; btn.textContent = 'Starting…';   // no double submits
       T('concepts_requested', { event_type: draft.type });
       var ev = draft; ev.paid = null; ev.created = ev.created || new Date().toISOString().slice(0, 10);
       if (!saveEvent(ev)) { btn.disabled = false; btn.textContent = 'Create my concepts'; return; }
@@ -1021,6 +1039,8 @@
       }).join('');
     }
     function load(skip) {
+      /* App Store 5.1.2(i): in the app, ask once before her details go to a third-party AI. Not now = looks from our style library, made on the phone. */
+      if (CFG.app && AI.live && !store.get('aiConsent', '')) return aiAsk(function () { load(skip); });
       var t0 = Date.now();
       AI.concepts(ev, skip).then(function (list) {
         T(skip && skip.length ? 'concepts_more_shown' : 'concepts_shown', { source: AI.source || 'library', wait_seconds: Math.round((Date.now() - t0) / 100) / 10, event_type: ev.type, from_photo: E.inspoOf(ev) ? 'yes' : 'no' });
@@ -1073,7 +1093,7 @@
       (SHARING ? '<p class="muted small">Your plan is saved on this ' + (CFG.app ? 'phone' : 'device') + '. Guests RSVP from your invitation link on their own phones.</p>' : CFG.app ? '<p class="muted small">Your plan is saved on this phone. Send your invitation from the Invitation page.</p>' : CFG.preview ? '<p class="muted small">Right now your plan is saved on this device. Sending your invitation to guests on their own phones turns on when accounts launch.</p>' : '') +
       (FREE ? '' : '<p class="muted small">Guest list grows past ' + pass.max.toLocaleString('en-US') + '? You pay only the difference.</p>') +
       (CFG.preview && !FREE ? '<div class="note">Preview version: no payment is taken.</div>' : '') +
-      '<button class="btn gold block" id="keepPay">' + (CFG.preview ? 'Keep my plan' : 'Pay ' + usd2(pass.price) + ' and keep my plan') + '</button><button class="btn ghost block" data-close>Not now</button>', function (el, close) {
+      '<button class="btn gold block" id="keepPay">' + (CFG.preview || CFG.app ? 'Keep my plan' : 'Pay ' + usd2(pass.price) + ' and keep my plan') + '</button><button class="btn ghost block" data-close>Not now</button>', function (el, close) {
       $('#keepPay', el).addEventListener('click', function () {
         ev.paid = { price: pass.price, max: pass.max, at: new Date().toISOString() };
         T('plan_kept', { pass: pass.label, value: CFG.preview ? 0 : pass.price, pass_price: pass.price, currency: 'USD', event_type: ev.type, preview: CFG.preview ? 'yes' : 'no' });
@@ -1090,7 +1110,7 @@
       '<div class="sum"><div><span>Price</span><b class="num">$' + item.price.toFixed(2) + '</b></div>' + (item.credits ? '<div><span>Or with credits</span><span class="num">' + item.credits + ' credits (you have ' + w.credits + ')</span></div>' : '') + '</div>' +
       '<p class="muted small">Charged once, only when it’s delivered. Failed results never cost anything.</p>' +
       (CFG.preview ? '<div class="note">' + (CFG.launchFree ? 'Free during our launch.' : 'Preview version: no payment is taken.') + '</div>' : '') +
-      '<button class="btn gold block" id="buy">' + (CFG.preview ? 'Add it' : 'Pay ' + usd2(item.price)) + '</button>' +
+      '<button class="btn gold block" id="buy">' + (CFG.preview || CFG.app ? 'Add it' : 'Pay ' + usd2(item.price)) + '</button>' +
       (canCredits ? '<button class="btn block" id="useCredits">Use ' + item.credits + ' credits</button>' : '') +
       '<button class="btn ghost block" data-close>Continue without this</button>', function (el, close) {
       $('#buy', el).addEventListener('click', function () { addLedger({ kind: item.name, event: ev ? ev.name : '', amount: CFG.preview ? 0 : item.price, note: CFG.preview ? 'preview' : '' }); close(); toast('Added'); onDone && onDone(); });
@@ -1223,7 +1243,7 @@
       ev.setting === 'home' || ev.settingOpen ? null : { done: !!(ev.areaChosen || ev.area), label: 'Choose the area for your venue', detail: ev.area || 'Anywhere in ' + ev.city.split(',')[0], act: 'area' },
       where,
       { done: !vend.length || booked === vend.length, label: 'Choose your vendors', detail: vend.length ? booked + ' of ' + vend.length + ' booked' : 'No other vendors needed', href: base + '/budget' },
-      { done: isKept(ev), label: 'Keep your plan', detail: isKept(ev) ? 'Saved and unlocked' : CFG.launchFree ? 'Free during our launch: save, print and share it anytime' : 'Unlocks every detail, invitations and RSVPs', act: 'keep' },
+      { done: isKept(ev), label: 'Keep your plan', detail: isKept(ev) ? 'Saved and unlocked' : CFG.app ? 'Save, print and share it anytime' : CFG.launchFree ? 'Free during our launch: save, print and share it anytime' : 'Unlocks every detail, invitations and RSVPs', act: 'keep' },
       { done: !!ev.invited || (ev.guestsList || []).some(function (g) { return g.status === 'yes' || g.status === 'declined'; }), label: 'Invite your guests', detail: (ev.guestsList || []).length ? plural(ev.guestsList.length, 'guest') + ' on your list' : 'Send your invitation link', href: base + '/invite' }
     ];
   }
@@ -1991,7 +2011,7 @@
       return '<div class="panel stack pkg" id="pkg">' + PKG_STEPS(2) + '<div class="pkg-top"><h3>' + (pks.length === 1 ? 'Your package' : 'Compare your packages') + '</h3></div>' + AREA_LINE(ev) +
         '<p class="pkg-guide">Each package has a top-rated pick for every part of your plan. Tap <b>Swap</b> on anything you don’t like. When you’re happy, tap <b>Choose</b> on the one you like best: it becomes your <b>final package</b>, and we walk you through booking it.</p>' +
         '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of every package and your budget, and your estimated total goes down to match. You can add it back anytime.' + (ev.sample ? '' : ' <button type="button" class="link small" data-pkextras>+ Add an item</button>') + '</p>' +
-        (pks.length === 1 && !ev.sample ? '<div class="pkg-one-more"><span class="small muted">Want to compare? We make a second package with different top-rated picks.</span><button class="btn small ghost" id="pkgMore">+ Compare with another package</button></div>' : '') + '<div class="pkg-cmp-wrap"><table class="pkg-cmp' + (pks.length === 1 ? ' one' : '') + '" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + rideRow(ev, b, true, ncol) + '</tbody></table></div>' +
+        (pks.length === 1 && !ev.sample ? '<div class="pkg-one-more"><span class="small muted">Want to compare? We make a second package with different top-rated picks.</span><button class="btn small ghost" id="pkgMore">+ Compare with another package</button></div>' : '') + '<div class="pkg-cmp-wrap"><table class="pkg-cmp' + (pks.length === 1 ? ' one' : '') + '" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + rideRow(ev, b, true, ncol) + '</tbody></table></div><p class="small muted">Places and ratings from Google Maps; \u2605 Recommended picks are chosen by Event Couture.</p>' +
         (ex.length && !ev.sample ? '<p class="small muted">Removed: ' + ex.map(function (id) { return esc(catName(id, ev)) + ' <button class="link small" data-pkunx="' + id + '">Add back</button>'; }).join(' · ') + '</p>' : '') +
         '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
     }
@@ -2038,7 +2058,7 @@
   var CQ_TEST = (function () { try { var m = location.search.match(/[?&]cqtest=([01])/); if (m) localStorage.setItem('ec_cqtest', m[1]); return localStorage.getItem('ec_cqtest') === '1'; } catch (e) { return /[?&]cqtest=1/.test(location.search); } })();
   function cqCard() { var c = cqCfg(); return c.stripe === true || (c.stripe === 'test' && CQ_TEST); }
   function cqLive(id) { return cqCard() || !!(cqCfg().links || {})[id]; }
-  function cqOn(ev) { return !ev.sample && !!CFG.apiUrl && E.countryOf(ev.city || '').id === 'US' && CQ_TIERS.some(function (t) { return cqLive(t.id); }); }
+  function cqOn(ev) { return !CFG.app && !ev.sample && !!CFG.apiUrl && E.countryOf(ev.city || '').id === 'US' && CQ_TIERS.some(function (t) { return cqLive(t.id); }); }
   function cqPrice(t) { return cqCfg().founding !== false ? t.founding : t.price; }
   function cqBest(ev, n) { if (ev.type === 'wedding' || ev.culture) return CQ_TIERS[2]; return CQ_TIERS.find(function (t) { return n <= t.max; }) || CQ_TIERS[2]; }
   function conciergeCard(ev, cats) {
@@ -2584,7 +2604,7 @@
           if (!list.length) { box.innerHTML = '<p class="muted">No well-reviewed matches nearby for this type. Try another venue type, or switch to a different spending level.</p>'; return; }
           var placesAll = list.length; list = cut(list, 3, ev);
           var ids = list.map(function (p) { return p.id; });
-          box.innerHTML = '<div class="curated"><p class="eyebrow">Top-rated ' + esc(btn.dataset.live.toLowerCase()) + 's in ' + esc(ev.city.split(',')[0]) + '</p>' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + venueFit(ev, p) + '<div class="small muted">' + (p.rating ? '\u2605 ' + p.rating + ' \u00b7 ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews \u00b7 ' : '') + esc(p.address || '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts">' + saveBtn(ev, p, venueCat(ev)) + (isRestaurantPick(ev, venueCat(ev), { id: p.id, name: p.name, maps: p.mapsUrl, reservable: p.reservable }) && (ev.setting === 'restaurant' || ev.setting === 'privateRoom') ? '<a class="btn small gold" target="_blank" rel="noopener" href="' + esc(reserveLink(ev, { name: p.name, maps: p.mapsUrl })) + '">Reserve a table</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Pricing and availability come directly from each venue when you inquire.</p></div>' + more(ev, placesAll, list.length, 'top-rated places');
+          box.innerHTML = '<div class="curated"><p class="eyebrow">Top-rated ' + esc(btn.dataset.live.toLowerCase()) + 's in ' + esc(ev.city.split(',')[0]) + '</p>' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + venueFit(ev, p) + '<div class="small muted">' + (p.rating ? '\u2605 ' + p.rating + ' \u00b7 ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews \u00b7 ' : '') + esc(p.address || '') + '</div><div class="small muted" data-dt="' + esc(p.id) + '"></div></div><span class="acts">' + saveBtn(ev, p, venueCat(ev)) + (isRestaurantPick(ev, venueCat(ev), { id: p.id, name: p.name, maps: p.mapsUrl, reservable: p.reservable }) && (ev.setting === 'restaurant' || ev.setting === 'privateRoom') ? '<a class="btn small gold" target="_blank" rel="noopener" href="' + esc(reserveLink(ev, { name: p.name, maps: p.mapsUrl })) + '">Reserve a table</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Places and ratings from Google Maps. Pricing and availability come directly from each venue when you inquire.</p></div>' + more(ev, placesAll, list.length, 'top-rated places');
           $$('[data-keep]', box).forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { location.reload(); }); }); });
           if (ev.start && ids.length) {
             var origin = /,|\d{5}/.test(ev.start) ? ev.start : ev.start + ', ' + ev.city;
@@ -2707,7 +2727,7 @@
       var el = document.querySelector('[data-ecv="' + cat + '"]'), list = (j.vendors || []).slice(0, 4); if (!el || !list.length) return;
       el.innerHTML = '<div class="curated"><p class="eyebrow">Event Couture vendors</p>' + list.map(function (x) {
         var p = { id: 'ec:' + x.id, name: x.name, website: x.ig ? 'https://instagram.com/' + x.ig : x.site, mapsUrl: siteBase() + '#/v/' + x.id };
-        return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b> <span class="badge est">' + (x.featured ? 'Recommended' : x.founding ? 'Founding vendor' : 'Event Couture vendor') + '</span><div class="small muted">' + (x.price ? esc(x.priceType || 'From') + ' ' + money(x.price) + ' \u00b7 ' : '') + esc(x.bio ? x.bio.slice(0, 90) : x.cats.map(catLabel).join(', ')) + '</div></div><span class="acts">' + saveBtn(ev, p, cat) + (x.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://instagram.com/' + esc(x.ig) + '">Instagram</a>' : '') + '<a class="btn small ghost" href="#/v/' + esc(x.id) + '">View page</a></span></div>';
+        return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b> <span class="badge est">' + (x.featured ? 'Sponsored' : x.founding ? 'Founding vendor' : 'Event Couture vendor') + '</span><div class="small muted">' + (x.price ? esc(x.priceType || 'From') + ' ' + money(x.price) + ' \u00b7 ' : '') + esc(x.bio ? x.bio.slice(0, 90) : x.cats.map(catLabel).join(', ')) + '</div></div><span class="acts">' + saveBtn(ev, p, cat) + (x.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://instagram.com/' + esc(x.ig) + '">Instagram</a>' : '') + '<a class="btn small ghost" href="#/v/' + esc(x.id) + '">View page</a></span></div>';
       }).join('') + '</div>';
     }).catch(function () {});
   }
@@ -2719,10 +2739,10 @@
     return 'Hi! I\u2019m planning ' + (/^[aeiou]/i.test(tn) ? 'an ' : 'a ') + (E.culture(ev) ? tn.charAt(0) + tn.slice(1).toLowerCase() : tn.toLowerCase()) + ' in ' + ev.city.split(',')[0] + (ev.date ? ' on ' + fmtDate(ev.date) : ev.dateFrom ? ' sometime between ' + shortDate(ev.dateFrom) + ' and ' + shortDate(ev.dateTo || ev.dateFrom) : '') + ' for about ' + plural(ev.guests, 'guest') + ', and I\u2019d love a quote for ' + need + '.' + (theme ? ' The theme is ' + theme + '.' : '') + (line && !CFG.app ? ' My budget for this is about ' + money(line.mid) + '.' : '') + ' Are you available?\n\nPlanned with Event Couture by Always Luxe. Vendors: get listed free at ' + siteBase() + '#/vendors';
   }
   function marketBlock(ev, cat) {
-    var q = (ev.quotes || {})[cat], reps = ((ev.quoteReplies || {})[cat]) || [];
+    var q = (ev.quotes || {})[cat], blk = store.get('blockedVendors', []), reps = (((ev.quoteReplies || {})[cat]) || []).filter(function (r) { return blk.indexOf(r.vid) < 0; });   /* a vendor she blocked never shows again on this device */
     var quotes = !SHARING || ev.sample ? '' : q ? '<div class="stack"><b>Quotes from vendors' + (reps.length ? ' (' + reps.length + ')' : '') + '</b>' + (reps.length ? reps.map(function (r) {
         var p = { id: 'ec:' + r.vid, name: r.card.name, website: r.card.ig ? 'https://instagram.com/' + r.card.ig : r.card.site, mapsUrl: siteBase() + '#/v/' + r.vid };
-        return '<div class="it"><div class="grow"><b>' + esc(r.card.name) + '</b>' + (r.price ? ' <span class="num">' + money(r.price) + '</span>' : '') + '<div class="small">' + esc(r.msg) + '</div><div class="small muted">' + [r.card.phone, r.email].filter(Boolean).map(esc).join(' \u00b7 ') + '</div></div><span class="acts">' + saveBtn(ev, p, cat) + (r.card.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://ig.me/m/' + esc(r.card.ig) + '">Message</a>' : r.email ? '<a class="btn small ghost" href="mailto:' + esc(r.email) + '">Email</a>' : '') + '</span></div>'; }).join('') : '<span class="muted small">Your request is out. Event Couture vendors in ' + esc(ev.city.split(',')[0]) + ' reply here, usually within a day or two.</span>') + '</div>'
+        return '<div class="it"><div class="grow"><b>' + esc(r.card.name) + '</b>' + (r.price ? ' <span class="num">' + money(r.price) + '</span>' : '') + '<div class="small">' + esc(r.msg) + '</div><div class="small muted">' + [r.card.phone, r.email].filter(Boolean).map(esc).join(' \u00b7 ') + '</div><div class="small"><button class="link quiet" data-vrep="' + esc(r.vid) + '">Report</button> \u00b7 <button class="link quiet" data-vblock="' + esc(r.vid) + '">Block</button></div></div><span class="acts">' + saveBtn(ev, p, cat) + (r.card.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://ig.me/m/' + esc(r.card.ig) + '">Message</a>' : r.email ? '<a class="btn small ghost" href="mailto:' + esc(r.email) + '">Email</a>' : '') + '</span></div>'; }).join('') : '<span class="muted small">Your request is out. Event Couture vendors in ' + esc(ev.city.split(',')[0]) + ' reply here, usually within a day or two.</span>') + '</div>'
       : '<div class="stack"><button class="btn small" data-getq="' + esc(cat) + '">Get quotes from vendors</button><span class="muted small">Free. Vendors see your date, city, guest count, theme and budget for this, never your name or contact details.</span></div>';
     var ig = (ev.shortlist || []).filter(function (x) { return x.cat === cat && /^ig:/.test(x.id); });
     var recs = recFor(ev, cat);
@@ -2784,7 +2804,7 @@
           if (!list.length) { box.innerHTML = '<p class="muted small">No well-reviewed matches nearby. Try a different area on the Venues tab.</p>'; return; }
           var bizAll = list.length; list = cut(list, 3, ev);
           var PL = { PRICE_LEVEL_INEXPENSIVE: 'Budget-friendly', PRICE_LEVEL_MODERATE: 'Moderate prices', PRICE_LEVEL_EXPENSIVE: 'Upscale', PRICE_LEVEL_VERY_EXPENSIVE: 'Luxury prices' };
-          box.innerHTML = '<div class="curated">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + (p.rating ? '★ ' + p.rating + ' · ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews' : '') + (PL[p.priceLevel] ? ' · ' + PL[p.priceLevel] : '') + (p.address ? ' · ' + esc(p.address.split(',').slice(0, 2).join(',')) : '') + '</div></div><span class="acts">' + saveBtn(ev, p, btn.dataset.vendor) + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Ratings from Google. Exact pricing comes from each business when you inquire.</p></div>' + more(ev, bizAll, list.length, 'top-rated businesses');
+          box.innerHTML = '<div class="curated">' + list.map(function (p) { return '<div class="it"><div class="grow"><b>' + esc(p.name) + '</b>' + hotelBadge(p.name) + '<div class="small muted">' + (p.rating ? '★ ' + p.rating + ' · ' + Number(p.reviews || 0).toLocaleString('en-US') + ' reviews' : '') + (PL[p.priceLevel] ? ' · ' + PL[p.priceLevel] : '') + (p.address ? ' · ' + esc(p.address.split(',').slice(0, 2).join(',')) : '') + '</div></div><span class="acts">' + saveBtn(ev, p, btn.dataset.vendor) + (p.website ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.website) + '">Website</a>' : '') + '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(p.mapsUrl) + '">View details</a></span></div>'; }).join('') + '<p class="muted small">Places and ratings from Google Maps. Exact pricing comes from each business when you inquire.</p></div>' + more(ev, bizAll, list.length, 'top-rated businesses');
           $$('[data-keep]', box).forEach(function (k) { k.addEventListener('click', function () { keepSheet(ev, 'Keep your plan', function () { location.reload(); }); }); });
         }).catch(function (e) { box.innerHTML = '<p class="muted small">' + esc(e.message || 'Search isn’t available right now.') + '</p>'; });
   }
@@ -3277,7 +3297,8 @@
   var FC_LINK = '<a class="fc-try small" href="https://facecouture.app/" target="_blank" rel="noopener" data-fc>\u2728 Try your glam look first on Face Couture</a>';
   /* After the party: the photos get their finish on Face Couture, the sister app. */
   function fcFinish(guest) {
-    return '<div class="panel fc-finish"><img src="img/brand/facecouture-icon-128.png" alt="" width="52" height="52"><div><span class="eyebrow">' + (guest ? 'Before you post' : 'After the party') + '</span><b>' + (guest ? 'Edit your photos from tonight with Face Couture' : 'Edit your event photos with Face Couture') + '</b><p class="small muted">' + (guest ? 'Glow, glam and a flawless finish in seconds, so every photo from tonight is ready to share.' : 'Glow, glam and a flawless finish for every photo from your celebration, in seconds. Picture perfect, every time.') + '</p><div class="row"><a class="btn small gold" href="https://facecouture.app/" target="_blank" rel="noopener" data-fc>Edit on the website</a>' + (CFG.faceCoutureApp ? '<a class="btn small ghost" href="' + esc(CFG.faceCoutureApp) + '" target="_blank" rel="noopener" data-fc>Get the app</a>' : '<span class="badge">iPhone app coming soon</span>') + '</div></div></div>';
+    if (CFG.app && !CFG.faceCoutureApp) return '';   /* in the app, only once Face Couture is in the App Store */
+    return '<div class="panel fc-finish"><img src="img/brand/facecouture-icon-128.png" alt="" width="52" height="52"><div><span class="eyebrow">' + (guest ? 'Before you post' : 'After the party') + '</span><b>' + (guest ? 'Edit your photos from tonight with Face Couture' : 'Edit your event photos with Face Couture') + '</b><p class="small muted">' + (guest ? 'Glow, glam and a flawless finish in seconds, so every photo from tonight is ready to share.' : 'Glow, glam and a flawless finish for every photo from your celebration, in seconds. Picture perfect, every time.') + '</p><div class="row">' + (CFG.app ? '' : '<a class="btn small gold" href="https://facecouture.app/" target="_blank" rel="noopener" data-fc>Edit on the website</a>') + (CFG.faceCoutureApp ? '<a class="btn small ghost" href="' + esc(CFG.faceCoutureApp) + '" target="_blank" rel="noopener" data-fc>Get the app</a>' : '<span class="badge">iPhone app coming soon</span>') + '</div></div></div>';
   }
   function guestPromo() {
     return '<div class="panel guest-promo"><img src="img/brand/ec-mark-128.png" alt="" width="44" height="44"><div><b>Planning something of your own?</b><p class="small muted">This celebration was planned with Event Couture by Always Luxe. Share one photo or a few words and get the whole event: the look, the budget, venues, vendors and an invitation like this one. Free to plan.</p><a class="btn small gold" href="#/new/1" data-promo="invitation">Plan my event</a></div></div>';
@@ -3661,9 +3682,19 @@
             return '<div class="panel stack rv-adm"><div class="row" style="justify-content:space-between"><span class="rv-st">' + starsText(r.stars) + '</span><span class="badge' + (r.status === 'approved' ? ' ok' : '') + '">' + esc(r.status === 'approved' ? 'Showing on the site' : r.status === 'hidden' ? 'Hidden' : 'Waiting for you') + '</span></div><p>' + esc(r.text) + '</p><p class="small muted"><b>' + esc(r.name) + '</b> · ' + esc([r.event, r.city].filter(Boolean).join(', ')) + (REV_LABEL[r.rel] ? ' · ' + REV_LABEL[r.rel] : '') + ' · ' + esc(fmtDate((r.at || '').slice(0, 10))) + '</p><div class="row">' +
               (r.status !== 'approved' ? '<button class="btn small gold" data-rv="approved" data-id="' + esc(r.id) + '">Approve</button>' : '') + (r.status !== 'hidden' ? '<button class="btn small ghost" data-rv="hidden" data-id="' + esc(r.id) + '">Hide</button>' : '') + '<button class="btn small ghost" data-rv="deleted" data-id="' + esc(r.id) + '">Delete</button></div></div>';
           }).join('') : '<p class="muted">No reviews yet.</p>';
+          return fetch(CFG.apiUrl + '/api/vendors/pending', { headers: { 'x-admin-code': code } }).then(function (r) { return r.ok ? r.json() : { vendors: [] }; }).then(function (v) {
+            var V = v.vendors || [];   /* new vendor listings wait here until she approves them */
+            $('#vdList').innerHTML = '<h3>Vendor listings waiting</h3>' + (V.length ? V.map(function (x) { return '<div class="panel stack"><b>' + esc(x.name || 'No name') + '</b><span class="small muted">' + esc((x.cats || []).join(', ')) + ' \u00b7 ' + esc((x.cities || []).join(', ')) + (x.ig ? ' \u00b7 @' + esc(x.ig) : '') + '</span>' + (x.bio ? '<p class="small">' + esc(x.bio) + '</p>' : '') + '<div class="row"><button class="btn small gold" data-vd="approved" data-id="' + esc(x.id) + '">Approve</button><button class="btn small ghost" data-vd="hidden" data-id="' + esc(x.id) + '">Hide</button></div></div>'; }).join('') : '<p class="muted">None waiting.</p>');
+          });
         })
         .catch(function (er) { toast(er.message || 'Not available'); });
     }
+    $('#rvList').insertAdjacentHTML('afterend', '<div class="stack" id="vdList"></div>');
+    $('#vdList').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-vd]'); if (!b) return; b.disabled = true;
+      fetch(CFG.apiUrl + '/api/vendors/set', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-code': code }, body: JSON.stringify({ id: b.dataset.id, status: b.dataset.vd }) })
+        .then(function (r) { if (!r.ok) throw new Error(); load(); }).catch(function () { b.disabled = false; toast('Couldn\u2019t save that. Try again.'); });
+    });
     $('#rvLogin').addEventListener('submit', function (e) { e.preventDefault(); code = $('#admCode').value; load(); });
     $('#rvList').addEventListener('click', function (e) {
       var b = e.target.closest('[data-rv]'); if (!b) return; b.disabled = true;
@@ -3801,6 +3832,7 @@
       apiMarket('vendor/save', { key: vendorKey(v), id: v.serverId, listing: listingOut(v) }).then(function (j) {
         v.serverId = j.id; v.live = j.live; v.founding = j.founding; store.set('vendor', v); btn.disabled = false; btn.textContent = 'Save my listing';
         if (!j.live) return sheet('<h3>Saved, almost live</h3><p class="muted">Add ' + esc((j.missing || []).map(function (m) { return { ig: 'your Instagram or website', agree: 'the price agreement at the bottom', name: 'your business name', cats: 'what you offer', cities: 'the cities you serve' }[m] || m; }).join(' and ')) + ' and save again to go live.</p><button class="btn block" data-close>OK</button>');
+        if (j.pending) return sheet('<h3>Thanks, your listing is saved</h3><p class="muted">Every new listing is checked by Event Couture before it shows to clients, usually within a day. You\u2019ll see it live here once it\u2019s approved.</p><button class="btn block" data-close>OK</button>');
         vendorLiveSheet(v);
       }).catch(function (e) { btn.disabled = false; btn.textContent = 'Save my listing'; toast(e.message || 'Couldn\u2019t save right now. Try again.'); });
     });
@@ -3877,14 +3909,17 @@
     if (/^How do I invite guests/.test(q[0])) return [q[0], 'Open your plan, then Guests & invitations, Invitation. Tap Send invitation to share the date, place and dress code by text, email or any app. Guests reply to you, and you track RSVPs under Guests.', q[2]];
     if (/^Can guests add photos/.test(q[0])) return [q[0], 'Guests can send you their photos, and you add them to your album under Photos and thank-yous.', q[2]];
     if (/^How do vendors join/.test(q[0])) return null;
-    if (/^How long do I keep my plan/.test(q[0])) return [q[0], 'Until 12 months after you keep it, or 30 days after your event, whichever is later. The exact date is under Your finished plan, Plan settings.', q[2]];
+    if (/^Can I put Event Couture on my home screen/.test(q[0])) return null;   /* it's an app already */
+    if (/^Is my data safe/.test(q[0])) return [q[0], q[1].replace(/ Google Analytics counts[^.]*\./, ' The app has no analytics, ads or tracking.'), q[2]];
+    if (/^How long do I keep my plan/.test(q[0])) return [q[0], 'As long as the app is on your phone. Delete it anytime under Your finished plan, Plan settings.', q[2]];
     if (/^How do I delete my data/.test(q[0])) return [q[0], q[1].replace('Overview, Your pass', 'Overview, Your finished plan, Plan settings at the bottom'), q[2]];
     return q;
   }).filter(Boolean);
   function help() {
     frame('<div class="wizard stack-lg"><div class="stack"><h2>Help</h2><p class="muted">Ask a question or pick one below. Answers come from the help center and your own events.</p></div>' +
       '<div class="panel stack"><div class="chat" id="chat"></div><form id="ask" class="row"><input class="input" aria-label="Your question" id="q" style="flex:1 1 220px" placeholder="Type your question" autocomplete="off"><button class="btn">Ask</button></form></div>' +
-      '<div class="stack">' + FAQ.map(function (f) { return '<details class="panel"><summary style="cursor:pointer;font-weight:500">' + esc(f[0]) + '</summary><p class="muted" style="margin-top:10px">' + esc(f[1]) + '</p></details>'; }).join('') + '</div></div>');
+      (CFG.app ? '<div class="row"><a class="btn small ghost" href="#/privacy">Privacy</a><a class="btn small ghost" href="#/terms">Terms</a><a class="btn small ghost" href="mailto:hello@eventcouture.app">Contact us</a></div><div class="panel row" style="justify-content:space-between"><span class="small"><b>AI looks</b><br><span class="muted">Send your details to Google\u2019s Gemini AI to design your looks</span></span><button class="btn small ghost" id="aiToggle" aria-pressed="' + (store.get('aiConsent', '') === 'yes') + '">' + (store.get('aiConsent', '') === 'yes' ? 'On' : 'Off') + '</button></div>' : '') + '<div class="stack">' + FAQ.map(function (f) { return '<details class="panel"><summary style="cursor:pointer;font-weight:500">' + esc(f[0]) + '</summary><p class="muted" style="margin-top:10px">' + esc(f[1]) + '</p></details>'; }).join('') + '</div></div>');
+    var aiT = $('#aiToggle'); if (aiT) aiT.addEventListener('click', function () { var on = store.get('aiConsent', '') !== 'yes'; store.set('aiConsent', on ? 'yes' : 'no'); AI.pre = null; aiT.textContent = on ? 'On' : 'Off'; aiT.setAttribute('aria-pressed', String(on)); });
     $('#ask').addEventListener('submit', function (e) { e.preventDefault(); var q = $('#q').value.trim(); if (!q) return;
       var STOP = ['how', 'the', 'can', 'get', 'you', 'what', 'does', 'and', 'for', 'are', 'with', 'this', 'that', 'there', 'when', 'why', 'who', 'will', 'your', 'about'];
       var words = q.toLowerCase().split(/\W+/).filter(function (w) { return STOP.indexOf(w) < 0; }); var best = FAQ.map(function (f) { return { f: f, s: words.filter(function (w) { return w.length > 2 && f[2].indexOf(w) >= 0; }).length }; }).sort(function (a, b) { return b.s - a.s; })[0];
