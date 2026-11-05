@@ -38,11 +38,11 @@ with sync_playwright() as p:
         check('Yorkville' in areas, f'{vp}: Toronto areas missing {areas}')
         pg.screenshot(path=f'{OUT}/canada-form-{vp}.png')
         # Toronto plan
-        base = plan(pg, 'elegant black and gold wedding', 'CA', 'Toronto, ON')
+        qs.clear(); base = plan(pg, 'elegant black and gold wedding', 'CA', 'Toronto, ON')
         pg.goto(U + base + '/budget'); pg.reload(); pg.wait_for_timeout(600); t = pg.inner_text('main')
         check('CA$' in t and 'HST (13%)' in t and 'Sales tax' not in t, f'{vp}: Toronto budget not in CAD with HST')
         pg.screenshot(path=f'{OUT}/canada-budget-{vp}.png')
-        qs.clear(); pg.goto(U + base + '/vendors'); pg.wait_for_selector('[data-vendor]'); pg.click('[data-vendor] >> nth=0'); pg.wait_for_timeout(800)
+        pg.goto(U + base + '/vendors'); pg.wait_for_selector('[data-vendor]'); pg.click('[data-vendor] >> nth=0'); pg.wait_for_timeout(800)   # the packages made on choosing a look already searched (Nov 4, 2026): every search must be Canadian
         check(qs and all('Canada' in c for c in qs), f'{vp}: search city not Canadian {qs}')
         # a city she types in British Columbia gets BC tax
         base = plan(pg, 'garden brunch', 'CA', 'Other city in Canada', 'Kelowna, BC')

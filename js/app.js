@@ -1021,7 +1021,7 @@
     if (ev.concepts && ev.concepts.length) render(ev.concepts); else load([]);
     $('#cs').addEventListener('click', function (e) {
       var b = e.target.closest('[data-i]'); if (!b) return;
-      ev.concept = ev.concepts[+b.dataset.i]; T('concept_chosen', { look: ev.concept.inspo || ev.concept.id, position: +b.dataset.i + 1, from_photo: ev.concept.inspo ? 'yes' : 'no', event_type: ev.type }); if (ev.nameAuto) ev.name = ev.concept.name; saveEvent(ev); location.hash = '#/e/' + ev.id;
+      ev.concept = ev.concepts[+b.dataset.i]; T('concept_chosen', { look: ev.concept.inspo || ev.concept.id, position: +b.dataset.i + 1, from_photo: ev.concept.inspo ? 'yes' : 'no', event_type: ev.type }); if (ev.nameAuto) ev.name = ev.concept.name; saveEvent(ev); if (AI.live && !ev.settingOpen && !(ev.packages || []).length) { AUTO_PKG = true; location.hash = '#/e/' + ev.id + '/budget'; } else location.hash = '#/e/' + ev.id;   /* straight to the packages: one tap from look to vendors */
     });
     if ($('#more')) $('#more').addEventListener('click', function () {
       ev.seen = (ev.seen || []).concat(ev.concepts.map(function (c) { return c.id; }));
@@ -2135,7 +2135,26 @@
       rideRow(ev, b, false) +
       '<div class="pkg-sum-t"><span>' + (d.booked === d.rows.length ? 'Package total, all booked' : 'Package total') + '<span class="small muted pkg-sum-note">' + (d.askN ? 'Not counting ' + plural(d.askN, 'line') + ' priced on request. ' : '') + 'Your plan\u2019s estimate (' + money(b.total) + ') ' + (d.askN ? 'adds estimates for those and ' : 'also ') + 'keeps a 10% cushion for surprises.</span>' + (ev.budget ? ' <span class="small muted">(budget ' + money(ev.budget) + ')</span>' : '') + '</span><b class="num">' + money(d.total) + '</b></div>' +
       '<p class="small muted">' + d.booked + ' of ' + d.rows.length + ' booked' + (d.removed.length ? ' \u00b7 Not needed: ' + d.removed.map(esc).join(', ') : '') + '</p>' +
-      '<p class="small">This is your package. Save it as a PDF, email it to yourself or forward it to a co-host anytime, booked or not.</p><div class="row pkg-sum-acts"><button class="btn gold small" data-pksum="pdf">Save as PDF</button><button class="btn ghost small" data-pksum="mail">Email it</button><button class="btn ghost small" data-pksum="share">Share</button></div></div>';
+      '<p class="small">This is your package. Save it as a PDF, email it to yourself or forward it to a co-host anytime, booked or not.</p><div class="row pkg-sum-acts"><button class="btn gold small" data-pksum="pdf">Save as PDF</button><button class="btn ghost small" data-pksum="mail">Email it</button><button class="btn ghost small" data-pksum="share">Share</button></div>' + nextRow(ev) + '</div>';
+  }
+  /* After the package: the next things to do, one tap each, so she never has to look for them. */
+  function nextSteps(ev) {
+    var base = '#/e/' + ev.id, gifts = hasRegistry(ev) || GIFT_LIST_OPTIONAL.indexOf(ev.type) < 0;
+    return [
+      ['invite', 'Send your invitations', 'Design it, then text or email it with RSVPs', base + '/invite'],
+      ['guests', 'Add your guest list', 'Track who\u2019s coming and their plus-ones', base + '/guests'],
+      gifts ? ['registry', 'Set up your gift registry', 'Gift ideas and cash funds on your event page', base + '/registry'] : null,
+      ['timeline', 'See your checklist', 'What to book and buy, with dates', base + '/timeline']
+    ].filter(Boolean);
+  }
+  function nextRow(ev) {
+    if (ev.sample) return '';
+    return '<div class="pkg-next"><p class="eyebrow">What\u2019s next</p><div class="pkg-next-g">' + nextSteps(ev).map(function (x) { return '<a class="pkg-next-a" href="' + x[3] + '" data-next="' + x[0] + '"><b>' + esc(x[1]) + '</b><span class="small muted">' + esc(x[2]) + '</span><span class="pkg-next-arr" aria-hidden="true">\u2192</span></a>'; }).join('') + '</div></div>';
+  }
+  function nextSheet(ev, k) {
+    sheet('<p class="eyebrow">\u2713 Package ' + (k + 1) + ' is yours</p><h3>What would you like to do next?</h3><div class="pkg-next-g">' + nextSteps(ev).map(function (x) { return '<a class="pkg-next-a" href="' + x[3] + '" data-next="' + x[0] + '" data-close><b>' + esc(x[1]) + '</b><span class="small muted">' + esc(x[2]) + '</span><span class="pkg-next-arr" aria-hidden="true">\u2192</span></a>'; }).join('') + '</div><button class="btn ghost block" data-close>Book my vendors first</button>', function (el) {
+      $$('[data-next]', el).forEach(function (a) { a.addEventListener('click', function () { T('next_step', { step: a.dataset.next, from: 'package_sheet' }); }); });
+    });
   }
   /* The playlist and optional add-ons, right in the package. */
   /* Add-ons she can put in her package, grouped, and only the ones that suit this occasion and setting. */
@@ -2246,7 +2265,7 @@
     $$('[data-pkuse]').forEach(function (bt) { bt.addEventListener('click', function () {
       if (lockSample(ev)) return; var k = +bt.dataset.pkuse, pk = ev.packages[k]; ev.pkgChosen = k; ev.pkgView = k; ev.pkgConfirmed = true; ev.pkgSkipped = [];
       Object.keys(pk.items).forEach(function (cat) { if (!savedFor(ev, cat).some(function (x) { return isBooked(ev, cat, x); })) setPick(ev, cat, pk.items[cat]); syncPrice(ev, cat); });
-      save(); rerender(); toast('Package ' + (k + 1) + ' it is. Now let\u2019s book it, one at a time.'); var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' });
+      save(); rerender(); var el = $('#pkg'); if (el) el.scrollIntoView({ block: 'start' }); var first = !ev.nextShown; ev.nextShown = true; save(); if (first) nextSheet(ev, k); else toast('Package ' + (k + 1) + ' it is. Now let\u2019s book it, one at a time.');
     }); });
     $$('[data-pkdel]').forEach(function (bt) { bt.addEventListener('click', function () {
       if (lockSample(ev)) return; var k = +bt.dataset.pkdel, pk = ev.packages[k];

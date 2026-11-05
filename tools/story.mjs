@@ -42,7 +42,8 @@ try {
     console.log('OPTIONS', cat, JSON.stringify(await pg.evaluate(c => [...document.querySelectorAll(`[data-pkswapbox="${c}"] .it`)].map(x => x.textContent.replace(/\s+/g, ' ').trim().slice(0, 140)), cat)));
     await sw.click().catch(() => {});
   }
-  await pg.click('[data-pkuse="0"]'); await pg.waitForSelector('#pkgSum'); await pg.waitForTimeout(3500);
+  await pg.click('[data-pkuse="0"]');
+  await pg.waitForTimeout(600); await pg.evaluate(() => document.querySelectorAll('.sheet-back').forEach(x => x.remove()));   /* the What's next prompt isn't part of the story */ await pg.waitForSelector('#pkgSum'); await pg.waitForTimeout(3500);
   const rmvList = (process.env.REMOVE || '').split(',').map(x => x.trim()).filter(Boolean), nameMap = Object.fromEntries((process.env.NAMES || '').split(';').map(x => x.split('=').map(y => y.trim())).filter(x => x[0] && x[1]));
   const info = await pg.evaluate(([row, rmv, names]) => {
     const sum = document.querySelector('#pkgSum');
@@ -55,7 +56,7 @@ try {
     if (want) { want.parentNode.prepend(want); want.classList.add('story-star'); }
     (rmv || []).forEach(name => rows.filter(r => r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase() === name.toLowerCase()).forEach(r => r.remove()));
     Object.entries(names || {}).forEach(([cat, nm]) => rows.filter(r => r.querySelector('.pkg-sum-c').textContent.trim().toLowerCase() === cat.toLowerCase()).forEach(r => { const star = /\*$/.test(nm); r.querySelector('.pkg-sum-n b').textContent = nm.replace(/\*$/, ''); const bd = r.querySelector('.badge.rec'); if (bd) bd.remove(); if (star) r.querySelector('.pkg-sum-n b').insertAdjacentHTML('afterend', ' <span class="badge rec">\u2605 Recommended</span>'); }));   /* a trailing * = one of our recommended vendors */
-    sum.querySelectorAll('.pkg-sum-a, .pkg-sum-t, .pkg-adds-row, .pkg-adds, .pkg-pl, .pkg-sum-acts, .badge.ok, .pkg-ride, .pk-ride').forEach(x => x.remove());
+    sum.querySelectorAll('.pkg-sum-a, .pkg-sum-t, .pkg-adds-row, .pkg-adds, .pkg-pl, .pkg-sum-acts, .badge.ok, .pkg-ride, .pk-ride, .pkg-next').forEach(x => x.remove());
     [...sum.children].forEach(c => { if (c.tagName === 'P') c.remove(); });
     rows.filter(r => !r.querySelector('.pkg-sum-n b') || /Still to choose/.test(r.textContent)).forEach(r => r.remove());
     const story = document.createElement('div'); story.id = 'story';

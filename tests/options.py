@@ -1,6 +1,7 @@
 # Three options per category, a front-runner and the side-by-side comparison: python3 tests/options.py <screenshot folder>
 from playwright.sync_api import sync_playwright
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
+_open.CLEAR_PACKAGES = True   # these checks are about saving options by hand, before any package
 import json, sys
 U='http://localhost:8765/'; OUT=sys.argv[1] if len(sys.argv)>1 else '/tmp'
 PL=json.dumps({'places':[

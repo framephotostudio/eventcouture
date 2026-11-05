@@ -20,6 +20,8 @@ with sync_playwright() as p:
         pg.select_option('#type','birthday'); pg.fill('#guests','40'); pg.fill('#expected','40'); pg.fill('#time','19:00'); pg.select_option('#city', 'Houston, TX'); pg.click('#setting [data-v=indoor]')
         pg.click('#next'); pg.wait_for_selector('.concept', timeout=20000); pg.wait_for_timeout(250)
         pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); pg.click('#keepBtn'); pg.click('#keepPay'); pg.wait_for_timeout(300)
+        # this test checks the Bookings list used when there is no package yet, so the packages made on choosing a look are cleared
+        pg.evaluate("() => { var all = JSON.parse(localStorage['ec.events']); Object.values(all).forEach(e => { e.packages = []; e.pkgConfirmed = false; }); localStorage['ec.events'] = JSON.stringify(all); }")
         base=pg.url.split('#')[1].split('/'); base='#/'+base[1]+'/'+base[2]
         pg.goto(U+base+'/vendors'); pg.wait_for_timeout(300)
         btns=pg.query_selector_all('[data-vendor]'); print(n,'vendor search buttons',len(btns))
@@ -29,7 +31,7 @@ with sync_playwright() as p:
         pg.goto(U+base+'/places'); pg.wait_for_timeout(300)
         lb=pg.query_selector_all('[data-live]'); lb[0].click(); pg.wait_for_selector('[data-short]'); pg.click('[data-short] >> nth=1'); pg.wait_for_timeout(200)
         pg.goto(U+base+'/budget'); pg.wait_for_timeout(300)
-        print(n,'bookings:', pg.inner_text('.bookings').replace('\n',' | ')[:260])
+        print(n,'bookings:', pg.inner_text('.bookings, .pkg-cmp').replace('\n',' | ')[:260])
         pg.click('[data-compare] >> nth=0'); pg.wait_for_selector('.cmp'); pg.click('[data-book-opt] >> nth=0'); pg.wait_for_selector('#pamt'); print(n,'booking form:', pg.inner_text('.sheet h3')); pg.fill('#pamt','1500'); pg.click('#psave'); pg.wait_for_timeout(300); pg.click('.sheet [data-close]'); pg.wait_for_timeout(300)
         print(n,'after booking:', pg.inner_text('.bookings').replace('\n',' | ')[:120])
         pg.query_selector('.bookings').scroll_into_view_if_needed(); pg.evaluate('window.scrollBy(0,-100)'); pg.wait_for_timeout(100); pg.screenshot(path=(__import__('sys').argv[1] if len(__import__('sys').argv) > 1 else '/tmp') + '/'+f'book_{n}.png')

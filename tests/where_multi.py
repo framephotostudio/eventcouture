@@ -32,8 +32,8 @@ with sync_playwright() as p:
         pg.click('#setting [data-v=indoor]'); check(n, pressed(pg)==['indoor'], 'choosing a venue turns the restaurant off')
         pg.click('#setting [data-v=indoor]'); check(n, pressed(pg)==['indoor'], 'the last choice cannot be turned off')
         pg.click('#setting [data-v=ballroom]'); pg.screenshot(path=f'{OUT}/where_both_{n}.png')
-        base=go(pg)
-        Q.clear(); pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=40000)
+        Q.clear(); base=go(pg)   # choosing a look builds the packages right away (Nov 4, 2026), so the searches are logged from here
+        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=40000)
         vq=[q['query'] for q in Q if not q.get('kind')]; v1=[q for q in vq if 'ballroom' in q or 'hotel' in q][:1]; v2=[q for q in vq if not ('ballroom' in q or 'hotel' in q)][:1]   # all 3 packages build at once
         check(n, bool(v1 and v2), 'one package has an event venue, the other a hotel ballroom: '+str(v1[:1])+' / '+str(v2[:1]))
         # venue and outdoors: compared

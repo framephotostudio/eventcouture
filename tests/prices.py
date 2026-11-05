@@ -1,6 +1,7 @@
 # Prices typed on the Budget page and prices on saved options stay in step: python3 tests/prices.py
 from playwright.sync_api import sync_playwright
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
+_open.CLEAR_PACKAGES = True   # these checks are about saving options by hand, before any package
 import json
 U='http://localhost:8765/'
 PL=json.dumps({'places':[{'id':'g','name':'Grand Hall','rating':4.8,'reviews':10,'address':'1 A St, Houston','mapsUrl':'https://maps.google.com/?q=g'},{'id':'r','name':'Rose Room','rating':4.6,'reviews':9,'address':'2 B St, Houston','mapsUrl':'https://maps.google.com/?q=r'},{'id':'s','name':'Sky Loft','rating':4.7,'reviews':8,'address':'3 C St, Houston','mapsUrl':'https://maps.google.com/?q=s'},{'id':'m','name':'Maison','rating':4.5,'reviews':7,'address':'4 D St, Houston','mapsUrl':'https://maps.google.com/?q=m'}]})

@@ -32,9 +32,9 @@ with sync_playwright() as p:
         base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2]); eid=base.split('/')[2]
         ev=lambda: pg.evaluate("id => JSON.parse(localStorage['ec.events'])[id]", eid)
         check(n, 'Venues' not in pg.inner_text('.groupbar') and pg.query_selector('a[href$="/budget"]') is not None, 'one booking page in the menu')
-        pg.goto(U+base+'/budget'); pg.wait_for_selector('#pkgGo'); check(n, pg.query_selector('#pkArea') is not None and pg.query_selector('[data-pkwhen]') is not None, 'create step asks for the date and the venue area first')
-        pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=15000); pg.wait_for_timeout(600)
-        check(n, pg.url.endswith('/budget'), 'Create my package on the Summary starts it right away')
+        # Nov 4, 2026: choosing a look builds the packages right away (the venue area is asked on the basics step)
+        pg.goto(U+base+'/budget'); pg.wait_for_selector('.pkg-cmp', timeout=15000); pg.wait_for_timeout(600)
+        check(n, len(ev().get('packages') or [])>=1, 'choosing a look built the packages with no extra tap')
         rows=pg.query_selector_all('tr[data-pkrow]'); filled=pg.query_selector_all('tr[data-pkrow] td > b')
         check(n, len(rows)>=8 and len(filled)==len(rows)*3 and len(ev()['packages'])==3, f'one tap builds all 3 packages, every line filled: {len(filled)}/{len(rows)*3}')
         first_calls=calls[0]

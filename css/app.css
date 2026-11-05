@@ -1076,3 +1076,11 @@ footer.site nav.foot-guides { gap: 6px 14px; font-size: .8rem; margin-top: 4px; 
   .sticky-plan { display: inline-flex; position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 40; transform: translate(-50%, 140%); opacity: 0; pointer-events: none; transition: transform .25s ease, opacity .25s ease; box-shadow: 0 10px 28px rgba(60, 12, 40, .28); }
   .sticky-plan.on { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
 }
+
+/* After the package: what's next, one tap each */
+.pkg-next { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 8px; }
+.pkg-next-g { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.pkg-next-a { position: relative; display: grid; gap: 2px; padding: 12px 36px 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); text-decoration: none; transition: border-color .15s, background .15s; }
+.pkg-next-a:hover, .pkg-next-a:focus-visible { border-color: var(--champagne); background: var(--tint); }
+.pkg-next-arr { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--gold-text); font-size: 1.1rem; }
+.sheet .pkg-next-g { grid-template-columns: 1fr; margin: 8px 0 12px; }
