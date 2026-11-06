@@ -78,7 +78,7 @@ with sync_playwright() as p:
             bb = pg.query_selector('.sheet .btn.gold, .sheet #buy')
             if bb: bb.click(); pg.wait_for_timeout(300)
             check('76 to 150' in pg.inner_text('#tab') or '76' in pg.inner_text('#tab'), n + ': pass did not move up: ' + pg.inner_text('#tab')[:200])
-        else: check('free during our launch' in pg.inner_text('#tab'), n + ': launch: pass says free: ' + pg.inner_text('#tab')[:200])
+        else: check('free for a limited time' in pg.inner_text('#tab'), n + ': launch: pass says free: ' + pg.inner_text('#tab')[:200])
         # change concept and see three new ones
         go(base); pg.click('text=Change look'); pg.wait_for_selector('.concept'); first = pg.inner_text('.concept h3 >> nth=0') if pg.query_selector('.concept h3') else ''
         if pg.query_selector('#more'):

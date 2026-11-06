@@ -17,7 +17,7 @@ module.exports = function compare(ctx) {
     registry: [1, 'Gift wish list and cash gifts through your own Venmo, Cash App or PayPal; no store-linked registry'],
     privacy: [2, 'Vendors only hear from you when you choose to message them'],
     app: [1, 'Website now; iPhone and Android app coming soon'],
-    price: [2, 'Free to plan; a one-time Event Pass to keep and share a plan (free during launch)']
+    price: [2, 'Free to plan; a one-time Event Pass to keep and share a plan (free for a limited time)']
   };
   const ROWS = [['photo', 'Plan from an inspiration photo'], ['budget', 'Budget for your city'], ['events', 'Kinds of events'], ['culture', 'Cultural weddings'], ['vendors', 'Vendors'], ['invites', 'Invitations and RSVPs'], ['registry', 'Registry and gifts'], ['privacy', 'Your contact details'], ['app', 'Phone app'], ['price', 'Price']];
   const S = {
@@ -99,7 +99,7 @@ module.exports = function compare(ctx) {
     const a = score(EC), b = score(s.row);
     const table = `<div class="panel cv-tw"><table class="cv-t"><thead><tr><th></th><th>Event Couture</th><th>${esc(s.name)}</th></tr></thead><tbody>${ROWS.map(([id, label]) => `<tr><th scope="row">${esc(label)}</th><td class="ec" data-l="Event Couture"><div class="cv-c">${mark(EC[id][0])}<span>${esc(EC[id][1])}</span></div></td><td data-l="${esc(s.name)}"><div class="cv-c">${mark(s.row[id][0])}<span>${esc(s.row[id][1])}</span></div></td></tr>`).join('')}</tbody></table></div>
 <div class="cv-key"><span>${mark(2)} Does it well</span><span>${mark(1)} Partly</span><span>${mark(0)} Not offered</span></div>`;
-    const items = [[`Is Event Couture free like ${s.name}?`, 'Planning on Event Couture is free. Keeping and sharing a finished plan uses a one-time Event Pass, which is free during the launch period.'],
+    const items = [[`Is Event Couture free like ${s.name}?`, 'Planning on Event Couture is free. Keeping and sharing a finished plan uses a one-time Event Pass, which is free for a limited time.'],
       [`Can I use Event Couture and ${s.name} together?`, `Yes. Lots of people use Event Couture to design the event and see the budget, and keep using ${s.name} for what it does best.`],
       ['Does Event Couture sell my details to vendors?', 'No. Vendors only hear from you when you choose to message them through Event Couture.']];
     const body = `${CSS}
