@@ -6,7 +6,8 @@ window.EC_CONFIG = {
   apiUrl: '',
   amazonTag: 'eventcouture-20',
   preview: true,
-  launchFree: true,   /* launch offer: keeping a plan is free on the website too, until payments are connected; set false to show prices */
+  launchFree: true,
+  freeUntil: '2026-11-19',   /* the free promotion's last day; plans started on or before it stay free after payments switch on */   /* launch offer: keeping a plan is free on the website too, until payments are connected; set false to show prices */
   supportEmail: 'hello@eventcouture.app',
   legalName: 'Always Luxe',   /* the business name on Privacy and Terms */
   governingState: 'Texas',   /* e.g. 'Texas': the state whose laws govern the Terms */

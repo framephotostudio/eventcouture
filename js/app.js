@@ -591,7 +591,7 @@
   /* The planning-guide address for an occasion, built the same way as tools/seo.cjs builds it. */
   function guideSlug(name) { return String(name).replace(/\u2019s/, 's').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function pricing() {
-    frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2>' + (CFG.launchFree ? '<div class="note"><b>Limited-time offer:</b> keeping your plan is free right now. The prices below apply after the promotion ends.</div>' : '') + '<p class="muted">Planning is free: build your looks, budget and plan at no cost. You pay once per event, only if you want to keep your plan. No subscription.</p></div>' +
+    frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2>' + (CFG.launchFree ? '<div class="note"><b>Limited-time offer:</b> keeping your plan is free until ' + freeUntilText() + '. Every plan started by then stays free, even after. The prices below apply to plans started after that.</div>' : '') + '<p class="muted">Planning is free: build your looks, budget and plan at no cost. You pay once per event, only if you want to keep your plan. No subscription.</p></div>' +
       '<section class="stack"><h3>Event Pass</h3><p class="muted">Based on how many people you invite, including plus-ones. This is what Event Couture costs, separate from your event budget.</p>' +
       '<div class="panel price-grid">' + D.PASSES.map(function (ps) { return '<div><span class="muted small">Up to ' + ps.max.toLocaleString('en-US') + ' guests</span><b class="num">' + usdSign() + ps.price.toFixed(2) + '</b></div>'; }).join('') + '<div><span class="muted small">Each extra 5,000</span><b class="num">+$150</b></div></div>' +
       '<p class="small muted">Guest list grows later? You pay only the difference.</p></section>' +
@@ -1014,7 +1014,7 @@
     ];
     frame('<div class="wizard stack-lg">' + prog + '<div class="stack"><h2>Does this look right?</h2><p class="muted">Your looks, prices and timeline are built from these details. Fix anything before we start.</p></div>' +
       '<div class="panel confirm">' + rowsHtml.map(function (r) { return '<div class="crow"><span class="muted small">' + r[0] + '</span><span>' + r[1] + '</span></div>'; }).join('') + '</div>' +
-      '<p class="muted small">' + (CFG.app ? 'Planning and keeping your plan are free.' : CFG.launchFree ? 'Planning and keeping your plan are free for a limited time.' : 'Planning is free. You only pay if you want to keep your plan and share it with guests.') + '</p>' +
+      '<p class="muted small">' + (CFG.app ? 'Planning and keeping your plan are free.' : CFG.launchFree ? 'Planning and keeping your plan are free until ' + freeUntilText() + ', and plans started by then stay free.' : 'Planning is free. You only pay if you want to keep your plan and share it with guests.') + '</p>' +
       '<div class="wiz-act"><button class="btn gold" id="go">Create my looks</button><a class="btn ghost" href="' + W + '2/' + draft.id + '">Edit details</a>' + laterBtn() + '</div></div>');
     $('#later').addEventListener('click', function () { persist(); location.hash = '#/events'; setTimeout(function () { toast('Saved. Pick it up anytime from My events.'); }, 80); });
     if (AI.live && !(CFG.app && store.get('aiConsent', '') !== 'yes')) AI.concepts(draft, []);   /* start the AI now; it's usually ready by the time the host taps Create */
@@ -1073,7 +1073,10 @@
   }
 
   /* ---------- Keep this plan: the Event Pass, asked for once the plan is built ---------- */
-  function isKept(ev) { return ev.sample || !!(ev.paid && ev.paid.price !== undefined); }
+  /* Plans started during the free promotion (on or before CFG.freeUntil) stay free after payments switch on */
+  function freeUntilText() { if (!CFG.freeUntil) return 'the promotion ends'; var d = new Date(CFG.freeUntil + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); }
+  function promoPlan(ev) { return !!(CFG.freeUntil && ev && ev.created && String(ev.created).slice(0, 10) <= CFG.freeUntil); }
+  function isKept(ev) { return ev.sample || !!(ev.paid && ev.paid.price !== undefined) || (!CFG.launchFree && promoPlan(ev)); }
   /* Free preview: every section shows a taste; keeping the plan reveals the rest. Sample plans are always complete. */
   function preview(ev) { return false; }   /* planning shows everything; the pass is asked for only when she shares or saves her plan */
   function cut(arr, n, ev) { return preview(ev) ? arr.slice(0, n) : arr; }
@@ -1117,7 +1120,7 @@
     sheet('<h3>' + esc(item.name) + '</h3><p class="muted">' + esc(item.desc) + '</p>' +
       '<div class="sum"><div><span>Price</span><b class="num">$' + item.price.toFixed(2) + '</b></div>' + (item.credits ? '<div><span>Or with credits</span><span class="num">' + item.credits + ' credits (you have ' + w.credits + ')</span></div>' : '') + '</div>' +
       '<p class="muted small">Charged once, only when it’s delivered. Failed results never cost anything.</p>' +
-      (CFG.preview ? '<div class="note">' + (CFG.launchFree ? 'Free for a limited time.' : 'Preview version: no payment is taken.') + '</div>' : '') +
+      (CFG.preview ? '<div class="note">' + (CFG.launchFree ? 'Free until ' + freeUntilText() + '.' : 'Preview version: no payment is taken.') + '</div>' : '') +
       '<button class="btn gold block" id="buy">' + (CFG.preview || CFG.app ? 'Add it' : 'Pay ' + usd2(item.price)) + '</button>' +
       (canCredits ? '<button class="btn block" id="useCredits">Use ' + item.credits + ' credits</button>' : '') +
       '<button class="btn ghost block" data-close>Continue without this</button>', function (el, close) {
@@ -1157,7 +1160,7 @@
     }).join('') + '</nav>';
     var lockedTab = preview(ev) && LOCKED_TABS[tab];
     var body = lockedTab ? '<div class="stack"><div class="lock-card big"><h3>' + esc(LOCKED_TABS[tab]) + '</h3><p class="muted">Keep your plan to invite guests, track RSVPs and plan together. Your look and estimates stay exactly as they are.</p><button class="btn" data-keep>Keep my plan</button></div></div>' : (TAB_VIEWS[tab] || TAB_VIEWS.overview)(ev, b);
-    var keepBar = isKept(ev) || ev.keepNoteHidden ? '' : '<div class="keep-note small muted"><span>' + (CFG.app ? 'Planning is free.' : CFG.launchFree ? 'Planning and keeping your plan are free for a limited time.' : 'Planning is free. You pay once, ' + usd2(E.passFor(ev.guests).price) + ', only when you share your invitation or save your plan.') + '</span><button class="link small quiet" id="keepNoteX" aria-label="Hide this note">Got it</button></div>';
+    var keepBar = isKept(ev) || ev.keepNoteHidden ? '' : '<div class="keep-note small muted"><span>' + (CFG.app ? 'Planning is free.' : CFG.launchFree ? 'Planning and keeping your plan are free until ' + freeUntilText() + ', and plans started by then stay free.' : 'Planning is free. You pay once, ' + usd2(E.passFor(ev.guests).price) + ', only when you share your invitation or save your plan.') + '</span><button class="link small quiet" id="keepNoteX" aria-label="Hide this note">Got it</button></div>';
     frame(head + keepBar + groupBar + '<div class="workspace">' + rail + '<section id="tab" class="stack-lg" style="min-width:0">' + body + '</section></div>');
     var kn = $('#keepNoteX'); if (kn) kn.addEventListener('click', function () { ev.keepNoteHidden = true; saveEvent(ev); kn.closest('.keep-note').remove(); });
     if (!ev.sample) syncQuotes(ev);
@@ -1252,7 +1255,7 @@
       ev.setting === 'home' || ev.settingOpen ? null : { done: !!(ev.areaChosen || ev.area), label: 'Choose the area for your venue', detail: ev.area || 'Anywhere in ' + ev.city.split(',')[0], act: 'area' },
       where,
       { done: !vend.length || booked === vend.length, label: 'Choose your vendors', detail: vend.length ? booked + ' of ' + vend.length + ' booked' : 'No other vendors needed', href: base + '/budget' },
-      { done: isKept(ev), label: 'Keep your plan', detail: isKept(ev) ? 'Saved and unlocked' : CFG.app ? 'Save, print and share it anytime' : CFG.launchFree ? 'Free for a limited time: save, print and share it anytime' : 'Unlocks every detail, invitations and RSVPs', act: 'keep' },
+      { done: isKept(ev), label: 'Keep your plan', detail: isKept(ev) ? 'Saved and unlocked' : CFG.app ? 'Save, print and share it anytime' : CFG.launchFree ? 'Free until ' + freeUntilText() + ': save, print and share it anytime' : 'Unlocks every detail, invitations and RSVPs', act: 'keep' },
       { done: !!ev.invited || (ev.guestsList || []).some(function (g) { return g.status === 'yes' || g.status === 'declined'; }), label: 'Invite your guests', detail: (ev.guestsList || []).length ? plural(ev.guestsList.length, 'guest') + ' on your list' : 'Send your invitation link', href: base + '/invite' }
     ];
   }
@@ -3912,12 +3915,12 @@
     return q;
   });
   if (CFG.launchFree && !CFG.app) FAQ = FAQ.map(function (q) {   /* the website is free during launch: its help answers carry no prices either */
-    if (/^Is there a subscription/.test(q[0])) return [q[0], 'No. Planning and keeping your plan are free for a limited time. Nothing renews automatically.', q[2]];
-    if (/^How much does it cost/.test(q[0])) return [q[0], 'Planning and keeping your plan are free for a limited time. Guests never pay to view, RSVP or vote. After the promotion, prices are on the Pricing page.', q[2]];
+    if (/^Is there a subscription/.test(q[0])) return [q[0], 'No. Planning and keeping your plan are free until ' + freeUntilText() + ', and plans started by then stay free. Nothing renews automatically.', q[2]];
+    if (/^How much does it cost/.test(q[0])) return [q[0], 'Planning and keeping your plan are free until ' + freeUntilText() + ', and plans started by then stay free. Guests never pay to view, RSVP or vote. After the promotion, prices are on the Pricing page.', q[2]];
     if (/^What if my guest list grows/.test(q[0])) return [q[0], 'Tap the guest count at the top of your plan to change it. For a limited time it\u2019s free, and your plan stays exactly as it is.', q[2]];
     if (/^How long do I keep my plan/.test(q[0])) return [q[0], 'Until 12 months after you keep it, or 30 days after your event, whichever is later. The exact date is shown when you keep it and under Your finished plan, Plan settings.', q[2]];
     if (/^How do I delete my data/.test(q[0])) return [q[0], q[1].replace('Overview, Your pass', 'Overview, Your finished plan, Plan settings at the bottom'), q[2]];
-    if (/^Can I get a refund/.test(q[0])) return [q[0], 'There\u2019s nothing to pay for a limited time. If anything doesn\u2019t work, contact us and we\u2019ll make it right.', q[2]];
+    if (/^Can I get a refund/.test(q[0])) return [q[0], 'There\u2019s nothing to pay until ' + freeUntilText() + '. If anything doesn\u2019t work, contact us and we\u2019ll make it right.', q[2]];
     return q;
   });
   if (CFG.app) FAQ = FAQ.map(function (q) {   /* the app is free for now, so its help answers carry no prices */
