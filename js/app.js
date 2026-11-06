@@ -591,7 +591,7 @@
   /* The planning-guide address for an occasion, built the same way as tools/seo.cjs builds it. */
   function guideSlug(name) { return String(name).replace(/\u2019s/, 's').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function pricing() {
-    frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2>' + (CFG.launchFree ? '<div class="note"><b>Limited-time offer:</b> keeping your plan is free until ' + freeUntilText() + '. Every plan started by then stays free, even after. The prices below apply to plans started after that.</div>' : '') + '<p class="muted">Planning is free: build your looks, budget and plan at no cost. You pay once per event, only if you want to keep your plan. No subscription.</p></div>' +
+    frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2>' + (CFG.launchFree ? '<div class="note"><b>Limited-time offer:</b> keeping your plan is free until ' + freeUntilText() + '. Every plan started by then stays free, even after. The prices below apply to plans started after that.</div>' : '') + '</div>' +
       '<section class="stack"><h3>Event Pass</h3><p class="muted">Based on how many people you invite, including plus-ones. This is what Event Couture costs, separate from your event budget.</p>' +
       '<div class="panel price-grid">' + D.PASSES.map(function (ps) { return '<div><span class="muted small">Up to ' + ps.max.toLocaleString('en-US') + ' guests</span><b class="num">' + usdSign() + ps.price.toFixed(2) + '</b></div>'; }).join('') + '<div><span class="muted small">Each extra 5,000</span><b class="num">+$150</b></div></div>' +
       '<p class="small muted">Guest list grows later? You pay only the difference.</p></section>' +
