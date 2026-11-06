@@ -792,7 +792,9 @@
       { name: 'DJ Joe Hannoun', ig: 'djjoehannoun', cats: ['dj'], country: 'OM', weight: 150, note: 'DJ Joe Hannoun: Lebanese DJ based in Dubai, playing weddings and events across Lebanon and the Gulf' },
       { name: 'Samer Murad', ig: 'samermuradofficial', cats: ['singer'], cities: ['Dallas, TX'], weight: 200, note: 'Samer Murad: live wedding singer for weddings, private events and live shows; Dallas, and available nationwide' },
       /* Houston makeup, after the earlier Houston picks; those who also do hair are under hair too */
-      { name: 'Makeup by Mahboubeh', ig: 'makeupbymahboubeh', cats: ['hairMakeup', 'hair'], cities: ['Houston, TX'], weight: 10, note: 'Mahboubeh: pro makeup artist and hairstylist with 20 years of experience; bridal and event glam, on location in Houston' },
+      { name: 'Makeup by Mahboubeh', ig: 'makeupbymahboubeh', cats: ['hairMakeup'], cities: ['Houston, TX'], weight: 15, note: 'Mahboubeh: pro makeup artist and hairstylist with 20 years of experience; bridal and event glam, on location in Houston' },
+      { name: 'Makeup by Mahboubeh', ig: 'makeupbymahboubeh', cats: ['hair'], cities: ['Houston, TX'], notCultures: ['indian', 'pakistani'], weight: 150, note: 'Mahboubeh: pro makeup artist and hairstylist with 20 years of experience; bridal and event glam, on location in Houston' },
+      { name: 'Makeup by Mahboubeh', ig: 'makeupbymahboubeh', cats: ['hair'], cities: ['Houston, TX'], cultures: ['indian', 'pakistani'], weight: 90, note: 'Mahboubeh: pro makeup artist and hairstylist with 20 years of experience; bridal and event glam, on location in Houston' },
       { name: 'Ola Nimri', ig: 'ola.nimri', cats: ['hairMakeup', 'hair'], cities: ['Houston, TX'], weight: 9, note: 'Hair stylist and makeup artist in Houston and Cypress' },
       { name: 'Makeup by Samira', ig: '_makeupbysamira', cats: ['hairMakeup'], cities: ['Houston, TX'], weight: 8, note: 'Makeup artist in Houston who travels to clients' },
       { name: 'Makeup by Samira', ig: '_makeupbysamira', cats: ['hairMakeup'], country: 'US', weight: -200, note: 'Makeup artist in Houston who travels to clients' },
