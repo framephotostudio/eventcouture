@@ -548,7 +548,7 @@
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div>' +
       '<div class="hero-chips" aria-label="Start with your occasion">' +
       [['wedding', 'Wedding'], ['birthday', 'Birthday'], ['baby-shower', 'Baby shower'], ['quince', 'Quincea\u00f1era']].map(function (c) { var q = QUICK.find(function (x) { return x[0] === c[0]; }); return q ? '<a class="chip" href="#/start/' + q[0] + '/-/' + q[2] + '" data-hchip="' + q[0] + '">' + c[1] + '</a>' : ''; }).join('') +
-      '<button type="button" class="chip" data-scroll="cultural">Cultural wedding</button></div>' + (CFG.app ? '' : '<p class="hero-help"><span>Want us to plan it for you? Book our planning service:</span> <a href="https://instagram.com/always_luxe" target="_blank" rel="noopener" data-planner>message @always_luxe</a></p>') + '</div>' +
+      '<button type="button" class="chip" data-scroll="cultural">Cultural wedding</button></div>' + (CFG.app ? '' : '<p class="hero-help"><span>Want us to plan it for you? Book our planning service: call or text</span> <a href="tel:+17135343603" data-planner>713-534-3603</a> <span>or message</span> <a href="https://instagram.com/always_luxe" target="_blank" rel="noopener" data-planner>@always_luxe</a></p>') + '</div>' +
       '<figure class="hero-photo"><div class="scene">' +
       '<img src="' + srcOf(HERO_IMG) + '"' + (window.EC_EMBED ? '' : ' srcset="img/hero-480.webp 480w, img/hero-720.webp 720w, img/hero-960.webp 960w" sizes="(min-width: 900px) 46vw, calc(100vw - 40px)"') + ' width="960" height="1200" fetchpriority="high" alt="Candlelit reception table with blush and ivory roses, gold candlesticks, crystal glasses and a tiered cake">' +
       tags.map(function (t) { return '<button class="hot' + (t[2] > 65 ? ' r' : t[2] < 30 ? ' l' : '') + '" style="left:' + t[2] + '%;top:' + t[3] + '%" aria-expanded="false" aria-label="' + esc(t[0]) + ', ' + money(t[1]) + '"><span class="dot" aria-hidden="true"></span><span class="lbl" aria-hidden="true"><b>' + esc(t[0]) + '</b> ' + money(t[1]) + '</span></button>'; }).join('') +
@@ -1509,7 +1509,7 @@
   };
 
   /* Overview: three budget versions, pros and cons, guardian, concierge */
-  function plannerBox(ev) { return CFG.app || ev.sample ? '' : '<div class="panel planner-box"><div class="grow"><b>Want us to plan it for you?</b><span class="small muted"> Our paid planning service finds and books your vendors and builds your schedule, by phone and online.</span></div><a class="btn small gold" href="https://instagram.com/always_luxe" target="_blank" rel="noopener" data-planner>Message @always_luxe</a></div>'; }
+  function plannerBox(ev) { return CFG.app || ev.sample ? '' : '<div class="panel planner-box"><div class="grow"><b>Want us to plan it for you?</b><span class="small muted"> Our paid planning service finds and books your vendors and builds your schedule, by phone and online.</span></div><div class="row"><a class="btn small gold" href="tel:+17135343603" data-planner>Call 713-534-3603</a><a class="btn small ghost" href="sms:+17135343603" data-planner>Text</a><a class="btn small ghost" href="https://instagram.com/always_luxe" target="_blank" rel="noopener" data-planner>Instagram</a></div></div>'; }
   TAB_VIEWS.overview = function (ev, b) {
     var all = E.allBudgets(ev);
     var picked = ev.budget && ev.tier && ev.tier !== 'F';   /* she chose a spending level over her budget plan */
