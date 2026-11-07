@@ -69,11 +69,15 @@ const TOP = {
   'Seattle, WA': 'October to April is rainy. July to September is usually dry and books first, so outdoor events outside summer need a covered plan.',
   'Detroit, MI': 'Peak season runs June to October. Winters are cold and snowy, with lower venue prices from November to March.'
 };
+function autoNoteFor(c) { const country = E.countryOf(c.name), cityShort = c.name.split(',')[0], pct = Math.round((c.index - 1) * 100); return country.id === 'US'
+    ? `Event costs in ${cityShort} run ${pct === 0 ? 'close to the US average' : `about ${Math.abs(pct)}% ${pct > 0 ? 'above' : 'below'} the US average`}, and ${c.tax ? `sales tax is about ${c.tax}%` : 'there is no local sales tax'}. Book popular venues and photographers 9 to 12 months ahead for weekends in peak season.`
+    : `Prices here are shown in ${country.currency}${c.tax ? ` and include ${c.taxName || 'tax'} (${c.tax}%)` : ''}${country.tip === false ? ', with no tips added because tipping isn\u2019t expected for most event services' : ', with customary tips added for service staff'}. Book popular venues and photographers well ahead for weekends in peak season.`; }
+const noteFor = c => TOP[c.name] || autoNoteFor(c);
 const recsIn = (city) => { const st = city.split(', ')[1] || ''; const seen = {}; return (D.RECOMMENDED || []).filter(r => (r.cities && r.cities.includes(city)) || (r.onlyCities && r.onlyCities.includes(city)) || (!r.cities && !r.onlyCities && r.states && r.states.includes(st) && !(r.notCities || []).includes(city))).filter(r => { const k = r.ig || r.name; if (seen[k]) return false; seen[k] = 1; return true; }); };
 const catLabel = id => (D.CATEGORIES[id] ? D.CATEGORIES[id].name.split(' (')[0] : id);
 for (const c of CITIES) {
   const country = E.countryOf(c.name), cityShort = c.name.split(',')[0];
-  const rows = OCC.map(o => { const t = totals(o, c.name); return `<tr><td><a href="../${o.slug}/">${esc(o.name)}</a></td><td class="n">${o.guests}</td><td class="n">${money(t[0], c.name)}</td><td class="n"><b>${money(t[1], c.name)}</b></td><td class="n">${money(t[2], c.name)}</td><td><a class="small" href="../../#/start/${o.start}/${encodeURIComponent(c.name)}">Plan it</a></td></tr>`; }).join('');
+  const rows = OCC.map(o => { const t = totals(o, c.name); return `<tr><td><a href="${o.slug}/">${esc(o.name)}</a></td><td class="n">${o.guests}</td><td class="n">${money(t[0], c.name)}</td><td class="n"><b>${money(t[1], c.name)}</b></td><td class="n">${money(t[2], c.name)}</td><td><a class="small" href="../../#/start/${o.start}/${encodeURIComponent(c.name)}">Plan it</a></td></tr>`; }).join('');
   const rate = (id, unit) => { E.useCountry(c.name); const k = D.CATEGORIES[id], m = c.index; const r = k.perHour || k.perGuest || k.fixed; return `<tr><td>${esc(k.name.split(' (')[0])}</td><td class="n">${money(r[0] * m, c.name)} to ${money(r[1] * m, c.name)} ${unit}</td></tr>`; };
   const areas = D.AREAS[c.name] || [];
   const tax = c.taxName ? `${c.taxName} (${c.tax}%)` : c.tax ? `${c.tax}% sales tax` : 'no local sales tax';
@@ -84,10 +88,7 @@ for (const c of CITIES) {
 ${areas.length ? `<h2>Popular areas for venues</h2><p>${areas.map(esc).join(' · ')}</p>` : ''}
 ${cta(null, c.name, '../../')}<h2>Planning guides by occasion</h2><div class="cols">${OCC.map(o => `<a href="../${o.slug}/">${esc(o.name)}</a>`).join('')}</div>`;
   const top = TOP[c.name];
-  const pct = Math.round((c.index - 1) * 100);
-  const autoNote = country.id === 'US'
-    ? `Event costs in ${cityShort} run ${pct === 0 ? 'close to the US average' : `about ${Math.abs(pct)}% ${pct > 0 ? 'above' : 'below'} the US average`}, and ${c.tax ? `sales tax is about ${c.tax}%` : 'there is no local sales tax'}. Book popular venues and photographers 9 to 12 months ahead for weekends in peak season.`
-    : `Prices here are shown in ${country.currency}${c.tax ? ` and include ${c.taxName || 'tax'} (${c.tax}%)` : ''}${country.tip === false ? ', with no tips added because tipping isn\u2019t expected for most event services' : ', with customary tips added for service staff'}. Book popular venues and photographers well ahead for weekends in peak season.`;
+  const autoNote = autoNoteFor(c);
   const neighbors = CITIES.filter(x => x !== c && (country.id === 'US' ? x.name.split(', ')[1] === c.name.split(', ')[1] : E.countryOf(x.name).id === country.id)).slice(0, 8);
   let local = '', ld = [];
   {
@@ -145,7 +146,7 @@ for (const o of OCC) {
 <h2>What ${o.phrase.replace(/^an? /, '')} costs in major cities</h2><div class="table-wrap panel"><table class="qty"><thead><tr><th>City</th><th class="n">Luxe for Less</th><th class="n">Signature</th><th class="n">Ultra Luxe</th></tr></thead><tbody>${cityRows}</tbody></table></div>
 ${pic ? `<figure class="lp-fig"><img src="../../img/inspo/${pic.id}.jpg" alt="${esc(pic.alt || pic.name)}" width="1200" height="800" loading="lazy"><figcaption class="small muted">${esc(pic.name)} · AI-generated inspiration</figcaption></figure>` : ''}${extra}<h2>Sample schedule</h2><ol class="plain">${ros}</ol><h2>What to book, and when</h2><ol class="plain">${steps}</ol>
 <h2>Questions people ask</h2><div class="faq">${faqs.map(([qq, a]) => `<details class="panel"><summary><b>${esc(qq)}</b></summary><p>${esc(a)}</p></details>`).join('')}</div>
-${cta(o, null, '../../')}<h2>Costs in your city</h2><div class="cols">${CITIES.map(c => `<a href="../${c.slug}/">${esc(c.name)}</a>`).join('')}</div>`;
+${cta(o, null, '../../')}<h2>Costs in your city</h2><div class="cols">${CITIES.map(c => `<a href="../${c.slug}/${o.slug}/">${esc(c.name)}</a>`).join('')}</div>`;
   const art = { '@context': 'https://schema.org', '@type': 'Article', headline: q, description: `${o.name} budget for ${YEAR}`, image: pic ? `${BASE}img/inspo/${pic.id}.jpg` : `${BASE}img/hero.jpg`, author: { '@type': 'Organization', name: 'Event Couture by Always Luxe', url: BASE }, publisher: { '@type': 'Organization', name: 'Event Couture by Always Luxe', logo: { '@type': 'ImageObject', url: `${BASE}img/brand/ec-mark-256.png` } }, dateModified: new Date().toISOString().slice(0, 10), mainEntityOfPage: `${BASE}plan/${o.slug}/` };
   const fq = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map(([qq, a]) => ({ '@type': 'Question', name: qq, acceptedAnswer: { '@type': 'Answer', text: a } })) };
   write(`plan/${o.slug}/index.html`, page({ rel: 2, title: `${o.name} Cost (${YEAR}): Budget, Checklist and Planner | Event Couture`, h1: q, desc: `${o.name} planner for ${YEAR}: what it costs (${money(t[0], nat)} to ${money(t[2], nat)}), a line-by-line budget, costs in major cities, a sample schedule and a planning checklist.`, body, canonical: `${BASE}plan/${o.slug}/`, ld: [art, fq], image: pic ? `${BASE}img/inspo/${pic.id}.jpg` : null }));
@@ -157,6 +158,7 @@ const idx = `<p>Real numbers for planning any celebration: what it costs, where 
 <h2>By occasion</h2><div class="cols">${OCC.map(o => `<a href="${o.slug}/">${esc(o.name)}</a>`).join('')}</div><h2>By city</h2><div class="cols">${CITIES.map(c => `<a href="${c.slug}/">${esc(c.name)}</a>`).join('')}</div>${cta(null, null, '../')}`;
 write('plan/index.html', page({ rel: 1, title: `Event planning guides and costs (${YEAR}) | Event Couture`, h1: 'Event planning guides', desc: `What weddings, quinceañeras, birthdays, showers and more cost in ${YEAR}, city by city, with budgets, schedules and checklists.`, body: idx, canonical: `${BASE}plan/` }).replace('<a href="../">Home</a> › <a href="../plan/">Planning guides</a></nav>', '<a href="../">Home</a> › Planning guides</nav>'));
 urls.unshift(BASE, `${BASE}plan/`);
+const comboCount = require('./combos.cjs')({ D, E, OCC, CITIES, page, write, urls, esc, money, totals, evFor, YEAR, BASE, recsIn, catLabel, noteFor });
 const landingPages = require('./landing.cjs')({ D, E, OCC, CITIES, BIG, page, write, urls, esc, money, totals, evFor, YEAR, BASE, INSPO });
 const comparePages = require('./compare.cjs')({ D, CITIES, page, write, urls, esc, BASE });
 const ideaPages = require('./ideas.cjs')({ OCC, INSPO, page, write, urls, esc, money, totals, BASE, YEAR });
@@ -164,4 +166,4 @@ fs.writeFileSync(path.join(OUT, 'robots.txt'), `# Event Couture: everything publ
 write('404.html', page({ rel: 0, title: 'Page not found | Event Couture', desc: 'This page doesn’t exist. Start planning your event or browse the planning guides.', h1: 'This page doesn’t exist', crumb: 'Page not found', canonical: BASE, body: `<p>The link may be old or mistyped. Here are good places to start:</p><div class="cta"><a class="btn primary" href="/#/new/1">Plan my event</a><a class="btn ghost" href="/plan/">Planning guides</a><a class="btn ghost" href="/ai-event-planner/">AI event planner</a></div>` }).replace('<head>', '<head><meta name="robots" content="noindex"><base href="/">'));
 const today = new Date().toISOString().slice(0, 10);
 fs.writeFileSync(path.join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `<url><loc>${u}</loc><lastmod>${today}</lastmod>${u === BASE ? '<priority>1.0</priority>' : landingPages.some(l => u === BASE + l + '/') ? '<priority>0.9</priority>' : comparePages.some(l => u === BASE + l + '/') || ideaPages.some(l => u === BASE + l + '/') ? '<priority>0.7</priority>' : /\/plan\/[a-z0-9-]+-(wedding|party)\/$|\/plan\/(wedding|birthday|baby-shower|quinceanera|kids-themed-birthday|engagement-party|bridal-shower|graduation-party|sweet-16)\/$/.test(u) ? '<priority>0.8</priority>' : '<priority>0.5</priority>'}</url>`).join('\n')}\n</urlset>\n`);
-console.log(`guides: ${CITIES.length} cities, ${OCC.length} occasions, ${landingPages.length} landing pages, ${urls.length} urls`);
+console.log(`guides: ${CITIES.length} cities, ${OCC.length} occasions, ${comboCount} city costs, ${landingPages.length} landing pages, ${urls.length} urls`);
