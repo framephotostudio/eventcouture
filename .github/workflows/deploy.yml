@@ -109,6 +109,7 @@ jobs:
         with: { path: _site }
       - id: pages
         uses: actions/deploy-pages@v4
+        with: { timeout: 1800000 }   # 30 minutes: the site has about 10,000 guide pages to sync
       - name: Tell Bing and other IndexNow search engines about the pages (free, no account)
         continue-on-error: true
         run: |
