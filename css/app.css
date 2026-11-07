@@ -1149,3 +1149,9 @@ footer.site nav.foot-guides { gap: 6px 14px; font-size: .8rem; margin-top: 4px; 
 }
 @media (max-width: 699px) { .wizard .wiz-act .btn.gold { order: 3; flex: 1; width: auto; margin-left: 0; } .wizard .wiz-act .btn.ghost { order: 1; flex: none; } }
 html.ec-app .wizard .wiz-act { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); padding-bottom: 10px; }
+
+/* Planner contact: a line under the home hero and a box on plans */
+.hero-help { margin: 14px 0 0; font-size: .92rem; color: var(--muted); }
+.hero-help a { color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.planner-box { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border-color: var(--champagne); }
+.planner-box .grow { flex: 1 1 240px; }
