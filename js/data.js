@@ -816,6 +816,7 @@
       { name: 'Da Cakes Houston', ig: 'dacakeshouston', site: 'https://www.dacakeshouston.com', maps: 'Da Cakes Houston 1829 Bingle Rd Houston TX', cats: ['cake'], cities: ['Houston, TX'], weight: 23, note: 'Custom wedding and celebration cakes, ordered online' },
       { name: 'Arehely Cakes', ig: 'arehelycakes', site: 'https://arehelycakes.com', cats: ['cake'], cities: ['Houston, TX'], weight: 22, note: 'Custom themed cakes and cupcakes. Inquiries answered Sunday to Wednesday' },
       { name: 'Delights by Denise', ig: 'delightsbydenise_', site: 'https://linktr.ee/delightsbydenise_', cats: ['cake'], cities: ['Houston, TX'], weight: 21, note: 'Luxury heart cakes, custom cakes and treats. Order through the custom cake form' },
+      { name: 'Sary\u2019s Cakes', ig: 'saryscakes.htx', site: 'https://linktr.ee/saryscakes.htx', cats: ['cake'], cities: ['Houston, TX'], weight: 20, note: 'Wedding cake designer Sary Garcia: elegant wedding cakes and custom cakes. Delivery to all Houston areas or pick up' },
       { name: 'Kinella Cakes and Treats', ig: 'kinellacakesandtreats', cats: ['cake'], states: ['MD'], note: 'Bespoke cakes for every celebration, Baltimore. Order by DM' },
       /* Detroit and Michigan bridal hair */
       { name: 'Regina Raytman', ig: 'reginaraytman', site: 'https://www.artiste-salon.com', maps: 'Artiste Salon 6400 Telegraph Rd Bloomfield Hills MI', cats: ['hair'], cities: ['Detroit, MI'], weight: 22, note: 'Bridal hair specialist at Artiste Salon, Bloomfield Hills: styles, haircuts and blowouts' },
