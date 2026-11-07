@@ -1155,3 +1155,14 @@ html.ec-app .wizard .wiz-act { bottom: calc(64px + env(safe-area-inset-bottom, 0
 .hero-help a { color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .planner-box { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border-color: var(--champagne); }
 .planner-box .grow { flex: 1 1 240px; }
+
+/* Home: a bigger "Plan my event" button that's easy to see and tap */
+.hero-copy > .row > .btn.primary { min-height: 58px; padding: 0 40px; font-size: 1.12rem; box-shadow: 0 8px 22px rgba(60, 12, 40, .24); }
+@media (max-width: 640px) {
+  /* phones: the button comes right under the headline, full width */
+  .hero-copy > * { order: 2; }
+  .hero-copy > .hero-tag, .hero-copy > h1 { order: 0; }
+  .hero-copy > .row { order: 1; width: 100%; }
+  .hero-copy > .row > .btn.primary { flex: 1 1 100%; justify-content: center; min-height: 62px; font-size: 1.2rem; }
+  .hero-copy > .row > .link { margin: 0 auto; }
+}
