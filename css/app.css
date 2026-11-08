@@ -1176,3 +1176,4 @@ html.ec-app .wizard .wiz-act { bottom: calc(64px + env(safe-area-inset-bottom, 0
 }
 .app-soon-end { margin: 8px auto 0; max-width: 620px; }
 
+.hero-help b { color: var(--ink); font-weight: 600; }
