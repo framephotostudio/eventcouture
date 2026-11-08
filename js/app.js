@@ -1811,7 +1811,7 @@
   var PKG_K = 0;   /* which package is being built */
   function themeVenue(ev, types) {
     if (ev.venueKind === 'both') { var wantBall = PKG_K % 2 === 1, own = themeVenue(Object.assign({}, ev, { venueKind: '' }), types), ownBall = /ballroom|hotel/i.test(own); if (wantBall === ownBall) return own; if (wantBall) return themeVenue(Object.assign({}, ev, { venueKind: 'ballroom' }), types); return themeVenue(Object.assign({}, ev, { venueKind: '' }), types.filter(function (v) { return !/ballroom|hotel/i.test(v); })) || own; }   /* one package with each */
-    if (ev.type === 'conference') return PKG_K % 3 === 1 ? 'Conference center' : 'Hotel conference center';   /* a conference needs meeting rooms: hotels with conference centers, and a dedicated conference center */
+    if (ev.type === 'conference') return 'Hotel conference center';   /* a conference needs meeting rooms: hotels that have conference centers */
     if (ev.type === 'team-building') return 'Team building venue';
     if (ev.venueKind === 'ballroom') return 'Hotel ballroom';   /* a hotel ballroom plan always searches hotels */
     if (ev.setting === 'indoor') { types = types.map(function (v) { return /hotel ballroom/i.test(v) ? 'Banquet hall' : v; }).filter(function (v, i, a) { return !/hotel/i.test(v) && a.indexOf(v) === i; }); if (!types.length) types = ['Banquet hall']; }   /* an event venue plan: venues and banquet halls, never a hotel */

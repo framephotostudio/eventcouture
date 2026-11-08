@@ -233,7 +233,7 @@ const CAT_RULES = {
   videographer: { types: /store|school/, names: /camera|school|rental house/i },
   florals: { types: /supermarket|grocery|department_store|shopping_mall|convenience|pharmacy|gas_station/, names: /walmart|kroger|h-e-b|heb\b|costco|trader joe|whole foods|safeway|publix|1-800/i },
   cake: { types: /supermarket|grocery|convenience|gas_station|fast_food/, names: /walmart|kroger|h-e-b|heb\b|costco|sam's club|safeway|publix|dunkin|krispy|donut/i },
-  catering: { types: /fast_food|convenience|gas_station|supermarket/, names: /mcdonald|chick-fil-a|subway|taco bell|wendy|burger king|domino|pizza hut|papa john|panda express|popeyes|kfc/i },
+  catering: { types: /fast_food|convenience|gas_station|supermarket|event_venue|banquet_hall|wedding_venue/, names: /mcdonald|chick-fil-a|subway|taco bell|wendy|burger king|domino|pizza hut|papa john|panda express|popeyes|kfc|reception (venue|hall)|event venue|wedding venue|ballroom|banquet hall/i },   // a caterer, not a venue that happens to serve food
   hairMakeup: { types: /store|school|nail_salon|barber/, names: /beauty supply|sally beauty|ulta|sephora|school|academy|barber|nail/i },
   hair: { types: /store|school|nail_salon/, names: /beauty supply|sally beauty|ulta|sephora|school|academy|nail/i },
   rentals: { types: /car_rental|truck|storage/, names: /u-haul|penske|budget truck|storage|car rental/i },
