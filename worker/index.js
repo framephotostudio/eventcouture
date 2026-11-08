@@ -57,7 +57,7 @@ export default {
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
       if (url.pathname === '/api/stripe/webhook') return await stripeWebhook(req, env, json);
       // Per-visitor rate limit (free, best effort): 150 requests an hour per IP across AI and search.
-      if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown'))) return json({ error: 'You\u2019ve made a lot of requests. Please wait a few minutes and try again. Nothing was charged.' }, 429);
+      if (!(await rateOk(env, req.headers.get('cf-connecting-ip') || 'unknown', url.pathname))) return json({ error: 'You\u2019ve made a lot of requests. Please wait a few minutes and try again. Nothing was charged.' }, 429);
       if (+(req.headers.get('content-length') || 0) > 12e6) return json({ error: 'Those photos are too large. Try fewer or smaller photos.' }, 413);
       const body = await req.json().catch(() => ({}));
       // Bot check (Cloudflare Turnstile) for new booking requests, quote requests and new vendor listings, once TURNSTILE_SECRET is set.
@@ -137,9 +137,10 @@ async function reserve(env, usd) {
 const RL = new Map();
 const RUDE = /\b(f+u+c+k\w*|sh[i1]t+\w*|bitch\w*|cunts?|c0ck\w*|cocksucker|dick(head|s)?|puss(y|ies)|assholes?|arsehole|whores?|sluts?|bastards?|motherf\w*|n[i1]gg\w*|fag(g?ot)?s?|retard(ed|s)?|porn\w*|nudes?|xxx|kys)\b/i;
 function rude(text) { return RUDE.test(String(text || '').replace(/https?:\/\/\S+/g, ' ')); }
-async function rateOk(env, ip) {
-  const hour = new Date().toISOString().slice(0, 13), key = ip + ':' + hour, n = RL.get(key) || 0;
-  if (n >= 150) return false;
+async function rateOk(env, ip, path = '') {
+  /* searches get their own, larger allowance: one plan with three packages runs about 100 of them; the daily dollar cap still limits spending */
+  const places = path === '/api/places', hour = new Date().toISOString().slice(0, 13), key = ip + (places ? ':p:' : ':') + hour, n = RL.get(key) || 0;
+  if (n >= (places ? 400 : 150)) return false;
   RL.set(key, n + 1);
   if (RL.size > 5000) for (const k of RL.keys()) if (!k.endsWith(hour)) RL.delete(k);
   return true;
