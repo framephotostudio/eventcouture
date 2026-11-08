@@ -7,7 +7,11 @@ jobs:
       - run: |
           A=https://event-couture-api.facecouture.workers.dev
           curl -s $A/api/status; echo
-          for q in "mobile bartending service|bartender" "custom party favors|favors" "formal wear boutique|attire" "makeup artist|hairMakeup"; do
-            Q="${q%%|*}"; C="${q##*|}"
-            echo "== $C"; curl -s -X POST $A/api/places -H 'content-type: application/json' -H 'origin: https://eventcouture.app' -d "{\"query\":\"$Q\",\"city\":\"Detroit, MI\",\"kind\":\"vendor\",\"cat\":\"$C\",\"level\":\"S\"}" | head -c 600; echo
+          for city in "Detroit, MI" "Des Moines, IA" "Boise, ID" "Charleston, SC" "Albuquerque, NM" "Manama, Bahrain" "Nice, France" "Toronto, ON"; do
+            for q in "mobile bartending service|bartender" "custom party favors|favors" "formal wear boutique|attire" "makeup artist|hairMakeup"; do
+              Q="${q%%|*}"; C="${q##*|}"
+              n=$(curl -s -X POST $A/api/places -H 'content-type: application/json' -H 'origin: https://eventcouture.app' -d "{\"query\":\"$Q\",\"city\":\"$city\",\"kind\":\"vendor\",\"cat\":\"$C\",\"level\":\"S\"}" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('places',[])) if 'places' in d else 'ERR '+d.get('error',''))")
+              echo "RES $city | $C | $n"
+            done
           done
+          curl -s $A/api/status; echo
