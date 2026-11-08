@@ -90,11 +90,11 @@
     if (ev.setting === 'home') list = list.filter(function (c) { return c !== 'venue' && c !== 'privateDining'; }).concat(t.style === 'dining' ? ['catering', 'rentals'] : []);
     if (ev.alcohol === 'none') list = list.filter(function (c) { return c !== 'bartender'; });
     /* No one is being dressed for a dinner party, holiday party or gala: guests bring their own look. */
-    if (['dinner', 'holiday', 'christmas', 'gala', 'corporate', 'conference', 'team-building', 'other', 'kids-birthday'].indexOf(ev.type) >= 0 || (ev.kids && /birthday/.test(ev.type || ''))) list = list.filter(function (c) { return c !== 'attire' && c !== 'hairMakeup' && c !== 'hair'; });   /* a child's party doesn't budget a glam look for the host */
+    if (['dinner', 'holiday', 'christmas', 'gala', 'corporate', 'conference', 'team-building', 'retirement', 'other', 'kids-birthday'].indexOf(ev.type) >= 0 || (ev.kids && /birthday/.test(ev.type || ''))) list = list.filter(function (c) { return c !== 'attire' && c !== 'hairMakeup' && c !== 'hair'; });   /* a child's party doesn't budget a glam look for the host */
     if (['corporate', 'conference', 'team-building'].indexOf(ev.type) >= 0) list = list.filter(function (c) { return ['balloons', 'favors', 'cake', 'cakeFee'].indexOf(c) < 0 || (ev.include || []).indexOf(c) >= 0; });
     /* Balloon installations don't suit black-tie or romantic occasions unless the host adds them. */
     if (['gala', 'wedding', 'anniversary', 'engagement', 'dinner', 'holiday', 'christmas'].indexOf(ev.type) >= 0) list = list.filter(function (c) { return c !== 'balloons' || (ev.include || []).indexOf('balloons') >= 0; });
-    if ((ev.type === 'holiday' || ev.type === 'christmas')) list = list.filter(function (c) { return (c !== 'cake' && c !== 'cakeFee') || (ev.include || []).indexOf(c) >= 0; });
+    if ((ev.type === 'holiday' || ev.type === 'christmas' || ev.type === 'retirement')) list = list.filter(function (c) { return (c !== 'cake' && c !== 'cakeFee' || ev.type === 'retirement') && c !== 'favors' && c !== 'balloons' || (ev.include || []).indexOf(c) >= 0; });   /* no favors or balloons at a holiday or retirement party unless she adds them */
     if (hotelBallroom(ev)) list = list.filter(function (c) { return c !== 'rentals' || (ev.include || []).indexOf(c) >= 0; });   /* the hotel supplies tables, chairs and linens; drinks and bartenders are still charged */
     /* A setup and cleanup crew is optional everywhere: venues, hotels and restaurants clear their own space, the caterer clears the food
        and each vendor packs up their own decor. She adds a crew from the extras when her place needs one (often at home or outdoors). */

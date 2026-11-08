@@ -239,7 +239,10 @@ const CAT_RULES = {
   rentals: { types: /car_rental|truck|storage/, names: /u-haul|penske|budget truck|storage|car rental/i },
   balloons: { types: /supermarket|grocery|department_store/, names: /party city|walmart|dollar|kroger/i },
   decor: { types: /home_goods_store|furniture_store|department_store|supermarket/, names: /hobby lobby|michaels|home goods|homegoods|walmart|target|ikea|at home/i },
-  photoBooth: { types: /store|school/, names: /camera|school/i }
+  photoBooth: { types: /store|school/, names: /camera|school/i },
+  favors: { types: /supermarket|grocery|department_store|discount_store|variety_store|convenience/, names: /popshelf|dollar|five below|party city|walmart|target|big lots|family dollar/i },
+  av: { types: /electronics_store|cell_phone|movie_theater/, names: /best buy|geek squad|cinema|theater|theatre/i },
+  signage: { types: /supermarket|department_store/, names: /walmart|office depot|staples|ups store|fedex office/i }
 };
 /* Vendors are businesses that provide the service, never the mall, a store or a restaurant they sit near.
    The primary type decides (Google tags a florist as a "store" too). Some categories must look like the thing itself. */
@@ -310,6 +313,7 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
     .filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY' && p.businessStatus !== 'CLOSED_TEMPORARILY')
     .filter(p => !BUDGET_CHAINS.test(p.displayName?.text || '') && (level === 'L' || !MID_CHAINS.test(p.displayName?.text || '')))
     .filter(p => vendor || !p.priceLevel || L.priceLevels.includes(p.priceLevel))
+    .filter(p => vendor || !/^(shopping_mall|department_store|clothing_store|store)$/.test(String(p.primaryType || '')))   // a venue is never a mall or a store (a conference search found The Galleria mall)
     .filter(p => !vendor || /coordinator/.test(query) || !PLANNERS.test(p.displayName?.text || ''))   // vendors means the actual service, never planners   // places with no price level (ballrooms, estates) are judged by rating alone
     .filter(p => !rule || (!rule.types.test(cat === 'florals' ? String(p.primaryType || '') : [p.primaryType || ''].concat(p.types || []).join(' ')) && !rule.names.test(p.displayName?.text || '')))
     .filter(p => !vendor || rightKind(p, cat))

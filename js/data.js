@@ -142,8 +142,9 @@
     wedding: ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'florals', 'lighting', 'dj', 'singer', 'mc', 'photographer', 'videographer', 'photoBooth', 'favors', 'invitations', 'attire', 'hairMakeup', 'hair', 'officiant', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
     /* Where the event happens can override the event type. */
     /* company events: only what a business event needs (no cake, balloons, favors, attire or hair and makeup) */
-    conference:   ['venue', 'catering', 'coffeeBar', 'av', 'signage', 'lighting', 'photographer', 'videographer', 'mc', 'decor', 'coordinator', 'security', 'parking', 'transport', 'insurance'],
-    teambuilding: ['venue', 'teamActivity', 'catering', 'bar', 'bartender', 'photographer', 'transport', 'insurance'],
+    conference:   ['venue', 'catering', 'coffeeBar', 'av', 'signage', 'lighting', 'photographer', 'videographer', 'mc', 'coordinator', 'security', 'parking', 'transport', 'insurance'],
+    /* team building: the activity company hosts the group, so there is no separate venue */
+    teambuilding: ['teamActivity', 'catering', 'photographer', 'transport', 'insurance'],
     restaurant:  ['restaurantFood', 'restaurantDrinks', 'cake', 'cakeFee', 'tableDecor', 'photographer', 'favors'],
     privateRoom: ['privateDining', 'cake', 'cakeFee', 'decor', 'florals', 'balloons', 'photographer', 'favors', 'invitations']
   };
