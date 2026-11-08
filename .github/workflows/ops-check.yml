@@ -1,0 +1,13 @@
+name: ops-check
+on: { push: { branches: [ops-check] } }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          A=https://event-couture-api.facecouture.workers.dev
+          curl -s $A/api/status; echo
+          for q in "mobile bartending service|bartender" "custom party favors|favors" "formal wear boutique|attire" "makeup artist|hairMakeup"; do
+            Q="${q%%|*}"; C="${q##*|}"
+            echo "== $C"; curl -s -X POST $A/api/places -H 'content-type: application/json' -H 'origin: https://eventcouture.app' -d "{\"query\":\"$Q\",\"city\":\"Detroit, MI\",\"kind\":\"vendor\",\"cat\":\"$C\",\"level\":\"S\"}" | head -c 600; echo
+          done
