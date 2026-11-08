@@ -296,7 +296,7 @@ async function googleSearch(env, body) {
 }
 async function places(env, query, city, level = 'S', vendor = false, cat = '', hint = '') {
   const rule = CAT_RULES[cat], hintRe = hint ? new RegExp('\\b(' + hint.split(/[,|]/).map(w => w.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean).join('|') + ')', 'i') : null;
-  const L = vendor ? { minRating: 4.5, minReviews: 15, priceLevels: [] } : (LEVEL[level] || LEVEL.S);
+  const L = vendor ? { minRating: 4.5, minReviews: /^(bartender|bar|favors|officiant|coordinator)$/.test(cat) ? 5 : 15, priceLevels: [] } : (LEVEL[level] || LEVEL.S);   // small trades (mobile bartenders, favor makers) rarely have many reviews
   const search = async (withPrice) => {
     const body = { textQuery: `${query} in ${city}`, maxResultCount: 20, minRating: L.minRating };
     if (withPrice) body.priceLevels = L.priceLevels;
