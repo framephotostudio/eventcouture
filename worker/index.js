@@ -47,7 +47,7 @@ export default {
       const cqg = url.pathname.match(/^\/api\/concierge\/([a-z0-9]{16,40})$/);
       if (req.method === 'GET' && cqg) { if (!env.EC_KV) return json({ error: 'Not found' }, 404); let r = await env.EC_KV.get('cq:' + cqg[1], 'json'); if (typeof r === 'string') r = JSON.parse(r); return r ? json({ request: r }) : json({ error: 'Not found' }, 404); }
       if (url.pathname === '/api/status') {
-        return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env) });
+        return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env), placesThisMonth: parseInt((env.EC_KV && await env.EC_KV.get('places:' + new Date().toISOString().slice(0, 7))) || '0', 10), placesMonthLimit: FREE_PLACES + (inReview(env) ? 150 : 0) });
       }
       if (req.method === 'GET' && url.pathname === '/api/optin/export') return await optinExport(req, env, cors);
       if (req.method === 'GET' && url.pathname === '/api/reviews') { if (!env.EC_KV) return json({ reviews: [] }); return json({ reviews: (await env.EC_KV.get('revs:approved', 'json')) || [] }); }

@@ -1,0 +1,36 @@
+name: Search health
+# Twice a day: make sure live vendor search works and the month's free Google searches are not running out.
+# If something is wrong, GitHub emails the owner (an issue that mentions her). It closes by itself once all is well. Free.
+on:
+  schedule: [ { cron: '41 13,1 * * *' } ]
+  workflow_dispatch: {}
+permissions: { issues: write, contents: read }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check live search
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          API: https://event-couture-api.facecouture.workers.dev
+        run: |
+          st=$(curl -s -m 30 "$API/api/status") || st='{}'
+          used=$(printf '%s' "$st" | jq -r '.placesThisMonth // 0'); lim=$(printf '%s' "$st" | jq -r '.placesMonthLimit // 900'); on=$(printf '%s' "$st" | jq -r '.places // false')
+          # one real search (usually answered from the server's saved results, so it costs nothing)
+          n=$(curl -s -m 40 -X POST "$API/api/places" -H 'content-type: application/json' -H 'origin: https://eventcouture.app' \
+            -d '{"query":"event photographer","city":"Houston, TX","kind":"vendor","cat":"photographer","level":"S"}' | jq '.places | length' 2>/dev/null || echo 0)
+          echo "searches this month: $used of $lim; test search found: $n"
+          problem=""
+          [ "$on" != "true" ] && problem="Live vendor search is not connected."
+          [ "${n:-0}" -lt 1 ] && problem="A test search for Houston photographers found nothing, so plans may show 'No match yet'."
+          [ "$used" -ge $((lim * 80 / 100)) ] && problem="$problem The free Google searches for this month are almost used up ($used of $lim). When they run out, plans can't find vendors until next month unless a small paid allowance is turned on."
+          gh label create search-health --color B69A68 --description "Live vendor search needs attention" --force >/dev/null
+          num=$(gh issue list --label search-health --state open --json number --jq '.[0].number // empty')
+          if [ -n "$problem" ] && [ -z "$num" ]; then
+            gh issue create --title "Event Couture search needs attention" --label search-health --body "@framephotostudio $problem
+
+          Tell Claude in your Event Couture chat and it will fix it. This message closes by itself once search is healthy again."
+          elif [ -z "$problem" ] && [ -n "$num" ]; then
+            gh issue close "$num" --comment "Search is healthy again."
+          fi
