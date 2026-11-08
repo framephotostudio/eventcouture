@@ -7,8 +7,8 @@ jobs:
       - run: |
           A=https://event-couture-api.facecouture.workers.dev
           curl -s $A/api/status; echo
-          for city in "Detroit, MI" "Des Moines, IA" "Boise, ID" "Manama, Bahrain" "Houston, TX"; do
-            for q in "bartender for hire|bartender" "mobile bar service|bartender"; do
+          for city in "Des Moines, IA" "Boise, ID" "Albuquerque, NM"; do
+            for q in "mobile bartending service|bartender" "bartender for hire|bartender"; do
               Q="${q%%|*}"; C="${q##*|}"
               n=$(curl -s -X POST $A/api/places -H 'content-type: application/json' -H 'origin: https://eventcouture.app' -d "{\"query\":\"$Q\",\"city\":\"$city\",\"kind\":\"vendor\",\"cat\":\"$C\",\"level\":\"S\"}" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('places',[])) if 'places' in d else 'ERR '+d.get('error',''))")
               echo "RES $city | $C | $n"
