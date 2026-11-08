@@ -17,7 +17,7 @@ module.exports = function landing(ctx) {
   const biggest = id => { const o = occ(id), ev = evFor(o, NAT); E.useCountry(NAT); const b = E.budget(ev, 'S'); return b.items.slice().sort((x, y) => y.mid - x.mid).slice(0, 3).map(i => `${esc(i.name.split(' (')[0])} (about ${Math.round(i.mid / b.total * 100)}%)`).join(', '); };
   const ALL = ['wedding', 'engagement', 'bridal-shower', 'bachelorette', 'baby-shower', 'gender-reveal', 'birthday', 'kids-birthday', 'milestone', 'sweet16', 'quince', 'graduation', 'anniversary', 'retirement', 'brunch', 'dinner', 'holiday', 'christmas', 'gala', 'corporate'];
   const nCult = Object.keys(D.CULTURES).length, nCountries = new Set(CITIES.map(c => c.country)).size;
-  const related = (skip) => `<h2>More planning tools</h2><div class="cols">${[['ai-event-planner', 'AI event planner'], ['wedding-planner', 'Online wedding planner'], ['birthday-party-planner', 'Birthday party planner'], ['event-budget-calculator', 'Event budget calculator'], ['event-vendors', 'Find event vendors'], ['cultural-weddings', 'Cultural weddings'], ['event-inspiration', 'Event inspiration'], ['plan', 'All planning guides']].filter(x => x[0] !== skip).map(x => `<a href="../${x[0]}/">${x[1]}</a>`).join('')}</div>`;
+  const related = (skip) => `<h2>More planning tools</h2><div class="cols">${[['ai-event-planner', 'AI event planner'], ['wedding-planner', 'Online wedding planner'], ['birthday-party-planner', 'Birthday party planner'], ['corporate-event-planner', 'Corporate event planner'], ['event-budget-calculator', 'Event budget calculator'], ['event-vendors', 'Find event vendors'], ['cultural-weddings', 'Cultural weddings'], ['event-inspiration', 'Event inspiration'], ['plan', 'All planning guides']].filter(x => x[0] !== skip).map(x => `<a href="../${x[0]}/">${x[1]}</a>`).join('')}</div>`;
   const pages = [];
   const add = (slug, title, desc, h1, body, items, image) => {
     const ld = [{ '@context': 'https://schema.org', '@type': 'WebPage', name: h1, description: desc, url: `${BASE}${slug}/`, isPartOf: { '@type': 'WebSite', name: 'Event Couture', url: BASE }, publisher: { '@type': 'Organization', name: 'Event Couture by Always Luxe', logo: `${BASE}img/brand/ec-mark-256.png` } }];
@@ -101,6 +101,31 @@ ${photo('unicorn-dreamland')}
      ['What percentage of a wedding budget goes to the venue and catering?', `In a typical ${YEAR} US wedding budget, the biggest lines are ${biggest('wedding')}.`],
      ['Is the budget calculator free?', 'Yes, and it works for 20 kinds of events in ' + nCountries + ' countries, in local currency.'],
      ['Are the prices exact?', 'They are planning estimates sized to your city. Add real quotes as vendors send them and your totals update.']]);
+
+  /* 4b. Corporate events: conferences, team building, holiday parties */
+  const perHead = (id, city) => { const o = occ(id); return money(totals(o, city || NAT)[1] / o.guests, city || NAT); };
+  const BIZ_CITIES = ['Houston, TX', 'Dallas, TX', 'Austin, TX', 'New York, NY', 'Chicago, IL', 'Los Angeles, CA', 'Miami, FL', 'Atlanta, GA'].filter(c => CITIES.some(x => x.name === c));
+  add('corporate-event-planner', `Corporate Event Planner: Conferences, Team Building, Holiday Parties | Event Couture`,
+    `Plan a business conference, team building day, office holiday party or client event online. Per-person budgets for your city, hotels with conference centers, caterers, AV and invitations with RSVPs. Free to plan.`,
+    'Corporate event planner: conferences, team building and holiday parties',
+    `<p class="lead">Plan your company’s next event in minutes, not weeks. Event Couture builds a per-person budget for your city, finds hotels with conference centers and meeting rooms, top-rated caterers, audio-visual companies and team building activities, and sends invitations your team can RSVP to. A business conference for about 150 people typically runs <b>${range('conference')}</b> at average US prices in ${YEAR}, a team building day for 30 about <b>${range('team-building')}</b>, and an office holiday party for 40 about <b>${range('holiday')}</b>.</p>
+<div class="cta">${startBtn('#/start/conference', 'Plan a conference')}${startBtn('#/start/team-building', 'Plan team building')}${startBtn('#/start/holiday', 'Plan a holiday party')}</div>
+${photo('silver-blue-ballroom')}
+<h2>Built for business events</h2><ol class="plain">
+<li><b>Only what a company event needs.</b> A conference plan covers the venue, catering and coffee service, audio-visual (screens, projectors, microphones, a stage), name badges and signage, a photographer and an emcee. No cake, balloons, favors or hair and makeup.</li>
+<li><b>Venues with conference centers.</b> Conference plans search hotels with meeting rooms and dedicated conference centers, not wedding halls.</li>
+<li><b>Team building that works.</b> Cooking classes, escape rooms, workshops and games, with lunch, drinks and transportation priced for your headcount.</li>
+<li><b>A per-person number for your budget approval.</b> Every line is sized to your city and headcount, with tax, service charges and tips included, at three spending levels.</li>
+<li><b>RSVPs without an app.</b> Send one link; your team replies from their phone, and you see the headcount as it comes in.</li></ol>
+<h2>Cost per person by city (${YEAR})</h2><div class="table-wrap panel"><table class="qty"><thead><tr><th>City</th><th class="n">Conference</th><th class="n">Team building</th><th class="n">Holiday party</th></tr></thead><tbody>${BIZ_CITIES.map(c => `<tr><td>${esc(c)}</td><td class="n">${perHead('conference', c)}</td><td class="n">${perHead('team-building', c)}</td><td class="n">${perHead('holiday', c)}</td></tr>`).join('')}</tbody></table></div>
+<p class="small muted">Signature level: key pieces handled by professionals. Estimates, not quotes; real prices come from each venue and vendor.</p>
+<h2>Budgets by event</h2>${occTable(['conference', 'team-building', 'holiday', 'corporate', 'gala'])}
+<h2>Want us to plan it?</h2><p>Our planning service finds and books your venue and vendors and builds the schedule, by phone and online. Text <a href="sms:+17135343603">713-534-3603</a>, message <a href="https://instagram.com/always_luxe" rel="noopener" target="_blank">@always_luxe</a> or email <a href="mailto:hello@eventcouture.app">hello@eventcouture.app</a>.</p>`,
+    [['How much does a business conference cost?', `For about 150 attendees, plan on ${range('conference')} at average US prices, or about ${perHead('conference')} per person at the Signature level. The venue, catering and audio-visual are the biggest costs.`],
+     ['Which venues work for a conference?', 'Hotels with conference centers and meeting rooms, and dedicated conference centers. Event Couture searches those for conference plans, ranked by rating and reviews.'],
+     ['How much does a team building event cost?', `For about 30 people, plan on ${range('team-building')}, or about ${perHead('team-building')} per person, including the activity, food and drinks.`],
+     ['How much is an office holiday party per person?', `About ${perHead('holiday')} per person at the Signature level for 40 guests at average US prices; your city changes the number.`],
+     ['Can my team RSVP without downloading an app?', 'Yes. You send one invitation link and people reply from any phone or computer.']], 'silver-blue-ballroom');
 
   /* 5. Event vendors */
   const rate = (id, unit) => { E.useCountry(NAT); const k = D.CATEGORIES[id]; const r = k.perHour || k.perGuest || k.fixed || k.perPerson; return r ? `<tr><td>${esc(k.name.split(' (')[0])}</td><td class="n">${money(r[0], NAT)} to ${money(r[1], NAT)} ${unit}</td></tr>` : ''; };

@@ -6,7 +6,7 @@ module.exports = function ({ D, E, OCC, CITIES, page, write, urls, esc, money, t
   const TITLE = { brunch: 'Brunch or Tea Party', birthday: 'Birthday Party', 'kids-birthday': 'Kids’ Birthday Party', milestone: 'Milestone Birthday Party', dinner: 'Dinner Party',
     'bridal-shower': 'Bridal Shower', 'baby-shower': 'Baby Shower', 'gender-reveal': 'Gender Reveal Party', bachelorette: 'Bachelorette Party', graduation: 'Graduation Party',
     engagement: 'Engagement Party', quince: 'Quinceañera', sweet16: 'Sweet 16', anniversary: 'Anniversary Party', retirement: 'Retirement Party', christmas: 'Christmas Party',
-    holiday: 'Holiday Party', wedding: 'Wedding', gala: 'Gala or Fundraiser', corporate: 'Corporate Event' };
+    holiday: 'Holiday Party', wedding: 'Wedding', conference: 'Business Conference', 'team-building': 'Team Building Event', gala: 'Gala or Fundraiser', corporate: 'Corporate Event' };
   const titleOf = o => o.culture ? o.name.replace(/\bwedding\b/, 'Wedding') : (TITLE[o.key] || o.name);
   const RATE = [['photographer', 'an hour'], ['dj', 'an hour'], ['catering', 'a guest'], ['florals', 'a table'], ['cake', 'a guest'], ['hairMakeup', 'a person']];
   let n = 0;

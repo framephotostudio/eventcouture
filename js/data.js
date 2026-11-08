@@ -25,6 +25,8 @@
     { id: 'wedding', name: 'Wedding', hours: 6, style: 'wedding', defaultGuests: 120 },
     { id: 'gala', name: 'Gala or fundraiser', hours: 5, style: 'gala', defaultGuests: 200 },
     { id: 'corporate', name: 'Corporate event', hours: 3, style: 'party', defaultGuests: 80 },
+    { id: 'conference', name: 'Business conference', hours: 8, style: 'conference', defaultGuests: 150 },
+    { id: 'team-building', name: 'Team building', hours: 4, style: 'teambuilding', defaultGuests: 30 },
     { id: 'other', name: 'Other celebration', hours: 4, style: 'party', defaultGuests: 30 }
   ];
 
@@ -81,6 +83,9 @@
     officiant:    { name: 'Officiant', group: 'Logistics', fixed: [300, 800], tier: 'LSU' },
     security:     { name: 'Security', group: 'Logistics', perHour: [40, 70], tier: 'U', staffPer: 100 },
     coordinator:  { name: 'Day-of coordinator', group: 'Logistics', fixed: [600, 2500], tier: 'U' },
+    av:           { name: 'Audio-visual (screens, projectors, microphones, stage)', group: 'Setup', fixed: [1200, 3500], perGuest: [8, 25], tier: 'LSU', taxable: true },
+    signage:      { name: 'Name badges, banners and signage', group: 'Favors and paper', fixed: [250, 900], perGuest: [2, 6], tier: 'LSU', taxable: true },
+    teamActivity: { name: 'Team building activity (cooking class, escape room, workshop)', group: 'Music and fun', fixed: [200, 600], perGuest: [45, 120], tier: 'LSU', taxable: true },
     cleanup:      { name: 'Setup and cleanup crew', group: 'Logistics', fixed: [100, 450], tier: 'SU' },
     parking:      { name: 'Parking and valet', group: 'Logistics', perGuest: [4, 12], tier: 'U' },
     insurance:    { name: 'Event insurance', group: 'Logistics', fixed: [100, 300], tier: 'U' },
@@ -136,6 +141,9 @@
     gala:    ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'balloons', 'florals', 'lighting', 'dj', 'liveMusic', 'mc', 'photographer', 'videographer', 'photoBooth', 'entertainment', 'favors', 'invitations', 'attire', 'hairMakeup', 'hair', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
     wedding: ['venue', 'catering', 'bar', 'bartender', 'cake', 'rentals', 'decor', 'florals', 'lighting', 'dj', 'singer', 'mc', 'photographer', 'videographer', 'photoBooth', 'favors', 'invitations', 'attire', 'hairMakeup', 'hair', 'officiant', 'transport', 'security', 'coordinator', 'cleanup', 'insurance', 'parking'],
     /* Where the event happens can override the event type. */
+    /* company events: only what a business event needs (no cake, balloons, favors, attire or hair and makeup) */
+    conference:   ['venue', 'catering', 'coffeeBar', 'av', 'signage', 'lighting', 'photographer', 'videographer', 'mc', 'decor', 'coordinator', 'security', 'parking', 'transport', 'insurance'],
+    teambuilding: ['venue', 'teamActivity', 'catering', 'bar', 'bartender', 'photographer', 'transport', 'insurance'],
     restaurant:  ['restaurantFood', 'restaurantDrinks', 'cake', 'cakeFee', 'tableDecor', 'photographer', 'favors'],
     privateRoom: ['privateDining', 'cake', 'cakeFee', 'decor', 'florals', 'balloons', 'photographer', 'favors', 'invitations']
   };
@@ -396,8 +404,8 @@
       { id: 'chocolateFountain', not: ['dinner', 'retirement'] },
       { id: 'dessertBar', not: ['dinner'] },
       { id: 'iceCreamCart', only: WED.concat(CELEB, SHOWER, ['kids-birthday', 'corporate', 'other']) },
-      { id: 'coffeeBar', only: WED.concat(['gala', 'corporate', 'bridal-shower', 'baby-shower', 'brunch', 'holiday', 'christmas', 'retirement', 'milestone', 'other']) },
-      { id: 'foodTruck', only: ['wedding', 'birthday', 'milestone', 'graduation', 'corporate', 'kids-birthday', 'sweet16', 'quince', 'retirement', 'bachelorette', 'other'] },
+      { id: 'coffeeBar', only: WED.concat(['gala', 'corporate', 'conference', 'team-building', 'bridal-shower', 'baby-shower', 'brunch', 'holiday', 'christmas', 'retirement', 'milestone', 'other']) },
+      { id: 'foodTruck', only: ['wedding', 'birthday', 'milestone', 'graduation', 'corporate', 'team-building', 'kids-birthday', 'sweet16', 'quince', 'retirement', 'bachelorette', 'other'] },
       { id: 'popcornCart', only: ['kids-birthday', 'birthday', 'sweet16', 'quince', 'graduation', 'baby-shower', 'gender-reveal', 'corporate'] } ] },
     { group: 'Photos and memories', items: [
       { id: 'photographer' }, { id: 'videographer' },
