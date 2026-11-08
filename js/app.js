@@ -542,8 +542,7 @@
     var lastEv = Object.values(events()).filter(function (e) { return e && e.id && !e.sample; }).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); })[0];
     frame(
       (lastEv ? '<a class="resume-bar" href="#/e/' + esc(lastEv.id) + ((lastEv.packages || []).length ? '/budget' : '') + '"><span>Welcome back. <b>Continue planning ' + esc(lastEv.name || 'your event') + '</b></span><span aria-hidden="true">\u2192</span></a>' : '') +
-      (CFG.app ? '' : '<div class="app-soon-bar"><img src="img/brand/ec-mark-128.png" alt="" width="30" height="30"><span><b><span class="asb-long">The Event Couture app is coming soon</span><span class="asb-short">App coming soon</span></b><span class="asb-long"> to iPhone and Android. Plan, book and invite from your phone.</span>' + (isInstalled() ? '' : '<span class="asb-short" aria-hidden="true"> \u00b7 </span><button type="button" class="link small" data-install><span class="asb-long">Add Event Couture to your home screen now</span><span class="asb-short">Add to home screen</span></button>') + '</span></div>') +
-      '<section class="hero"><div class="hero-copy"><p class="hero-tag">Your inspiration. A beautifully planned event.</p><h1>Plan your whole event in minutes</h1>' +
+      '<section class="hero"><div class="hero-copy"><p class="hero-tag">Event planning for weddings, birthdays, showers, quincea\u00f1eras and more</p><h1>Plan your whole event in minutes</h1>' +
       '<p class="lead">Share a photo or a few words. AI designs the look, and you get a budget estimate for your city, top-rated vendors, a checklist and invitations. Free to plan.</p>' +
       '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div>' +
       '<div class="hero-chips" aria-label="Start with your occasion">' +
@@ -568,7 +567,9 @@
       '<div><button class="btn ghost" id="allSamples" aria-expanded="false" aria-controls="moreSamples">See all ' + SAMPLES.length + ' sample plans</button></div></section>' +
       '<section id="reviews" class="stack section" hidden></section>' +
       '<a class="btn primary sticky-plan" href="#/new" aria-hidden="true" tabindex="-1">Plan my event</a>' +
-      '<section class="stack section" style="text-align:center;justify-items:center"><h2>Ready when you are</h2><p class="muted">Start with a photo, a few words or just your colors.</p><div><a class="btn primary" href="#/new">Plan my event</a></div></section>'
+      '<section class="stack section" style="text-align:center;justify-items:center"><h2>Ready when you are</h2><p class="muted">Start with a photo, a few words or just your colors.</p><div><a class="btn primary" href="#/new">Plan my event</a></div></section>' +
+      /* app coming soon: at the bottom of the home page */
+      (CFG.app ? '' : '<div class="app-soon-bar app-soon-end"><img src="img/brand/ec-mark-128.png" alt="" width="30" height="30"><span><b><span class="asb-long">The Event Couture app is coming soon</span><span class="asb-short">App coming soon</span></b><span class="asb-long"> to iPhone and Android. Plan, book and invite from your phone.</span>' + (isInstalled() ? '' : '<span class="asb-short" aria-hidden="true"> \u00b7 </span><button type="button" class="link small" data-install><span class="asb-long">Add Event Couture to your home screen now</span><span class="asb-short">Add to home screen</span></button>') + '</span></div>')
     );
     $$('[data-scroll]').forEach(function (b) { b.addEventListener('click', function () { var t = document.getElementById(b.dataset.scroll); if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }); });
     $$('[data-hchip]').forEach(function (a) { a.addEventListener('click', function () { T('quick_start', { occasion: a.dataset.hchip, from: 'hero' }); }); });

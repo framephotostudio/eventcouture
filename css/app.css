@@ -1159,10 +1159,20 @@ html.ec-app .wizard .wiz-act { bottom: calc(64px + env(safe-area-inset-bottom, 0
 /* Home: a bigger "Plan my event" button that's easy to see and tap */
 .hero-copy > .row > .btn.primary { min-height: 58px; padding: 0 40px; font-size: 1.12rem; box-shadow: 0 8px 22px rgba(60, 12, 40, .24); }
 @media (max-width: 640px) {
-  /* phones: the button comes right under the headline, full width */
-  .hero-copy > * { order: 2; }
-  .hero-copy > .hero-tag, .hero-copy > h1 { order: 0; }
-  .hero-copy > .row { order: 1; width: 100%; }
+  /* phones: headline, a big button, then the photo straight away; event types and the rest under it */
+  .hero { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+  .hero-copy { display: contents; }
+  .hero-copy > *, .hero > .hero-photo { order: 5; }
+  .hero-copy > .hero-tag { order: 0; margin: 0 0 6px; }
+  .hero-copy > h1 { order: 1; margin: 0 0 14px; }
+  .hero-copy > .row { order: 2; width: 100%; margin: 0 0 6px; }
+  .hero > .hero-photo { order: 3; margin: 10px 0 14px; }
+  .hero-copy > .hero-chips { order: 4; flex-wrap: wrap; overflow: visible; margin: 0 0 12px; padding: 0; }
+  .hero-copy > p.lead { order: 5; margin: 0 0 10px; padding: 0; max-width: none; align-self: stretch; }
+  .hero { padding-top: 6px; margin-top: 0; }
+  .hero-copy > .hero-help { order: 6; }
   .hero-copy > .row > .btn.primary { flex: 1 1 100%; justify-content: center; min-height: 62px; font-size: 1.2rem; }
   .hero-copy > .row > .link { margin: 0 auto; }
 }
+.app-soon-end { margin: 8px auto 0; max-width: 620px; }
+
