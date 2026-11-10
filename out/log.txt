@@ -1,0 +1,50 @@
+munich ERR Page.select_option: Timeout 30000ms exceeded.
+Call log:
+waiting for locator("#city")
+  -   locator resolved to <select id="city" class="input">…</select>
+  - attempting select option action
+  -   waiting for element to be visible and enabled
+  -   did not find some options
+  - retrying select option action, attempt #1
+  -   waiting for element to be visible and enabled
+  -   did not find some opti
+dubai ERR Page.select_option: Timeout 30000ms exceeded.
+Call log:
+waiting for locator("#city")
+  -   locator resolved to <select id="city" class="input">…</select>
+  - attempting select option action
+  -   waiting for element to be visible and enabled
+  -   did not find some options
+  - retrying select option action, attempt #1
+  -   waiting for element to be visible and enabled
+  -   did not find some opti
+cape-town ERR Page.select_option: Timeout 30000ms exceeded.
+Call log:
+waiting for locator("#city")
+  -   locator resolved to <select id="city" class="input">…</select>
+  - attempting select option action
+  -   waiting for element to be visible and enabled
+  -   did not find some options
+  - retrying select option action, attempt #1
+  -   waiting for element to be visible and enabled
+  -   did not find some opti
+penang ERR Page.select_option: Timeout 30000ms exceeded.
+Call log:
+waiting for locator("#city")
+  -   locator resolved to <select id="city" class="input">…</select>
+  - attempting select option action
+  -   waiting for element to be visible and enabled
+  -   did not find some options
+  - retrying select option action, attempt #1
+  -   waiting for element to be visible and enabled
+  -   did not find some opti
+london ERR Page.select_option: Timeout 30000ms exceeded.
+Call log:
+waiting for locator("#city")
+  -   locator resolved to <select id="city" class="input">…</select>
+  - attempting select option action
+  -   waiting for element to be visible and enabled
+  -   did not find some options
+  - retrying select option action, attempt #1
+  -   waiting for element to be visible and enabled
+  -   did not find some opti
