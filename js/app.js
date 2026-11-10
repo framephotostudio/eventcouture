@@ -1989,7 +1989,17 @@
       }).catch(function () { miss.push(c.cat); }).then(function () { done++; if (onStep) onStep(done, cats.length); });
     };
     var i = 0; var next = function () { if (i >= cats.length) return Promise.resolve(); var batch = cats.slice(i, i + 6); i += 6;   /* six searches at a time: a full package in a few seconds */ return Promise.all(batch.map(one)).then(next); };
-    return next().then(function () { ev.packages[k].miss = miss; saveEvent(ev); return k; });
+    /* the same business twice in one package (say a florist under Florals and Decor): keep it in the first, give the other the next best (the searches are saved, so this costs nothing) */
+    var fixDup = function () {
+      var it = ev.packages[k].items, seen = {}, again = [];
+      cats.forEach(function (c) { var id = it[c.cat]; if (!id) return; var o = savedFor(ev, c.cat).find(function (x) { return x.id === id; }); if (o && o.rec) return;   /* an Event Couture Pick listed under both (hair and makeup) stays */ if (seen[id]) again.push(c); else seen[id] = c.cat; });
+      return again.reduce(function (pr, c) { return pr.then(function () { return pkgSearch(ev, c).then(function (list) {
+        var inPkg = Object.keys(it).map(function (x) { return it[x]; }), other = ev.packages.map(function (pk) { return pk.items[c.cat]; });
+        var p = list.find(function (x) { return inPkg.indexOf(x.id) < 0 && other.indexOf(x.id) < 0; }) || list.find(function (x) { return inPkg.indexOf(x.id) < 0; });
+        if (p) putInPackage(ev, k, c.cat, p);
+      }).catch(function () {}); }); }, Promise.resolve());
+    };
+    return next().then(fixDup).then(function () { ev.packages[k].miss = miss; saveEvent(ev); return k; });
   }
   var PRICE_SIGN = { PRICE_LEVEL_INEXPENSIVE: 'Budget-friendly', PRICE_LEVEL_MODERATE: 'Moderate prices', PRICE_LEVEL_EXPENSIVE: 'Upscale', PRICE_LEVEL_VERY_EXPENSIVE: 'Luxury prices' };
   var ORDINAL = ['first', 'second', 'third'];
@@ -2013,7 +2023,7 @@
     var k = Math.min(ev.pkgView || 0, pks.length - 1), pk = pks[k];
     var bizOf = function (pkx, cat) { var id = pkx.items[cat]; return id && savedFor(ev, cat).find(function (o) { return o.id === id; }); };
     var line = function (x, cat) { return (cat && cat === venueCat(ev) ? venueFit(ev, x).replace(/^ /, '') + ' ' : '') + (x.rec ? '<span class="badge rec" title="Event Couture Pick: recommended by Event Couture. Not paid placement or an independent review.">\u2605 Event Couture Pick</span>' + claimLink(x) + ' ' : '') + hotelBadge(x.name).replace(/^ /, '') + [x.rec && /^ig:/.test(x.id) ? '@' + esc(String(x.id).slice(3)) : '',x.rating ? '★ ' + (Math.round(x.rating * 10) / 10) + (x.reviews ? ' (' + Number(x.reviews).toLocaleString('en-US') + ')' : '') : '', (cat && cat === venueCat(ev) ? '' : PRICE_SIGN[x.price] || ''), x.address ? esc(x.address.split(',').slice(0, 2).join(',')) : ''].filter(Boolean).join(' · '); };
-    var est = function (cat, x) { if (x && onRequest(ev, cat, x)) return 'Price on request'; var it = b.items.find(function (i) { return i.id === cat; }); return it ? 'est. ' + money(it.mid) : ''; };
+    var est = function (cat, x) { if (x && onRequest(ev, cat, x)) return 'Price on request'; var it = b.items.find(function (i) { return i.id === cat; }); return it ? 'est. ' + money(it.mid) + (cat === 'venue' && ev.venueKind === 'ballroom' && ev.setting === 'indoor' ? ' room fee + food (see Catering)' : '') : ''; };   /* a hotel ballroom is priced through its catering package */
     var links = function (x, cat) { return (cat && isRestaurantPick(ev, cat, x) ? '<a class="btn small gold" target="_blank" rel="noopener" href="' + esc(reserveLink(ev, x)) + '">Reserve a table</a>' : '') + (siteOf(x) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(siteOf(x)) + '">' + (/^ig:/.test(x.id) ? 'Instagram' : /google\.[a-z.]+\/maps/.test(siteOf(x)) ? 'Map' : 'Website') + '</a>' : '') + (x.maps && x.maps !== siteOf(x) && !/google\.[a-z.]+\/maps/.test(siteOf(x)) ? '<a class="btn small ghost" target="_blank" rel="noopener" href="' + esc(x.maps) + '">Map</a>' : ''); };
     var row = function (c, pkx, mode) {
       var x = bizOf(pkx, c.cat), bk = x && isBooked(ev, c.cat, x);
