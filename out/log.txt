@@ -1,0 +1,12 @@
+London, UK | photographer | event photographer => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+London, UK | photographer | wedding photographer => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+London, UK | hairMakeup | makeup artist => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+London, UK | hair | hair stylist => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+London, UK | attire | formal wear boutique => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+London, UK | dj | wedding DJ => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+Cape Town, South Africa | photographer | event photographer => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+Cape Town, South Africa | photographer | wedding photographer => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+Cape Town, South Africa | hairMakeup | makeup artist => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+Cape Town, South Africa | hair | hair stylist => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+Cape Town, South Africa | attire | formal wear boutique => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
+Cape Town, South Africa | dj | wedding DJ => HTTP Error 403: Forbidden raw:{'error': 'HTTP Error 403: Forbidden'}
