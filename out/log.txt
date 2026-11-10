@@ -1,0 +1,12 @@
+London, UK | photographer | event photographer => 8 The Photo Team; Event Photographer London; Vistolia Photography Hackney; Karolina Heller Photography raw:{}
+London, UK | photographer | wedding photographer => 8 The Photo Team; Event Photographer London; OLD AND NEW STUDIO; Philip White Wedding Photograp raw:{}
+London, UK | hairMakeup | makeup artist => 8 Alyse Baker Artistry | Hair & ; Aishi Make up Artist, Hair sty; Wedding Makeup & Hair Stylist; Kristina Gasperas Makeup Artis raw:{}
+London, UK | hair | hair stylist => 8 Ena Salon; Shunji Hair & Makeup Covent Ga; Beauty Club London; Windle London raw:{}
+London, UK | attire | formal wear boutique => 8 Alterations Boutique; Alia Couture - Wedding, Evenin; Saint + Sofia | Covent Garden; Aristocracy London raw:{}
+London, UK | dj | wedding DJ => 8 WE R DJS; SpinSisters LTD; JW DJ Agency; London Event DJs raw:{}
+Cape Town, South Africa | photographer | event photographer => 8 Riekert Cloete Photography; Expressions Photography by And; Marlow Photography (PTY); Trending Photography raw:{}
+Cape Town, South Africa | photographer | wedding photographer => 8 Riekert Cloete Photography; Expressions Photography by And; Heinrich Knoetze Photography; Trending Photography raw:{}
+Cape Town, South Africa | hairMakeup | makeup artist => 8 Danielle Jacobs Hair and Make-; Face By Lizeka; Cecilia Fourie - Hair & Makeup; Monique Du Toit - Hair and Mak raw:{}
+Cape Town, South Africa | hair | hair stylist => 8 Excentric on Kloof; Just Peachy Hair; Blue Lemon Hair & Beauty; Camps Bay Haute Coiffure raw:{}
+Cape Town, South Africa | attire | formal wear boutique => 8 Bellisimo Dresses, Cape Town; The Wedding Boutique; Calegra Bridal House Cape Town; Molteno Couture raw:{}
+Cape Town, South Africa | dj | wedding DJ => 8 Southern Sound | Wedding DJ Ca; Mzanzi Soundworx DJs & Mirror ; DJ Max Reloaded; DJ Dave Ward raw:{}
