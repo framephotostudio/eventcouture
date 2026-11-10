@@ -2,11 +2,11 @@ import os, json
 from playwright.sync_api import sync_playwright
 os.makedirs('out',exist_ok=True); U='https://eventcouture.app/'
 log=lambda m: open('out/log.txt','a').write(m+'\n')
-def run(pg,name,city,typ='wedding',text='Elegant wedding in ivory and gold'):
+def run(pg,name,cc,city,typ='wedding',text='Elegant wedding in ivory and gold'):
     try:
         pg.goto(U+'#/new/1'); pg.wait_for_timeout(2500)
         pg.fill('#text',text); pg.click('#next'); pg.wait_for_timeout(800)
-        pg.select_option('#type',typ); pg.select_option('#city',city); pg.click('#setting [data-v=indoor]'); pg.wait_for_timeout(300)
+        pg.select_option('#type',typ); pg.select_option('#country',cc); pg.wait_for_timeout(300); pg.select_option('#city',city); pg.click('#setting [data-v=indoor]'); pg.wait_for_timeout(300)
         pg.click('#next'); pg.wait_for_selector('.concept', timeout=90000); pg.wait_for_timeout(800)
         pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head', timeout=60000); pg.wait_for_timeout(800)
         base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
@@ -18,6 +18,6 @@ def run(pg,name,city,typ='wedding',text='Elegant wedding in ivory and gold'):
         log(name+' ERR '+str(e)[:400]); pg.screenshot(path=f'out/{name}-error.png', full_page=True)
 with sync_playwright() as p:
     b=p.chromium.launch(); pg=b.new_page(viewport={'width':1100,'height':1000},device_scale_factor=1)
-    for n,c in [('munich','Munich, Germany'),('dubai','Dubai, UAE'),('cape-town','Cape Town, South Africa'),('penang','Penang, Malaysia'),('london','London, UK')]:
-        run(pg,n,c)
+    for n,cc,c in [('munich','DE','Munich, Germany'),('dubai','AE','Dubai, UAE'),('cape-town','ZA','Cape Town, South Africa'),('penang','MY','Penang, Malaysia'),('london','GB','London, UK')]:
+        run(pg,n,cc,c)
     b.close()
