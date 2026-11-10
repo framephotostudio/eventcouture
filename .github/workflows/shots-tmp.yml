@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: curl -s https://event-couture-api.facecouture.workers.dev/api/status > status-before.json; cat status-before.json
-
+      - run: pip install playwright==1.48.0 && python -m playwright install --with-deps chromium
       - run: python .github/shots.py
       - if: always()
         run: |

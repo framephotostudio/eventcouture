@@ -1,11 +1,23 @@
-import json, urllib.request
-A='https://event-couture-api.facecouture.workers.dev/api/places'
-def q(query,city,cat):
-    req=urllib.request.Request(A,data=json.dumps({'query':query,'city':city,'kind':'vendor','cat':cat,'level':'S'}).encode(),headers={'content-type':'application/json','origin':'https://eventcouture.app','referer':'https://eventcouture.app/','user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'})
-    try: d=json.load(urllib.request.urlopen(req,timeout=40))
-    except Exception as e: d={'error':str(e)}
-    open('out/log.txt','a').write(f"{city} | {cat} | {query} => "+(str(d.get('error')) if 'places' not in d else str(len(d['places']))+' '+'; '.join(p['name'][:30] for p in d['places'][:4]))+(' raw:'+str({k:v for k,v in d.items() if k!='places'})[:200])+'\n')
-import os; os.makedirs('out',exist_ok=True)
-for city in ['London, UK','Cape Town, South Africa']:
-    for query,cat in [('event photographer','photographer'),('wedding photographer','photographer'),('makeup artist','hairMakeup'),('hair stylist','hair'),('formal wear boutique','attire'),('wedding DJ','dj')]:
-        q(query,city,cat)
+import os, json
+from playwright.sync_api import sync_playwright
+os.makedirs('out',exist_ok=True); U='https://eventcouture.app/'
+log=lambda m: open('out/log.txt','a').write(m+'\n')
+def run(pg,name,cc,city,typ='wedding',text='Romantic wedding in blush and white'):
+    try:
+        pg.goto(U+'#/new/1'); pg.wait_for_timeout(2500)
+        pg.fill('#text',text); pg.click('#next'); pg.wait_for_timeout(800)
+        pg.select_option('#type',typ); pg.select_option('#country',cc); pg.wait_for_timeout(300); pg.select_option('#city',city); pg.click('#setting [data-v=indoor]'); pg.wait_for_timeout(300)
+        pg.click('#next'); pg.wait_for_selector('.concept', timeout=90000); pg.wait_for_timeout(800)
+        pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head', timeout=60000); pg.wait_for_timeout(800)
+        base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
+        pg.goto(U+base+'/budget'); pg.wait_for_selector('.pkg-cmp', timeout=120000); pg.wait_for_timeout(55000)
+        rows=pg.evaluate("[...document.querySelectorAll('tr[data-pkrow]')].map(r=>[r.dataset.pkrow,[...r.querySelectorAll('td')].slice(1).map(td=>{const b=td.querySelector('b');return b?b.innerText:td.innerText.split('\\n')[0]})])")
+        log(json.dumps({'city':city,'rows':rows},ensure_ascii=False))
+        t=pg.query_selector('.pkg-cmp'); t.scroll_into_view_if_needed(); pg.wait_for_timeout(500); t.screenshot(path=f'out/{name}.png')
+    except Exception as e:
+        log(name+' ERR '+str(e)[:400]); pg.screenshot(path=f'out/{name}-error.png', full_page=True)
+with sync_playwright() as p:
+    b=p.chromium.launch(); pg=b.new_page(viewport={'width':1100,'height':1000},device_scale_factor=1)
+    for n,cc,c in [('london','GB','London, UK'),('cape-town','ZA','Cape Town, South Africa'),('penang','MY','Penang, Malaysia')]:
+        run(pg,n,cc,c)
+    b.close()
