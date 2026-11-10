@@ -2591,7 +2591,7 @@
   function venueCity(ev) { var up = !ev.area && (D.UPSCALE_AREAS || {})[ev.city]; return (ev.area || up ? (ev.area || up) + ', ' : '') + ev.city; }
   /* Nicer venues first: luxury brands and top price levels move up; airport, convention and budget hotels move down.
      hotel: a hotel ballroom plan wants hotels first; an event venue plan wants venues and banquet halls first. */
-  var NOT_FANCY = /airport|\bLAX\b|\bIAH\b|\bDFW\b|\bJFK\b|\bSFO\b|o\u2019?'?hare|convention cent|\bexpress\b|\bmotel\b|\bby the airport/i;
+  var NOT_FANCY = /airport|\bLAX\b|\bIAH\b|\bDFW\b|\bJFK\b|\bSFO\b|o\u2019?'?hare|convention cent|\bexpress\b|\bmotel\b|\bby the airport|wine bar|\bpub\b|sports bar|cocktail bar/i;   /* bars rank last as a venue for a large event */
   /* How nice a place her budget reaches: 3 = 5-star luxury, 2 = upscale 4-star, 1 = a nice standard place.
      With her own budget, compare her money per guest with what each hotel class charges per guest in her city (food and room are about half a budget). */
   function budgetCap(ev, lvl) {

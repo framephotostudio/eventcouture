@@ -249,6 +249,7 @@ const CAT_RULES = {
   photoBooth: { types: /store|school/, names: /camera|school/i },
   favors: { types: /supermarket|grocery|department_store|discount_store|variety_store|convenience/, names: /popshelf|dollar|five below|party city|walmart|target|big lots|family dollar/i },
   av: { types: /electronics_store|cell_phone|movie_theater/, names: /best buy|geek squad|cinema|theater|theatre/i },
+  attire: { types: /print|screen_print|sporting/, names: /t-?shirt|tees\b|printing|screen print|uniform|sportswear|alterations only/i },
   signage: { types: /supermarket|department_store/, names: /walmart|office depot|staples|ups store|fedex office/i }
 };
 /* Vendors are businesses that provide the service, never the mall, a store or a restaurant they sit near.
@@ -266,7 +267,8 @@ const MUST_LOOK_LIKE = {
   videographer: { types: /video|film|photograph/, names: /video|film|cinema|motion|studio|media|production/i },
   hairMakeup: { types: /beauty|hair|spa|makeup/, names: /makeup|mua|beauty|glam|hair|bridal|artistry|lash|face/i },
   hair: { types: /beauty|hair|spa/, names: /hair|stylist|salon|blowout|bridal|glam|beauty|updo|extensions/i },
-  decor: { types: /event|party|florist|furniture_rental|interior/, names: /decor|design|event|rental|styl|backdrop|balloon|floral|draper|luxe|occasion/i }
+  decor: { types: /event|party|florist|furniture_rental|interior/, names: /decor|design|event|rental|styl|backdrop|balloon|floral|draper|luxe|occasion/i },
+  attire: { types: /bridal|wedding|clothing_store|boutique/, names: /bridal|bride|wedding|gown|couture|dress|boutique|formal|evening|suit|tux|abaya|saree|sari|lehenga|kaftan|atelier|fashion|tailor/i }
 };
 function rightKind(p, cat) {
   const prim = String(p.primaryType || ''), name = p.displayName?.text || '', types = [prim].concat(p.types || []).join(' ');
