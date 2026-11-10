@@ -104,11 +104,18 @@ export default {
 /* Google gives 1,000 detailed place searches a month free. Those don't count against the daily dollar cap;
    searches past that (with a little margin) are paid and are counted as before. */
 const FREE_PLACES = 900;   // Google gives 1,000 free searches a month; stop at 900 to be safe
+/* The month's count lives in one stored number, and the store takes about one write per second for it.
+   A plan runs six searches at once, so a write can be turned away; that used to stop the search ("free searches used up")
+   and the rest of the plan came back empty. Now a turned-away write is kept here and added to the next one. */
+const PLACES_MEM = { month: '', pending: 0 };
 async function freePlaces(env) {
   if (!env.EC_KV) return false;
-  const key = 'places:' + new Date().toISOString().slice(0, 7), n = parseInt((await env.EC_KV.get(key)) || '0', 10);
-  if (n >= FREE_PLACES + (inReview(env) ? 150 : 0)) return false;   // review window: 150 more searches, about 50 beyond Google's free 1,000 (under $2)
-  try { await env.EC_KV.put(key, String(n + 1), { expirationTtl: 60 * 60 * 24 * 40 }); } catch (e) { return false; }   // can't count it, so don't spend
+  const month = new Date().toISOString().slice(0, 7), key = 'places:' + month;
+  if (PLACES_MEM.month !== month) { PLACES_MEM.month = month; PLACES_MEM.pending = 0; }
+  const stored = parseInt((await env.EC_KV.get(key).catch(() => null)) || '0', 10);
+  if (stored + PLACES_MEM.pending >= FREE_PLACES + (inReview(env) ? 150 : 0)) return false;   // review window: 150 more searches, about 50 beyond Google's free 1,000 (under $2)
+  PLACES_MEM.pending++;
+  try { await env.EC_KV.put(key, String(stored + PLACES_MEM.pending), { expirationTtl: 60 * 60 * 24 * 40 }); PLACES_MEM.pending = 0; } catch (e) {}   // busy: written with the next search
   return true;
 }
 async function freeMonthly(env, name, limit, n) {
