@@ -1823,6 +1823,7 @@
   /* Only the venue follows her area; vendors travel to her, so they're searched across the whole city. */
   /* Vendors Always Luxe recommends for this city and line, shaped like a search result. */
   function recFor(ev, cat) {
+    if ((D.HIDE_PICKS || []).indexOf(ev.city) >= 0) return [];   /* picks hidden in this city for now */
     /* a luxury-priced pick (luxury: true) leads only on a luxury plan: Ultra Luxe, or a budget in the luxury class; on other plans it waits after the first three */
     var luxPlan = ev.tier === 'U' || (+ev.budget > 0 && budgetCap(ev, 'S') >= 3);
     var nb = (D.NEAR || {})[ev.city], inC = function (l) { return l.indexOf(ev.city) >= 0 || !!nb && l.indexOf(nb.city) >= 0 && nb.not.indexOf(cat) < 0; };   /* a nearby big city's picks also show here (The Woodlands gets Houston's), except the categories kept local */
