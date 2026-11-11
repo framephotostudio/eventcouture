@@ -247,7 +247,7 @@ const CAT_RULES = {
   balloons: { types: /supermarket|grocery|department_store/, names: /party city|walmart|dollar|kroger/i },
   decor: { types: /home_goods_store|furniture_store|department_store|supermarket/, names: /hobby lobby|michaels|home goods|homegoods|walmart|target|ikea|at home/i },
   photoBooth: { types: /store|school/, names: /camera|school/i },
-  favors: { types: /supermarket|grocery|department_store|discount_store|variety_store|convenience/, names: /popshelf|dollar|five below|party city|walmart|target|big lots|family dollar/i },
+  favors: { types: /supermarket|grocery|department_store|discount_store|variety_store|convenience/, names: /popshelf|dollar|five below|party city|walmart|target|big lots|family dollar|balloon|helium|party decor|\bdecor\b|rental/i },   // favors, not a balloon or decor company
   av: { types: /electronics_store|cell_phone|movie_theater/, names: /best buy|geek squad|cinema|theater|theatre/i },
   attire: { types: /print|screen_print|sporting/, names: /t-?shirt|tees\b|printing|screen print|uniform|sportswear|alterations only/i },
   signage: { types: /supermarket|department_store/, names: /walmart|office depot|staples|ups store|fedex office/i }

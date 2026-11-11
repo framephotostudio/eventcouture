@@ -1814,7 +1814,7 @@
     if (ev.type === 'conference') return 'Hotel conference center';   /* a conference needs meeting rooms: hotels that have conference centers */
     if (ev.type === 'team-building') return 'Team building venue';
     if (ev.venueKind === 'ballroom') return 'Hotel ballroom';   /* a hotel ballroom plan always searches hotels */
-    if (ev.setting === 'indoor') { types = types.map(function (v) { return /hotel ballroom/i.test(v) ? 'Banquet hall' : v; }).filter(function (v, i, a) { return !/hotel/i.test(v) && a.indexOf(v) === i; }); if (!types.length) types = ['Banquet hall']; }   /* an event venue plan: venues and banquet halls, never a hotel */
+    if (ev.setting === 'indoor') { types = types.map(function (v) { return /hotel ballroom/i.test(v) ? 'Banquet hall' : v; }).filter(function (v, i, a) { return !/hotel|restaurant|private dining|bistro|brunch|lunch spot|wine bar|lounge/i.test(v) && a.indexOf(v) === i; }); if (!types.length) types = ['Banquet hall']; }   /* an event venue plan: venues and banquet halls, never a hotel or a restaurant (she chose a venue, not a restaurant) */
     var c = ev.concept || {}, t = [c.name, c.styleName, c.mood, (c.decor || []).join(' '), (c.outline || []).join(' '), ev.inspiration && ev.inspiration.text].join(' ').toLowerCase();
     var best = types[0], bs = 0;
     types.forEach(function (v, i) { var sc = VENUE_CUES.reduce(function (a, cue) { return a + (cue[0].test(t) && cue[1].test(v) ? (t.match(new RegExp(cue[0].source, 'g')) || []).length : 0); }, 0) - i * 0.01; if (sc > bs) { bs = sc; best = v; } });
@@ -1829,7 +1829,7 @@
     var nb = (D.NEAR || {})[ev.city], inC = function (l) { return l.indexOf(ev.city) >= 0 || !!nb && l.indexOf(nb.city) >= 0 && nb.not.indexOf(cat) < 0; };   /* a nearby big city's picks also show here (The Woodlands gets Houston's), except the categories kept local */
     return (D.RECOMMENDED || []).filter(function (r) { var st = (ev.city || '').split(', ')[1] || ''; return r.cats.indexOf(cat) >= 0 && ((ev.guests || 0) <= (r.maxGuests || (cat === 'venue' ? 600 : 1e9))) && (ev.guests || 0) >= (r.minGuests || 0) && (cat !== 'venue' || (r.settings || ['indoor']).indexOf(ev.setting) >= 0) && (!r.cities || inC(r.cities)) && (!r.states || r.states.indexOf(st) >= 0) && (!r.notCities || !inC(r.notCities)) && (!r.notStates || r.notStates.indexOf(st) < 0) && (!r.onlyCities || inC(r.onlyCities)) && (!r.country || E.countryOf(ev.city).id === r.country) && (r.cities || r.states || r.country || r.everywhere || ['US', 'CA'].indexOf(E.countryOf(ev.city).id) >= 0)   /* no place given: the US and Canada; everywhere: every country */ && (!r.notCultures || r.notCultures.indexOf(ev.culture || '') < 0) && (!r.cultures || r.cultures.indexOf(ev.culture || '') >= 0 || r.cultures.indexOf('parties') >= 0 && ev.type !== 'wedding' || r.types && r.types.indexOf(ev.type) >= 0); })
       .sort(function (a, b) { var w = function (r) { return r.weight != null ? r.weight : (r.first ? 100 : 0) + (r.cities ? 20 : r.states ? 10 : 0) + (r.top ? 5 : 0); }; return w(b) - w(a); })   /* this city first, then this state, then everywhere */
-      .map(function (r) { var mp = !r.ig && 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.maps || r.name); return { id: r.ig ? 'ig:' + r.ig : 'rec:' + r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: r.name, website: r.ig ? 'https://instagram.com/' + r.ig : r.site || mp, mapsUrl: !r.ig && r.site ? mp : undefined, rec: true, note: r.note, ig: r.ig, priceLevel: r.priceLevel || undefined, late: !!(r.notTop && r.notTop.indexOf(ev.city) >= 0) || (!!r.luxury && !luxPlan) }; })
+      .map(function (r) { var mp = !r.ig && 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(r.maps || r.name); return { id: r.ig ? 'ig:' + r.ig : 'rec:' + r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: r.name, website: r.ig ? 'https://instagram.com/' + r.ig : r.site || mp, mapsUrl: !r.ig && r.site ? mp : undefined, rec: true, note: r.note, ig: r.ig, priceLevel: r.priceLevel || undefined, late: !!(r.notTop && r.notTop.indexOf(ev.city) >= 0) || (!!r.luxury && !luxPlan) || (r.weight < 0 && !(r.cities && inC(r.cities)) && !(r.onlyCities && inC(r.onlyCities))) };   /* a pick from another city who travels here (weight below 0) comes after the first local businesses */ })
       .filter(function (r, i, a) { return a.findIndex(function (o) { return o.id === r.id; }) === i; });   /* one person listed twice (top in their state, and everywhere) shows once */
   }
   function pkgSearch(ev, c) {
@@ -2592,7 +2592,7 @@
   function venueCity(ev) { var up = !ev.area && (D.UPSCALE_AREAS || {})[ev.city]; return (ev.area || up ? (ev.area || up) + ', ' : '') + ev.city; }
   /* Nicer venues first: luxury brands and top price levels move up; airport, convention and budget hotels move down.
      hotel: a hotel ballroom plan wants hotels first; an event venue plan wants venues and banquet halls first. */
-  var NOT_FANCY = /airport|\bLAX\b|\bIAH\b|\bDFW\b|\bJFK\b|\bSFO\b|o\u2019?'?hare|convention cent|\bexpress\b|\bmotel\b|\bby the airport|wine bar|\bpub\b|sports bar|cocktail bar/i;   /* bars rank last as a venue for a large event */
+  var NOT_FANCY = /airport|\bLAX\b|\bIAH\b|\bDFW\b|\bJFK\b|\bSFO\b|o\u2019?'?hare|convention cent|\bexpress\b|\bmotel\b|\bby the airport|wine bar|\bpub\b|sports bar|cocktail bar|steakhouse|steak house|\bgrill\b|\+ ?bar\b|\bdiner\b/i;   /* bars rank last as a venue for a large event */
   /* How nice a place her budget reaches: 3 = 5-star luxury, 2 = upscale 4-star, 1 = a nice standard place.
      With her own budget, compare her money per guest with what each hotel class charges per guest in her city (food and room are about half a budget). */
   function budgetCap(ev, lvl) {
@@ -2620,7 +2620,7 @@
       var n = String(p.name || ''), ad = String(p.address || '').toLowerCase(), pl = String(p.priceLevel || p.price || ''), m = 1;
       var r = venueRankOf(p); if (r == null) r = 2;
       m *= r > cap ? (r - cap > 1 ? 0.3 : 0.6) : r === cap ? 1.35 : r === cap - 1 ? 0.95 : 0.6;   /* above budget: later; the nicest that fits: first */
-      if (NOT_FANCY.test(n + ' ' + ad) && !(ev.type === 'conference' && /convention|conference/i.test(n))) m *= 0.15;   /* airport and convention hotels: only when nothing else is left */
+      if (NOT_FANCY.test(n + ' ' + ad) && !(ev.type === 'conference' && /convention|conference/i.test(n)) && !(/restaurant|privateRoom/.test(ev.setting || '') && !/airport|motel|express/i.test(n))) m *= 0.15;   /* a restaurant plan may well want the steakhouse */   /* airport and convention hotels: only when nothing else is left */
       if (up.some(function (w) { return ad.indexOf(w) >= 0; })) m *= 1.15;
       var isHotel = E.hotelClass(n) !== 'hall';
       if (hotel != null) m *= isHotel === hotel ? 1.6 : 0.5;   /* the right kind of place before the other kind */
@@ -2742,9 +2742,12 @@
     if (cat === 'favors' && !/kids|baby|gender/.test(ev.type) && ADULT_FAVORS.test(n)) return false;
     return true;
   }
+  var CULTURE_WORDS = ['indian', 'desi', 'south asian', 'punjabi', 'pakistani', 'persian', 'iranian', 'mexican', 'latino', 'hispanic', 'chinese', 'vietnamese', 'korean', 'filipino', 'nigerian', 'african', 'arab', 'arabic', 'lebanese', 'spanish', 'russian', 'ukrainian', 'moroccan', 'greek', 'turkish'];
   function rankLine(ev, cat, list) {
     var pref = PKG_PREFER[cat], hc = E.culture(ev), words = hc && hc.hint ? new RegExp('\\b(' + hc.hint.split(',').map(function (w) { return w.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).filter(Boolean).join('|') + ')', 'i') : null;
-    var score = function (p) { return (pref && pref.test(p.name || '') ? 2 : 0) + (words && words.test(p.name || '') ? 1 : 0); };
+    /* a cultural wedding: a business named for another culture (an "Indian wedding photographer" for an Arabic wedding) goes to the end of the line */
+    var mine = hc && hc.hint ? hc.hint.split(',').map(function (w) { return w.trim().toLowerCase(); }) : [], other = ev.culture && ev.culture !== 'fusion' ? new RegExp('\\b(' + CULTURE_WORDS.filter(function (w) { return mine.indexOf(w) < 0; }).join('|') + ')\\b', 'i') : null;
+    var score = function (p) { return (pref && pref.test(p.name || '') ? 2 : 0) + (words && words.test(p.name || '') ? 1 : 0) - (other && other.test(p.name || '') && !(words && words.test(p.name || '')) ? 5 : 0); };
     return list.filter(function (p) { return fitsLine(ev, cat, p); }).map(function (p, i) { return { p: p, s: score(p), i: i }; }).sort(function (a, b) { return b.s - a.s || a.i - b.i; }).map(function (x) { return x.p; });
   }
   /* The theme in plain search words: a motif for kids' parties (unicorn, princess), otherwise the look's two main colors. */
