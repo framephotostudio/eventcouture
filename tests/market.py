@@ -8,7 +8,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); OUT = sys.argv[1] if len(sys.
 U = 'http://localhost:8765/'; problems = []
 def check(c, m):
     if not c: problems.append(m); print('FAIL', m)
-VENDOR = {'name': 'Layali Voice', 'email': 'layali@example.com', 'phone': '713-555-0100', 'cats': ['Wedding singer'], 'bio': 'Arabic and English wedding singer with oud and percussion.', 'ig': '@layali.voice', 'years': '8',
+VENDOR = {'name': 'Layali Voice', 'email': 'layali@example.com', 'phone': '713-555-0100', 'cats': ['Wedding singer and band'], 'bio': 'Arabic and English wedding singer with oud and percussion.', 'ig': '@layali.voice', 'years': '8',
   'cities': ['Houston, TX'], 'radius': '60', 'pkgName': 'Wedding set', 'pkgIncl': 'Three hours with musicians', 'priceType': 'Starting at', 'price': '2500', 'deposit': '30', 'minGuests': '50', 'maxGuests': '800',
   'lead': '8', 'notIncl': 'Sound system for venues without one', 'cancel': 'Deposit is non-refundable', 'events': ['Wedding', 'Arabic wedding'], 'langs': 'Arabic, English', 'agree': True}
 for vp, size, port in [('phone', {'width': 390, 'height': 844}, 8791), ('desk', {'width': 1280, 'height': 900}, 8792)]:
@@ -30,7 +30,12 @@ for vp, size, port in [('phone', {'width': 390, 'height': 844}, 8791), ('desk', 
             pg.goto(U); pg.evaluate("v => localStorage.setItem('ec.vendor', JSON.stringify(v))", VENDOR)
             pg.goto(U + '#/vendors'); pg.wait_for_selector('#submit'); pg.click('#submit')
             pg.wait_for_selector('.sheet h3'); t = pg.inner_text('.sheet')
-            check('live' in t and 'Founding vendor' in t, f'{vp}: vendor not live: {t[:120]}')
+            check('checked by Event Couture' in t, f'{vp}: a new listing waits for approval: {t[:120]}')
+            vid = pg.evaluate("JSON.parse(localStorage.getItem('ec.vendor')).serverId"); pg.click('.sheet [data-close] >> nth=-1')
+            import urllib.request
+            urllib.request.urlopen(urllib.request.Request(API + '/api/vendors/set', data=json.dumps({'id': vid, 'status': 'approved'}).encode(), headers={'content-type': 'application/json', 'x-admin-code': 'local-test-only', 'origin': 'http://localhost:8765'}, method='POST')).read()
+            pg.click('#submit'); pg.wait_for_selector('.sheet h3'); t = pg.inner_text('.sheet')
+            check('live' in t and 'Founding vendor' in t, f'{vp}: vendor live once approved: {t[:120]}')
             check('Book me on Event Couture' in t, f'{vp}: no Instagram bio line')
             pg.wait_for_timeout(700); pg.screenshot(path=f'{OUT}/vendor-live-{vp}.png')
             vid = pg.evaluate("JSON.parse(localStorage.getItem('ec.vendor')).serverId")
@@ -64,10 +69,10 @@ for vp, size, port in [('phone', {'width': 390, 'height': 844}, 8791), ('desk', 
             # 3. the singer sees the request (no name or contact) and replies
             pg.goto(U + '#/vendors/requests'); pg.wait_for_selector('[data-req]')
             rq = pg.inner_text('#reqs'); check('Arabic wedding' in rq and 'Arabic and English songs please' in rq, f'{vp}: request not shown to vendor: {rq[:150]}')
-            pg.fill('[data-req] [data-msg]', 'I\'m available June 12! Full set with oud and darbuka.'); pg.fill('[data-req] [data-price]', '2800'); pg.click('[data-req] [data-send]'); pg.wait_for_selector('text=Reply sent')
+            pg.fill('[data-req] [data-msg]', 'I\'m available June 12! Full set with oud and darbuka.'); pg.fill('[data-req] [data-price]', '2800'); pg.click('[data-req] [data-send]'); pg.wait_for_selector('[data-req] [data-send] >> text=Update my reply')
             pg.screenshot(path=f'{OUT}/vendor-requests-{vp}.png')
             # 4. the host sees the quote
-            pg.goto(U + base + '/vendors'); pg.wait_for_selector('text=new quote', timeout=8000)
+            pg.goto(U + base + '/vendors'); pg.wait_for_selector('[data-vendor=singer]'); pg.wait_for_timeout(1500)
             pg.click('[data-vendor=singer]'); pg.wait_for_selector('[data-mk=singer] >> text=Quotes from vendors (1)')
             qt = pg.inner_text('[data-mk=singer]'); check('$2,800' in qt and 'oud and darbuka' in qt, f'{vp}: quote not shown: {qt[:150]}')
             # 5. the vendor's public page

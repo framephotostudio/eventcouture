@@ -2,7 +2,7 @@
 import http from 'http';
 const src = await import('../worker/index.js');
 const store = new Map();
-const env = { EC_KV: { get: async k => store.has(k) ? store.get(k) : null, put: async (k, v) => { store.set(k, v); }, delete: async k => { store.delete(k); } }, ALLOWED_ORIGINS: 'http://localhost:8765' };
+const env = { EC_KV: { get: async k => store.has(k) ? store.get(k) : null, put: async (k, v) => { store.set(k, v); }, delete: async k => { store.delete(k); } }, ALLOWED_ORIGINS: 'http://localhost:8765', ADMIN_CODE: 'local-test-only' };
 http.createServer(async (req, res) => {
   let body = ''; req.on('data', c => body += c); await new Promise(r => req.on('end', r));
   const headers = { ...req.headers, 'cf-connecting-ip': '7.7.7.' + Math.floor(Math.random() * 250) };

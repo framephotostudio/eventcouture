@@ -12,7 +12,7 @@ with sync_playwright() as p:
         pg.goto(U+'#/new/1'); pg.fill('#text','Ivory and gold wedding for 150'); pg.click('#next'); pg.wait_for_selector('#type'); pg.select_option('#type','wedding')
         check(n, pg.is_checked('#alc'), 'a wedding starts with alcohol checked')
         pg.select_option('#type','baby-shower'); pg.wait_for_timeout(100); check(n, not pg.is_checked('#alc'), 'a baby shower starts without alcohol')
-        pg.check('#alc'); pg.click('details.more summary'); check(n, pg.get_attribute('#alcohol [data-v=none]','aria-pressed')=='false', 'checking it turns the Drinks choice back on')
+        pg.evaluate("document.querySelector('details.more').open=true"); pg.wait_for_timeout(100); pg.check('#alc'); check(n, pg.get_attribute('#alcohol [data-v=none]','aria-pressed')=='false', 'checking it turns the Drinks choice back on')
         pg.uncheck('#alc'); check(n, pg.get_attribute('#alcohol [data-v=none]','aria-pressed')=='true', 'unchecking it picks No alcohol under More details')
         pg.click('#alcohol [data-v=wine]'); pg.wait_for_timeout(50); check(n, pg.is_checked('#alc'), 'picking Beer and wine checks the box')
         pg.select_option('#type','wedding'); pg.uncheck('#alc'); pg.select_option('#country','US'); pg.wait_for_timeout(150); pg.select_option('#city','Houston, TX'); pg.click('#setting [data-v=indoor]'); pg.click('#next')

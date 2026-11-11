@@ -13,8 +13,10 @@ with sync_playwright() as p:
         pg = b.new_page(viewport=size); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.goto(U); pg.wait_for_selector('#cultural')
         vis = lambda: len([c for c in pg.query_selector_all('.culture-card') if c.is_visible()])
-        check(vis() == 6, f'{vp}: front page shows 6 cultural weddings first ({vis()})'); pg.click('#allCult'); pg.wait_for_timeout(200)
-        check(vis() == 17, f'{vp}: See all shows 17 ({vis()})')
+        if vp == 'phone': check(vis() == 17 and not pg.is_visible('#allCult'), f'{vp}: phone shows all 17 cultural weddings in a swipe row ({vis()})')
+        else:
+            check(vis() == 6, f'{vp}: front page shows 6 cultural weddings first ({vis()})'); pg.click('#allCult'); pg.wait_for_timeout(200)
+            check(vis() == 17, f'{vp}: See all shows 17 ({vis()})')
         pg.evaluate("document.querySelector('#cultural').scrollIntoView({block:'start'})"); pg.wait_for_timeout(200); pg.screenshot(path=f'{OUT}/cultures-home-{vp}.png', full_page=False)
         check(pg.evaluate('document.documentElement.scrollWidth') <= size['width'] + 1, f'{vp}: sideways scroll')
         for name, text in SAY.items():

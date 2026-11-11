@@ -110,4 +110,6 @@
 
       '<h3>20. Contact</h3><p>' + NAME + ' · ' + mail + '</p>'
   };
+  /* the app's copy names no other store or platform (App Store 2.3.10) */
+  if (C.app) Object.keys(root.EC_LEGAL).forEach(function (k) { if (typeof root.EC_LEGAL[k] === 'string') root.EC_LEGAL[k] = root.EC_LEGAL[k].replace(/the iPhone and Android apps/g, 'the app').replace(/In the iPhone and Android apps/g, 'In the app').replace(/Apple or Google/g, 'Apple'); });
 })(typeof window !== 'undefined' ? window : globalThis);

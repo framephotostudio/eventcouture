@@ -66,7 +66,7 @@ with sync_playwright() as p:
         names, _ = plan(pg, '', 'wedding', photo='royal-red-quinceanera', occ='quince'); check('Royal Red Wedding' in names and not any('Quincea' in n for n in names), t + 'photo named for the wrong occasion: ' + str(names))
         pg.goto(U + '#/inspiration/kids-birthday'); pg.wait_for_selector('#igrid'); pg.click('[data-inspo=dino-discovery]'); pg.click('.sheet #useInspo'); pg.wait_for_selector('.inspo-chosen')
         pg.fill('#text', 'for my son Leo'); pg.click('#swapInspo'); pg.wait_for_selector('#igrid'); did = pg.url.split('/')[-1]
-        pg.goto(U); pg.wait_for_selector('#igrid'); pg.click('#igrid [data-inspo] >> nth=0'); pg.click('.sheet #useInspo'); pg.wait_for_selector('.inspo-chosen')
+        pg.goto(U + '#/inspiration/all'); pg.wait_for_selector('#igrid'); pg.click('#igrid [data-inspo] >> nth=0'); pg.click('.sheet #useInspo'); pg.wait_for_selector('.inspo-chosen')
         d = pg.evaluate("JSON.parse(localStorage.getItem('ec.drafts'))[%s]" % json.dumps(did))
         check(d and d['type'] == 'kids-birthday' and d['inspiration']['text'] == 'for my son Leo', t + 'home photo overwrote another draft or lost typed text: ' + str(d and (d['type'], d['inspiration']['text'])))
         pg.close()
