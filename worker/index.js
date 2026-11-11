@@ -234,7 +234,7 @@ const SHOPS = /store|supermarket|grocery|department_store|shopping_mall|convenie
 const CAT_RULES = {
   dj: { types: /night_club|bar\b|pub|restaurant|karaoke|casino|store/, names: /lounge|night ?club|\bclub\b|\bbar\b|grill|tavern|pub\b|karaoke|hookah/i },
   liveMusic: { types: /night_club|bar\b|pub|restaurant|store/, names: /lounge|night ?club|\bbar\b|grill|tavern|guitar center|music store/i },
-  bar: { types: /night_club|\bbar\b|pub|restaurant|liquor_store|store|winery|brewery/, names: /sports bar|tavern|pub\b|grill|lounge|liquor|wine (shop|store)|brewing|brewery/i },
+  bar: { types: /night_club|\bbar\b|pub|restaurant|liquor_store|store|winery|brewery/, names: /sports bar|tavern|pub\b|grill|lounge|liquor|wine (shop|store)|brewing|brewery|alcohol delivery|bottle service/i },
   bartender: { types: /night_club|\bbar\b|pub|restaurant|liquor_store|store/, names: /sports bar|tavern|pub\b|grill|lounge|liquor|bartending school/i },
   photographer: { types: /store|school|lab\b/, names: /camera|photo lab|printing|passport|school|cvs|walgreens|walmart/i },
   videographer: { types: /store|school/, names: /camera|school|rental house/i },
@@ -247,7 +247,7 @@ const CAT_RULES = {
   balloons: { types: /supermarket|grocery|department_store/, names: /party city|walmart|dollar|kroger/i },
   decor: { types: /home_goods_store|furniture_store|department_store|supermarket/, names: /hobby lobby|michaels|home goods|homegoods|walmart|target|ikea|at home/i },
   photoBooth: { types: /store|school/, names: /camera|school/i },
-  favors: { types: /supermarket|grocery|department_store|discount_store|variety_store|convenience/, names: /popshelf|dollar|five below|party city|walmart|target|big lots|family dollar|balloon|helium|party decor|\bdecor\b|rental/i },   // favors, not a balloon or decor company
+  favors: { types: /supermarket|grocery|department_store|discount_store|variety_store|convenience/, names: /popshelf|dollar|five below|party city|walmart|target|big lots|family dollar|balloon|helium|party decor|\bdecor\b|rental|\bevents\b|\bparty r\b/i },   // favors, not a balloon or decor company
   av: { types: /electronics_store|cell_phone|movie_theater/, names: /best buy|geek squad|cinema|theater|theatre/i },
   attire: { types: /print|screen_print|sporting/, names: /t-?shirt|tees\b|printing|screen print|uniform|sportswear|alterations only/i },
   signage: { types: /supermarket|department_store/, names: /walmart|office depot|staples|ups store|fedex office/i }

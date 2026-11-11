@@ -2621,6 +2621,8 @@
       var r = venueRankOf(p); if (r == null) r = 2;
       m *= r > cap ? (r - cap > 1 ? 0.3 : 0.6) : r === cap ? 1.35 : r === cap - 1 ? 0.95 : 0.6;   /* above budget: later; the nicest that fits: first */
       if (NOT_FANCY.test(n + ' ' + ad) && !(ev.type === 'conference' && /convention|conference/i.test(n)) && !(/restaurant|privateRoom/.test(ev.setting || '') && !/airport|motel|express/i.test(n))) m *= 0.15;   /* a restaurant plan may well want the steakhouse */   /* airport and convention hotels: only when nothing else is left */
+      if (p.bar && /^(indoor|outdoor)$/.test(ev.setting || '') && !/banquet|ballroom|\bhall\b|event|venue/i.test(n)) m *= 0.15;   /* a bar is the last choice for a venue plan */
+      if (p.restaurant && /^(indoor|outdoor)$/.test(ev.setting || '') && !/banquet|ballroom|\bhall\b|event|venue|reception|estate|garden/i.test(n)) m *= 0.3;   /* she chose a venue, not a restaurant: a restaurant's private room comes after the real venues */
       if (up.some(function (w) { return ad.indexOf(w) >= 0; })) m *= 1.15;
       var isHotel = E.hotelClass(n) !== 'hall';
       if (hotel != null) m *= isHotel === hotel ? 1.6 : 0.5;   /* the right kind of place before the other kind */
