@@ -22,7 +22,6 @@ def run(pg,name,cc,city,typ,text,start='#/new/1',setting='indoor'):
 with sync_playwright() as p:
     b=p.chromium.launch()
     for a in [('la-quince','US','Los Angeles, CA','quince','Pink and gold quinceanera with a ballroom feel'),
-              ('toronto-arabic','CA','Toronto, ON',None,'Ivory and gold wedding with a grand zaffe entrance','#/start/arabic-wedding/'),
-              ('miami-wedding','US','Miami, FL','wedding','Romantic white and greenery wedding')]:
+              ('toronto-arabic','CA','Toronto, ON',None,'Ivory and gold wedding with a grand zaffe entrance','#/start/arabic-wedding/')]:
         pg=b.new_page(viewport={'width':1100,'height':1000},device_scale_factor=1); run(pg,*a); pg.close()
     b.close()
