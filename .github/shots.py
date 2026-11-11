@@ -21,11 +21,8 @@ def run(pg,name,cc,city,typ,text,start='#/new/1',setting='indoor'):
         log(name+' ERR '+str(e)[:400]+' '+json.dumps(errs)); pg.screenshot(path=f'out/{name}-error.png', full_page=True)
 with sync_playwright() as p:
     b=p.chromium.launch()
-    for a in [('chicago-birthday','US','Chicago, IL','birthday','Black and gold 40th birthday dinner party'),
-              ('la-quince','US','Los Angeles, CA','quince','Pink and gold quinceanera with a ballroom feel'),
+    for a in [('la-quince','US','Los Angeles, CA','quince','Pink and gold quinceanera with a ballroom feel'),
               ('toronto-arabic','CA','Toronto, ON',None,'Ivory and gold wedding with a grand zaffe entrance','#/start/arabic-wedding/'),
-              ('atlanta-babyshower','US','Atlanta, GA','baby-shower','Sage green and cream baby shower brunch'),
-              ('dallas-conference','US','Dallas, TX','conference','Annual sales conference with keynote speakers'),
               ('miami-wedding','US','Miami, FL','wedding','Romantic white and greenery wedding')]:
         pg=b.new_page(viewport={'width':1100,'height':1000},device_scale_factor=1); run(pg,*a); pg.close()
     b.close()
