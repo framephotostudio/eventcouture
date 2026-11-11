@@ -915,7 +915,7 @@
       { name: 'Joseph\u2019s Fashion', ig: 'josephs_fashion', cats: ['attire'], states: ['MI'], note: 'Custom suits and tuxedos for men and women: weddings, prom and personal styling. Sterling Heights, Michigan' }
     ],
     /* Cities whose Event Couture Picks are hidden for now (the vendors stay saved here; remove the city to show them again) */
-    HIDE_PICKS: ['Detroit, MI'],
+    HIDE_PICKS: [],
     NEAR: { 'The Woodlands, TX': { city: 'Houston, TX', not: ['venue', 'florals', 'flowerWall'] } }, CITIES: CITIES, COUNTRIES: COUNTRIES, PROVINCES: PROVINCES, AREAS: AREAS, UPSCALE_AREAS: UPSCALE_AREAS, STYLES: STYLES, MENUS: MENUS, DIETS: DIETS, CHECKLIST: CHECKLIST, PASSES: PASSES,
     CREDIT_PACKS: CREDIT_PACKS, PACKAGES: PACKAGES, ADDONS: ADDONS, ALLOWANCE: ALLOWANCE,
     CULTURE_LOOKS: CULTURE_LOOKS,
