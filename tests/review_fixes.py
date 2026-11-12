@@ -76,7 +76,7 @@ with sync_playwright() as p:
         check(n, 'dj' not in adds and 'balloons' not in adds and 'photoBooth' not in adds and len(adds)<=7, 'restaurant add-ons are restaurant-appropriate: '+str(adds))
         # Kuwait: refresh before choosing a city keeps the country
         pg.goto(U+'#/new/1'); pg.fill('#text','Gold party'); pg.click('#next'); pg.wait_for_selector('#type'); pg.select_option('#country','KW'); pg.wait_for_timeout(150); pg.fill('#budget','5000'); pg.wait_for_timeout(300)
-        pg.click('#back2'); pg.wait_for_selector('#next'); pg.click('#next'); pg.wait_for_selector('#type')
+        pg.click('#vision'); pg.wait_for_selector('#next'); pg.click('#next'); pg.wait_for_selector('#type')   # out to the vision screen and back
         check(n, pg.input_value('#country')=='KW', 'country kept after going back: '+pg.input_value('#country'))
         pg.select_option('#type','birthday'); pg.select_option('#city','Other city in Kuwait'); pg.click('#setting [data-v=indoor]'); pg.click('#next'); pg.wait_for_timeout(400)
         tt=pg.inner_text('.toast') if pg.query_selector('.toast') else ''

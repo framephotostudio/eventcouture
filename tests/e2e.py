@@ -21,7 +21,7 @@ def run(p, name, viewport, scheme):
     page.wait_for_selector('.hero')
     page.screenshot(path=f'{OUT}/{name}-home.png', full_page=True)
     # wizard step 1
-    page.click('text=Plan my event')
+    page.click('text=Plan my event'); page.click('#vision')   # photos are on the optional vision screen now
     page.set_input_files('#files', [os.path.join(HERE, 'pink.jpg'), os.path.join(HERE, 'noir.jpg')])
     page.wait_for_selector('.photo img')
     page.locator('.photo img').first.click(position={'x': 40, 'y': 60})
@@ -37,8 +37,7 @@ def run(p, name, viewport, scheme):
     page.fill('#date', '2026-12-19')
     page.fill('#guests', '30'); page.fill('#expected', '26'); page.fill('#budget', '6000')
     page.fill('#start', '1600 Main St, Houston')
-    page.click('#next'); page.wait_for_timeout(200)
-    if '#/new/3' in page.url: problems.append('continued without choosing restaurant or venue')
+    if not page.query_selector('#setting [aria-pressed="true"]'): problems.append('a place should be pre-picked')
     page.select_option('#city', 'Houston, TX'); page.click('#setting [data-v=indoor]')
     page.screenshot(path=f'{OUT}/{name}-step2.png', full_page=True)
     page.click('#next')

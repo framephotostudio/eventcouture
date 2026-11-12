@@ -56,3 +56,23 @@ def _keep_click(self, sel, *a, **k):
     return r
 Page.click = _keep_click
 CLEAR_PACKAGES = False   # a test sets _open.CLEAR_PACKAGES = True to start each plan with no package
+# Nov 11, 2026: planning now opens on the quick basics screen (occasion, city, guests) and a chosen photo goes
+# straight there too. Older tests were written for the words-and-photos screen first; they still walk that path
+# (it's the optional "Add your vision" screen now). tests/quick_start.py covers the new direct path.
+_goto0 = Page.goto
+def _goto(self, url, *a, **k):
+    if url.endswith('#/new'): url = url + '/1'
+    r = _goto0(self, url, *a, **k)
+    if '#/start/' in url: _to_step1(self)
+    return r
+def _to_step1(self):
+    try: self.wait_for_function("location.hash.indexOf('#/new/2/') === 0 || location.hash.indexOf('#/new/1/') === 0", timeout=4000)
+    except Exception: return
+    if '/new/2/' in self.url: _goto0(self, self.url.replace('/new/2/', '/new/1/'))
+Page.goto = _goto
+_click2 = Page.click
+def _click_legacy(self, sel, *a, **k):
+    r = _click2(self, sel, *a, **k)
+    if sel in ('.sheet #useInspo', '#useInspo') or '#/start/' in sel or 'href="#/new"' in sel: _to_step1(self)
+    return r
+Page.click = _click_legacy
