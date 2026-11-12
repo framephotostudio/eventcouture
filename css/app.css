@@ -1215,6 +1215,8 @@ main:not(.auto-picking) .auto-look { display: none; }
 .pr-pkg.top { background: linear-gradient(180deg, var(--champagne-soft), var(--surface) 55%); }
 .pr-pop { position: absolute; top: -11px; left: 18px; background: var(--ink); color: var(--on-plum, #fff); font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; }
 .pr-name { font-family: var(--display); font-size: 1.35rem; color: var(--ink); line-height: 1.15; }
+.pr-name { font-size: 1.5rem; }
+.pr-kind { font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--gold-text, #9a7430); margin-top: -2px; }
 .pr-for { font-size: .82rem; color: var(--muted); }
 .pr-cost { font-size: 1.05rem; margin: 4px 0 2px; }
 .pr-cost s { color: var(--muted); font-size: .9rem; margin-right: 2px; }

@@ -3826,11 +3826,11 @@
   /* "Let us plan it for you": a short request for the founder's paid planning service; she's alerted by email (GitHub) and reads it at #/admin/requests */
   /* The planning packages, each with what's included. Weddings and large events: Vendor Booking or Full Planning; smaller parties: Party Planning. */
   var PR_PKGS = [
-    { id: 'Vendor Booking', for: 'Weddings, engagements, quinceañeras & large events', was: '$2,500', from: '$1,900',
+    { id: 'Vendor Booking', name: 'The Atelier', for: 'Weddings, engagements, quinceañeras & large events', was: '$2,500', from: '$1,900',
       inc: ['Vendors matched to your budget and city', 'We contact vendors and compare quotes', 'Price negotiation on your behalf', 'Booking arranged with every vendor', 'Vendor confirmations before your event'] },
-    { id: 'Full Planning', for: 'Weddings, engagements, quinceañeras & large events', was: '$3,500', from: '$2,500', top: true,
-      inc: ['Everything in Vendor Booking', 'Budget & planning timeline', 'Design, décor & color direction', 'Invitations & RSVPs', 'Gift registry setup', 'Event-day schedule for every vendor'] },
-    { id: 'Party Planning', for: 'Birthdays, showers, graduations & more', was: '$750', from: '$500',
+    { id: 'Full Planning', name: 'The Haute Couture', for: 'Weddings, engagements, quinceañeras & large events', was: '$3,500', from: '$2,500', top: true,
+      inc: ['Everything in The Atelier', 'Budget & planning timeline', 'Design, décor & color direction', 'Invitations & RSVPs', 'Gift registry setup', 'Event-day schedule for every vendor'] },
+    { id: 'Party Planning', name: 'The Soir\u00e9e', for: 'Birthdays, showers, graduations & more', was: '$750', from: '$500',
       inc: ['Theme & décor ideas', 'Venue & vendors picked and booked for you', 'Budget & checklist', 'Invitations & RSVPs', 'Party-day schedule'] }];
   function planForMePage() {
     var last = Object.values(events()).filter(function (e) { return e && !e.sample; }).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); })[0] || {};
@@ -3841,7 +3841,7 @@
       '<div class="pr-pkgs" id="prPkgs" role="radiogroup" aria-label="Planning package">' + PR_PKGS.map(function (k, i) {
         var on = lastBig ? i === 1 : i === 2;
         return '<button type="button" class="pr-pkg' + (k.top ? ' top' : '') + '" role="radio" aria-checked="' + on + '" data-pkg="' + i + '">' + (k.top ? '<span class="pr-pop">Most popular</span>' : '') +
-          '<span class="pr-name">' + esc(k.id) + '</span><span class="pr-for">' + esc(k.for) + '</span><span class="pr-cost"><s>' + k.was + '</s> <b>from ' + k.from + '</b></span>' +
+          '<span class="pr-name">' + esc(k.name) + '</span><span class="pr-kind">' + esc(k.id) + '</span><span class="pr-for">' + esc(k.for) + '</span><span class="pr-cost"><s>' + k.was + '</s> <b>from ' + k.from + '</b></span>' +
           '<ul class="pr-inc">' + k.inc.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><span class="pr-sel" aria-hidden="true">' + (on ? '✓ Selected' : 'Choose') + '</span></button>';
       }).join('') + '</div>' +
       '<p class="small muted pr-terms">Vendor costs are separate and paid directly to your vendors · 50% to start, the rest once your vendors are booked · Planning by phone and online</p>' +
@@ -3866,7 +3866,7 @@
     /* the package she picks sets the starting price she agrees to */
     var pkgOf = function () { var b = $('#prPkgs [aria-checked="true"]'); return PR_PKGS[b ? +b.dataset.pkg : 1]; };
     var priceFor = function () { return pkgOf().from; };
-    var upd = function () { var k = pkgOf(); $('#prOkTxt').textContent = 'I understand ' + k.id + ' starts at ' + k.from + ' (vendor costs are separate)'; };
+    var upd = function () { var k = pkgOf(); $('#prOkTxt').textContent = 'I understand ' + k.name + ' (' + k.id + ') starts at ' + k.from + ' (vendor costs are separate)'; };
     upd();
     $('#prPkgs').addEventListener('click', function (e) { var b = e.target.closest('[data-pkg]'); if (!b) return; $$('#prPkgs [data-pkg]').forEach(function (x) { var on = x === b; x.setAttribute('aria-checked', on); $('.pr-sel', x).textContent = on ? '✓ Selected' : 'Choose'; }); $('#prOk').checked = false; upd(); T('planner_package', { pkg: pkgOf().id }); });
     /* choosing a smaller party moves her to Party Planning; a wedding or large event moves her off it */
