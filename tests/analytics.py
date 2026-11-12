@@ -12,11 +12,13 @@ def serve(route):
     if not os.path.isfile(f): return route.fulfill(status=404, body='')
     route.fulfill(status=200, body=open(f, 'rb').read(), headers={'content-type': mimetypes.guess_type(f)[0] or 'application/octet-stream'})
 U = 'https://facecouture.app/eventcouture/'
+REAL_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'
 SECRET = ['Ava Stone', 'secret garden for grandma', 'Maya']
 with sync_playwright() as p:
     b = p.chromium.launch()
     for w, tag in [(390, 'phone'), (1280, 'desktop')]:
-        ctx = b.new_context(viewport={'width': w, 'height': 860}); pg = ctx.new_page()
+        # A real visitor: a normal browser (not an automated one) that touches the page.
+        ctx = b.new_context(viewport={'width': w, 'height': 860}, user_agent=REAL_UA); ctx.add_init_script("Object.defineProperty(navigator,'webdriver',{get:()=>false})"); pg = ctx.new_page()
         pg.route('https://facecouture.app/eventcouture/**', serve)
         pg.route('https://www.googletagmanager.com/**', lambda r: r.fulfill(status=200, body='', headers={'content-type': 'text/javascript'}))
         pg.route('https://fonts.googleapis.com/**', lambda r: r.fulfill(status=200, body='', headers={'content-type': 'text/css'}))
@@ -50,5 +52,19 @@ with sync_playwright() as p:
     pg.route('https://facecouture.app/eventcouture/**', serve); pg.route('https://www.googletagmanager.com/**', lambda r: r.fulfill(status=200, body=''))
     pg.goto(U); pg.wait_for_timeout(500); check(not pg.evaluate('window.dataLayer && window.dataLayer.length'), 'Do Not Track still sent data')
     pg.goto('http://localhost:8765/'); pg.wait_for_timeout(500); check(not pg.evaluate('window.dataLayer && window.dataLayer.length'), 'local copy sent data')
+    # Bots and crawlers: an automated browser, or a crawler's name in the browser id, never loads Google Analytics;
+    # a real visitor only loads it once they touch the page.
+    for label, opts, hide, act in [('automated browser', {}, False, True), ('crawler', {'user_agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}, True, True),
+                                   ('person who never touches', {'user_agent': REAL_UA}, True, False), ('person who moves the mouse', {'user_agent': REAL_UA}, True, True)]:
+        ctx = b.new_context(**opts)
+        if hide: ctx.add_init_script("Object.defineProperty(navigator,'webdriver',{get:()=>false})")
+        pg = ctx.new_page(); hits = []
+        pg.route('https://facecouture.app/eventcouture/**', serve)
+        pg.route('https://www.googletagmanager.com/**', lambda r: (hits.append(1), r.fulfill(status=200, body='', headers={'content-type': 'text/javascript'})))
+        pg.route('https://fonts.googleapis.com/**', lambda r: r.fulfill(status=200, body='', headers={'content-type': 'text/css'}))
+        pg.goto(U); pg.wait_for_timeout(1200)
+        if act: pg.mouse.move(200, 300); pg.mouse.move(240, 330); pg.wait_for_timeout(500)
+        check(bool(hits) == (label == 'person who moves the mouse'), label + ': Google Analytics loaded = ' + str(bool(hits)))
+        ctx.close()
     b.close()
 print('\n'.join(problems) if problems else 'analytics ok')

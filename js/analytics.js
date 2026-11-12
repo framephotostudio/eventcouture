@@ -1,7 +1,7 @@
 /* Event Couture analytics: Google Analytics 4, the same property as Face Couture, so both sites show up together
    (every Event Couture event carries app_name = event_couture, and pages live under /eventcouture/).
    Only page names, button names and general choices are sent: never names, guest lists, photos, typed descriptions or
-   event ids. Nothing is sent when the browser asks not to be tracked, or anywhere but the live site. */
+   event ids. Nothing is sent when the browser asks not to be tracked, for bots and crawlers, or anywhere but the live site. */
 (function () {
   'use strict';
   var GA_ID = 'G-JNY27DLF0Z';
@@ -14,7 +14,10 @@
        computer (?ec_owner=0 turns tracking back on). It is remembered on that device. */
     var owner = false;
     try { var om = /[?&]ec_owner=([01])/.exec(location.search); if (om) localStorage.setItem('ec.owner', om[1]); owner = localStorage.getItem('ec.owner') === '1'; } catch (e) {}
-    if (!live || optOut || owner || !/^G-[A-Z0-9]{6,}$/.test(GA_ID)) return;
+    /* Bots and crawlers stay out of the numbers: automated browsers and known crawlers are never counted. */
+    var ua = navigator.userAgent || '';
+    var bot = navigator.webdriver === true || /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|scrap|fetch|python|curl|wget|phantom|puppeteer|playwright|selenium|chrome-lighthouse|gtmetrix|pingdom|uptime|monitor|facebookexternalhit|embedly|quora link|whatsapp|telegram|discord|skype|bingpreview|yandex|baidu|semrush|ahrefs|mj12|dotbot|petal|bytespider|gptbot|claude|perplexity|ccbot|amazonbot|applebot/i.test(ua) || !navigator.languages || navigator.languages.length === 0;
+    if (!live || optOut || owner || bot || !/^G-[A-Z0-9]{6,}$/.test(GA_ID)) return;
     window.dataLayer = window.dataLayer || [];
     window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
     var app = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
@@ -23,7 +26,14 @@
     function clean() { var path = pagePath(); var t = 'Event Couture ' + path.replace('/eventcouture/', '').replace(/\//g, ' / '); gtag('set', { page_title: t, page_location: location.origin + path, page_path: path, page_referrer: '' }); return { path: path, title: t }; }
     gtag('js', new Date());
     gtag('config', GA_ID, { send_page_view: false, page_title: 'Event Couture', page_location: location.origin + '/eventcouture/', allow_google_signals: false, allow_ad_personalization_signals: false });
-    var s = document.createElement('script'); s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID; document.head.appendChild(s);
+    /* A visit only counts once a real person touches, taps, types, scrolls with a wheel or moves the mouse; crawlers that just
+       open a page never do. Everything before that waits in line and is sent the moment they do. */
+    var HUMAN = ['pointerdown', 'touchstart', 'keydown', 'wheel', 'mousemove'];
+    function human() {
+      HUMAN.forEach(function (n) { window.removeEventListener(n, human, true); });
+      var s = document.createElement('script'); s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID; document.head.appendChild(s);
+    }
+    HUMAN.forEach(function (n) { window.addEventListener(n, human, { capture: true, passive: true }); });
 
     /* one tap = one event */
     var last = {};
