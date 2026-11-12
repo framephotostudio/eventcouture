@@ -3829,7 +3829,7 @@
     { id: 'Vendor Booking', name: 'The Atelier', for: 'Weddings, engagements, quinceañeras & large events', was: '$2,500', from: '$1,900',
       inc: ['Venue & vendor research and booking', 'Vendors matched to your budget and city', 'Quotes compared & prices negotiated', 'Vendor communication & final details', 'Vendor confirmations before your event'] },
     { id: 'Full Planning', name: 'The Haute Couture', for: 'Weddings, engagements, quinceañeras & large events', was: '$3,500', from: '$2,500', top: true,
-      inc: ['Everything in The Atelier', 'Budget management & planning roadmap', 'Decoration & color direction', 'Floor plan & seating-chart guidance', 'Invitations, RSVPs & gift registry', 'Custom event-day timeline for every vendor'] },
+      inc: ['Everything in The Atelier', 'Budget management & planning', 'Decoration & color direction', 'Floor plan & seating-chart guidance', 'Invitations, RSVPs & gift registry', 'Custom event-day timeline for every vendor'] },
     { id: 'Party Planning', name: 'The Soir\u00e9e', for: 'Birthdays, showers, graduations & more', was: '$750', from: '$500',
       inc: ['Theme & decoration ideas', 'Venue & vendor research and booking', 'Budget & planning checklist', 'Invitations & RSVPs', 'Custom party-day timeline'] }];
   function planForMePage() {
