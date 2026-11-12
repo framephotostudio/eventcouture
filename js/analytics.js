@@ -26,10 +26,14 @@
     function clean() { var path = pagePath(); var t = 'Event Couture ' + path.replace('/eventcouture/', '').replace(/\//g, ' / '); gtag('set', { page_title: t, page_location: location.origin + path, page_path: path, page_referrer: '' }); return { path: path, title: t }; }
     gtag('js', new Date());
     gtag('config', GA_ID, { send_page_view: false, page_title: 'Event Couture', page_location: location.origin + '/eventcouture/', allow_google_signals: false, allow_ad_personalization_signals: false });
-    /* A visit only counts once a real person touches, taps, types, scrolls with a wheel or moves the mouse; crawlers that just
+    /* A visit only counts once a real person touches, taps, clicks, types or scrolls with a wheel; crawlers that just
        open a page never do. Everything before that waits in line and is sent the moment they do. */
-    var HUMAN = ['pointerdown', 'touchstart', 'keydown', 'wheel', 'mousemove'];
-    function human() {
+    var HUMAN = ['pointerdown', 'touchstart', 'keydown', 'wheel'];
+    function human(e) {
+      /* only a real tap, click, key or scroll wheel counts: events made up by a script, or on a page nobody can see, don't */
+      if (e && e.isTrusted === false) return;
+      if (document.visibilityState && document.visibilityState !== 'visible') return;
+      if (!screen || !screen.width || !screen.height) return;
       HUMAN.forEach(function (n) { window.removeEventListener(n, human, true); });
       var s = document.createElement('script'); s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID; document.head.appendChild(s);
     }

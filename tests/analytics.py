@@ -55,7 +55,7 @@ with sync_playwright() as p:
     # Bots and crawlers: an automated browser, or a crawler's name in the browser id, never loads Google Analytics;
     # a real visitor only loads it once they touch the page.
     for label, opts, hide, act in [('automated browser', {}, False, True), ('crawler', {'user_agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}, True, True),
-                                   ('person who never touches', {'user_agent': REAL_UA}, True, False), ('person who moves the mouse', {'user_agent': REAL_UA}, True, True)]:
+                                   ('person who never touches', {'user_agent': REAL_UA}, True, False), ('person who scrolls', {'user_agent': REAL_UA}, True, True)]:
         ctx = b.new_context(**opts)
         if hide: ctx.add_init_script("Object.defineProperty(navigator,'webdriver',{get:()=>false})")
         pg = ctx.new_page(); hits = []
@@ -63,8 +63,8 @@ with sync_playwright() as p:
         pg.route('https://www.googletagmanager.com/**', lambda r: (hits.append(1), r.fulfill(status=200, body='', headers={'content-type': 'text/javascript'})))
         pg.route('https://fonts.googleapis.com/**', lambda r: r.fulfill(status=200, body='', headers={'content-type': 'text/css'}))
         pg.goto(U); pg.wait_for_timeout(1200)
-        if act: pg.mouse.move(200, 300); pg.mouse.move(240, 330); pg.wait_for_timeout(500)
-        check(bool(hits) == (label == 'person who moves the mouse'), label + ': Google Analytics loaded = ' + str(bool(hits)))
+        if act: pg.mouse.wheel(0, 300); pg.wait_for_timeout(500)
+        check(bool(hits) == (label == 'person who scrolls'), label + ': Google Analytics loaded = ' + str(bool(hits)))
         ctx.close()
     b.close()
 print('\n'.join(problems) if problems else 'analytics ok')
