@@ -1186,3 +1186,8 @@ html.ec-app .wizard .wiz-act { bottom: calc(64px + env(safe-area-inset-bottom, 0
 .hero-ctas { flex-wrap: wrap; }
 .hero-ctas .hero-planner { min-height: 54px; padding: 0 28px; font-size: 1.05rem; border: 1.5px solid var(--champagne); color: var(--ink); background: var(--surface); }
 @media (max-width: 699px) { .hero-ctas { flex-direction: column; align-items: stretch; gap: 12px; } .hero-ctas .btn { width: 100%; justify-content: center; } }
+.pr-price .badge.sale { background: var(--blush, #f6e3e8); color: var(--ink); font-weight: 600; }
+.pr-rows { display: grid; gap: 6px; }
+.pr-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.pr-row:last-child { border-bottom: 0; }
+.pr-row s { color: var(--muted); margin-right: 4px; }

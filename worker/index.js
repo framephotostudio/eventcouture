@@ -573,7 +573,7 @@ async function planReqNew(env, b) {
   const id = Array.from(a, x => x.toString(16).padStart(2, '0')).join('');
   const rec = { id, at: new Date().toISOString(), status: 'new', help: (Array.isArray(b.help) ? b.help : []).filter(h => PR_HELP.includes(h)).slice(0, 8),
     type: t(b.type, 60), date: t(b.date, 40), city: t(b.city, 80), guests: Math.max(0, Math.min(100000, +b.guests || 0)), budget: t(b.budget, 40),
-    name: t(b.name, 80), phone: t(b.phone, 30), email: t(b.email, 120), contact: ['text', 'call', 'email'].includes(b.contact) ? b.contact : 'text', notes: t(b.notes, 2000) };
+    name: t(b.name, 80), phone: t(b.phone, 30), email: t(b.email, 120), contact: ['text', 'call', 'email'].includes(b.contact) ? b.contact : 'text', notes: t(b.notes, 2000), priceOk: t(b.priceOk, 10) };
   if (!rec.name) return { error: 'Add your name.' };
   if (!rec.phone && !rec.email) return { error: 'Add a phone number or an email so we can reach you.' };
   if (rec.email && !EMAIL_RE.test(rec.email)) return { error: 'Check your email address.' };

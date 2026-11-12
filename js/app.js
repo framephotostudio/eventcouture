@@ -3827,10 +3827,19 @@
       '</div>' +
       '<div class="stack"><h3>Best way to reach you</h3><div class="chips" id="prContact" role="group" aria-label="Best way to reach you">' + [['text', 'Text me'], ['call', 'Call me'], ['email', 'Email me']].map(function (c, i) { return '<button type="button" class="chip" data-contact="' + c[0] + '" aria-pressed="' + (i === 0) + '">' + c[1] + '</button>'; }).join('') + '</div></div>' +
       '<label class="field"><span>Anything else we should know? <span class="muted small">(optional)</span></span><textarea class="input" id="prNotes" maxlength="2000" placeholder="Your vision, colors, must-haves, or questions"></textarea></label>' +
+      '<div class="panel stack pr-price"><div class="row" style="justify-content:space-between;align-items:center"><b>Our planning service</b><span class="badge sale">Launch special</span></div>' +
+      '<div class="small"><b>Weddings, engagements, quincea\u00f1eras and large events</b></div><div class="pr-rows"><div class="pr-row"><span>Vendor Booking</span><span><s>$2,500</s> <b>from $1,900</b></span></div><div class="pr-row"><span>Full Planning</span><span><s>$3,500</s> <b>from $2,500</b></span></div></div>' +
+      '<div class="small"><b>Smaller parties</b> (birthdays, showers, graduations and more)</div><div class="pr-rows"><div class="pr-row"><span>Party planning</span><span><s>$750</s> <b>from $500</b></span></div></div><span class="small muted">Vendor costs are separate and paid directly to your vendors. 50% to start, the rest once your vendors are booked. Planning is by phone and online.</span>' +
+      '<label class="check small"><input type="checkbox" id="prOk"><span id="prOkTxt">I understand planning starts at $500</span></label></div>' +
       '<div><button class="btn gold" type="submit" id="prSend">Send my request</button></div>' +
       '<p class="small muted">We use your details only to contact you about planning your event (<a href="#/privacy">Privacy</a>). Prefer to talk now? Text <a href="sms:+17135343603">713-534-3603</a> or message <a href="https://instagram.com/always_luxe" target="_blank" rel="noopener">@always_luxe</a> on Instagram.</p>' +
       '</form></div>', { noRibbon: true });
     T('planner_form_open', {});
+    /* the starting price follows the event: weddings and large events from $1,900, smaller parties from $500 */
+    var BIG = /wedding|engagement|quincea|gala|corporate|conference|team building|sweet 16|anniversary|retirement|holiday|christmas/i;
+    var priceFor = function () { var t = $('#prType').value; return t && !BIG.test(t) ? '$500' : t ? '$1,900' : '$500'; };
+    var upd = function () { $('#prOkTxt').textContent = 'I understand our paid planning service starts at ' + priceFor() + (($('#prType').value && BIG.test($('#prType').value)) ? ' for this event' : ($('#prType').value ? ' for this party' : '')); };
+    upd(); $('#prType').addEventListener('change', function () { upd(); $('#prOk').checked = false; });
     $('#prHelp').addEventListener('click', function (e) { var b = e.target.closest('[data-help]'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
     $('#prContact').addEventListener('click', function (e) { var b = e.target.closest('[data-contact]'); if (!b) return; $$('#prContact [data-contact]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
     $('#prForm').addEventListener('submit', function (e) {
@@ -3840,10 +3849,11 @@
       if (!phone && !email) { $('#prPhone').focus(); return toast('Add a phone number or an email so we can reach you'); }
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { $('#prEmail').focus(); return toast('Check your email address'); }
       if (phone && phone.replace(/\D/g, '').length < 7) { $('#prPhone').focus(); return toast('Check your phone number'); }
+      if (!$('#prOk').checked) { $('#prOk').focus(); return toast('Tick the box about our planning prices to send your request'); }
       var help = $$('#prHelp [aria-pressed="true"]').map(function (b) { return b.dataset.help; }), contact = ($('#prContact [aria-pressed="true"]') || {}).dataset;
       if (!CFG.apiUrl) return toast('Requests aren\u2019t connected yet. Text 713-534-3603 and we\u2019ll get back to you.');
       btn.disabled = true; btn.textContent = 'Sending\u2026';
-      tsToken().then(function (ts) { return fetch(CFG.apiUrl + '/api/planreq/new', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ts: ts, help: help, type: v('prType'), date: v('prDate'), city: v('prCity'), guests: +v('prGuests') || 0, budget: v('prBudget'), name: name, phone: phone, email: email, contact: contact ? contact.contact : 'text', notes: v('prNotes') }) }); })
+      tsToken().then(function (ts) { return fetch(CFG.apiUrl + '/api/planreq/new', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ts: ts, priceOk: priceFor(), help: help, type: v('prType'), date: v('prDate'), city: v('prCity'), guests: +v('prGuests') || 0, budget: v('prBudget'), name: name, phone: phone, email: email, contact: contact ? contact.contact : 'text', notes: v('prNotes') }) }); })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || 'Couldn\u2019t send that. Try again, or text 713-534-3603.'); return j; }); })
         .then(function () {
           T('planner_request', { event_type: v('prType') || 'none', help_count: help.length });
@@ -3865,7 +3875,7 @@
             return '<div class="panel stack"><div class="row" style="justify-content:space-between"><b>' + esc(r.name) + '</b><span class="badge' + (r.status === 'handled' ? ' ok' : '') + '">' + (r.status === 'handled' ? 'Handled' : 'New') + '</span></div>' +
               '<span class="small muted">' + esc(String(r.at || '').slice(0, 16).replace('T', ' ')) + ' UTC \u00b7 prefers ' + esc(r.contact === 'call' ? 'a call' : r.contact === 'email' ? 'email' : 'a text') + '</span>' +
               '<div>' + [r.type, r.date, r.city, r.guests ? r.guests + ' guests' : '', r.budget ? 'Budget ' + r.budget : ''].filter(Boolean).map(esc).join(' \u00b7 ') + '</div>' +
-              (r.help && r.help.length ? '<div class="small"><b>Help with:</b> ' + esc(r.help.join(', ')) + '</div>' : '') + (r.notes ? '<div class="small muted">\u201c' + esc(r.notes) + '\u201d</div>' : '') +
+              (r.help && r.help.length ? '<div class="small"><b>Help with:</b> ' + esc(r.help.join(', ')) + '</div>' : '') + (r.priceOk ? '<div class="small muted">Agreed planning starts at ' + esc(r.priceOk) + '</div>' : '') + (r.notes ? '<div class="small muted">\u201c' + esc(r.notes) + '\u201d</div>' : '') +
               '<div class="row">' + (dial ? '<a class="btn small gold" href="sms:' + esc(dial) + '">Text ' + esc(r.phone) + '</a><a class="btn small ghost" href="tel:' + esc(dial) + '">Call</a>' : '') + (r.email ? '<a class="btn small ghost" href="mailto:' + esc(r.email) + '">Email</a>' : '') +
               '<button class="btn small ghost" data-pr="' + (r.status === 'handled' ? 'new' : 'handled') + '" data-id="' + esc(r.id) + '">' + (r.status === 'handled' ? 'Mark as new' : 'Mark handled') + '</button><button class="link small" data-pr="delete" data-id="' + esc(r.id) + '">Delete</button></div></div>';
           }).join('') : '<p class="muted">No requests yet.</p>';
