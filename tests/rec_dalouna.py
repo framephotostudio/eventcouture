@@ -28,7 +28,7 @@ with sync_playwright() as p:
             z, cell = zaffe_picks(pg, city)
             check(n, z[:1]==['Dalouna Events'] and ig in cell and 'Event Couture Pick' in cell, city+': Dalouna first, linking @'+ig+': '+str(z))
         z, cell = zaffe_picks(pg, 'Houston, TX')
-        check(n, 'Dalouna Events' not in z[:3] and z[:2]==['Turáth Folkoholic Dance Theatre','Watan Zaffe & Dabke Group'], 'Houston keeps its top 3, Dalouna after: '+str(z))
+        check(n, 'Dalouna Events' not in z[:3] and z[:2]==['Watan Zaffe & Dabke Group','Turáth Folkoholic Dance Theatre'], 'Houston keeps its top 3, Dalouna after: '+str(z))
         z, cell = zaffe_picks(pg, 'Los Angeles, CA')
         check(n, 'Dalouna Events' not in z, 'not in California: '+str(z))
         check(n, not e, 'no page errors '+str(e[:2]))

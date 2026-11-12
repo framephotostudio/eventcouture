@@ -1010,7 +1010,19 @@
       /* her city, filled in from the approximate location of her connection (no permission prompt, nothing stored); she can change it */
       /* type a few letters of the city: pick it from the suggestions and the country and city are set */
       var pickCity = function (n) { var co = E.countryOf(n); if ($('#country').value !== co.id) { $('#country').value = co.id; $('#country').dispatchEvent(new Event('change')); } $('#city').value = n; $('#city').dispatchEvent(new Event('change')); $('#citySearchWrap').hidden = true; };
-      ['input', 'change'].forEach(function (evn) { $('#citySearch').addEventListener(evn, function () { var v = this.value.trim().toLowerCase(); if (!v) return; var hit = D.CITIES.find(function (c) { return !/^Other /.test(c.name) && (c.name.toLowerCase() === v || evn === 'change' && c.name.split(',')[0].toLowerCase() === v); }); if (hit) { pickCity(hit.name); T('city_search', { city: hit.name }); } }); });
+      /* "Houston", "houston tx", "Houston, Texas" or the first letters of one city all find it */
+      var findCity = function (raw, loose) {
+        var nz = function (x) { return String(x || '').toLowerCase().replace(/[^a-z0-9\u00c0-\u024f ]+/g, ' ').replace(/\s+/g, ' ').trim(); }, v = nz(raw); if (!v) return null;
+        var L = D.CITIES.filter(function (c) { return !/^Other /.test(c.name); }), full = L.find(function (c) { return nz(c.name) === v; }); if (full || !loose) return full || null;
+        var city = L.filter(function (c) { var n = nz(c.name.split(',')[0]); return n === v || v.indexOf(n + ' ') === 0; }); if (city.length) return city[0];
+        var pre = v.length >= 3 ? L.filter(function (c) { return nz(c.name).indexOf(v) === 0; }) : []; return pre.length === 1 ? pre[0] : null;
+      };
+      ['input', 'change'].forEach(function (evn) { $('#citySearch').addEventListener(evn, function () {
+        var hit = findCity(this.value, evn === 'change'); if (!hit) return;
+        /* on leaving the box, wait a moment: hiding it right away moves the button she is tapping out from under her finger */
+        var go = function () { if ($('#city') && !$('#city').value) { pickCity(hit.name); T('city_search', { city: hit.name }); } };
+        if (evn === 'change') setTimeout(go, 300); else go();
+      }); });
       $('#city').addEventListener('change', function () { if (this.value) $('#citySearchWrap').hidden = true; });
       if (draft.autoGo) {   /* from a home page occasion: straight to the looks with the usual details; she can change them on the next page */
         delete draft.autoGo; persist();
@@ -1054,7 +1066,8 @@
         if (!draft) return;   /* a second tap after the plan was already created */
         var g = Math.round(+$('#guests').value), ex = Math.round(+$('#expected').value);
         if (!$('#type').value) { $('#type').focus(); return toast('Choose what you’re celebrating'); }
-        if (!$('#city').value) { $('#city').focus(); return toast('Choose your city so prices match where you live'); }
+        if (!$('#city').value && $('#citySearch') && findCity) { var typed = findCity($('#citySearch').value, true); if (typed) pickCity(typed.name); }
+        if (!$('#city').value) { ($('#citySearch') && !$('#citySearchWrap').hidden ? $('#citySearch') : $('#city')).focus(); return toast('Choose your city so prices match where you live'); }
         if (!(g >= 1)) return toast('Enter how many people you’re inviting');
         if (g > 20000) return toast('Event Couture plans events for up to 20,000 people');
         var hrs = +$('#hours').value; if (!(hrs >= 1 && hrs <= 16)) return toast('An event can run from 1 to 16 hours');
@@ -3811,40 +3824,53 @@
   }
   /* Owner only: approve reviews. The admin code is typed each time and kept only on this page. */
   /* "Let us plan it for you": a short request for the founder's paid planning service; she's alerted by email (GitHub) and reads it at #/admin/requests */
-  var PR_HELP = ['Full planning', 'Finding a venue', 'Booking vendors', 'Negotiating prices', 'Decor and flowers', 'Budget', 'Invitations and RSVPs', 'Wedding-day schedule'];
+  /* The planning packages, each with what's included. Weddings and large events: Vendor Booking or Full Planning; smaller parties: Party Planning. */
+  var PR_PKGS = [
+    { id: 'Vendor Booking', for: 'Weddings, engagements, quinceañeras & large events', was: '$2,500', from: '$1,900',
+      inc: ['Vendors matched to your budget and city', 'We contact vendors and compare quotes', 'Price negotiation on your behalf', 'Booking arranged with every vendor', 'Vendor confirmations before your event'] },
+    { id: 'Full Planning', for: 'Weddings, engagements, quinceañeras & large events', was: '$3,500', from: '$2,500', top: true,
+      inc: ['Everything in Vendor Booking', 'Budget & planning timeline', 'Design, décor & color direction', 'Invitations & RSVPs', 'Gift registry setup', 'Event-day schedule for every vendor'] },
+    { id: 'Party Planning', for: 'Birthdays, showers, graduations & more', was: '$750', from: '$500',
+      inc: ['Theme & décor ideas', 'Venue & vendors picked and booked for you', 'Budget & checklist', 'Invitations & RSVPs', 'Party-day schedule'] }];
   function planForMePage() {
     var last = Object.values(events()).filter(function (e) { return e && !e.sample; }).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); })[0] || {};
-    frame('<div class="wizard stack-lg"><div class="stack"><h2>Let us plan it for you</h2><p class="muted">Tell us a little about your event and what you\u2019d like help with. We\u2019ll get back to you within 24 hours about our planning service. No payment now.</p></div>' +
+    var BIG = /wedding|engagement|quincea|gala|corporate|conference|team building|sweet 16|anniversary|retirement|holiday|christmas/i;
+    var lastBig = last.type ? BIG.test(last.culture ? 'wedding' : last.type) : true;
+    frame('<div class="wizard stack-lg pr-page"><div class="stack"><div class="row" style="justify-content:space-between;align-items:center;gap:10px"><h2>Let us plan it for you</h2><span class="badge sale">Holiday special</span></div><p class="muted">Choose a package and send your request. We’ll get back to you within 24 hours. No payment now.</p></div>' +
       '<form id="prForm" class="stack-lg" novalidate>' +
-      '<div class="stack"><h3>What would you like help with?</h3><span class="small muted">Tap all that apply.</span><div class="chips" id="prHelp">' + PR_HELP.map(function (h) { return '<button type="button" class="chip" aria-pressed="false" data-help="' + esc(h) + '">' + esc(h) + '</button>'; }).join('') + '</div></div>' +
-      '<div class="grid2">' +
-      '<label class="field"><span>Your event</span><select class="input" id="prType"><option value="">Choose one</option>' + D.EVENT_TYPES.map(function (t) { return '<option' + (last.type === t.id && !last.culture ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '<optgroup label="Cultural weddings">' + Object.keys(D.CULTURES).map(function (k) { return '<option' + (last.type === 'wedding' && last.culture === k ? ' selected' : '') + '>' + esc(D.CULTURES[k].name) + '</option>'; }).join('') + '</optgroup></select></label>' +
-      '<label class="field"><span>Date <span class="muted small">(or month, or \u201cnot sure\u201d)</span></span><input class="input" id="prDate" maxlength="40" placeholder="e.g. June 2027" value="' + esc(last.date || '') + '"></label>' +
+      '<div class="pr-pkgs" id="prPkgs" role="radiogroup" aria-label="Planning package">' + PR_PKGS.map(function (k, i) {
+        var on = lastBig ? i === 1 : i === 2;
+        return '<button type="button" class="pr-pkg' + (k.top ? ' top' : '') + '" role="radio" aria-checked="' + on + '" data-pkg="' + i + '">' + (k.top ? '<span class="pr-pop">Most popular</span>' : '') +
+          '<span class="pr-name">' + esc(k.id) + '</span><span class="pr-for">' + esc(k.for) + '</span><span class="pr-cost"><s>' + k.was + '</s> <b>from ' + k.from + '</b></span>' +
+          '<ul class="pr-inc">' + k.inc.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><span class="pr-sel" aria-hidden="true">' + (on ? '✓ Selected' : 'Choose') + '</span></button>';
+      }).join('') + '</div>' +
+      '<p class="small muted pr-terms">Vendor costs are separate and paid directly to your vendors · 50% to start, the rest once your vendors are booked · Planning by phone and online</p>' +
+      '<div class="panel stack"><h3>Your event</h3><div class="grid2">' +
+      '<label class="field"><span>Event</span><select class="input" id="prType"><option value="">Choose one</option>' + D.EVENT_TYPES.map(function (t) { return '<option' + (last.type === t.id && !last.culture ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '<optgroup label="Cultural weddings">' + Object.keys(D.CULTURES).map(function (k) { return '<option' + (last.type === 'wedding' && last.culture === k ? ' selected' : '') + '>' + esc(D.CULTURES[k].name) + '</option>'; }).join('') + '</optgroup></select></label>' +
+      '<label class="field"><span>Date <span class="muted small">(or month)</span></span><input class="input" id="prDate" maxlength="40" placeholder="e.g. June 2027" value="' + esc(last.date || '') + '"></label>' +
       '<label class="field"><span>City</span><input class="input" id="prCity" list="prCities" maxlength="80" placeholder="e.g. Houston, TX" autocomplete="off" value="' + esc(last.city || '') + '"><datalist id="prCities">' + D.CITIES.filter(function (c) { return !/^Other /.test(c.name); }).map(function (c) { return '<option value="' + esc(c.name) + '">'; }).join('') + '</datalist></label>' +
-      '<label class="field"><span>Number of guests</span><input class="input num" id="prGuests" type="number" min="0" max="100000" value="' + (last.guests || '') + '" placeholder="e.g. 100"></label>' +
-      '<label class="field"><span>Budget <span class="muted small">(or \u201cnot sure\u201d)</span></span><input class="input" id="prBudget" maxlength="40" placeholder="e.g. $15,000" value="' + (last.budget ? esc(money(last.budget)) : '') + '"></label>' +
-      '</div>' +
-      '<div class="grid2">' +
-      '<label class="field"><span>Your name</span><input class="input" id="prName" maxlength="80" autocomplete="name"></label>' +
+      '<label class="field"><span>Guests</span><input class="input num" id="prGuests" type="number" min="0" max="100000" value="' + (last.guests || '') + '" placeholder="e.g. 100"></label>' +
+      '<label class="field"><span>Budget <span class="muted small">(optional)</span></span><input class="input" id="prBudget" maxlength="40" placeholder="e.g. $15,000" value="' + (last.budget ? esc(money(last.budget)) : '') + '"></label>' +
+      '</div></div>' +
+      '<div class="panel stack"><h3>Your details</h3><div class="grid2">' +
+      '<label class="field"><span>Name</span><input class="input" id="prName" maxlength="80" autocomplete="name"></label>' +
       '<label class="field"><span>Phone</span><input class="input" id="prPhone" type="tel" maxlength="30" autocomplete="tel" inputmode="tel"></label>' +
       '<label class="field"><span>Email</span><input class="input" id="prEmail" type="email" maxlength="120" autocomplete="email" inputmode="email"></label>' +
-      '</div>' +
-      '<div class="stack"><h3>Best way to reach you</h3><div class="chips" id="prContact" role="group" aria-label="Best way to reach you">' + [['text', 'Text me'], ['call', 'Call me'], ['email', 'Email me']].map(function (c, i) { return '<button type="button" class="chip" data-contact="' + c[0] + '" aria-pressed="' + (i === 0) + '">' + c[1] + '</button>'; }).join('') + '</div></div>' +
-      '<label class="field"><span>Anything else we should know? <span class="muted small">(optional)</span></span><textarea class="input" id="prNotes" maxlength="2000" placeholder="Your vision, colors, must-haves, or questions"></textarea></label>' +
-      '<div class="panel stack pr-price"><div class="row" style="justify-content:space-between;align-items:center"><b>Our planning service</b><span class="badge sale">Holiday special</span></div>' +
-      '<div class="small"><b>Weddings, engagements, quincea\u00f1eras and large events</b></div><div class="pr-rows"><div class="pr-row"><span>Vendor Booking</span><span><s>$2,500</s> <b>from $1,900</b></span></div><div class="pr-row"><span>Full Planning</span><span><s>$3,500</s> <b>from $2,500</b></span></div></div>' +
-      '<div class="small"><b>Smaller parties</b> (birthdays, showers, graduations and more)</div><div class="pr-rows"><div class="pr-row"><span>Party planning</span><span><s>$750</s> <b>from $500</b></span></div></div><span class="small muted">Vendor costs are separate and paid directly to your vendors. 50% to start, the rest once your vendors are booked. Planning is by phone and online.</span>' +
-      '<label class="check small"><input type="checkbox" id="prOk"><span id="prOkTxt">I understand planning starts at $500</span></label></div>' +
-      '<div><button class="btn gold" type="submit" id="prSend">Send my request</button></div>' +
+      '</div><div class="stack"><span class="small">Best way to reach you</span><div class="chips" id="prContact" role="group" aria-label="Best way to reach you">' + [['text', 'Text me'], ['call', 'Call me'], ['email', 'Email me']].map(function (c, i) { return '<button type="button" class="chip" data-contact="' + c[0] + '" aria-pressed="' + (i === 0) + '">' + c[1] + '</button>'; }).join('') + '</div></div>' +
+      '<label class="field"><span>Anything else? <span class="muted small">(optional)</span></span><textarea class="input" id="prNotes" maxlength="2000" placeholder="Your vision, colors, must-haves, or questions"></textarea></label></div>' +
+      '<label class="check small"><input type="checkbox" id="prOk"><span id="prOkTxt"></span></label>' +
+      '<div><button class="btn gold block-phone" type="submit" id="prSend">Send my request</button></div>' +
       '<p class="small muted">We use your details only to contact you about planning your event (<a href="#/privacy">Privacy</a>). Prefer to talk now? Text <a href="sms:+17135343603">713-534-3603</a> or message <a href="https://instagram.com/always_luxe" target="_blank" rel="noopener">@always_luxe</a> on Instagram.</p>' +
       '</form></div>', { noRibbon: true });
     T('planner_form_open', {});
-    /* the starting price follows the event: weddings and large events from $1,900, smaller parties from $500 */
-    var BIG = /wedding|engagement|quincea|gala|corporate|conference|team building|sweet 16|anniversary|retirement|holiday|christmas/i;
-    var priceFor = function () { var t = $('#prType').value; return t && !BIG.test(t) ? '$500' : t ? '$1,900' : '$500'; };
-    var upd = function () { $('#prOkTxt').textContent = 'I understand our paid planning service starts at ' + priceFor() + (($('#prType').value && BIG.test($('#prType').value)) ? ' for this event' : ($('#prType').value ? ' for this party' : '')); };
-    upd(); $('#prType').addEventListener('change', function () { upd(); $('#prOk').checked = false; });
-    $('#prHelp').addEventListener('click', function (e) { var b = e.target.closest('[data-help]'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
+    /* the package she picks sets the starting price she agrees to */
+    var pkgOf = function () { var b = $('#prPkgs [aria-checked="true"]'); return PR_PKGS[b ? +b.dataset.pkg : 1]; };
+    var priceFor = function () { return pkgOf().from; };
+    var upd = function () { var k = pkgOf(); $('#prOkTxt').textContent = 'I understand ' + k.id + ' starts at ' + k.from + ' (vendor costs are separate)'; };
+    upd();
+    $('#prPkgs').addEventListener('click', function (e) { var b = e.target.closest('[data-pkg]'); if (!b) return; $$('#prPkgs [data-pkg]').forEach(function (x) { var on = x === b; x.setAttribute('aria-checked', on); $('.pr-sel', x).textContent = on ? '✓ Selected' : 'Choose'; }); $('#prOk').checked = false; upd(); T('planner_package', { pkg: pkgOf().id }); });
+    /* choosing a smaller party moves her to Party Planning; a wedding or large event moves her off it */
+    $('#prType').addEventListener('change', function () { var t = this.value; if (!t) return; var big = BIG.test(t), cur = pkgOf(); if (big === (cur.id !== 'Party Planning')) return; var want = big ? 1 : 2; var b = $('#prPkgs [data-pkg="' + want + '"]'); if (b) b.click(); });
     $('#prContact').addEventListener('click', function (e) { var b = e.target.closest('[data-contact]'); if (!b) return; $$('#prContact [data-contact]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
     $('#prForm').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -3853,14 +3879,14 @@
       if (!phone && !email) { $('#prPhone').focus(); return toast('Add a phone number or an email so we can reach you'); }
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { $('#prEmail').focus(); return toast('Check your email address'); }
       if (phone && phone.replace(/\D/g, '').length < 7) { $('#prPhone').focus(); return toast('Check your phone number'); }
-      if (!$('#prOk').checked) { $('#prOk').focus(); return toast('Tick the box about our planning prices to send your request'); }
-      var help = $$('#prHelp [aria-pressed="true"]').map(function (b) { return b.dataset.help; }), contact = ($('#prContact [aria-pressed="true"]') || {}).dataset;
+      if (!$('#prOk').checked) { $('#prOk').focus(); return toast('Tick the box about the package price to send your request'); }
+      var help = [], contact = ($('#prContact [aria-pressed="true"]') || {}).dataset;
       if (!CFG.apiUrl) return toast('Requests aren\u2019t connected yet. Text 713-534-3603 and we\u2019ll get back to you.');
       btn.disabled = true; btn.textContent = 'Sending\u2026';
-      tsToken().then(function (ts) { return fetch(CFG.apiUrl + '/api/planreq/new', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ts: ts, priceOk: priceFor(), help: help, type: v('prType'), date: v('prDate'), city: v('prCity'), guests: +v('prGuests') || 0, budget: v('prBudget'), name: name, phone: phone, email: email, contact: contact ? contact.contact : 'text', notes: v('prNotes') }) }); })
+      tsToken().then(function (ts) { return fetch(CFG.apiUrl + '/api/planreq/new', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ts: ts, priceOk: priceFor(), pkg: pkgOf().id, help: help, type: v('prType'), date: v('prDate'), city: v('prCity'), guests: +v('prGuests') || 0, budget: v('prBudget'), name: name, phone: phone, email: email, contact: contact ? contact.contact : 'text', notes: v('prNotes') }) }); })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || 'Couldn\u2019t send that. Try again, or text 713-534-3603.'); return j; }); })
         .then(function () {
-          T('planner_request', { event_type: v('prType') || 'none', help_count: help.length });
+          T('planner_request', { event_type: v('prType') || 'none', pkg: pkgOf().id });
           $('main').innerHTML = '<div class="wizard stack-lg"><div class="panel stack pr-done"><h2>Thank you, ' + esc(name.split(' ')[0]) + '!</h2><p>We got your request and will ' + (contact && contact.contact === 'call' ? 'call you' : contact && contact.contact === 'email' ? 'email you' : 'text you') + ' within 24 hours about planning your event.</p><p class="muted small">In the meantime, you can start your free plan to see looks, prices and vendors for your city.</p><div><a class="btn primary" href="#/new">See my free plan</a></div></div></div>'; window.scrollTo(0, 0);
         })
         .catch(function (er) { btn.disabled = false; btn.textContent = 'Send my request'; toast(er.message); });
@@ -3879,7 +3905,7 @@
             return '<div class="panel stack"><div class="row" style="justify-content:space-between"><b>' + esc(r.name) + '</b><span class="badge' + (r.status === 'handled' ? ' ok' : '') + '">' + (r.status === 'handled' ? 'Handled' : 'New') + '</span></div>' +
               '<span class="small muted">' + esc(String(r.at || '').slice(0, 16).replace('T', ' ')) + ' UTC \u00b7 prefers ' + esc(r.contact === 'call' ? 'a call' : r.contact === 'email' ? 'email' : 'a text') + '</span>' +
               '<div>' + [r.type, r.date, r.city, r.guests ? r.guests + ' guests' : '', r.budget ? 'Budget ' + r.budget : ''].filter(Boolean).map(esc).join(' \u00b7 ') + '</div>' +
-              (r.help && r.help.length ? '<div class="small"><b>Help with:</b> ' + esc(r.help.join(', ')) + '</div>' : '') + (r.priceOk ? '<div class="small muted">Agreed planning starts at ' + esc(r.priceOk) + '</div>' : '') + (r.notes ? '<div class="small muted">\u201c' + esc(r.notes) + '\u201d</div>' : '') +
+              (r.pkg ? '<div class="small"><b>Package:</b> ' + esc(r.pkg) + '</div>' : '') + (r.help && r.help.length ? '<div class="small"><b>Help with:</b> ' + esc(r.help.join(', ')) + '</div>' : '') + (r.priceOk ? '<div class="small muted">Agreed planning starts at ' + esc(r.priceOk) + '</div>' : '') + (r.notes ? '<div class="small muted">\u201c' + esc(r.notes) + '\u201d</div>' : '') +
               '<div class="row">' + (dial ? '<a class="btn small gold" href="sms:' + esc(dial) + '">Text ' + esc(r.phone) + '</a><a class="btn small ghost" href="tel:' + esc(dial) + '">Call</a>' : '') + (r.email ? '<a class="btn small ghost" href="mailto:' + esc(r.email) + '">Email</a>' : '') +
               '<button class="btn small ghost" data-pr="' + (r.status === 'handled' ? 'new' : 'handled') + '" data-id="' + esc(r.id) + '">' + (r.status === 'handled' ? 'Mark as new' : 'Mark handled') + '</button><button class="link small" data-pr="delete" data-id="' + esc(r.id) + '">Delete</button></div></div>';
           }).join('') : '<p class="muted">No requests yet.</p>';

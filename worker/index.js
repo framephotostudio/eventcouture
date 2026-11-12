@@ -566,12 +566,13 @@ async function conciergeNew(env, b) {
 }
 
 /* "Let us plan it for you": a request for the founder's paid planning service. Kept a year; she reads them in the admin page. */
+const PR_PKG = ['Vendor Booking', 'Full Planning', 'Party Planning'];
 const PR_HELP = ['Full planning', 'Finding a venue', 'Booking vendors', 'Negotiating prices', 'Decor and flowers', 'Budget', 'Invitations and RSVPs', 'Wedding-day schedule'];
 async function planReqNew(env, b) {
   const t = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u000b-\u001f]/g, '').slice(0, n).trim();
   const a = new Uint8Array(10); crypto.getRandomValues(a);
   const id = Array.from(a, x => x.toString(16).padStart(2, '0')).join('');
-  const rec = { id, at: new Date().toISOString(), status: 'new', help: (Array.isArray(b.help) ? b.help : []).filter(h => PR_HELP.includes(h)).slice(0, 8),
+  const rec = { id, at: new Date().toISOString(), status: 'new', pkg: PR_PKG.includes(b.pkg) ? b.pkg : '', help: (Array.isArray(b.help) ? b.help : []).filter(h => PR_HELP.includes(h)).slice(0, 8),
     type: t(b.type, 60), date: t(b.date, 40), city: t(b.city, 80), guests: Math.max(0, Math.min(100000, +b.guests || 0)), budget: t(b.budget, 40),
     name: t(b.name, 80), phone: t(b.phone, 30), email: t(b.email, 120), contact: ['text', 'call', 'email'].includes(b.contact) ? b.contact : 'text', notes: t(b.notes, 2000), priceOk: t(b.priceOk, 10) };
   if (!rec.name) return { error: 'Add your name.' };
