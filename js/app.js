@@ -3827,11 +3827,11 @@
   /* The planning packages, each with what's included. Weddings and large events: Vendor Booking or Full Planning; smaller parties: Party Planning. */
   var PR_PKGS = [
     { id: 'Vendor Booking', name: 'The Atelier', for: 'Weddings, engagements, quinceañeras & large events', was: '$2,500', from: '$1,900',
-      inc: ['Vendors matched to your budget and city', 'We contact vendors and compare quotes', 'Price negotiation on your behalf', 'Booking arranged with every vendor', 'Vendor confirmations before your event'] },
+      inc: ['Venue & vendor research and booking', 'Vendors matched to your budget and city', 'Quotes compared & prices negotiated', 'Vendor communication & final details', 'Vendor confirmations before your event'] },
     { id: 'Full Planning', name: 'The Haute Couture', for: 'Weddings, engagements, quinceañeras & large events', was: '$3,500', from: '$2,500', top: true,
-      inc: ['Everything in The Atelier', 'Budget & planning timeline', 'Design, décor & color direction', 'Invitations & RSVPs', 'Gift registry setup', 'Event-day schedule for every vendor'] },
+      inc: ['Everything in The Atelier', 'Budget management & planning roadmap', 'Decoration & color direction', 'Floor plan & seating-chart guidance', 'Invitations, RSVPs & gift registry', 'Custom event-day timeline for every vendor'] },
     { id: 'Party Planning', name: 'The Soir\u00e9e', for: 'Birthdays, showers, graduations & more', was: '$750', from: '$500',
-      inc: ['Theme & décor ideas', 'Venue & vendors picked and booked for you', 'Budget & checklist', 'Invitations & RSVPs', 'Party-day schedule'] }];
+      inc: ['Theme & decoration ideas', 'Venue & vendor research and booking', 'Budget & planning checklist', 'Invitations & RSVPs', 'Custom party-day timeline'] }];
   function planForMePage() {
     var last = Object.values(events()).filter(function (e) { return e && !e.sample; }).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); })[0] || {};
     var BIG = /wedding|engagement|quincea|gala|corporate|conference|team building|sweet 16|anniversary|retirement|holiday|christmas/i;
