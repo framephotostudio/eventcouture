@@ -48,7 +48,7 @@ export default {
       if (req.method === 'GET' && cqg) { if (!env.EC_KV) return json({ error: 'Not found' }, 404); let r = await env.EC_KV.get('cq:' + cqg[1], 'json'); if (typeof r === 'string') r = JSON.parse(r); return r ? json({ request: r }) : json({ error: 'Not found' }, 404); }
       if (req.method === 'GET' && url.pathname === '/api/where') {   // the approximate city of her internet connection, to fill in the city on the first screen; nothing is stored
         const cf = req.cf || {};
-        return new Response(JSON.stringify({ city: cf.city || '', region: cf.regionCode || '', country: cf.country || '' }), { headers: { ...cors, 'content-type': 'application/json', 'cache-control': 'private, no-store' } });
+        return new Response(JSON.stringify({ city: cf.city || '', region: cf.regionCode || '', country: cf.country || '', lat: +cf.latitude || null, lon: +cf.longitude || null }), { headers: { ...cors, 'content-type': 'application/json', 'cache-control': 'private, no-store' } });
       }
       if (url.pathname === '/api/status') {
         return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env), placesThisMonth: parseInt((env.EC_KV && await env.EC_KV.get('places:' + new Date().toISOString().slice(0, 7))) || '0', 10), placesMonthLimit: FREE_PLACES + (inReview(env) ? 150 : 0) });
@@ -581,7 +581,7 @@ async function optin(env, remove, body, json) {
   if (remove) { await env.EC_KV.delete(key); return json({ ok: true }); }
   if (body.consent !== true) return json({ error: 'Tick the box to agree to the emails.' }, 400);
   const clip = (v, n) => String(v || '').replace(/[\r\n]+/g, ' ').slice(0, n);
-  const rec = { email, consent: 'Yes, email me planning tips and reminders for this event. I can unsubscribe anytime.', at: new Date().toISOString(), type: clip(body.type, 60), date: /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? body.date : '', city: clip(body.city, 80), guests: Math.max(0, Math.min(100000, +body.guests || 0)) };
+  const rec = { email, consent: body.kind === 'ideas' ? 'Yes, email me event ideas and planning tips. I can unsubscribe anytime.' : 'Yes, email me planning tips and reminders for this event. I can unsubscribe anytime.', at: new Date().toISOString(), type: clip(body.type, 60), date: /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? body.date : '', city: clip(body.city, 80), guests: Math.max(0, Math.min(100000, +body.guests || 0)) };
   await env.EC_KV.put(key, JSON.stringify(rec));
   return json({ ok: true });
 }

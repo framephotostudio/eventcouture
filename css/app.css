@@ -1181,3 +1181,4 @@ html.ec-app .wizard .wiz-act { bottom: calc(64px + env(safe-area-inset-bottom, 0
 @media (max-width: 699px) { #occ.occ-chips { flex-wrap: wrap; overflow: visible; margin: 0; padding: 0; } }
 #occ .chip[aria-pressed="true"] { font-weight: 600; }
 .vision-row .btn { width: 100%; justify-content: center; border-style: dashed; }
+.ideas-optin { max-width: 640px; margin: 8px auto 0; }

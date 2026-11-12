@@ -35,7 +35,7 @@ with sync_playwright() as p:
         check(n, not errs, 'no page errors ' + str(errs[:2]))
         pg.close()
     # city from the approximate location
-    for where, want in [({'city': 'Katy', 'region': 'TX', 'country': 'US'}, 'Houston, TX'), ({'city': 'London', 'region': 'ENG', 'country': 'GB'}, 'London, UK'), ({'city': 'Smallville', 'region': 'KS', 'country': 'US'}, '')]:
+    for where, want in [({'city': 'Katy', 'region': 'TX', 'country': 'US'}, 'Houston, TX'), ({'city': 'London', 'region': 'ENG', 'country': 'GB'}, 'London, UK'), ({'city': 'Moses Lake', 'region': 'WA', 'country': 'US', 'lat': 47.13, 'lon': -119.28}, 'Seattle, WA'), ({'city': 'Midland', 'region': 'TX', 'country': 'US', 'lat': 31.99, 'lon': -102.08}, ''), ({'city': 'Brenham', 'region': 'TX', 'country': 'US', 'lat': 30.17, 'lon': -96.4}, 'The Woodlands, TX'), ({'city': 'Smallville', 'region': 'KS', 'country': 'US'}, '')]:
         pg = b.new_page(viewport={'width': 390, 'height': 844})
         def cfg(route):
             r = route.fetch(); route.fulfill(response=r, body=r.text().replace("apiUrl: ''", "apiUrl: '" + API + "'"))
@@ -49,5 +49,24 @@ with sync_playwright() as p:
         else:
             pg.wait_for_timeout(1500); check('home', '/new/2/' in pg.url and pg.get_attribute('[data-occ2=birthday]', 'aria-pressed') == 'true', 'no city found: the basics screen waits with Birthday picked')
         pg.close()
+    # city search box
+    pg = b.new_page(viewport={'width': 390, 'height': 844}); pg.goto(U + '#/new/2'); pg.wait_for_selector('#citySearch')
+    pg.fill('#citySearch', 'Toronto, ON'); pg.wait_for_timeout(300)
+    check('search', pg.input_value('#country') == 'CA' and pg.input_value('#city') == 'Toronto, ON' and not pg.is_visible('#citySearch'), 'typing a city sets the country and city')
+    pg.close()
+    # save ideas for later (home page)
+    sent = []
+    pg = b.new_page(viewport={'width': 390, 'height': 844})
+    def cfg2(route):
+        r = route.fetch(); route.fulfill(response=r, body=r.text().replace("apiUrl: ''", "apiUrl: '" + API + "'"))
+    def api2(route):
+        if route.request.url.endswith('/api/optin'): sent.append(json.loads(route.request.post_data))
+        route.fulfill(status=200, content_type='application/json', body='{"ok":true}', headers={'access-control-allow-origin': '*'})
+    pg.route('**/js/config.js*', cfg2); pg.route(API + '/**', api2)
+    pg.goto(U + '#/'); pg.wait_for_selector('#ideasOptin'); pg.fill('#ideasEmail', 'test@example.com'); pg.click('#ideasOptin button'); pg.wait_for_timeout(300)
+    check('ideas', not sent, 'needs the agree box first')
+    pg.check('#ideasOk'); pg.click('#ideasOptin button'); pg.wait_for_timeout(2500)
+    check('ideas', len(sent) == 1 and sent[0].get('kind') == 'ideas' and sent[0].get('consent') is True and 'on the list' in pg.inner_text('main'), 'sign-up sent with consent and thanked: ' + str(sent[:1]))
+    pg.close()
     b.close()
 print('FAILURES:', F if F else 'none')
