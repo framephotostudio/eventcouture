@@ -31,7 +31,7 @@ module.exports = function landing(ctx) {
     `Event Couture is an AI event planner and party planner: share a photo or a few words and get three looks, a budget for your city, top-rated vendors, a checklist and invitations. Free to plan.`,
     'AI event planner: from one photo to a full plan',
     `<p class="lead">Event Couture is a free online event planner. AI reads your inspiration and designs the look; a pricing engine built on local costs estimates the budget; real top-rated businesses fill your vendor list. Share a photo you love, paste a Pinterest or TikTok link, or just describe your party in a few words. In about a minute you get three event looks, a budget sized to your city and guest count, top-rated venues and vendors near you, a menu, a playlist, a day-of schedule and an invitation your guests can RSVP to.</p>
-<div class="cta">${startBtn('#/new/1', 'Plan my event with AI')}<a class="btn ghost" href="../#/inspiration">Browse inspiration</a></div>
+<div class="cta">${startBtn('#/new', 'Plan my event with AI')}<a class="btn ghost" href="../#/inspiration">Browse inspiration</a></div>
 ${photo('blush-wisteria-ballroom')}
 <h2>What AI does, and what it doesn’t</h2><ol class="plain">
 <li><b>AI reads your inspiration.</b> Colors, flowers, lighting and decor are picked out of your photo or words, so the plan matches the look you love.</li>
@@ -93,7 +93,7 @@ ${photo('unicorn-dreamland')}
     `Free event budget calculator for weddings, birthdays, showers and parties: a line-by-line budget for your city and guest count, with tax, tips and a 10% cushion included.`,
     'Event budget calculator',
     `<p class="lead">Tell Event Couture what you’re celebrating, where, and for how many guests, and it builds a line-by-line budget: venue, food, drinks, decor, flowers, music, photos and the fees people forget. Prices follow your city, and every line already includes tax, service charges and tips where they apply, plus a 10% cushion for surprises.</p>
-<div class="cta">${startBtn('#/new/1', 'Calculate my budget')}</div>
+<div class="cta">${startBtn('#/new', 'Calculate my budget')}</div>
 <h2>Typical event budgets</h2>${occTable(ALL.slice(0, 12))}
 <h2>Sample wedding budget, line by line</h2><div class="table-wrap panel"><table class="qty"><tbody>${wb.items.map(i => `<tr><td>${esc(i.name)}</td><td class="n">${money(i.mid, NAT)}</td><td class="n small muted">${Math.round(i.mid / wb.total * 100)}%</td></tr>`).join('')}<tr><td>Cushion for surprises (10%)</td><td class="n">${money(wb.contingency, NAT)}</td><td></td></tr><tr><td><b>Estimated total, 120 guests</b></td><td class="n"><b>${money(wb.total, NAT)}</b></td><td></td></tr></tbody></table></div>
 <h2>Three ways to fit your budget</h2><ol class="plain"><li><b>Luxe for Less</b> keeps the look with smart swaps.</li><li><b>Signature</b> has the key pieces handled by pros.</li><li><b>Ultra Luxe</b> adds full service, lighting, live music and a coordinator.</li></ol><p>Or set your own maximum: the plan is fitted to it and protects your must-haves first.</p>`,

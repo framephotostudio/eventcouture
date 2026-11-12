@@ -46,6 +46,10 @@ export default {
       if (req.method === 'GET' && vp) return await vendorProfile(env, vp[1], json);
       const cqg = url.pathname.match(/^\/api\/concierge\/([a-z0-9]{16,40})$/);
       if (req.method === 'GET' && cqg) { if (!env.EC_KV) return json({ error: 'Not found' }, 404); let r = await env.EC_KV.get('cq:' + cqg[1], 'json'); if (typeof r === 'string') r = JSON.parse(r); return r ? json({ request: r }) : json({ error: 'Not found' }, 404); }
+      if (req.method === 'GET' && url.pathname === '/api/where') {   // the approximate city of her internet connection, to fill in the city on the first screen; nothing is stored
+        const cf = req.cf || {};
+        return new Response(JSON.stringify({ city: cf.city || '', region: cf.regionCode || '', country: cf.country || '' }), { headers: { ...cors, 'content-type': 'application/json', 'cache-control': 'private, no-store' } });
+      }
       if (url.pathname === '/api/status') {
         return json({ ai: !!env.GEMINI_KEY, model: env.GEMINI_KEY ? await pickModel(env) : null, places: !!env.GOOGLE_MAPS_KEY, spentToday: await spent(env), capToday: cap(env), placesThisMonth: parseInt((env.EC_KV && await env.EC_KV.get('places:' + new Date().toISOString().slice(0, 7))) || '0', 10), placesMonthLimit: FREE_PLACES + (inReview(env) ? 150 : 0) });
       }
