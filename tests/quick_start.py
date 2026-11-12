@@ -42,6 +42,12 @@ with sync_playwright() as p:
         pg.route('**/js/config.js*', cfg); pg.route(API + '/**', fake(json.dumps(where)))
         pg.goto(U + '#/new'); pg.wait_for_selector('#city'); pg.wait_for_timeout(1200)
         check('where', pg.input_value('#city') == want, where['city'] + ' -> ' + repr(pg.input_value('#city')))
+        # a home page occasion goes straight to the looks when the city is known, and waits on the basics when it isn't
+        pg.goto(U + '#/'); pg.wait_for_selector('.hero'); pg.click('.hero a[data-hchip=birthday]')
+        if want:
+            pg.wait_for_selector('.concept', timeout=30000); check('home', '/concepts' in pg.url, where['city'] + ': Birthday on the home page goes straight to the looks')
+        else:
+            pg.wait_for_timeout(1500); check('home', '/new/2/' in pg.url and pg.get_attribute('[data-occ2=birthday]', 'aria-pressed') == 'true', 'no city found: the basics screen waits with Birthday picked')
         pg.close()
     b.close()
 print('FAILURES:', F if F else 'none')
