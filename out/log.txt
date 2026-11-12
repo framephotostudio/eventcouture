@@ -1,0 +1,36 @@
+phone A after Plan my event: /new/2/yivg9mwq02
+phone A city value: Des Moines, IA
+phone A next button: Create my looks
+phone A landed /e/yivg9mwq02/budget after 21s, packages=True
+phone A errors []
+phone B hero chips ['wedding', 'engagement', 'bridal-shower', 'birthday', 'kids-birthday', 'baby-shower', 'quince', 'graduation', 'gender-reveal', 'holiday', 'corporate', 'conference', 'retirement']
+phone B after chip: /e/q118epxbul/concepts
+phone B landed /e/q118epxbul/budget after 19s, packages=True
+phone B errors []
+phone C arabic card present: True
+phone C after card: /e/4y76ljxuy2/concepts
+phone C landed /e/4y76ljxuy2/budget after 19s, packages=True
+phone C errors []
+phone D planner: /plan-for-me form=True
+phone D errors []
+phone E after use photo: /new/2/liq048yhi4
+phone E landed /e/liq048yhi4/budget after 19s, packages=True
+phone E errors []
+desktop A after Plan my event: /new/2/ybtsw0z0is
+desktop A city value: Des Moines, IA
+desktop A next button: Create my looks
+desktop A landed /e/ybtsw0z0is/budget after 18s, packages=True
+desktop A errors []
+desktop B hero chips ['wedding', 'engagement', 'bridal-shower', 'birthday', 'kids-birthday', 'baby-shower', 'quince', 'graduation', 'gender-reveal', 'holiday', 'corporate', 'conference', 'retirement']
+desktop B after chip: /e/duh4bfzk4q/concepts
+desktop B landed /e/duh4bfzk4q/budget after 13s, packages=True
+desktop B errors []
+desktop C arabic card present: True
+desktop C after card: /e/y7t14bzyjq/concepts
+desktop C landed /e/y7t14bzyjq/budget after 16s, packages=True
+desktop C errors []
+desktop D planner: /plan-for-me form=True
+desktop D errors []
+desktop E after use photo: /new/2/rqocuy0iwm
+desktop E landed /e/rqocuy0iwm/budget after 18s, packages=True
+desktop E errors []
