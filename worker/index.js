@@ -57,6 +57,7 @@ export default {
       if (req.method === 'GET' && url.pathname === '/api/reviews') { if (!env.EC_KV) return json({ reviews: [] }); return json({ reviews: (await env.EC_KV.get('revs:approved', 'json')) || [] }); }
       if (req.method === 'GET' && url.pathname === '/api/reports') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return json({ reports: await kvGet(env, 'reports', []) }); }
       if (req.method === 'GET' && url.pathname === '/api/vendors/pending') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await vendorsPending(env, json); }
+      if (req.method === 'GET' && url.pathname === '/api/planreq') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await planReqList(env, json); }
       if (req.method === 'GET' && url.pathname === '/api/reviews/all') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await reviewsAll(env, json); }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
       if (url.pathname === '/api/stripe/webhook') return await stripeWebhook(req, env, json);
@@ -65,7 +66,7 @@ export default {
       if (+(req.headers.get('content-length') || 0) > 12e6) return json({ error: 'Those photos are too large. Try fewer or smaller photos.' }, 413);
       const body = await req.json().catch(() => ({}));
       // Bot check (Cloudflare Turnstile) for new booking requests, quote requests and new vendor listings, once TURNSTILE_SECRET is set.
-      const human = url.pathname === '/api/concierge/new' || url.pathname === '/api/req/new' || url.pathname === '/api/optin' || url.pathname === '/api/review' || (url.pathname === '/api/vendor/save' && !body.id);
+      const human = url.pathname === '/api/concierge/new' || url.pathname === '/api/planreq/new' || url.pathname === '/api/req/new' || url.pathname === '/api/optin' || url.pathname === '/api/review' || (url.pathname === '/api/vendor/save' && !body.id);
       const fromApp = /^(capacitor:\/\/localhost|https?:\/\/localhost)$/.test(req.headers.get('origin') || '');   // the iPhone and Android apps can't show the web bot check; the rate limit still applies
       if (human && !fromApp && env.TURNSTILE_SECRET && !(await turnstileOk(env, body.ts, req.headers.get('cf-connecting-ip')))) return json({ error: 'Please confirm you\u2019re not a robot and try again.', code: 'turnstile' }, 403);
       delete body.ts;
@@ -77,6 +78,8 @@ export default {
       if (url.pathname === '/api/vendors/set') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await vendorSet(env, body, json); }
       if (url.pathname === '/api/reviews/set') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await reviewSet(env, body, json); }
       if (url.pathname === '/api/checkout') { if (!env.EC_KV || !env.STRIPE_SECRET_KEY) return json({ error: 'Card payments are not switched on yet.' }, 503); return await checkout(env, body, url, json); }
+      if (url.pathname === '/api/planreq/new') { if (!env.EC_KV) return json({ error: 'Requests are not connected yet.' }, 503); const pr = await planReqNew(env, body); return pr.error ? json(pr, 400) : json(pr); }
+      if (url.pathname === '/api/planreq/set') { if (!adminOk(req, env)) return json({ error: 'Wrong code' }, 403); return await planReqSet(env, body, json); }
       if (url.pathname === '/api/concierge/new') { if (!env.EC_KV) return json({ error: 'Booking requests are not connected yet.' }, 503); const cr = await conciergeNew(env, body); return cr.error ? json(cr, 400) : json(cr); }
       const mk = url.pathname.match(/^\/api\/(vendor\/save|vendor\/report|req\/new|req\/list|req\/reply|req\/inbox|req\/delete)$/);
       if (mk) { if (!env.EC_KV) return json({ error: 'Vendor listings are not connected yet.' }, 503); return await market(env, mk[1], body, req.headers.get('cf-connecting-ip') || 'unknown', json); }
@@ -560,6 +563,36 @@ async function conciergeNew(env, b) {
   if (!rec.name || !rec.phone || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rec.email)) return { error: 'Add your name, phone and email.' };
   await env.EC_KV.put('cq:' + ref, JSON.stringify(rec), { expirationTtl: 60 * 60 * 24 * 366 });
   return { ref };
+}
+
+/* "Let us plan it for you": a request for the founder's paid planning service. Kept a year; she reads them in the admin page. */
+const PR_HELP = ['Full planning', 'Finding a venue', 'Booking vendors', 'Negotiating prices', 'Decor and flowers', 'Budget', 'Invitations and RSVPs', 'Wedding-day schedule'];
+async function planReqNew(env, b) {
+  const t = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u000b-\u001f]/g, '').slice(0, n).trim();
+  const a = new Uint8Array(10); crypto.getRandomValues(a);
+  const id = Array.from(a, x => x.toString(16).padStart(2, '0')).join('');
+  const rec = { id, at: new Date().toISOString(), status: 'new', help: (Array.isArray(b.help) ? b.help : []).filter(h => PR_HELP.includes(h)).slice(0, 8),
+    type: t(b.type, 60), date: t(b.date, 40), city: t(b.city, 80), guests: Math.max(0, Math.min(100000, +b.guests || 0)), budget: t(b.budget, 40),
+    name: t(b.name, 80), phone: t(b.phone, 30), email: t(b.email, 120), contact: ['text', 'call', 'email'].includes(b.contact) ? b.contact : 'text', notes: t(b.notes, 2000) };
+  if (!rec.name) return { error: 'Add your name.' };
+  if (!rec.phone && !rec.email) return { error: 'Add a phone number or an email so we can reach you.' };
+  if (rec.email && !EMAIL_RE.test(rec.email)) return { error: 'Check your email address.' };
+  if (rec.phone && rec.phone.replace(/\D/g, '').length < 7) return { error: 'Check your phone number.' };
+  await env.EC_KV.put('preq:' + id, JSON.stringify(rec), { expirationTtl: 60 * 60 * 24 * 366 });
+  return { ok: true };
+}
+async function planReqList(env, json) {
+  const out = []; let cursor;
+  do { const l = await env.EC_KV.list({ prefix: 'preq:', cursor }); for (const k of l.keys) { const r = await env.EC_KV.get(k.name, 'json'); if (r) out.push(r); } cursor = l.list_complete ? null : l.cursor; } while (cursor);
+  out.sort((x, y) => String(y.at).localeCompare(String(x.at)));
+  return json({ requests: out });
+}
+async function planReqSet(env, b, json) {
+  const id = String(b.id || ''); if (!/^[a-f0-9]{20}$/.test(id)) return json({ error: 'Not found' }, 404);
+  const r = await env.EC_KV.get('preq:' + id, 'json'); if (!r) return json({ error: 'Not found' }, 404);
+  if (b.status === 'delete') { await env.EC_KV.delete('preq:' + id); return json({ ok: true }); }
+  r.status = b.status === 'new' ? 'new' : 'handled'; await env.EC_KV.put('preq:' + id, JSON.stringify(r), { expirationTtl: 60 * 60 * 24 * 366 });
+  return json({ ok: true });
 }
 
 async function turnstileOk(env, token, ip) {

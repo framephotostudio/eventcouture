@@ -1182,3 +1182,7 @@ html.ec-app .wizard .wiz-act { bottom: calc(64px + env(safe-area-inset-bottom, 0
 #occ .chip[aria-pressed="true"] { font-weight: 600; }
 .vision-row .btn { width: 100%; justify-content: center; border-style: dashed; }
 .ideas-optin { max-width: 640px; margin: 8px auto 0; }
+/* home: the free planner and the paid planning service side by side (stacked on phones), both easy to tap */
+.hero-ctas { flex-wrap: wrap; }
+.hero-ctas .hero-planner { min-height: 54px; padding: 0 28px; font-size: 1.05rem; border: 1.5px solid var(--champagne); color: var(--ink); background: var(--surface); }
+@media (max-width: 699px) { .hero-ctas { flex-direction: column; align-items: stretch; gap: 12px; } .hero-ctas .btn { width: 100%; justify-content: center; } }

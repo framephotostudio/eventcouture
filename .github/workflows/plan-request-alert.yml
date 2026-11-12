@@ -1,0 +1,42 @@
+name: Planning request alert
+# Every 10 minutes: when someone sends a "Let us plan it for you" request, GitHub emails the owner (through an issue that
+# mentions her). The issue never shows the person's name, phone or email or the admin code: this repository is public.
+on:
+  schedule: [ { cron: '*/10 * * * *' } ]
+  workflow_dispatch: {}
+permissions: { issues: write, contents: read }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Look for new planning requests
+        env:
+          CODE: ${{ secrets.ADMIN_CODE }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          API: https://event-couture-api.facecouture.workers.dev
+        run: |
+          CODE=$(printf '%s' "$CODE" | tr -d '[:space:]')
+          if [ -z "$CODE" ]; then echo "No ADMIN_CODE secret, nothing to check."; exit 0; fi
+          body=$(curl -s -m 30 -H "x-admin-code: $CODE" "$API/api/planreq") || { echo "Server not reachable"; exit 0; }
+          n=$(printf '%s' "$body" | jq '[.requests[]? | select(.status == "new")] | length' 2>/dev/null || echo "")
+          if [ -z "$n" ]; then echo "Could not read requests."; exit 0; fi
+          echo "New: $n"
+          gh label create plan-request --color 5C1A3A --description "Someone asked Event Couture to plan their event" --force >/dev/null
+          open=$(gh issue list --label plan-request --state open --json number,title --jq '.[0] // empty')
+          num=$(printf '%s' "$open" | jq -r '.number // empty'); was=$(printf '%s' "$open" | jq -r '.title // ""' | grep -oE '^[0-9]+' || echo 0)
+          word() { [ "$1" = 1 ] && echo "person wants" || echo "people want"; }
+          msg="@framephotostudio $n $(word $n) you to plan their event (new request on Event Couture).
+
+          Open https://eventcouture.app/#/admin/requests and type your admin code to see their details, then tap Mark handled once you've reached out.
+
+          This message closes by itself once every request is marked handled."
+          msg=$(printf '%s' "$msg" | sed 's/^          //')
+          if [ "$n" -gt 0 ] && [ -z "$num" ]; then
+            gh issue create --title "$n new planning request$([ "$n" = 1 ] || echo s)" --label plan-request --body "$msg"
+          elif [ "$n" -gt 0 ] && [ "$n" -gt "${was:-0}" ]; then
+            gh issue edit "$num" --title "$n new planning request$([ "$n" = 1 ] || echo s)"
+            gh issue comment "$num" --body "$msg"
+          elif [ "$n" -eq 0 ] && [ -n "$num" ]; then
+            gh issue close "$num" --comment "All planning requests are handled."
+          fi

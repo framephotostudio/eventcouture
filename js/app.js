@@ -334,6 +334,8 @@
       if (p[0] === 'p' && p[1]) return proposalPage(p[1]);
       if (p[0] === 'admin' && p[1] === 'emails') return emailExportPage();
       if (p[0] === 'admin' && p[1] === 'reviews') return reviewsAdminPage();
+      if (p[0] === 'admin' && p[1] === 'requests') return requestsAdminPage();
+      if (p[0] === 'plan-for-me') return planForMePage();
       if (p[0] === 'cq' && p[1]) return cqRequest(p[1]);
       if (p[0] === 'vendors' && p[1] === 'requests') { if (CFG.app) { location.replace('#/'); return; } return vendorRequests(); }
       if (p[0] === 'r' && /^[a-f0-9]{20}$/.test(p[1] || '')) return vendorReply(p[1]);
@@ -544,7 +546,7 @@
       (lastEv ? '<a class="resume-bar" href="#/e/' + esc(lastEv.id) + ((lastEv.packages || []).length ? '/budget' : '') + '"><span>Welcome back. <b>Continue planning ' + esc(lastEv.name || 'your event') + '</b></span><span aria-hidden="true">\u2192</span></a>' : '') +
       '<section class="hero"><div class="hero-copy"><p class="hero-tag">Event planning for weddings, birthdays, showers, quincea\u00f1eras and more</p><h1>Plan your whole event in minutes</h1>' +
       '<p class="lead">Share a photo or a few words. AI designs the look, and you get a budget estimate for your city, top-rated vendors, a checklist and invitations. Free to plan.</p>' +
-      '<div class="row"><a class="btn primary" href="#/new">Plan my event</a><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div>' +
+      '<div class="row hero-ctas"><a class="btn primary" href="#/new">Plan my event</a>' + (CFG.app ? '' : '<a class="btn ghost hero-planner" href="#/plan-for-me" data-planner>Let us plan it for you</a>') + '</div><div class="row"><button class="link quiet" data-scroll="inspo">Browse inspiration</button></div>' +
       '<div class="hero-chips" aria-label="Start with your occasion">' +
       [['wedding', 'Wedding'], ['engagement', 'Engagement'], ['bridal-shower', 'Bridal shower'], ['birthday', 'Birthday'], ['kids-birthday', 'Kids\u2019 birthday'], ['baby-shower', 'Baby shower'], ['quince', 'Quincea\u00f1era'], ['graduation', 'Graduation'], ['gender-reveal', 'Gender reveal'], ['holiday', 'Holiday party'], ['corporate', 'Corporate event'], ['conference', 'Conference'], ['retirement', 'Retirement party']].map(function (c) { var q = QUICK.concat([['gender-reveal', 'Gender reveal', 'pink-or-blue-garden-reveal'], ['holiday', 'Holiday party', 'winter-lights-rooftop'], ['corporate', 'Corporate event', 'black-and-gold-soiree'], ['conference', 'Conference', 'silver-blue-ballroom'], ['retirement', 'Retirement party', 'rosewood-private-dinner']]).find(function (x) { return x[0] === c[0]; }); return q ? '<a class="chip" href="#/start/' + q[0] + '/-/' + q[2] + '" data-hchip="' + q[0] + '">' + c[1] + '</a>' : ''; }).join('') +
       '<button type="button" class="chip" data-scroll="cultural">Cultural wedding</button></div>' + (CFG.app ? '' : '<p class="hero-help"><b>Want us to plan it for you?</b> <span>Text</span> <a href="sms:+17135343603" data-planner>713-534-3603</a><span>, message us on Instagram</span> <a href="https://instagram.com/always_luxe" target="_blank" rel="noopener" data-planner>@always_luxe</a> <span>or email</span> <a href="mailto:hello@eventcouture.app" data-planner>hello@eventcouture.app</a><span>, and we\u2019ll get back to you about our planning service.</span></p>') + '</div>' +
@@ -1581,7 +1583,7 @@
   };
 
   /* Overview: three budget versions, pros and cons, guardian, concierge */
-  function plannerBox(ev) { return CFG.app || ev.sample ? '' : '<div class="panel planner-box"><div class="grow"><b>Want us to plan it for you?</b><span class="small muted"> Our paid planning service finds and books your vendors and builds your schedule, by phone and online. Text, Instagram or email us and we\u2019ll get back to you.</span></div><div class="row"><a class="btn small gold" href="sms:+17135343603" data-planner>Text 713-534-3603</a><a class="btn small ghost" href="https://instagram.com/always_luxe" target="_blank" rel="noopener" data-planner>Instagram @always_luxe</a><a class="btn small ghost" href="mailto:hello@eventcouture.app" data-planner>Email us</a></div></div>'; }
+  function plannerBox(ev) { return CFG.app || ev.sample ? '' : '<div class="panel planner-box"><div class="grow"><b>Want us to plan it for you?</b><span class="small muted"> Our paid planning service finds and books your vendors and builds your schedule, by phone and online. Send us a quick request, or text, Instagram or email us, and we\u2019ll get back to you.</span></div><div class="row"><a class="btn small gold" href="#/plan-for-me" data-planner>Send a request</a><a class="btn small ghost" href="sms:+17135343603" data-planner>Text 713-534-3603</a><a class="btn small ghost" href="https://instagram.com/always_luxe" target="_blank" rel="noopener" data-planner>Instagram @always_luxe</a><a class="btn small ghost" href="mailto:hello@eventcouture.app" data-planner>Email us</a></div></div>'; }
   TAB_VIEWS.overview = function (ev, b) {
     var all = E.allBudgets(ev);
     var picked = ev.budget && ev.tier && ev.tier !== 'F';   /* she chose a spending level over her budget plan */
@@ -3804,6 +3806,79 @@
     }).catch(function () {});
   }
   /* Owner only: approve reviews. The admin code is typed each time and kept only on this page. */
+  /* "Let us plan it for you": a short request for the founder's paid planning service; she's alerted by email (GitHub) and reads it at #/admin/requests */
+  var PR_HELP = ['Full planning', 'Finding a venue', 'Booking vendors', 'Negotiating prices', 'Decor and flowers', 'Budget', 'Invitations and RSVPs', 'Wedding-day schedule'];
+  function planForMePage() {
+    var last = Object.values(events()).filter(function (e) { return e && !e.sample; }).sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); })[0] || {};
+    frame('<div class="wizard stack-lg"><div class="stack"><h2>Let us plan it for you</h2><p class="muted">Tell us a little about your event and what you\u2019d like help with. We\u2019ll get back to you within 24 hours about our planning service. No payment now.</p></div>' +
+      '<form id="prForm" class="stack-lg" novalidate>' +
+      '<div class="stack"><h3>What would you like help with?</h3><span class="small muted">Tap all that apply.</span><div class="chips" id="prHelp">' + PR_HELP.map(function (h) { return '<button type="button" class="chip" aria-pressed="false" data-help="' + esc(h) + '">' + esc(h) + '</button>'; }).join('') + '</div></div>' +
+      '<div class="grid2">' +
+      '<label class="field"><span>Your event</span><select class="input" id="prType"><option value="">Choose one</option>' + D.EVENT_TYPES.map(function (t) { return '<option' + (last.type === t.id && !last.culture ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '<optgroup label="Cultural weddings">' + Object.keys(D.CULTURES).map(function (k) { return '<option' + (last.type === 'wedding' && last.culture === k ? ' selected' : '') + '>' + esc(D.CULTURES[k].name) + '</option>'; }).join('') + '</optgroup></select></label>' +
+      '<label class="field"><span>Date <span class="muted small">(or month, or \u201cnot sure\u201d)</span></span><input class="input" id="prDate" maxlength="40" placeholder="e.g. June 2027" value="' + esc(last.date || '') + '"></label>' +
+      '<label class="field"><span>City</span><input class="input" id="prCity" list="prCities" maxlength="80" placeholder="e.g. Houston, TX" autocomplete="off" value="' + esc(last.city || '') + '"><datalist id="prCities">' + D.CITIES.filter(function (c) { return !/^Other /.test(c.name); }).map(function (c) { return '<option value="' + esc(c.name) + '">'; }).join('') + '</datalist></label>' +
+      '<label class="field"><span>Number of guests</span><input class="input num" id="prGuests" type="number" min="0" max="100000" value="' + (last.guests || '') + '" placeholder="e.g. 100"></label>' +
+      '<label class="field"><span>Budget <span class="muted small">(or \u201cnot sure\u201d)</span></span><input class="input" id="prBudget" maxlength="40" placeholder="e.g. $15,000" value="' + (last.budget ? esc(money(last.budget)) : '') + '"></label>' +
+      '</div>' +
+      '<div class="grid2">' +
+      '<label class="field"><span>Your name</span><input class="input" id="prName" maxlength="80" autocomplete="name"></label>' +
+      '<label class="field"><span>Phone</span><input class="input" id="prPhone" type="tel" maxlength="30" autocomplete="tel" inputmode="tel"></label>' +
+      '<label class="field"><span>Email</span><input class="input" id="prEmail" type="email" maxlength="120" autocomplete="email" inputmode="email"></label>' +
+      '</div>' +
+      '<div class="stack"><h3>Best way to reach you</h3><div class="chips" id="prContact" role="group" aria-label="Best way to reach you">' + [['text', 'Text me'], ['call', 'Call me'], ['email', 'Email me']].map(function (c, i) { return '<button type="button" class="chip" data-contact="' + c[0] + '" aria-pressed="' + (i === 0) + '">' + c[1] + '</button>'; }).join('') + '</div></div>' +
+      '<label class="field"><span>Anything else we should know? <span class="muted small">(optional)</span></span><textarea class="input" id="prNotes" maxlength="2000" placeholder="Your vision, colors, must-haves, or questions"></textarea></label>' +
+      '<div><button class="btn gold" type="submit" id="prSend">Send my request</button></div>' +
+      '<p class="small muted">We use your details only to contact you about planning your event (<a href="#/privacy">Privacy</a>). Prefer to talk now? Text <a href="sms:+17135343603">713-534-3603</a> or message <a href="https://instagram.com/always_luxe" target="_blank" rel="noopener">@always_luxe</a> on Instagram.</p>' +
+      '</form></div>', { noRibbon: true });
+    T('planner_form_open', {});
+    $('#prHelp').addEventListener('click', function (e) { var b = e.target.closest('[data-help]'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
+    $('#prContact').addEventListener('click', function (e) { var b = e.target.closest('[data-contact]'); if (!b) return; $$('#prContact [data-contact]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); });
+    $('#prForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = function (id) { return ($('#' + id).value || '').trim(); }, name = v('prName'), phone = v('prPhone'), email = v('prEmail'), btn = $('#prSend');
+      if (!name) { $('#prName').focus(); return toast('Add your name'); }
+      if (!phone && !email) { $('#prPhone').focus(); return toast('Add a phone number or an email so we can reach you'); }
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { $('#prEmail').focus(); return toast('Check your email address'); }
+      if (phone && phone.replace(/\D/g, '').length < 7) { $('#prPhone').focus(); return toast('Check your phone number'); }
+      var help = $$('#prHelp [aria-pressed="true"]').map(function (b) { return b.dataset.help; }), contact = ($('#prContact [aria-pressed="true"]') || {}).dataset;
+      if (!CFG.apiUrl) return toast('Requests aren\u2019t connected yet. Text 713-534-3603 and we\u2019ll get back to you.');
+      btn.disabled = true; btn.textContent = 'Sending\u2026';
+      tsToken().then(function (ts) { return fetch(CFG.apiUrl + '/api/planreq/new', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ts: ts, help: help, type: v('prType'), date: v('prDate'), city: v('prCity'), guests: +v('prGuests') || 0, budget: v('prBudget'), name: name, phone: phone, email: email, contact: contact ? contact.contact : 'text', notes: v('prNotes') }) }); })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || 'Couldn\u2019t send that. Try again, or text 713-534-3603.'); return j; }); })
+        .then(function () {
+          T('planner_request', { event_type: v('prType') || 'none', help_count: help.length });
+          $('main').innerHTML = '<div class="wizard stack-lg"><div class="panel stack pr-done"><h2>Thank you, ' + esc(name.split(' ')[0]) + '!</h2><p>We got your request and will ' + (contact && contact.contact === 'call' ? 'call you' : contact && contact.contact === 'email' ? 'email you' : 'text you') + ' within 24 hours about planning your event.</p><p class="muted small">In the meantime, you can start your free plan to see looks, prices and vendors for your city.</p><div><a class="btn primary" href="#/new">See my free plan</a></div></div></div>'; window.scrollTo(0, 0);
+        })
+        .catch(function (er) { btn.disabled = false; btn.textContent = 'Send my request'; toast(er.message); });
+    });
+  }
+  function requestsAdminPage() {
+    var code = '';
+    frame('<div class="wizard stack-lg"><h2>Planning requests</h2><p class="small muted">People who tapped \u201cLet us plan it for you\u201d. Reach out, then tap Mark handled so the email alerts stop.</p><form id="prLogin" class="stack" novalidate><input type="text" name="username" value="Event Couture admin" autocomplete="username" hidden><label for="prCode">Admin code</label><input class="input" id="prCode" name="password" type="password" autocomplete="current-password"><div><button class="btn primary" type="submit">Show requests</button></div></form><div id="prList" class="stack"></div></div>', { noRibbon: true });
+    function load() {
+      fetch(CFG.apiUrl + '/api/planreq', { headers: { 'x-admin-code': code } })
+        .then(function (r) { if (!r.ok) throw new Error(r.status === 403 ? 'Wrong code' : 'Not available'); return r.json(); })
+        .then(function (j) {
+          $('#prLogin').hidden = true; var L = j.requests || [];
+          $('#prList').innerHTML = L.length ? L.map(function (r) {
+            var dial = (r.phone || '').replace(/[^\d+]/g, '');
+            return '<div class="panel stack"><div class="row" style="justify-content:space-between"><b>' + esc(r.name) + '</b><span class="badge' + (r.status === 'handled' ? ' ok' : '') + '">' + (r.status === 'handled' ? 'Handled' : 'New') + '</span></div>' +
+              '<span class="small muted">' + esc(String(r.at || '').slice(0, 16).replace('T', ' ')) + ' UTC \u00b7 prefers ' + esc(r.contact === 'call' ? 'a call' : r.contact === 'email' ? 'email' : 'a text') + '</span>' +
+              '<div>' + [r.type, r.date, r.city, r.guests ? r.guests + ' guests' : '', r.budget ? 'Budget ' + r.budget : ''].filter(Boolean).map(esc).join(' \u00b7 ') + '</div>' +
+              (r.help && r.help.length ? '<div class="small"><b>Help with:</b> ' + esc(r.help.join(', ')) + '</div>' : '') + (r.notes ? '<div class="small muted">\u201c' + esc(r.notes) + '\u201d</div>' : '') +
+              '<div class="row">' + (dial ? '<a class="btn small gold" href="sms:' + esc(dial) + '">Text ' + esc(r.phone) + '</a><a class="btn small ghost" href="tel:' + esc(dial) + '">Call</a>' : '') + (r.email ? '<a class="btn small ghost" href="mailto:' + esc(r.email) + '">Email</a>' : '') +
+              '<button class="btn small ghost" data-pr="' + (r.status === 'handled' ? 'new' : 'handled') + '" data-id="' + esc(r.id) + '">' + (r.status === 'handled' ? 'Mark as new' : 'Mark handled') + '</button><button class="link small" data-pr="delete" data-id="' + esc(r.id) + '">Delete</button></div></div>';
+          }).join('') : '<p class="muted">No requests yet.</p>';
+        })
+        .catch(function (er) { toast(er.message || 'Not available'); });
+    }
+    $('#prLogin').addEventListener('submit', function (e) { e.preventDefault(); code = $('#prCode').value; load(); });
+    $('#prList').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-pr]'); if (!b) return; if (b.dataset.pr === 'delete' && !confirm('Delete this request? This can\u2019t be undone.')) return; b.disabled = true;
+      fetch(CFG.apiUrl + '/api/planreq/set', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-code': code }, body: JSON.stringify({ id: b.dataset.id, status: b.dataset.pr }) })
+        .then(function (r) { if (!r.ok) throw new Error(); load(); }).catch(function () { b.disabled = false; toast('Couldn\u2019t save that. Try again.'); });
+    });
+  }
   function reviewsAdminPage() {
     var code = '';
     frame('<div class="wizard stack-lg"><h2>Reviews</h2><p class="small muted">Approve every honest review, including low ratings. Hide only spam, abuse or private details. Choosing reviews by their rating is not allowed under the FTC rule on reviews.</p><form id="rvLogin" class="stack" novalidate><input type="text" name="username" value="Event Couture admin" autocomplete="username" hidden><label for="admCode">Admin code</label><input class="input" id="admCode" name="password" type="password" autocomplete="current-password"><div><button class="btn primary" type="submit">Show reviews</button></div></form><div id="rvList" class="stack"></div></div>', { noRibbon: true });
