@@ -21,9 +21,8 @@ with sync_playwright() as p:
         pg.click('#setting [data-v=outdoor]'); pg.click('[data-occ2=wedding]'); check(n, pg.get_attribute('#setting [data-v=outdoor]', 'aria-pressed') == 'true', 'a place she picked herself stays when she changes the occasion')
         pg.click('[data-occ2=baby-shower]')
         pg.click('#next'); pg.wait_for_timeout(300); check(n, '/new/2/' in pg.url, 'no city: stays and asks for it')
-        pg.select_option('#city', 'Houston, TX'); pg.click('#next'); pg.wait_for_selector('.concept', timeout=30000)
-        check(n, '/concepts' in pg.url, 'occasion + city is enough to get looks')
-        pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head')
+        pg.select_option('#city', 'Houston, TX'); pg.click('#next'); pg.wait_for_selector('.plan-head', timeout=30000)
+        check(n, '/concepts' not in pg.url and pg.evaluate("(()=>{const id=location.hash.split('/')[2];return !!JSON.parse(localStorage['ec.events'])[id].concept})()"), 'occasion + city goes straight to the plan with a look picked, no looks screen')
         ev = pg.evaluate("(()=>{const id=location.hash.split('/')[2];return JSON.parse(localStorage['ec.events'])[id]})()")
         check(n, not ev.get('settingOpen'), 'the plan has a place, so packages can build right away (setting=' + str(ev.get('setting')) + ')')
         pg.goto(U + '#/start/birthday/Dallas, TX'); pg.wait_for_selector('#occ')
@@ -45,7 +44,7 @@ with sync_playwright() as p:
         # a home page occasion goes straight to the looks when the city is known, and waits on the basics when it isn't
         pg.goto(U + '#/'); pg.wait_for_selector('.hero'); pg.click('.hero a[data-hchip=birthday]')
         if want:
-            pg.wait_for_selector('.concept', timeout=30000); check('home', '/concepts' in pg.url, where['city'] + ': Birthday on the home page goes straight to the looks')
+            pg.wait_for_selector('.plan-head', timeout=30000); check('home', '/concepts' not in pg.url and '/e/' in pg.url, where['city'] + ': Birthday on the home page goes straight to the plan')
         else:
             pg.wait_for_timeout(1500); check('home', '/new/2/' in pg.url and pg.get_attribute('[data-occ2=birthday]', 'aria-pressed') == 'true', 'no city found: the basics screen waits with Birthday picked')
         pg.close()

@@ -798,7 +798,7 @@
     return { id: uid(), name: '', type: '', guests: 20, expected: 20, city: '', budget: 0, setting: null, hours: 3, date: '', time: '18:00', start: '', kids: false,
       inspiration: { photos: [], links: [], text: '', vibes: [] }, priorities: [], guestsList: [], polls: [], registry: { items: [], funds: [] }, gifts: [], album: [], cohosts: [], checklistDone: {}, split: { people: [] }, payLinks: {}, overrides: {}, exclude: [], include: [], tier: 'F', created: Date.now() };
   }
-  var JUST_CREATED = {};
+  var JUST_CREATED = {}, AUTO_LOOK = {};
   /* Where in the city the venue should be: a short list of neighborhoods people ask for, or any area she types. */
   function areaOptions(city, cur) {
     var list = D.AREAS[city] || [], other = cur && list.indexOf(cur) < 0;
@@ -1072,7 +1072,7 @@
         T('concepts_requested', { event_type: draft.type });   /* no extra review page: straight to the looks */
         var nev = draft; nev.paid = null; nev.created = nev.created || new Date().toISOString().slice(0, 10);
         if (!saveEvent(nev)) return;
-        removeDraft(nev.id); draft = null; JUST_CREATED[nev.id] = true;
+        removeDraft(nev.id); draft = null; JUST_CREATED[nev.id] = true; AUTO_LOOK[nev.id] = true;   /* no looks screen to tap through: straight to the packages */
         location.hash = '#/e/' + nev.id + '/concepts';
       });
       return;
@@ -1111,8 +1111,9 @@
   /* ---------- concepts ---------- */
   function conceptsView(id) {
     var ev = getEvent(id); if (!ev) return notFound(); E.useCountry(ev.city); SHOP_COUNTRY = E.countryOf(ev.city);
-    frame('<div class="stack-lg"><div class="stack"><h2>Three looks for ' + (ev.nameAuto ? 'your ' + esc(ev.culture ? E.typeName(ev) : E.typeName(ev).toLowerCase().replace(/christmas/, 'Christmas')) : esc(ev.name)) + '</h2><p class="muted">Each look has its own colors, atmosphere and decor. Pick one to see what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">' + (function () { var ins = ev.inspiration || {}, src = []; if (ins.inspo) src.push(ev.quickInspo ? 'a popular look for your event' : 'the inspiration photo you chose'); if ((ins.photos || []).length) src.push('your photos'); if (ins.text) src.push('your description'); if ((ins.vibes || []).length) src.push('the colors and vibes you picked'); return src.length ? 'Built from ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' and ' + src[src.length - 1] : src[0]) + '.' : 'Built from your event details.'; })() + '</p>' +
-      '<p class="small looks-for">' + esc([ev.city, plural(ev.guests, 'guest'), settingName(ev)].filter(Boolean).join(' \u00b7 ')) + ' <span class="muted">\u00b7 You can change these after you pick a look.</span></p></div><div id="cs" class="concepts"><div class="loading-concepts" role="status"><span class="spin" aria-hidden="true"></span><span id="lmsg">Reading your inspiration…</span></div></div>' +
+    frame('<div class="stack-lg"><div class="stack"><h2>' + (AUTO_LOOK[ev.id] ? 'Building your plan' : 'Three looks for ' + (ev.nameAuto ? 'your ' + esc(ev.culture ? E.typeName(ev) : E.typeName(ev).toLowerCase().replace(/christmas/, 'Christmas')) : esc(ev.name))) + '</h2><p class="muted">Each look has its own colors, atmosphere and decor. Pick one to see what it costs, venues in your city, vendors, menu and timeline.</p><p class="small muted">' + (function () { var ins = ev.inspiration || {}, src = []; if (ins.inspo) src.push(ev.quickInspo ? 'a popular look for your event' : 'the inspiration photo you chose'); if ((ins.photos || []).length) src.push('your photos'); if (ins.text) src.push('your description'); if ((ins.vibes || []).length) src.push('the colors and vibes you picked'); return src.length ? 'Built from ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' and ' + src[src.length - 1] : src[0]) + '.' : 'Built from your event details.'; })() + '</p>' +
+      '<p class="small looks-for">' + esc([ev.city, plural(ev.guests, 'guest'), settingName(ev)].filter(Boolean).join(' \u00b7 ')) + ' <span class="muted">\u00b7 You can change these after you pick a look.</span></p>' +
+      (AUTO_LOOK[ev.id] ? '<p class="auto-look" role="status"><span class="spin" aria-hidden="true"></span> Designing your look and finding your vendors\u2026</p>' : '') + '</div><div id="cs" class="concepts"><div class="loading-concepts" role="status"><span class="spin" aria-hidden="true"></span><span id="lmsg">Reading your inspiration…</span></div></div>' +
       '<p class="small muted" id="srcNote" hidden></p>' + (ev.usedMoreConcepts && !SELL_EXTRAS ? '' : '<div class="row"><button class="btn ghost" id="more">Show three different looks</button><span class="muted small">You can see three new looks once, free.</span></div>') + '</div>');
     var msgs = ['Reading your inspiration…', 'Choosing colors and decor…', 'Matching the look to your event…', 'Almost ready…'], mi = 0;
     var tick = setInterval(function () { var m = $('#lmsg'); if (!m) return clearInterval(tick); mi = Math.min(msgs.length - 1, mi + 1); m.textContent = msgs[mi]; }, 2500);
@@ -1136,6 +1137,9 @@
       });
     }
     if (ev.concepts && ev.concepts.length) render(ev.concepts); else load([]);
+    /* straight to the packages (Nov 11, 2026): the best-matching look is picked for her; the three looks stay one tap away under Overview, Change look */
+    if (AUTO_LOOK[ev.id] && (function () { try { return localStorage.getItem('ec.testLooks') === '1'; } catch (e) { return false; } })()) delete AUTO_LOOK[ev.id];   /* older tests walk the looks screen */
+    if (AUTO_LOOK[ev.id]) { delete AUTO_LOOK[ev.id]; $('main').classList.add('auto-picking'); var aw = 0, at = setInterval(function () { var first = $('#cs [data-i="0"]'); if (first) { clearInterval(at); T('look_auto', { event_type: ev.type }); first.click(); } else if (++aw > 120 || !$('#cs')) { clearInterval(at); var m = $('main'); if (m) m.classList.remove('auto-picking'); } }, 300); }
     $('#cs').addEventListener('click', function (e) {
       var b = e.target.closest('[data-i]'); if (!b) return;
       ev.concept = ev.concepts[+b.dataset.i]; T('concept_chosen', { look: ev.concept.inspo || ev.concept.id, position: +b.dataset.i + 1, from_photo: ev.concept.inspo ? 'yes' : 'no', event_type: ev.type }); if (ev.nameAuto) ev.name = ev.concept.name; saveEvent(ev); if (AI.live && !ev.settingOpen && !(ev.packages || []).length) { AUTO_PKG = true; location.hash = '#/e/' + ev.id + '/budget'; } else location.hash = '#/e/' + ev.id;   /* straight to the packages: one tap from look to vendors */

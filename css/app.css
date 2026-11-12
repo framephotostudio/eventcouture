@@ -1202,3 +1202,7 @@ html.ec-app .wizard .wiz-act { bottom: calc(64px + env(safe-area-inset-bottom, 0
 .pr-row:last-child { border-bottom: 0; }
 .pr-row s { color: var(--muted); margin-right: 4px; }
 @media (min-width: 700px) { .hero-ctas { gap: 12px; } .hero-ctas .hero-planner { padding: 0 18px; font-size: 1rem; gap: 6px; } .hero-ctas .hero-planner .spk3 { right: 10px; } }
+/* straight to the packages: while the look is picked for her, show one calm loading line instead of the three looks */
+main.auto-picking #cs, main.auto-picking #more, main.auto-picking #srcNote, main.auto-picking .looks-for, main.auto-picking .stack > p.muted { display: none !important; }
+.auto-look { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+main:not(.auto-picking) .auto-look { display: none; }

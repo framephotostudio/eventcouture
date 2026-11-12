@@ -76,3 +76,13 @@ def _click_legacy(self, sel, *a, **k):
     if sel in ('.sheet #useInspo', '#useInspo') or '#/start/' in sel or 'href="#/new"' in sel: _to_step1(self)
     return r
 Page.click = _click_legacy
+# Nov 11, 2026: after the basics, the best look is picked automatically and the plan opens on the packages.
+# Older tests choose a look themselves, so they keep the looks screen (ec.testLooks). tests/quick_start.py covers the new path.
+_goto1 = Page.goto
+def _goto_looks(self, url, *a, **k):
+    if not getattr(self, '_ec_looks', False):
+        self._ec_looks = True
+        try: self.context.add_init_script("try { localStorage.setItem('ec.testLooks', '1') } catch (e) {}")
+        except Exception: pass
+    return _goto1(self, url, *a, **k)
+Page.goto = _goto_looks
