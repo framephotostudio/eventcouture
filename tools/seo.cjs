@@ -21,6 +21,7 @@ OCC.forEach(o => { o.slug = slug(o.name.replace(/’s/, 's')); o.phrase = o.phra
 const CITIES = D.CITIES.filter(c => !/^Other /.test(c.name)).map(c => Object.assign({ slug: slug(c.name) }, c));
 const BIG = ['New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Dallas, TX', 'Miami, FL', 'Atlanta, GA', 'Washington, DC', 'Philadelphia, PA', 'Phoenix, AZ', 'San Diego, CA', 'San Francisco, CA',
   'Seattle, WA', 'Denver, CO', 'Boston, MA', 'Las Vegas, NV', 'Orlando, FL', 'Nashville, TN', 'New Orleans, LA', 'Toronto, ON', 'Vancouver, BC', 'Montreal, QC'];
+require('./planners.cjs').setup({ E, CITIES, BIG });
 
 function evFor(o, city) { return { type: o.type, culture: o.culture, guests: o.guests, expected: o.guests, hours: o.hours, city, setting: 'indoor', time: o.type === 'brunch' ? '11:00' : o.type === 'kids-birthday' ? '14:00' : '18:00', alcohol: ['baby-shower', 'gender-reveal', 'quince', 'sweet16', 'kids-birthday'].includes(o.type) ? 'none' : 'full', kids: o.type === 'kids-birthday', priorities: [], overrides: {} }; }
 function totals(o, city) { const ev = evFor(o, city); E.useCountry(city); const t = ['L', 'S', 'U'].map(k => E.budget(ev, k).total); return t; }
@@ -162,7 +163,7 @@ write('plan/index.html', page({ rel: 1, title: `Event planning guides and costs 
 urls.unshift(BASE, `${BASE}plan/`);
 const comboCount = require('./combos.cjs')({ D, E, OCC, CITIES, page, write, urls, esc, money, totals, evFor, YEAR, BASE, recsIn, catLabel, noteFor });
 const landingPages = require('./landing.cjs')({ D, E, OCC, CITIES, BIG, page, write, urls, esc, money, totals, evFor, YEAR, BASE, INSPO });
-const plannerPages = require('./planners.cjs').build({ D, OCC, page, write, urls, esc, money, totals, YEAR, BASE });
+const plannerPages = require('./planners.cjs').build({ D, OCC, page, write, urls, esc, money, totals, YEAR, BASE, recsIn, catLabel, noteFor, CITIES });
 const comparePages = require('./compare.cjs')({ D, CITIES, page, write, urls, esc, BASE });
 const ideaPages = require('./ideas.cjs')({ OCC, INSPO, page, write, urls, esc, money, totals, BASE, YEAR });
 fs.writeFileSync(path.join(OUT, 'robots.txt'), `# Event Couture: everything public may be crawled. Private plans live behind # links, which search engines don't index.\nUser-agent: *\nAllow: /\n\nSitemap: ${BASE}sitemap.xml\n`);
