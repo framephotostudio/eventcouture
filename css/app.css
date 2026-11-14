@@ -1238,3 +1238,6 @@ main:not(.auto-picking) .auto-look { display: none; }
 .guide-planner .gp-list, .guide .guide-planner ul.gp-list { margin: 0 !important; padding: 0 !important; list-style: none; }
 .guide-planner .gp-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid var(--line); }
 .guide-planner .gp-list li b { color: var(--ink); }
+.pr-pkgs.pr-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pr-pkgs.pr-two:has(> :only-child) { grid-template-columns: minmax(0, 420px); }
+@media (max-width: 760px) { .pr-pkgs.pr-two, .pr-pkgs.pr-two:has(> :only-child) { grid-template-columns: 1fr; } }
