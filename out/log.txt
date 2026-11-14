@@ -1,8 +1,0 @@
-phone names: ['The Atelier', 'The Haute Couture', 'The Soirée']
-phone roadmap present: False
-phone gold button opens: /plan-for-me cards=3
-phone errors []
-desktop names: ['The Atelier', 'The Haute Couture', 'The Soirée']
-desktop roadmap present: False
-desktop gold button opens: /plan-for-me cards=3
-desktop errors []

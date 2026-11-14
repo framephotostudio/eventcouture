@@ -1,15 +1,8 @@
-import os
-from playwright.sync_api import sync_playwright
+import os, urllib.request, re
 os.makedirs('out',exist_ok=True); log=lambda m: open('out/log.txt','a').write(str(m)+'\n')
-with sync_playwright() as p:
-    b=p.chromium.launch()
-    for tag,vp in [('phone',{'width':390,'height':844}),('desktop',{'width':1280,'height':860})]:
-        pg=b.new_page(viewport=vp); errs=[]; pg.on('pageerror',lambda e: errs.append(str(e)[:200]))
-        pg.goto('https://eventcouture.app/?v=pk#/plan-for-me'); pg.wait_for_selector('#prPkgs',timeout=30000); pg.wait_for_timeout(1500)
-        log(tag+' names: '+str(pg.eval_on_selector_all('.pr-name','e=>e.map(x=>x.textContent)')))
-        log(tag+' roadmap present: '+str('roadmap' in pg.content().lower()))
-        pg.screenshot(path='out/'+tag+'.png',full_page=True)
-        pg.goto('https://eventcouture.app/?v=pk#/'); pg.wait_for_selector('.hero'); pg.click('.hero-planner'); pg.wait_for_timeout(1500)
-        log(tag+' gold button opens: '+pg.url.split('#')[1]+' cards='+str(len(pg.query_selector_all('.pr-pkg'))))
-        log(tag+' errors '+str(errs))
-    b.close()
+for s in ['houston-arabic-wedding-planner','charlotte-wedding-planner','toronto-indian-wedding-planner','boise-party-planner','virtual-wedding-planner','plan/houston-tx']:
+    try:
+        r=urllib.request.urlopen('https://eventcouture.app/'+s+'/?v=pl',timeout=30); t=r.read().decode()
+        log(s+' '+str(r.status)+' '+re.search(r'<h1[^>]*>(.*?)</h1>',t,re.S).group(1)[:60]+(' | planner links: '+str(t.count('-planner/')) if 'plan/' in s else ''))
+    except Exception as e: log(s+' ERR '+str(e))
+sm=urllib.request.urlopen('https://eventcouture.app/sitemap.xml',timeout=30).read().decode(); log('sitemap planner urls: '+str(len(re.findall(r'-planner/</loc>',sm))))
