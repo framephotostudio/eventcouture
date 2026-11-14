@@ -1232,3 +1232,9 @@ main:not(.auto-picking) .auto-look { display: none; }
   .pr-terms { text-align: left; }
   .block-phone { width: 100%; }
 }
+/* planning-guide pages: the "Rather have us plan it for you?" box */
+.guide-planner { border-color: var(--champagne); background: linear-gradient(180deg, var(--champagne-soft), var(--surface) 70%); }
+.guide-planner .badge.sale { background: var(--blush, #f6e3e8); color: var(--ink); font-weight: 600; border-color: transparent; }
+.guide-planner .gp-list, .guide .guide-planner ul.gp-list { margin: 0 !important; padding: 0 !important; list-style: none; }
+.guide-planner .gp-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid var(--line); }
+.guide-planner .gp-list li b { color: var(--ink); }

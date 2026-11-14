@@ -13,6 +13,16 @@ module.exports = function ({ D, E, OCC, CITIES, page, write, urls, esc, money, t
   /* the same vendor picks and order the app shows, taken from js/app.js */
   const src = require('fs').readFileSync(require('path').join(__dirname, '../js/app.js'), 'utf8');
   const recFor = eval('(' + src.match(/  function recFor\(ev, cat\) \{[\s\S]*?\n  \}\n/)[0].replace('function recFor', 'function') + ')');
+  /* The planning packages and prices, taken from js/app.js so the guides always match the "Let us plan it for you" page */
+  const PKGS = eval(src.match(/var PR_PKGS = (\[[\s\S]*?\]\]?\s*\}\]);/)[1]);
+  const BIGO = /^(wedding|engagement|quince|gala|corporate|conference|team-building|sweet16|anniversary|retirement|holiday|christmas)$/;
+  const plannerBox = (o, cityShort, up) => {
+    const big = !!o.culture || BIGO.test(o.key), list = big ? PKGS.filter(k => k.id !== 'Party Planning') : PKGS.filter(k => k.id === 'Party Planning');
+    return `<div class="panel stack guide-planner"><div class="row" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><b>Rather have us plan it for you?</b><span class="badge sale">Holiday special</span></div>` +
+      `<p class="small muted">Event Couture plans your ${esc(o.phrase.replace(/^an? /, ''))} in ${esc(cityShort)} for you, by phone and online. No payment to send a request.</p>` +
+      `<ul class="plain gp-list">${list.map(k => `<li><span><b>${esc(k.name)}</b> <span class="small muted">\u00b7 ${esc(k.id)}</span></span><span><s class="small muted">${k.was}</s> <b>from ${k.from}</b></span></li>`).join('')}</ul>` +
+      `<div class="cta"><a class="btn gold" href="${up}#/plan-for-me">See what\u2019s included</a></div></div>`;
+  };
   const W = r => r.weight != null ? r.weight : (r.first ? 100 : 0) + (r.cities ? 20 : r.states ? 10 : 0) + (r.top ? 5 : 0);
   for (const c of CITIES) {
     const cityShort = c.name.split(',')[0], country = E.countryOf(c.name);
@@ -37,6 +47,7 @@ module.exports = function ({ D, E, OCC, CITIES, page, write, urls, esc, money, t
 <div class="cta"><a class="btn gold" href="../../../#/start/${o.start}/${encodeURIComponent(c.name)}">Get my exact budget, free</a><span class="small muted">Your guest count, your style, local vendors.</span></div>
 <div class="table-wrap panel"><table class="qty"><thead><tr><th>Budget level</th><th class="n">${o.guests} guests</th></tr></thead><tbody><tr><td>Luxe for Less <span class="small muted">(smart swaps)</span></td><td class="n">${money(t[0], c.name)}</td></tr><tr><td><b>Signature</b> <span class="small muted">(key pieces by pros)</span></td><td class="n"><b>${money(t[1], c.name)}</b></td></tr><tr><td>Ultra Luxe <span class="small muted">(full service)</span></td><td class="n">${money(t[2], c.name)}</td></tr><tr><td>Per guest (Signature)</td><td class="n">${money(t[1] / o.guests, c.name)}</td></tr></tbody></table></div>
 <h2>Budget breakdown in ${esc(cityShort)} (Signature)</h2><div class="table-wrap panel"><table class="qty"><tbody>${b.items.map(i => `<tr><td>${esc(i.name)}</td><td class="n">${money(i.mid, c.name)}</td></tr>`).join('')}<tr><td>Contingency (unexpected costs)</td><td class="n">${money(b.contingency, c.name)}</td></tr><tr><td><b>Estimated total</b></td><td class="n"><b>${money(b.total, c.name)}</b></td></tr></tbody></table></div>
+${country.id === 'US' ? plannerBox(o, cityShort, '../../../') : ''}
 ${rateRows ? `<h2>Vendor rates in ${esc(cityShort)}</h2><div class="table-wrap panel"><table class="qty"><tbody>${rateRows}</tbody></table></div>` : ''}
 <h2>Planning notes</h2><p>${esc(noteFor(c))}</p>
 ${myRecs.length ? `<h2>Event Couture picks in ${esc(cityShort)}</h2><p class="small muted">Recommended by Event Couture, not paid placement. Always check reviews and contracts yourself.</p><ul class="plain">${myRecs.map(r => `<li><b>${esc(r.name)}</b> · ${esc(r.cats.map(catLabel).join(', '))}${r.ig ? ` · <a href="https://instagram.com/${esc(r.ig)}" rel="nofollow noopener" target="_blank">@${esc(r.ig)}</a>` : ''}</li>`).join('')}</ul>` : ''}
