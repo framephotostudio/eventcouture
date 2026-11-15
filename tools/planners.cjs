@@ -56,7 +56,7 @@ function build(ctx) {
 
   for (const city of Object.keys(PLACES)) {
     const P = PLACES[city], c = P.short, area = P.near ? `${c} and nearby, including ${P.near.slice(0, -1).join(', ')} and ${P.near[P.near.length - 1]}` : `${c} and the surrounding area`;
-    const cityObj = CITIES.find(x => x.name === city), usd = P.cc === 'US' ? '' : ' Planning fees are in US dollars.';
+    const cityObj = CITIES.find(x => x.name === city), usd = P.cc === 'US' ? '' : ' \u00b7 Planning fees in US dollars';
     const picks = (recsIn(city) || []).slice(0, 8);
     const siblings = listFor(city);
     for (const k of KINDS(c, P)) {
@@ -92,6 +92,42 @@ ${how}${cta(o, city)}${more}${P.nearCities.length ? `<h2>${esc(k.key === 'event'
         [`Can I plan it myself instead?`, `Yes. Event Couture’s free planner builds the look, a budget for ${c} prices, local vendors and a checklist, and you can switch to our planning service anytime.`]];
       add(slug, title, `${h1}: ${k.pk === 'small' ? 'party planning from $500' : 'vendor booking from $1,900 and full planning from $2,500'}, holiday special. We find, negotiate and book your vendors in ${c}, by phone and online.`, h1, body, faqs, { '@type': 'City', name: city });
     }
+  }
+
+  /* Destination wedding planners: the places couples travel to marry, planned remotely from home */
+  const DEST = ['Mallorca, Spain', 'Marbella, Spain', 'Barcelona, Spain', 'Santorini, Greece', 'Mykonos, Greece', 'Athens, Greece', 'Amalfi Coast, Italy', 'Lake Como, Italy', 'Tuscany, Italy', 'Florence, Italy', 'Rome, Italy', 'Provence, France', 'Paris, France', 'Nice, France', 'Algarve, Portugal', 'Lisbon, Portugal', 'Dubrovnik, Croatia', 'Split, Croatia', 'Paphos, Cyprus', 'Antalya, Turkey', 'Bodrum, Turkey', 'Istanbul, Turkey', 'Cotswolds, UK', 'Edinburgh, UK', 'Cancun, Mexico', 'Tulum, Mexico', 'Los Cabos, Mexico', 'Puerto Vallarta, Mexico', 'San Miguel de Allende, Mexico', 'Punta Cana, Dominican Republic', 'Cartagena, Colombia', 'Bali, Indonesia', 'Phuket, Thailand', 'Koh Samui, Thailand', 'Boracay, Philippines', 'Dubai, UAE', 'Abu Dhabi, UAE', 'Marrakech, Morocco', 'Beirut, Lebanon', 'Jounieh, Lebanon', 'Dead Sea, Jordan', 'AlUla, Saudi Arabia', 'El Gouna, Egypt', 'Udaipur, India', 'Jaipur, India', 'Goa, India', 'Cape Town, South Africa', 'Queenstown, New Zealand', 'Kyoto, Japan']
+    .map(n => CITIES.find(c => c.name === n)).filter(Boolean);
+  const destSlug = c => `destination-wedding-planner-${slugOf(c.name.split(',')[0])}`;
+  const wedO = occ('wedding');
+  for (const c of DEST) {
+    const place = c.name, short = place.split(',')[0], country = place.split(', ')[1] || '', t = totals(wedO, place), slug = destSlug(c);
+    const picks = (recsIn(place) || []).slice(0, 8);
+    const where = country && country !== short ? `${short}, ${country}` : short;
+    const others = DEST.filter(x => x !== c && (x.name.split(', ')[1] === country)).concat(DEST.filter(x => x !== c && x.name.split(', ')[1] !== country)).slice(0, 10);
+    const body = `<p class="lead">Dreaming of a wedding in ${esc(where)}? Event Couture plans it with you remotely from home: we find and book your venue and vendors in ${esc(short)}, negotiate prices, keep every quote in one place and build the timeline your vendors follow, so you arrive to a wedding that is ready.</p>${cta(wedO, place)}
+<h2>Planning packages</h2>${cards('big', ' \u00b7 Planning fees in US dollars')}
+<h2>What a wedding costs in ${esc(short)}</h2><p>For about ${wedO.guests} guests, a wedding in ${esc(short)} typically costs <b>${money(t[0], place)}</b> done smartly, <b>${money(t[1], place)}</b> with the key pieces handled by pros, and <b>${money(t[2], place)}</b> or more for full-service luxury in ${YEAR}, before travel and our planning fee. Destination weddings are often smaller, and every line scales with your guest count. <a href="../plan/${c.slug}/wedding/">See the full wedding budget for ${esc(short)}</a>.</p>
+<h2>Planning notes for ${esc(short)}</h2><p>${esc(noteFor(c))}</p>
+${picks.length ? `<h2>Event Couture picks in ${esc(short)}</h2><p class="small muted">Vendors we recommend in ${esc(short)}; not paid placement.</p><ul class="plain">${picks.map(r => `<li><b>${esc(r.name)}</b> · ${esc(r.cats.map(catLabel).join(', '))}</li>`).join('')}</ul>` : ''}
+<h2>How it works</h2><ol class="plain"><li><b>Send a request.</b> Tell us your destination, dates and guest count. No payment to send it.</li><li><b>We get back to you within 24 hours</b> to talk through your vision and budget.</li><li><b>We research, compare and book</b> your venue and vendors in ${esc(short)}, negotiating for you. You approve every choice and pay your vendors directly.</li><li><b>You get a full timeline</b> shared with every vendor, plus a guest page with travel details and RSVPs.</li></ol>${cta(wedO, place)}
+<h2>More destination weddings</h2><div class="cols">${others.map(x => `<a href="../${destSlug(x)}/">${esc(x.name.split(',')[0])}</a>`).join('')}<a href="../destination-wedding-planner/">All destinations</a></div>`;
+    const faqs = [
+      [`How much does a destination wedding planner for ${short} cost?`, 'The Atelier (vendor booking) starts at $1,900 and The Haute Couture (full planning) at $2,500, with our holiday special prices, in US dollars. Vendor costs are separate and paid directly to your vendors.'],
+      [`Can you plan a wedding in ${short} if we live in the US or Canada?`, `Yes. Planning is by phone and online, so you can plan your ${short} wedding from home. Your venue and vendors run the day itself, following the timeline we build with them.`],
+      [`Can we legally marry in ${short}?`, `Rules for foreign couples differ by country and can change, so we point you to the official requirements early. Many couples hold a legal ceremony at home and the celebration in ${short}.`],
+      ['How far ahead should we book?', 'Ideally 12 to 18 months ahead for a destination wedding, since popular venues and peak dates book early and guests need time to arrange travel.'],
+      ['Can we plan it ourselves instead?', `Yes. Event Couture’s free planner builds the look, a budget for ${short} prices, local vendors and a checklist, and you can switch to our planning service anytime.`]];
+    add(slug, `Destination Wedding Planner in ${where}`, `Destination wedding planner for ${where}: we plan remotely from home and book your venue and vendors in ${short}. Vendor booking from $1,900, full planning from $2,500 (holiday special).`, `Destination wedding planner in ${where}`, body, faqs, { '@type': 'Place', name: where });
+  }
+  /* the hub listing every destination */
+  {
+    const byCountry = {}; DEST.forEach(c => { const k = c.name.split(', ')[1] || c.name; (byCountry[k] = byCountry[k] || []).push(c); });
+    const body = `<p class="lead">Event Couture plans destination weddings remotely from home: we find and book your venue and vendors abroad, negotiate prices and build the timeline your vendors follow. Choose your destination to see its costs and planning notes.</p><div class="cta"><a class="btn gold" href="../#/plan-for-me">See packages and send a request</a></div>
+<h2>Planning packages</h2>${cards('big', ' \u00b7 Planning fees in US dollars')}
+<h2>Destinations</h2><div class="cols">${Object.keys(byCountry).sort().map(k => byCountry[k].map(c => `<a href="../${destSlug(c)}/">${esc(c.name.split(',')[0])}${c.name.includes(',') ? ', ' + esc(k) : ''}</a>`).join('')).join('')}</div>`;
+    const faqs = [['What does a destination wedding planner do?', 'Finds and books your venue and vendors abroad, negotiates prices, keeps quotes and choices in one place, and builds the timeline your vendors follow, all by phone and online.'],
+      ['How much does it cost?', 'Vendor booking starts at $1,900 and full planning at $2,500, with our holiday special prices, in US dollars. Vendor costs are separate.']];
+    add('destination-wedding-planner', 'Destination Wedding Planner: Plan Your Wedding Abroad', `Destination wedding planner: we plan your wedding abroad remotely, in ${DEST.length} destinations from Mallorca and Santorini to Cancún, Bali and Dubai. From $1,900 (holiday special).`, 'Destination wedding planner', body, faqs, { '@type': 'Place', name: 'Worldwide' });
   }
 
   /* Virtual planners: anywhere in the US */
