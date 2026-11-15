@@ -1246,3 +1246,35 @@ main:not(.auto-picking) .auto-look { display: none; }
 .book-for-me b { color: var(--ink); font-family: var(--display); font-size: 1.15rem; display: block; margin-bottom: 2px; }
 .book-for-me .btn { flex: none; }
 @media (max-width: 640px) { .book-for-me { flex-direction: column; align-items: stretch; } .book-for-me .btn { width: 100%; } }
+
+/* ===== Light theme (Nov 2026): ivory satin, wine and metallic gold, like the Event Couture flyer =====
+   The header and footer move from a dark plum band to warm ivory with gold rules; the full-color logo
+   (wine "Event", gold "Couture") sits on it. Wine stays for buttons and headings, framed in gold. */
+body { background: radial-gradient(120% 60% at 50% 0%, #FFFDF9 0%, var(--bg) 60%) fixed, var(--bg); }
+.topbar { background: linear-gradient(180deg, #FFFDF9 0%, #F7EEE1 100%); border-bottom: 1px solid rgba(182, 154, 104, .45);
+  box-shadow: 0 8px 22px -18px rgba(75, 18, 53, .45); }
+.topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, #C9A35B 18%, #EAD29A 50%, #C9A35B 82%, transparent 100%); }
+.topbar .icon-btn { background: #FFFFFF; border: 1px solid rgba(182, 154, 104, .75); color: var(--ink); box-shadow: 0 1px 2px rgba(75, 18, 53, .08); }
+.topbar .icon-btn:hover { background: #FBF4EA; }
+.brand.logo-mark img { aspect-ratio: 401 / 200; filter: none; }
+.brand.logo-mark .by { color: var(--ink) !important; -webkit-text-fill-color: var(--ink); background: none !important; text-shadow: none !important; }
+.preview-ribbon { background: #F3E7D5; color: var(--ink); border-bottom: 1px solid rgba(182, 154, 104, .45); }
+/* buttons: wine with a gold hairline, like the flyer's pills */
+.btn, .btn.primary, .btn.gold { background: linear-gradient(180deg, #5C1A43 0%, #4B1235 100%); border: 1px solid #B69A68; color: #FFFFFF; }
+.btn:hover, .btn.primary:hover, .btn.gold:hover { background: linear-gradient(180deg, #6A2150 0%, #551840 100%); }
+.btn.ghost { background: #FFFFFF; border-color: rgba(182, 154, 104, .7); color: var(--ink); }
+.btn.ghost:hover { background: #FBF4EA; }
+/* section titles get a small gold flourish */
+.section > h2::after { content: ""; display: block; width: 56px; height: 2px; margin-top: 10px; border-radius: 2px;
+  background: linear-gradient(90deg, #C9A35B, #EAD29A, #C9A35B); }
+.section[style*="text-align:center"] > h2::after { margin-left: auto; margin-right: auto; }
+/* cards: white on ivory with a warm gold edge */
+.panel { border-color: rgba(182, 154, 104, .35); }
+/* footer: ivory, wine text, gold rule on top */
+footer.site { background: linear-gradient(180deg, #FBF6EE 0%, #F3E8D8 100%); color: var(--muted); border-top: 0; position: relative; }
+footer.site::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: linear-gradient(90deg, transparent 0%, #C9A35B 18%, #EAD29A 50%, #C9A35B 82%, transparent 100%); }
+footer.site a { color: var(--ink); text-decoration-color: rgba(182, 154, 104, .8); }
+footer.site .name { color: var(--ink); }
+footer.site img { box-shadow: 0 0 0 1px rgba(182, 154, 104, .6); }
+@media (min-width: 700px) { .topbar { height: calc(env(safe-area-inset-top, 0px) + 72px); } .brand.logo-mark img { height: 60px !important; width: auto !important; aspect-ratio: 401 / 200 !important; object-fit: contain; } .brand.logo-mark .by { font-size: 22px !important; letter-spacing: .22em !important; } }
