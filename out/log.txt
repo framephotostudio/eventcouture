@@ -1,0 +1,5 @@
+destination-wedding-planner ok Destination wedding planner | True
+destination-wedding-planner-mallorca ok Destination wedding planner in Mallorca, Spain | True
+destination-wedding-planner-cancun ok Destination wedding planner in Cancun, Mexico | True
+toronto-wedding-planner ok Wedding planner in Toronto | True
+planner urls: 592
