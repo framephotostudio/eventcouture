@@ -1278,3 +1278,22 @@ footer.site a { color: var(--ink); text-decoration-color: rgba(182, 154, 104, .8
 footer.site .name { color: var(--ink); }
 footer.site img { box-shadow: 0 0 0 1px rgba(182, 154, 104, .6); }
 @media (min-width: 700px) { .topbar { height: calc(env(safe-area-inset-top, 0px) + 72px); } .brand.logo-mark img { height: 60px !important; width: auto !important; aspect-ratio: 401 / 200 !important; object-fit: contain; } .brand.logo-mark .by { font-size: 22px !important; letter-spacing: .22em !important; } }
+
+/* ===== Golden glow theme (Nov 15, 2026), matching the Instagram profile picture:
+   warm gold light in the middle, deep wine lettering, rich metallic gold, rose-copper at the edges ===== */
+:root { --bg: #FBF2E4; --tint: #F7E8D0; --champagne: #C8902F; --gold-text: #8A5A14; --champagne-soft: #FAEBD3; --line: #EBD9BC; --ink: #4A0D24; }
+body { background: radial-gradient(90% 55% at 50% 0%, #FFF8EA 0%, #FBF2E4 55%, #F6E4C8 100%) fixed, #FBF2E4; }
+.topbar { background: radial-gradient(70% 140% at 50% 50%, #FFF7E4 0%, #F9DFAE 55%, #EDB979 100%); border-bottom: 1px solid #C8902F; box-shadow: 0 10px 24px -18px rgba(120, 50, 20, .55); }
+.topbar::after { background: linear-gradient(90deg, #B5652F 0%, #E3B04E 25%, #FCE7A8 50%, #E3B04E 75%, #B5652F 100%); }
+.topbar .icon-btn { background: rgba(255, 250, 238, .85); border-color: #C8902F; color: var(--ink); }
+.btn, .btn.primary, .btn.gold { background: linear-gradient(180deg, #651530 0%, #4A0D24 100%); border: 1px solid #D9A441; color: #FFF6E6; }
+.btn:hover, .btn.primary:hover, .btn.gold:hover { background: linear-gradient(180deg, #74193A 0%, #57112B 100%); }
+.btn.ghost { background: #FFFBF3; border-color: #D9A441; color: var(--ink); }
+.btn.ghost:hover { background: #FBEBCF; }
+.section > h2::after { background: linear-gradient(90deg, #B5652F, #E3B04E, #FCE7A8, #E3B04E); width: 64px; }
+.panel { border-color: rgba(200, 144, 47, .35); }
+.hero-planner { background: linear-gradient(135deg, #F7D58A 0%, #E3B04E 45%, #C8902F 100%) !important; color: #3E0A1E !important; border-color: #B5652F !important; }
+footer.site { background: radial-gradient(80% 120% at 50% 0%, #FBE6C0 0%, #EEC08A 60%, #D99868 100%); color: #5A2A1E; }
+footer.site::before { background: linear-gradient(90deg, #B5652F 0%, #E3B04E 25%, #FCE7A8 50%, #E3B04E 75%, #B5652F 100%); }
+footer.site a, footer.site .name { color: var(--ink); }
+.book-for-me, .guide-planner { background: radial-gradient(120% 140% at 30% 0%, #FFF6E2 0%, #F9E2B6 70%, #F2CC91 100%); border-color: #C8902F; }
