@@ -1600,6 +1600,13 @@
   };
 
   /* Overview: three budget versions, pros and cons, guardian, concierge */
+  /* At the moment she's looking at her packages: offer to have Event Couture book it all, with the matching planning package */
+  function bookForMeBox(ev) {
+    if (CFG.app || ev.sample) return '';
+    var big = !!ev.culture || /wedding|engagement|quince|gala|corporate|conference|team|sweet16|anniversary|retirement|holiday|christmas/i.test(ev.type || '');
+    var k = PR_PKGS[big ? 0 : 2], k2 = big ? PR_PKGS[1] : null;
+    return '<div class="book-for-me"><div class="grow"><b>Love this plan? Let us book it for you.</b><span class="small muted"> We contact, compare and book every vendor in ' + esc((ev.city || '').split(',')[0] || 'your city') + ', by phone and online. ' + esc(k.name) + ' (' + esc(k.id.toLowerCase()) + ') from ' + k.from + (k2 ? ' \u00b7 ' + esc(k2.name) + ' (' + esc(k2.id.toLowerCase()) + ') from ' + k2.from : '') + '. Holiday special, no payment to send a request.</span></div><a class="btn gold" href="#/plan-for-me" data-planner data-bfm>See what\u2019s included</a></div>';
+  }
   function plannerBox(ev) { return CFG.app || ev.sample ? '' : '<div class="panel planner-box"><div class="grow"><b>Want us to plan it for you?</b><span class="small muted"> Our paid planning service finds and books your vendors and builds your schedule, by phone and online. Send us a quick request, or text, Instagram or email us, and we\u2019ll get back to you.</span></div><div class="row"><a class="btn small gold" href="#/plan-for-me" data-planner>Send a request</a><a class="btn small ghost" href="sms:+17135343603" data-planner>Text 713-534-3603</a><a class="btn small ghost" href="https://instagram.com/always_luxe" target="_blank" rel="noopener" data-planner>Instagram @always_luxe</a><a class="btn small ghost" href="mailto:hello@eventcouture.app" data-planner>Email us</a></div></div>'; }
   TAB_VIEWS.overview = function (ev, b) {
     var all = E.allBudgets(ev);
@@ -2137,7 +2144,7 @@
         '<p class="note small pkg-x-note">Don\u2019t need something? Tap <b>\u00d7</b> to remove it. It comes out of every package and your budget, and your estimated total goes down to match. You can add it back anytime.' + (ev.sample ? '' : ' <button type="button" class="link small" data-pkextras>+ Add an item</button>') + '</p>' +
         (pks.length === 1 && !ev.sample ? '<div class="pkg-one-more"><span class="small muted">Want to compare? We make a second package with different top-rated picks.</span><button class="btn small ghost" id="pkgMore">+ Compare with another package</button></div>' : '') + '<div class="pkg-cmp-wrap"><table class="pkg-cmp' + (pks.length === 1 ? ' one' : '') + '" style="--pkn:' + (ncol - 1) + '"><thead>' + head + '</thead><tbody>' + rowsH + rideRow(ev, b, true, ncol) + '</tbody></table></div><p class="small muted">Places and ratings from Google Maps; \u2605 Event Couture Picks are recommended by Event Couture, not paid placement.</p>' +
         (ex.length && !ev.sample ? '<p class="small muted">Removed: ' + ex.map(function (id) { return esc(catName(id, ev)) + ' <button class="link small" data-pkunx="' + id + '">Add back</button>'; }).join(' · ') + '</p>' : '') +
-        '<p class="small muted" id="pkgMsg" aria-live="polite"></p></div>';
+        '<p class="small muted" id="pkgMsg" aria-live="polite"></p>' + bookForMeBox(ev) + '</div>';
     }
     var cp = pks[Math.min(ev.pkgChosen || 0, pks.length - 1)], skipped = ev.pkgSkipped || [];
     var open = cats.filter(function (c) { return statusOf(ev, c.cat) !== 'booked'; });

@@ -1241,3 +1241,8 @@ main:not(.auto-picking) .auto-look { display: none; }
 .pr-pkgs.pr-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .pr-pkgs.pr-two:has(> :only-child) { grid-template-columns: minmax(0, 420px); }
 @media (max-width: 760px) { .pr-pkgs.pr-two, .pr-pkgs.pr-two:has(> :only-child) { grid-template-columns: 1fr; } }
+/* "Love this plan? Let us book it for you." under her packages */
+.book-for-me { display: flex; align-items: center; gap: 16px; padding: 16px 18px; border-radius: var(--r-lg, 16px); border: 1.5px solid var(--champagne); background: linear-gradient(135deg, var(--champagne-soft), var(--surface) 70%); }
+.book-for-me b { color: var(--ink); font-family: var(--display); font-size: 1.15rem; display: block; margin-bottom: 2px; }
+.book-for-me .btn { flex: none; }
+@media (max-width: 640px) { .book-for-me { flex-direction: column; align-items: stretch; } .book-for-me .btn { width: 100%; } }
