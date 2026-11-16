@@ -46,6 +46,11 @@ with sync_playwright() as p:
         dd = [e[2] for e in ev() if e[1] == 'details_done'][0]
         check(dd.get('event_type') == 'graduation' and dd.get('start') == 'inspiration_photo' and dd.get('budget_band') == '5001-10000', tag + ': details_done ' + str(dd))
         sc = [e[2] for e in ev() if e[1] == 'shop_click'][0]; check(sc.get('list') == 'get_this_look' and sc.get('store') == 'amazon', tag + ': shop_click ' + str(sc))
+        # leads: each tap to text Event Couture is a lead; a vendor sending a verification code is not
+        pg.evaluate("""() => { const d = document.createElement('div'); d.innerHTML = '<a id="tLead" href="sms:+17135343603">Text</a><div class="vverify"><a id="tVer" href="mailto:hello@eventcouture.app">x</a></div>'; d.addEventListener('click', e => e.preventDefault()); document.body.appendChild(d); }""")
+        pg.click('#tVer'); check(not [e for e in ev() if e[1] == 'generate_lead' and e[2].get('lead_source') == 'email_us'], tag + ': vendor code counted as a lead')
+        pg.click('#tLead'); pg.wait_for_timeout(900); pg.click('#tLead')
+        gl = [e[2] for e in ev() if e[1] == 'generate_lead']; check(len(gl) == 2 and all(g.get('lead_source') == 'text_us' for g in gl), tag + ': text tap lead ' + str(gl))
         ctx.close()
     # Do Not Track and local copies send nothing
     ctx = b.new_context(extra_http_headers={'DNT': '1'}); pg = ctx.new_page(); pg.add_init_script("Object.defineProperty(navigator,'doNotTrack',{get:()=>'1'})")

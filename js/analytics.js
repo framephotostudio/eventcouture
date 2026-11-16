@@ -74,6 +74,31 @@
       gtag('event', 'page_view', { page_path: c.path, page_location: location.origin + c.path, page_title: c.title, app_name: 'event_couture', app_platform: platform });
     }
     window.addEventListener('hashchange', pageView); window.addEventListener('load', pageView);
+
+    /* Leads, for Google's "Leads" and "Qualified leads" reports. Only the kind of request is sent, never what was typed.
+       generate_lead: someone reached out (quote request, question to a vendor, email sign-up, text/email/Instagram tap to us).
+       qualify_lead: someone asked for the paid planning or booking service. */
+    var LEADS = [[/\/api\/planreq\/new$/, 'planning_service', true], [/\/api\/concierge\/new$/, 'booking_service', true],
+      [/\/api\/req\/new$/, 'vendor_quote'], [/\/api\/ask\/new$/, 'vendor_question'], [/\/api\/optin$/, 'email_signup'], [/\/api\/move\/new$/, 'moving_quote']];
+    function lead(kind, qualified) { track('generate_lead', { lead_source: kind }); if (qualified) track('qualify_lead', { lead_source: kind }); }
+    if (window.fetch) {
+      var f0 = window.fetch;
+      window.fetch = function (u, o) {
+        var p = f0.apply(this, arguments);
+        try {
+          var url = String(u && u.url || u || '').split('?')[0], post = o && String(o.method || '').toUpperCase() === 'POST';
+          var hit = post && LEADS.filter(function (l) { return l[0].test(url); })[0];
+          if (hit) p.then(function (r) { if (r && r.ok) lead(hit[1], hit[2]); }, function () {});
+        } catch (e) {}
+        return p;
+      };
+    }
+    document.addEventListener('click', function (e) {
+      var a = e.target && e.target.closest && e.target.closest('a[href]'); if (!a || a.closest('.vverify')) return; var h = a.getAttribute('href') || '';   /* a vendor sending their ownership code is not a lead */
+      if (/^(sms|tel):/i.test(h) && /713.?534.?3603/.test(h)) lead('text_us');   /* only texts or calls to us, not to a vendor or a friend */
+      else if (/^mailto:hello@eventcouture\.app/i.test(h)) lead('email_us');
+      else if (/instagram\.com\/always_luxe|ig\.me\/m\/always_luxe/i.test(h)) lead('instagram_us');
+    }, true);
     if (app) track('app_open');
 
     /* Taps, counted by what was tapped (never by what was typed). */
