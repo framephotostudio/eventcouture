@@ -3786,7 +3786,7 @@
   }
   /* ---------- Reviews of Event Couture ----------
      A host can rate her plan from the overview. Nothing shows on the site until the owner approves it at #/admin/reviews.
-     People who know the founder say so, and the site shows that label beside their words (FTC rule on reviews). */
+     People who know the founder say so; only the owner sees that, in the admin page (not shown on the site). */
   var REV_LABEL = { friend: 'Friend of the founder', family: 'Family of the founder' };
   function starsText(n) { return '★★★★★'.slice(0, n) + '<span class="rv-off">' + '★★★★★'.slice(n) + '</span>'; }
   function reviewCard(ev) {
@@ -3825,7 +3825,7 @@
     fetch(CFG.apiUrl + '/api/reviews').then(function (r) { return r.ok ? r.json() : { reviews: [] }; }).then(function (j) {
       var list = (j.reviews || []).slice(0, 6); if (!list.length || !document.body.contains(box)) return;
       box.innerHTML = '<h2>What hosts are saying</h2><p class="muted">Real reviews from people who planned with Event Couture.</p><div class="rv-grid">' + list.map(function (r) {
-        return '<figure class="panel rv-item"><div class="rv-st" aria-label="' + r.stars + ' out of 5 stars">' + starsText(r.stars) + '</div><blockquote>' + esc(r.text) + '</blockquote><figcaption><b>' + esc(r.name) + '</b>' + (r.event || r.city ? '<span class="small muted"> · ' + esc([r.event, r.city].filter(Boolean).join(', ')) + '</span>' : '') + (r.label ? '<span class="rv-tag">' + esc(r.label) + '</span>' : '') + '</figcaption></figure>';
+        return '<figure class="panel rv-item"><div class="rv-st" aria-label="' + r.stars + ' out of 5 stars">' + starsText(r.stars) + '</div><blockquote>' + esc(r.text) + '</blockquote><figcaption><b>' + esc(r.name) + '</b>' + (r.event || r.city ? '<span class="small muted"> · ' + esc([r.event, r.city].filter(Boolean).join(', ')) + '</span>' : '') + '</figcaption></figure>';
       }).join('') + '</div>';
       box.hidden = false;
     }).catch(function () {});

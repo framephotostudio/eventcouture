@@ -629,7 +629,7 @@ function adminOk(req, env) {
 }
 
 // ---------- Reviews of Event Couture: hosts write them after planning; none show until the owner approves them ----------
-// People who know the founder pick that when they write, and the site shows it beside their review (FTC rule on reviews).
+// People who know the founder pick that when they write, and only the owner sees it in the admin page; it is not shown on the site.
 const REV_REL = { none: '', friend: 'Friend of the founder', family: 'Family of the founder' };
 async function reviewNew(env, body, json) {
   const stars = Math.round(+body.stars || 0);
@@ -673,7 +673,7 @@ async function reviewSet(env, body, json) {
   else return json({ error: 'Choose approve, hide or delete.' }, 400);
   /* The public list is one stored key, rebuilt only when the owner changes something, so showing reviews costs one read. */
   let list = ((await env.EC_KV.get('revs:approved', 'json')) || []).filter(x => x.id !== id);
-  if (body.status === 'approved') list.unshift({ id: r.id, stars: r.stars, text: r.text, name: r.name, event: r.event, city: r.city, label: REV_REL[r.rel] || '', at: r.at });
+  if (body.status === 'approved') list.unshift({ id: r.id, stars: r.stars, text: r.text, name: r.name, event: r.event, city: r.city, label: '', at: r.at });
   await env.EC_KV.put('revs:approved', JSON.stringify(list.slice(0, 60)));
   return json({ ok: true });
 }
