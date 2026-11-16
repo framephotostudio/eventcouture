@@ -68,7 +68,7 @@ with sync_playwright() as p:
         pg.select_option('#country','US'); pg.wait_for_timeout(150); pg.select_option('#city','Houston, TX'); pg.fill('#guests','200'); pg.click('#setting [data-v=indoor]'); pg.click('#next')
         pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
         package(pg, base); st=pg.inner_text('#pkgSum')
-        check(n, 'Kasra Persian Grill' in st, 'Persian wedding in Houston: Kasra caters the package')
+        check(n, 'Mediterra' in st, 'Persian wedding in Houston: Mediterra caters the package')
         pg.screenshot(path=f'{OUT}/houston_persian_{n}.png')
         # London restaurant: only restaurant add-ons
         base=plan(pg, 'Birthday dinner for 12, black and gold', 'birthday', 'GB', 'London, UK', 12, 'restaurant'); package(pg, base)
