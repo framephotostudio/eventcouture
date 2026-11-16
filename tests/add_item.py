@@ -2,6 +2,10 @@
 import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'culture_pkg.py')).read().split('with sync_playwright() as p:')[0])
 from playwright.sync_api import sync_playwright
+
+def pk(pg, cat):  # the picks in package order (Package 1 = our top picks), whatever order the columns are shown in
+    return [c.query_selector('b').inner_text() for c in sorted(pg.query_selector_all(f'tr[data-pkrow="{cat}"] td[data-pki]'), key=lambda c: int(c.get_attribute('data-pki'))) if c.query_selector(':scope > b')]
+
 with sync_playwright() as p:
     b = p.chromium.launch()
     for w, h, n in [(390, 844, 'phone'), (1280, 900, 'desktop')]:
@@ -19,7 +23,7 @@ with sync_playwright() as p:
         txt = pg.inner_text('.sheet') if pg.query_selector('.sheet') else pg.content()
         check(n, 'main items' in txt.lower(), 'pop-up lists main items first')
         pg.click('[data-pkadd=venue]'); pg.wait_for_selector('tr[data-pkrow="venue"]', timeout=15000); pg.wait_for_timeout(500)
-        cells = [x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="venue"] td > b')]
+        cells = pk(pg, "venue")
         npk = len(pg.query_selector_all('.pkg-cmp thead th.pk-colh:not(.pk-addcol)')); check(n, npk >= 1 and len(cells) == npk, 'venue back in every package: ' + str(cells) + ' of ' + str(npk))
         pg.goto(U + base + '/budget'); pg.wait_for_timeout(500); pg.evaluate("document.querySelectorAll('details#budgetMore').forEach(d => d.open = true)"); pg.wait_for_selector('[data-budgetadd]'); pg.click('[data-budgetadd]'); pg.wait_for_selector('[data-pkadd=cleanup]'); pg.click('[data-pkadd=cleanup]'); pg.wait_for_timeout(500)
         check(n, 'Setup and cleanup crew' in pg.inner_text('#tab'), '+ Add an item on the budget adds a line (setup and cleanup crew)')

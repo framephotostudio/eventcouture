@@ -2,6 +2,10 @@
 from playwright.sync_api import sync_playwright
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import _open  # noqa
 import json, sys, hashlib
+
+def pk(pg, cat):  # the picks in package order (Package 1 = our top picks), whatever order the columns are shown in
+    return [c.query_selector('b').inner_text() for c in sorted(pg.query_selector_all(f'tr[data-pkrow="{cat}"] td[data-pki]'), key=lambda c: int(c.get_attribute('data-pki'))) if c.query_selector(':scope > b')]
+
 U='http://localhost:8765/'; OUT=sys.argv[1] if len(sys.argv)>1 else '/tmp'; F=[]
 def api(route):
     u=route.request.url; h={'access-control-allow-origin':'*'}
@@ -18,7 +22,7 @@ def zaffe_picks(pg, city):
     pg.wait_for_selector('.concept', timeout=20000); pg.click('.concept button >> nth=0'); pg.wait_for_selector('.plan-head'); base='#/'+'/'.join(pg.url.split('#/')[1].split('/')[:2])
     pg.goto(U+base+'/overview'); pg.wait_for_selector('#pkgStart'); pg.click('#pkgStart'); pg.wait_for_selector('.pkg-cmp', timeout=40000); pg.wait_for_timeout(600)
     for _ in range(2): (pg.query_selector('#pkgMore') and pg.click('#pkgMore')); pg.wait_for_timeout(1500)
-    return [x.inner_text() for x in pg.query_selector_all('tr[data-pkrow="zaffe"] td > b')], pg.inner_html('tr[data-pkrow="zaffe"] td >> nth=0')
+    return pk(pg, "zaffe"), pg.inner_html('tr[data-pkrow="zaffe"] td[data-pki="0"]')
 with sync_playwright() as p:
     b=p.chromium.launch()
     for w,h,n in [(390,844,'phone'),(1280,900,'desktop')]:
