@@ -449,7 +449,7 @@ function cleanListing(l) {
 const isLive = (l, agree) => !!(l.name && l.cats.length && l.cities.length && (l.site || l.ig) && agree);
 /* Featured (paid placement) is off until payments are connected: nothing sets rec.featuredUntil yet. */
 const isFeatured = rec => !!(rec.featuredUntil && rec.featuredUntil > Date.now());
-const publicCard = (id, rec) => Object.assign({ id, founding: !!rec.founding, featured: isFeatured(rec) }, rec.l);
+const publicCard = (id, rec) => Object.assign({ id, founding: !!rec.founding, featured: isFeatured(rec), verified: !!rec.verified }, rec.l);
 async function vendorSearch(env, url, json) {
   if (!env.EC_KV) return json({ vendors: [] });
   const city = cityKey(url.searchParams.get('city') || ''), cat = String(url.searchParams.get('cat') || '');
@@ -473,7 +473,8 @@ async function market(env, action, body, ip, json) {
     let id = /^[a-z0-9]{8,16}$/.test(String(body.id || '')) ? String(body.id) : '';
     let rec = id ? await kvGet(env, 'vend:' + id, null) : null;
     if (rec && rec.kh !== await sha(key)) return json({ error: 'Not allowed' }, 403);
-    if (!rec) { id = rid().slice(0, 12); rec = { kh: await sha(key), at: Date.now(), reports: [], approved: false }; const pend = await kvGet(env, 'vpend', []); pend.push(id); await env.EC_KV.put('vpend', JSON.stringify(pend.slice(-500))); }   // a new listing waits for the owner's approval (App Store 1.2)
+    if (!rec) { id = rid().slice(0, 12); rec = { kh: await sha(key), at: Date.now(), reports: [], approved: false, verified: false }; const pend = await kvGet(env, 'vpend', []); pend.push(id); await env.EC_KV.put('vpend', JSON.stringify(pend.slice(-500))); }   // a new listing waits for the owner's approval (App Store 1.2)
+    if (!rec.verified && !rec.vcode) rec.vcode = 'EC-' + String(1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000));   // the owner checks this code to confirm the business is theirs
     const l = cleanListing(body.listing), email = clip(body.listing && body.listing.email, 120).trim();
     const old = rec.l ? rec.l.cities.map(cityKey) : [];
     rec.l = l; rec.email = email; rec.live = isLive(l, !!(body.listing && body.listing.agree)); rec.up = Date.now();
@@ -486,7 +487,7 @@ async function market(env, action, body, ip, json) {
     }
     if (rec.founding === undefined && rec.live) rec.founding = false;
     await env.EC_KV.put('vend:' + id, JSON.stringify(rec));
-    return json({ ok: true, id, live: rec.live, pending: rec.approved === false, founding: !!rec.founding, missing: rec.live ? [] : ['name', 'cats', 'cities'].filter(k => !l[k].length).concat(l.site || l.ig ? [] : ['ig']).concat(body.listing && body.listing.agree ? [] : ['agree']) });
+    return json({ ok: true, id, live: rec.live, pending: rec.approved === false, founding: !!rec.founding, verified: !!rec.verified, vcode: rec.verified ? undefined : rec.vcode, missing: rec.live ? [] : ['name', 'cats', 'cities'].filter(k => !l[k].length).concat(l.site || l.ig ? [] : ['ig']).concat(body.listing && body.listing.agree ? [] : ['agree']) });
   }
   if (action === 'vendor/report') {
     const id = String(body.id || ''); const rec = /^[a-z0-9]{8,16}$/.test(id) && await kvGet(env, 'vend:' + id, null);
@@ -648,13 +649,13 @@ async function addReport(env, r) { if (!env.EC_KV) return; const l = await kvGet
 async function vendorsPending(env, json) {
   if (!env.EC_KV) return json({ vendors: [] });
   const ids = await kvGet(env, 'vpend', []), out = [];
-  for (const id of ids) { const r = await kvGet(env, 'vend:' + id, null); if (r && r.approved === false && !r.hidden) out.push({ id, name: r.l && r.l.name, cats: r.l && r.l.cats, cities: r.l && r.l.cities, ig: r.l && r.l.ig, site: r.l && r.l.site, bio: r.l && r.l.bio, at: r.at, live: r.live }); }
+  for (const id of ids) { const r = await kvGet(env, 'vend:' + id, null); if (r && r.approved === false && !r.hidden) out.push({ id, name: r.l && r.l.name, cats: r.l && r.l.cats, cities: r.l && r.l.cities, ig: r.l && r.l.ig, site: r.l && r.l.site, bio: r.l && r.l.bio, email: r.email, phone: r.l && r.l.phone, at: r.at, live: r.live, vcode: r.vcode, verified: !!r.verified }); }
   return json({ vendors: out });
 }
 async function vendorSet(env, body, json) {
   const id = String(body.id || ''); if (!/^[a-z0-9]{8,16}$/.test(id)) return json({ error: 'Not found' }, 404);
   const r = await kvGet(env, 'vend:' + id, null); if (!r) return json({ error: 'Not found' }, 404);
-  if (body.status === 'approved') { r.approved = true; r.hidden = false; } else if (body.status === 'hidden') r.hidden = true; else return json({ error: 'Choose approve or hide.' }, 400);
+  if (body.status === 'verified') { r.verified = true; r.approved = true; r.hidden = false; } else if (body.status === 'approved') { r.approved = true; r.hidden = false; } else if (body.status === 'hidden') r.hidden = true; else return json({ error: 'Choose approve or hide.' }, 400);
   await env.EC_KV.put('vend:' + id, JSON.stringify(r));
   await env.EC_KV.put('vpend', JSON.stringify((await kvGet(env, 'vpend', [])).filter(x => x !== id)));
   return json({ ok: true });

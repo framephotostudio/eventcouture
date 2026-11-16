@@ -21,8 +21,14 @@ assert.equal(r.body.pending, true);
 assert.equal((await call('/api/vendors?city=houston,%20tx&cat=singer', null, 'GET')).body.vendors.length, 0, 'hidden until approved');
 assert.equal((await call('/api/vendors/pending', null, 'GET')).status, 403, 'only the owner sees pending listings');
 assert.equal((await admin('/api/vendors/pending')).body.vendors[0].name, 'Layali Voice');
+// ownership check: a code to send from the business's own Instagram, email or phone
+assert.match(r.body.vcode, /^EC-\d{4}$/); assert.equal(r.body.verified, false);
+assert.equal((await admin('/api/vendors/pending')).body.vendors[0].vcode, r.body.vcode);
 assert.equal((await admin('/api/vendors/set', { id: vid, status: 'approved' })).status, 200);
 assert.equal((await admin('/api/vendors/pending')).body.vendors.length, 0);
+assert.equal((await admin('/api/vendors/set', { id: vid, status: 'verified' })).status, 200);
+{ const v2 = await call('/api/vendor/save', { key: vkey, id: vid, listing }); assert.equal(v2.body.verified, true); assert.equal(v2.body.vcode, undefined, 'no code once verified'); }
+assert.equal((await call('/api/vendors?city=houston,%20tx&cat=singer', null, 'GET')).body.vendors[0].verified, true, 'verified badge');
 // rude words are refused
 assert.equal((await call('/api/vendor/save', { key: vkey, id: vid, listing: Object.assign({}, listing, { bio: 'best shit singer' }) })).status, 400);
 let found = (await call('/api/vendors?city=houston,%20tx&cat=singer', null, 'GET')).body.vendors;

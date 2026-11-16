@@ -31,6 +31,10 @@ for vp, size, port in [('phone', {'width': 390, 'height': 844}, 8791), ('desk', 
             pg.goto(U + '#/vendors'); pg.wait_for_selector('#submit'); pg.click('#submit')
             pg.wait_for_selector('.sheet h3'); t = pg.inner_text('.sheet')
             check('checked by Event Couture' in t, f'{vp}: a new listing waits for approval: {t[:120]}')
+            import re as _re
+            code = pg.evaluate("JSON.parse(localStorage.getItem('ec.vendor')).vcode") or ''
+            check(_re.match(r'^EC-\d{4}$', code) and code in t and '@always_luxe' in t and 'hello@eventcouture.app' in t and 'No Instagram' in t, f'{vp}: ownership code with Instagram and no-Instagram ways: {t[:300]}')
+            pg.wait_for_timeout(500); pg.screenshot(path=f'{OUT}/vendor-verify-{vp}.png')
             vid = pg.evaluate("JSON.parse(localStorage.getItem('ec.vendor')).serverId"); pg.click('.sheet [data-close] >> nth=-1')
             import urllib.request
             urllib.request.urlopen(urllib.request.Request(API + '/api/vendors/set', data=json.dumps({'id': vid, 'status': 'approved'}).encode(), headers={'content-type': 'application/json', 'x-admin-code': 'local-test-only', 'origin': 'http://localhost:8765'}, method='POST')).read()

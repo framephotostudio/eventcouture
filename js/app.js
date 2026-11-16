@@ -2911,7 +2911,7 @@
       var el = document.querySelector('[data-ecv="' + cat + '"]'), list = (j.vendors || []).slice(0, 4); if (!el || !list.length) return;
       el.innerHTML = '<div class="curated"><p class="eyebrow">Event Couture vendors</p>' + list.map(function (x) {
         var p = { id: 'ec:' + x.id, name: x.name, website: x.ig ? 'https://instagram.com/' + x.ig : x.site, mapsUrl: siteBase() + '#/v/' + x.id };
-        return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b> <span class="badge est">' + (x.featured ? 'Sponsored' : x.founding ? 'Founding vendor' : 'Event Couture vendor') + '</span><div class="small muted">' + (x.price ? esc(x.priceType || 'From') + ' ' + money(x.price) + ' \u00b7 ' : '') + esc(x.bio ? x.bio.slice(0, 90) : x.cats.map(catLabel).join(', ')) + '</div></div><span class="acts">' + saveBtn(ev, p, cat) + (x.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://instagram.com/' + esc(x.ig) + '">Instagram</a>' : '') + '<a class="btn small ghost" href="#/v/' + esc(x.id) + '">View page</a></span></div>';
+        return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b> <span class="badge est">' + (x.featured ? 'Sponsored' : x.founding ? 'Founding vendor' : 'Event Couture vendor') + '</span>' + (x.verified ? ' <span class="vb-ver">\u2713 Verified</span>' : '') + '<div class="small muted">' + (x.price ? esc(x.priceType || 'From') + ' ' + money(x.price) + ' \u00b7 ' : '') + esc(x.bio ? x.bio.slice(0, 90) : x.cats.map(catLabel).join(', ')) + '</div></div><span class="acts">' + saveBtn(ev, p, cat) + (x.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://instagram.com/' + esc(x.ig) + '">Instagram</a>' : '') + '<a class="btn small ghost" href="#/v/' + esc(x.id) + '">View page</a></span></div>';
       }).join('') + '</div>';
     }).catch(function () {});
   }
@@ -3993,7 +3993,7 @@
           });
           return fetch(CFG.apiUrl + '/api/vendors/pending', { headers: { 'x-admin-code': code } }).then(function (r) { return r.ok ? r.json() : { vendors: [] }; }).then(function (v) {
             var V = v.vendors || [];   /* new vendor listings wait here until she approves them */
-            $('#vdList').innerHTML = '<h3>Vendor listings waiting</h3>' + (V.length ? V.map(function (x) { return '<div class="panel stack"><b>' + esc(x.name || 'No name') + '</b><span class="small muted">' + esc((x.cats || []).join(', ')) + ' \u00b7 ' + esc((x.cities || []).join(', ')) + (x.ig ? ' \u00b7 @' + esc(x.ig) : '') + '</span>' + (x.bio ? '<p class="small">' + esc(x.bio) + '</p>' : '') + '<div class="row"><button class="btn small gold" data-vd="approved" data-id="' + esc(x.id) + '">Approve</button><button class="btn small ghost" data-vd="hidden" data-id="' + esc(x.id) + '">Hide</button></div></div>'; }).join('') : '<p class="muted">None waiting.</p>');
+            $('#vdList').innerHTML = '<h3>Vendor listings waiting</h3>' + (V.length ? V.map(function (x) { return '<div class="panel stack"><b>' + esc(x.name || 'No name') + '</b><span class="small muted">' + esc((x.cats || []).join(', ')) + ' \u00b7 ' + esc((x.cities || []).join(', ')) + (x.ig ? ' \u00b7 @' + esc(x.ig) : '') + '</span>' + (x.bio ? '<p class="small">' + esc(x.bio) + '</p>' : '') + (x.vcode ? '<p class="small">Code <b>' + esc(x.vcode) + '</b>: verify once it arrives by DM from' + (x.ig ? ' @' + esc(x.ig) : ' their Instagram') + ', an email from their business address' + (x.email ? ' (' + esc(x.email) + ')' : '') + ', or a text from the phone on their public listing' + (x.phone ? ' (' + esc(x.phone) + ')' : '') + '.</p>' : '') + '<div class="row"><button class="btn small gold" data-vd="verified" data-id="' + esc(x.id) + '">Code matches: verify &amp; approve</button><button class="btn small ghost" data-vd="approved" data-id="' + esc(x.id) + '">Approve</button><button class="btn small ghost" data-vd="hidden" data-id="' + esc(x.id) + '">Hide</button></div></div>'; }).join('') : '<p class="muted">None waiting.</p>');
           });
         })
         .catch(function (er) { toast(er.message || 'Not available'); });
@@ -4082,7 +4082,7 @@
     if (!SHARING) { $('#vp').innerHTML = '<h2>Vendor pages open when Event Couture launches</h2>'; return; }
     apiMarket('vendor/' + encodeURIComponent(id)).then(function (j) {
       var x = j.vendor;
-      $('#vp').innerHTML = '<div class="stack-lg"><div class="stack"><span class="small muted">' + (x.founding ? 'Founding Event Couture vendor' : 'Event Couture vendor') + '</span><h2>' + esc(x.name) + '</h2><div class="small muted">' + esc(x.cats.map(catLabel).join(', ')) + ' \u00b7 ' + esc(x.cities.join(', ')) + '</div></div>' +
+      $('#vp').innerHTML = '<div class="stack-lg"><div class="stack"><span class="small muted">' + (x.founding ? 'Founding Event Couture vendor' : 'Event Couture vendor') + '</span><h2>' + esc(x.name) + (x.verified ? ' <span class="vb-ver">\u2713 Verified</span>' : '') + '</h2><div class="small muted">' + esc(x.cats.map(catLabel).join(', ')) + ' \u00b7 ' + esc(x.cities.join(', ')) + '</div></div>' +
         (x.bio ? '<p>' + esc(x.bio) + '</p>' : '') +
         (x.pkgName || x.price ? '<div class="panel stack"><b>' + esc(x.pkgName || 'Packages') + '</b>' + (x.price ? '<span>' + esc(x.priceType || 'From') + ' ' + E.moneyIn(x.price, x.cities[0]) + '</span>' : '') + (x.pkgIncl ? '<span class="small muted">' + esc(x.pkgIncl) + '</span>' : '') + '</div>' : '') +
         (x.langs ? '<div class="small">Languages: ' + esc(x.langs) + '</div>' : '') +
@@ -4093,6 +4093,16 @@
     }).catch(function (e) { $('#vp').innerHTML = '<h2>This vendor isn\u2019t listed right now</h2><p class="muted"><a href="#/new">Plan your event</a></p>'; });
   }
   var CLAIMING = '';   /* a Recommended business updating or removing its listing */
+  /* Proof the business is theirs: the vendor sends a short code from the business's own Instagram, email or phone,
+     and Event Couture marks the listing Verified. */
+  function vendorVerifyHtml(v) {
+    if (!v || !v.vcode || v.verified) return '';
+    var ig = v.ig ? String(v.ig).replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/[/?#].*$/, '') : '';
+    return '<div class="panel stack vverify"><b>Confirm it\u2019s your business</b><p class="small">Your code: <span class="vcode">' + esc(v.vcode) + '</span></p>' +
+      '<ol class="small"><li><b>Instagram:</b> send the code in a DM to <a class="link" target="_blank" rel="noopener" href="https://ig.me/m/always_luxe">@always_luxe</a> from your business account' + (ig ? ' (@' + esc(ig) + ')' : '') + '.</li>' +
+      '<li><b>No Instagram?</b> Email the code to <a class="link" href="mailto:hello@eventcouture.app?subject=' + encodeURIComponent('Verify ' + (v.name || 'my business') + ' ' + v.vcode) + '">hello@eventcouture.app</a> from your business email, or text it to 713-534-3603 from the phone number on your Google listing or website.</li></ol>' +
+      '<p class="muted small">We check it matches your public page, then your listing goes live with a \u2713 Verified badge, usually within a day.</p></div>';
+  }
   function vendorJoin() {
     var v = store.get('vendor', {});
     function req() { return VFIELDS.reduce(function (a, s) { return a.concat(s[1].filter(function (f) { return f[3]; })); }, []); }
@@ -4117,7 +4127,7 @@
     }
     var pct = Math.round(done() * 100);
     var claimNote = CLAIMING ? '<div class="note"><b>Is ' + esc(CLAIMING) + ' your business?</b> We list it as one of our Event Couture Picks from your public page. Add your own details below to update it, or <a class="link" href="mailto:' + esc(CFG.supportEmail || 'hello@eventcouture.app') + '?subject=' + encodeURIComponent('Remove my listing: ' + CLAIMING) + '">ask us to remove it</a> and we\u2019ll take it down the same day.</div>' : '';
-    frame('<div class="wizard stack-lg"><div class="stack"><h2>' + (CLAIMING ? 'Update your listing' : 'List your business on Event Couture') + '</h2>' + claimNote + '<p class="muted">' + (SHARING ? 'Listing is free. Once your listing is complete, it goes live: clients planning events in your city see you first, and you can answer their quote requests.' : 'Listing is free. Once vendor accounts launch, hosts planning events in your area will see your packages and prices inside their plans. Until then your listing saves on this device as you go.') + ' By listing you agree to our <a class="link" href="#/terms" target="_blank">Terms</a> for vendors.' + '</p>' + (SHARING && v.serverId ? '<div class="row"><a class="btn small" href="#/vendors/requests">See client requests</a>' + (v.live ? '<a class="btn small ghost" href="#/v/' + esc(v.serverId) + '">View my page</a>' : '') + '</div>' : '') + '</div>' +
+    frame('<div class="wizard stack-lg"><div class="stack"><h2>' + (CLAIMING ? 'Update your listing' : 'List your business on Event Couture') + '</h2>' + claimNote + vendorVerifyHtml(v) + '<p class="muted">' + (SHARING ? 'Listing is free. Once your listing is complete, it goes live: clients planning events in your city see you first, and you can answer their quote requests.' : 'Listing is free. Once vendor accounts launch, hosts planning events in your area will see your packages and prices inside their plans. Until then your listing saves on this device as you go.') + ' By listing you agree to our <a class="link" href="#/terms" target="_blank">Terms</a> for vendors.' + '</p>' + (SHARING && v.serverId ? '<div class="row"><a class="btn small" href="#/vendors/requests">See client requests</a>' + (v.live ? '<a class="btn small ghost" href="#/v/' + esc(v.serverId) + '">View my page</a>' : '') + '</div>' : '') + '</div>' +
       '<div class="panel stack"><div class="row" style="justify-content:space-between"><b>Listing complete</b><span class="num" id="pct">' + pct + '%</span></div><div class="meter"><i id="bar" style="width:' + pct + '%"></i></div><p class="muted small">Complete listings with full prices will show first in hosts\u2019 plans.</p>' +
       '</div>' +
       VFIELDS.map(function (s, si) { var need = s[1].filter(function (f) { return f[3]; }), had = need.filter(function (f) { var x = v[f[0]]; return Array.isArray(x) ? x.length : f[2] === 'check' ? x === true : x !== undefined && String(x).trim() !== ''; }).length;
@@ -4140,8 +4150,9 @@
       if (!SHARING) return sheet('<h3>Your listing is saved</h3><p class="muted">It\u2019s saved on this device for now. Listings open to hosts when vendor accounts launch; you\u2019ll be able to sign in, confirm it and go live then. Nothing is shared before you do.</p><button class="btn block" data-close>Done</button>');
       var btn = $('#submit'); btn.disabled = true; btn.textContent = 'Saving\u2026';
       apiMarket('vendor/save', { key: vendorKey(v), id: v.serverId, listing: listingOut(v) }).then(function (j) {
-        v.serverId = j.id; v.live = j.live; v.founding = j.founding; store.set('vendor', v); btn.disabled = false; btn.textContent = 'Save my listing';
+        v.serverId = j.id; v.live = j.live; v.founding = j.founding; v.verified = !!j.verified; if (j.vcode) v.vcode = j.vcode; store.set('vendor', v); btn.disabled = false; btn.textContent = 'Save my listing';
         if (!j.live) return sheet('<h3>Saved, almost live</h3><p class="muted">Add ' + esc((j.missing || []).map(function (m) { return { ig: 'your Instagram or website', agree: 'the price agreement at the bottom', name: 'your business name', cats: 'what you offer', cities: 'the cities you serve' }[m] || m; }).join(' and ')) + ' and save again to go live.</p><button class="btn block" data-close>OK</button>');
+        if (j.pending && j.vcode && !j.verified) return sheet('<h3>Saved. One last step</h3><p class="muted small">Every new listing is checked by Event Couture before it shows to clients.</p>' + vendorVerifyHtml(v) + '<button class="btn block" data-close>OK</button>');
         if (j.pending) return sheet('<h3>Thanks, your listing is saved</h3><p class="muted">Every new listing is checked by Event Couture before it shows to clients, usually within a day. You\u2019ll see it live here once it\u2019s approved.</p><button class="btn block" data-close>OK</button>');
         vendorLiveSheet(v);
       }).catch(function (e) { btn.disabled = false; btn.textContent = 'Save my listing'; toast(e.message || 'Couldn\u2019t save right now. Try again.'); });

@@ -1361,3 +1361,6 @@ main:not(.auto-picking) .pkg-progress.auto-look { display: none; }
 .pkg-cmp th.pk-top { background: linear-gradient(180deg, #FFF3DA, var(--surface)); }
 .pkg-cmp th.pk-top .pk-coln::after { content: "Our top picks"; display: inline-block; margin-left: 8px; vertical-align: middle; font-family: var(--sans, inherit); font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #FFF6E6; background: linear-gradient(180deg, #651530, #4A0D24); border-radius: 99px; padding: 2px 8px; }
 @media (max-width: 760px) { .pkg-cmp th.pk-top .pk-coln::after { display: block; width: fit-content; margin: 4px 0 0; } }
+.vverify { border: 1.5px solid var(--gold, #c9a35b); }
+.vverify ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.vcode { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 1.15rem; letter-spacing: .08em; background: #fff6e0; padding: 2px 10px; border-radius: 6px; }
