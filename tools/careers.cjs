@@ -81,7 +81,7 @@ module.exports = function careers({ page, write, urls, esc, BASE }) {
 <p>We’re looking for a motivated partner who can bring real business, build lasting relationships and help Event Couture grow globally.</p></section>`;
 
   const roles = [{ id: 'director', title: TITLE, meta: 'Senior · Remote, optional on-site' }, { id: 'manager', title: others[0].title, meta: 'Experienced · Remote / Houston' }, { id: 'coordinator', title: others[1].title, meta: 'Entry-level welcome · Remote / Houston' }];
-  const body = `<p class="lead">Event Couture is a newly launched, global AI-powered event planning platform that helps people plan weddings, birthdays, corporate events, private parties and celebrations. We offer AI planning tools, personalized event planning services, vendor connections and optional on-site coordination.</p>
+  const body = `<p class="lead">Event Couture is a global AI-powered event planning platform that helps people plan weddings, birthdays, corporate events, private parties and celebrations. We offer AI planning tools, personalized event planning services, vendor connections and optional on-site coordination.</p>
 <h2>Open roles</h2><div class="job-list">${roles.map(r => `<a class="panel job-link" href="#${r.id}"><b>${esc(r.title)}</b><span class="small muted">${esc(r.meta)}</span></a>`).join('')}</div>
 <style>.job-list{display:grid;gap:10px;margin-bottom:28px}.job-link{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:inherit}.job-link:hover{border-color:#c9a35b}.job{margin-top:36px;scroll-margin-top:80px}.job h4{margin:14px 0 4px}</style>
 ${directorHtml}${others.map(roleHtml).join('')}`;
