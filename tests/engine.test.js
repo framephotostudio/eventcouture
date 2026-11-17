@@ -8,13 +8,16 @@ function t(name, fn) { fn(); n++; console.log('ok', name); }
 
 t('pass tiers match the approved prices', () => {
   assert.equal(E.passFor(1).price, 9.99);
-  assert.equal(E.passFor(25).price, 9.99);
-  assert.equal(E.passFor(26).price, 19.99);
-  assert.equal(E.passFor(75).price, 19.99);
-  assert.equal(E.passFor(150).price, 39.99);
-  assert.equal(E.passFor(350).price, 69.99);
+  assert.equal(E.passFor(50).price, 9.99);
+  assert.equal(E.passFor(51).price, 19.99);
+  assert.equal(E.passFor(100).price, 19.99);
+  assert.equal(E.passFor(200).price, 39.99);
+  assert.equal(E.passFor(350).price, 59.99);
   assert.equal(E.passFor(500).price, 79.99);
-  assert.equal(E.passFor(2000).price, 99.99);
+  assert.equal(E.passFor(1000).price, 99.99);
+  assert.equal(E.passFor(1001).price, 149.99);
+  assert.equal(E.passFor(2000).price, 149.99);
+  assert.equal(E.passFor(100).name, 'Celebration');
   assert.equal(E.passFor(5000).price, 199.99);
   assert.equal(E.passFor(10000).price, 349.99);
   assert.equal(E.passFor(12000).price, 499.99);
@@ -22,7 +25,7 @@ t('pass tiers match the approved prices', () => {
   assert.equal(E.passFor(15001).price, 649.99);
 });
 t('upgrade pays only the difference', () => {
-  assert.equal(E.upgradeCost(9.99, 40).due, 10);
+  assert.equal(E.upgradeCost(9.99, 60).due, 10);
   assert.equal(E.upgradeCost(39.99, 20).due, 0);
 });
 const brunch = { type: 'brunch', guests: 10, city: 'Houston, TX', budget: 1500, hours: 3 };
@@ -137,9 +140,9 @@ t('impossible budget is labeled honestly', () => {
   assert(f.shortBy > 0 && f.total > 5000);
 });
 t('pass tier boundaries', () => {
-  assert.equal(E.passFor(25).price, 9.99); assert.equal(E.passFor(26).price, 19.99);
-  assert.equal(E.passFor(75).price, 19.99); assert.equal(E.passFor(76).price, 39.99);
-  assert.equal(E.upgradeCost(9.99, 26).due, 10);
+  assert.equal(E.passFor(50).price, 9.99); assert.equal(E.passFor(51).price, 19.99);
+  assert.equal(E.passFor(100).price, 19.99); assert.equal(E.passFor(101).price, 39.99);
+  assert.equal(E.upgradeCost(9.99, 51).due, 10);
 });
 t('brunch timeline has no birthday song unless it is a birthday', () => {
   assert(!E.runOfShow({ type: 'brunch', setting: 'restaurant', time: '11:00', hours: 2 }).some(r => /birthday/.test(r.text)));

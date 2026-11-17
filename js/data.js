@@ -675,10 +675,11 @@
     { w: -1, t: 'Send thank-you notes and share the album' }
   ];
 
-  /* Event Pass pricing (USD) from the approved proposal. */
+  /* Event Pass pricing (USD), Nov 16 2026. Guest counts include plus-ones; above 10,000 it is +$150 for each extra 5,000. */
   var PASSES = [
-    { max: 25, price: 9.99 }, { max: 75, price: 19.99 }, { max: 150, price: 39.99 }, { max: 350, price: 69.99 },
-    { max: 500, price: 79.99 }, { max: 2000, price: 99.99 }, { max: 5000, price: 199.99 }, { max: 10000, price: 349.99 }
+    { name: 'Intimate', max: 50, price: 9.99 }, { name: 'Celebration', max: 100, price: 19.99 }, { name: 'Grand', max: 200, price: 39.99 },
+    { name: 'Signature', max: 350, price: 59.99 }, { name: 'Premier', max: 500, price: 79.99 }, { name: 'Luxe', max: 1000, price: 99.99 },
+    { name: 'Elite', max: 2000, price: 149.99 }, { name: 'Spectacular', max: 5000, price: 199.99 }, { name: 'Mega Event', max: 10000, price: 349.99 }
   ];
   var CREDIT_PACKS = [{ credits: 10, price: 4.99 }, { credits: 25, price: 9.99 }, { credits: 60, price: 19.99 }];
   var PACKAGES = [

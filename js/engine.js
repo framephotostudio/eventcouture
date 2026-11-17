@@ -36,11 +36,11 @@
       var p = D.PASSES[i];
       if (guests <= p.max) {
         var min = i === 0 ? 1 : D.PASSES[i - 1].max + 1;
-        return { price: p.price, max: p.max, min: min, label: (i === 0 ? 'Up to ' : min.toLocaleString('en-US') + ' to ') + p.max.toLocaleString('en-US') + ' guests' };
+        return { name: p.name, price: p.price, max: p.max, min: min, label: (i === 0 ? 'Up to ' : min.toLocaleString('en-US') + ' to ') + p.max.toLocaleString('en-US') + ' guests' };
       }
     }
     var extra = Math.ceil((guests - 10000) / 5000);
-    return { price: round2(349.99 + 150 * extra), max: 10000 + extra * 5000, min: 10001, label: 'Up to ' + (10000 + extra * 5000).toLocaleString('en-US') + ' guests' };
+    return { name: 'Mega Event', price: round2(349.99 + 150 * extra), max: 10000 + extra * 5000, min: 10001, label: 'Up to ' + (10000 + extra * 5000).toLocaleString('en-US') + ' guests' };
   }
   function upgradeCost(paidPrice, newGuests) {
     var next = passFor(newGuests);

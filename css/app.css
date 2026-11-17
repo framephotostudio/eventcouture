@@ -1370,3 +1370,46 @@ main:not(.auto-picking) .pkg-progress.auto-look { display: none; }
 .price-guides .pg-links a { padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(201,163,91,.55); font-size: .9rem; text-decoration: none; color: inherit; }
 .price-guides .pg-links a:hover { background: rgba(201,163,91,.12); }
 @media (max-width: 640px) { .price-guides .pg-cols { grid-template-columns: 1fr; } }
+
+/* ---------- Pricing page (Nov 2026 redesign): champagne, ivory, soft gold ---------- */
+.pp { --pp-ink: #3B2A22; --pp-soft: #6E5D52; --pp-gold: #C2A26B; --pp-goldline: rgba(194,162,107,.45); --pp-cream: #FBF6EC; --pp-champ: #F5ECDC;
+  display: flex; flex-direction: column; gap: 34px; color: var(--pp-ink); max-width: 1120px; margin: 0 auto; }
+.pp-head { text-align: center; display: grid; gap: 12px; padding-top: 8px; }
+.pp-head h2 { font-family: var(--display); font-size: clamp(2rem, 4.6vw, 3.2rem); color: var(--pp-ink); line-height: 1.08; }
+.pp-head p { font-size: clamp(1.02rem, 1.6vw, 1.18rem); color: var(--pp-soft); max-width: 560px; margin: 0 auto; }
+.pp-offer { background: var(--pp-champ); border: 1px solid var(--pp-goldline); border-radius: 16px; padding: 20px 24px; text-align: center; display: grid; gap: 6px; max-width: 760px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.pp-offer b { font-family: var(--display); font-size: 1.3rem; font-weight: 500; letter-spacing: .02em; }
+.pp-offer p { margin: 0; font-size: 1.08rem; }
+.pp-offer span { font-size: .88rem; color: var(--pp-soft); }
+.pp-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.pp-card { background: #fff; border: 1px solid var(--pp-goldline); border-radius: 18px; padding: 30px 22px 28px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  box-shadow: 0 6px 22px rgba(80, 55, 30, .07); transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+.pp-card:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(80, 55, 30, .12); border-color: var(--pp-gold); }
+.pp-name { font-family: var(--display); font-size: 1.5rem; }
+.pp-cap { font-size: .98rem; color: var(--pp-soft); }
+.pp-card .pp-cap { padding-bottom: 12px; border-bottom: 1px solid var(--pp-goldline); width: 70%; }
+.pp-price { font-family: var(--display); font-size: 2.6rem; font-weight: 600; line-height: 1; margin-top: 10px; }
+.pp-per { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--pp-soft); }
+.pp-note { text-align: center; color: var(--pp-soft); margin: -14px 0 0; font-size: .95rem; }
+.pp-big, .pp-why { display: grid; gap: 8px; text-align: center; }
+.pp-big h3, .pp-why h3 { font-family: var(--display); font-size: clamp(1.6rem, 3vw, 2.1rem); color: var(--pp-ink); }
+.pp-big > p { color: var(--pp-soft); margin: 0 0 12px; font-size: 1.05rem; }
+.pp-minis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.pp-mini { background: var(--pp-cream); border: 1px solid var(--pp-goldline); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; align-items: center; text-align: left; column-gap: 12px;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+.pp-mini:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(80, 55, 30, .09); border-color: var(--pp-gold); }
+.pp-mname { font-family: var(--display); font-size: 1.15rem; grid-column: 1; }
+.pp-mini .pp-cap { grid-column: 1; font-size: .92rem; }
+.pp-mprice { grid-column: 2; grid-row: 1 / span 2; font-family: var(--display); font-size: 1.6rem; font-weight: 600; }
+.pp-blocks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 10px; }
+.pp-block { background: #fff; border: 1px solid var(--pp-goldline); border-radius: 16px; padding: 24px 22px; display: grid; gap: 8px; justify-items: center; align-content: start; box-shadow: 0 4px 16px rgba(80, 55, 30, .05); }
+.pp-block b { font-family: var(--display); font-size: 1.2rem; font-weight: 500; }
+.pp-block p { margin: 0; color: var(--pp-soft); font-size: .96rem; }
+.pp-ico { width: 46px; height: 46px; border-radius: 50%; background: var(--pp-champ); border: 1px solid var(--pp-goldline); display: grid; place-items: center; }
+.pp-ico svg { width: 22px; height: 22px; fill: none; stroke: #9C7D45; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pp-cta { text-align: center; }
+.pp-cta .btn { padding: 14px 34px; font-size: 1.05rem; }
+@media (max-width: 1000px) { .pp-cards { grid-template-columns: repeat(2, 1fr); } .pp-minis { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .pp { gap: 28px; } .pp-cards { grid-template-columns: 1fr 1fr; gap: 12px; } .pp-card { padding: 22px 12px 20px; } .pp-name { font-size: 1.25rem; } .pp-price { font-size: 2rem; } .pp-card .pp-cap { width: 90%; font-size: .9rem; }
+  .pp-minis, .pp-blocks { grid-template-columns: 1fr; } }
+@media (max-width: 360px) { .pp-cards { grid-template-columns: 1fr; } }

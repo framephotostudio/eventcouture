@@ -640,12 +640,26 @@
   /* The planning-guide address for an occasion, built the same way as tools/seo.cjs builds it. */
   function guideSlug(name) { return String(name).replace(/\u2019s/, 's').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function pricing() {
-    frame('<div class="stack-lg"><div class="stack"><h2>Pricing</h2>' + (CFG.launchFree ? '<div class="note"><b>Limited-time offer:</b> keeping your plan is free until ' + freeUntilText() + '. Every plan started by then stays free, even after. The prices below apply to plans started after that.</div>' : '') + '</div>' +
-      '<section class="stack"><h3>Event Pass</h3><p class="muted">Based on how many people you invite, including plus-ones. This is what Event Couture costs, separate from your event budget.</p>' +
-      '<div class="panel price-grid">' + D.PASSES.map(function (ps) { return '<div><span class="muted small">Up to ' + ps.max.toLocaleString('en-US') + ' guests</span><b class="num">' + usdSign() + ps.price.toFixed(2) + '</b></div>'; }).join('') + '<div><span class="muted small">Each extra 5,000</span><b class="num">+$150</b></div></div>' +
-      '<p class="small muted">Guest list grows later? You pay only the difference.</p></section>' +
-      '<section class="stack"><h3>How long you keep it</h3><p class="muted">Your plan stays available until 12 months after you keep it, or 30 days after your event, whichever is later. The exact date is shown before you pay.</p></section>' +
-      '<div><a class="btn primary" href="#/new">Plan my event</a></div></div>');
+    var P = D.PASSES, money = function (n) { return usdSign() + n.toFixed(2); };
+    var until = CFG.freeUntil ? new Date(CFG.freeUntil + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+    var card = function (ps) { return '<div class="pp-card"><span class="pp-name">' + esc(ps.name) + '</span><span class="pp-cap">Up to ' + ps.max.toLocaleString('en-US') + ' guests</span><b class="pp-price">' + money(ps.price) + '</b><span class="pp-per">Per event</span></div>'; };
+    var mini = function (ps) { return '<div class="pp-mini"><span class="pp-mname">' + esc(ps.name) + '</span><span class="pp-cap">Up to ' + ps.max.toLocaleString('en-US') + ' guests</span><b class="pp-mprice">' + money(ps.price) + '</b></div>'; };
+    var ico = { pass: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V14a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2"/></svg>',
+      up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+      cal: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M4 10h16M8 3.5v4M16 3.5v4"/></svg>' };
+    frame('<div class="pp">' +
+      '<header class="pp-head"><h2>Beautiful Events. Simple Pricing.</h2><p>From intimate gatherings to grand celebrations, find the perfect plan for your event.</p></header>' +
+      (CFG.launchFree ? '<div class="pp-offer"><b>Limited-Time Launch Offer</b><p>Start your event plan by ' + esc(until) + ', and keep it free.</p><span>Every plan started by then stays free, even after. The prices below apply to plans started after that.</span></div>' : '') +
+      '<div class="pp-cards">' + P.slice(0, 4).map(card).join('') + '</div>' +
+      '<p class="pp-note">Guest counts include plus-ones. This is what Event Couture costs, separate from your event budget.</p>' +
+      '<section class="pp-big"><h3>Planning Something Bigger?</h3><p>Flexible pricing for larger celebrations and extraordinary events.</p><div class="pp-minis">' + P.slice(4).map(mini).join('') +
+        '<div class="pp-mini pp-extra"><span class="pp-mname">Even larger</span><span class="pp-cap">Each additional 5,000 guests</span><b class="pp-mprice">+' + usdSign() + '150</b></div></div></section>' +
+      '<section class="pp-why"><h3>Simple, Flexible Pricing</h3><div class="pp-blocks">' +
+        '<div class="pp-block"><span class="pp-ico">' + ico.pass + '</span><b>One Event, One Pass</b><p>Pay once for each event, based on how many people you invite. No subscription.</p></div>' +
+        '<div class="pp-block"><span class="pp-ico">' + ico.up + '</span><b>Upgrade Anytime</b><p>Guest list grows? Move up a size and pay only the difference.</p></div>' +
+        '<div class="pp-block"><span class="pp-ico">' + ico.cal + '</span><b>Yours for 12 Months</b><p>Your plan stays available for 12 months, or 30 days after your event, whichever is later. The exact date is shown before you pay.</p></div>' +
+      '</div></section>' +
+      '<div class="pp-cta"><a class="btn primary" href="#/new">Plan my event</a></div></div>');
   }
 
   function myEvents() {
@@ -4190,7 +4204,7 @@
     ['Can I put Event Couture on my home screen or desktop?', 'Yes. Tap Add Event Couture to your home screen on the home page (or Add to home screen at the bottom of any page) and follow the steps for your phone or computer. On iPhone, use Safari: Share, then Add to Home Screen. The iPhone and Android apps are coming soon too.', 'install app icon home screen desktop shortcut add download bookmark'],
     ['What does Event Couture Pick mean?', 'An Event Couture Pick badge marks a business Event Couture chose for that city or tradition. It is not paid placement and not an independent review. Always check reviews, licenses and contracts yourself before you book.', 'recommended badge recommend founder pick picks paid sponsored vetted verified trust'],
     ['Is there a subscription?', 'No. Planning is free, and you pay once per event only if you want to keep and share your plan. Nothing renews automatically.', 'subscription subscribe monthly recurring renew renewal'],
-    ['How much does it cost?', 'You pay once per event, based on how many people you invite, in US dollars: US$9.99 up to 25 guests, US$19.99 up to 75, US$39.99 up to 150, US$69.99 up to 350, and more for larger events. Guests never pay to view, RSVP or vote.', 'price cost pay pass much'],
+    ['How much does it cost?', 'You pay once per event, based on how many people you invite, in US dollars: US$9.99 up to 50 guests, US$19.99 up to 100, US$39.99 up to 200, US$59.99 up to 350, and more for larger events (plus-ones count as guests). Guests never pay to view, RSVP or vote.', 'price cost pay pass much'],
     ['What if my guest list grows?', 'Move up a size under Overview, Your pass. You pay only the difference, and your plan stays exactly as it is.', 'grow grows growing more upgrade capacity bigger places full waitlist'],
   ];
   FAQ = FAQ.concat([

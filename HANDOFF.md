@@ -34,14 +34,15 @@ Event Couture turns a host's inspiration (photos, a description, spoken words, o
 
 | People invited | Price |
 |---|---|
-| Up to 25 | $9.99 |
-| 26 to 75 | $19.99 |
-| 76 to 150 | $39.99 |
-| 151 to 350 | $69.99 |
-| 351 to 500 | $79.99 |
-| 501 to 2,000 | $99.99 |
-| 2,001 to 5,000 | $199.99 |
-| 5,001 to 10,000 | $349.99 |
+| Intimate: up to 50 | $9.99 |
+| Celebration: 51 to 100 | $19.99 |
+| Grand: 101 to 200 | $39.99 |
+| Signature: 201 to 350 | $59.99 |
+| Premier: 351 to 500 | $79.99 |
+| Luxe: 501 to 1,000 | $99.99 |
+| Elite: 1,001 to 2,000 | $149.99 |
+| Spectacular: 2,001 to 5,000 | $199.99 |
+| Mega Event: 5,001 to 10,000 | $349.99 |
 | Each extra 5,000 | +$150 |
 
 Moving up a size charges only the difference. AI credits: 10 for $4.99, 25 for $9.99, 60 for $19.99. Package: three more concepts, $7.99. Add-ons: matching graphics $6.99; outfit boards, multilingual page, album space, more vendor options and thank-you drafts at $4.99 each; planner branding $9.99. **Credits, packages and add-ons are hidden** (`SELL_EXTRAS = false` in `app.js`) until each one delivers something real (see section 9). The one free extra set of concepts stays. The removed AI picture products (venue illustrations, invitation artwork) must stay removed.
