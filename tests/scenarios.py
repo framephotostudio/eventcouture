@@ -79,10 +79,10 @@ with sync_playwright() as p:
     names, review, head, base = run(pg, 'wedding, ivory and gold', 'wedding', 150, 'indoor', '17:00', 5000)
     if 'over your budget' not in head: problems.append('5: impossible budget not labeled over: ' + head)
 
-    # 6. tier boundary: 26 guests should be the 26-75 pass
-    names, review, head, base = run(pg, 'birthday party', 'birthday', 26, 'indoor', '19:00')
+    # 6. tier boundary: 51 guests should be the 51-100 pass
+    names, review, head, base = run(pg, 'birthday party', 'birthday', 51, 'indoor', '19:00')
     pg.goto(base + '/extras'); pg.wait_for_timeout(250)
-    if '26 to 75 guests' not in pg.inner_text('#tab'): problems.append('6: 26 guests not on the 26-75 pass')
+    if '51 to 100 guests' not in pg.inner_text('#tab'): problems.append('6: 51 guests not on the 51-100 pass')
 
     # 7. choosing the type first, then guests, also keeps the number
     names, review, head, base = run(pg, 'dinner party', 'dinner', 14, 'privateRoom', '19:00', guests_first=False)
