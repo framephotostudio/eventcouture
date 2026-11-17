@@ -39,7 +39,7 @@ for vp, size, port in [('phone', {'width': 390, 'height': 844}, 8791), ('desk', 
             import urllib.request
             urllib.request.urlopen(urllib.request.Request(API + '/api/vendors/set', data=json.dumps({'id': vid, 'status': 'approved'}).encode(), headers={'content-type': 'application/json', 'x-admin-code': 'local-test-only', 'origin': 'http://localhost:8765'}, method='POST')).read()
             pg.click('#submit'); pg.wait_for_selector('.sheet h3'); t = pg.inner_text('.sheet')
-            check('live' in t and 'Founding vendor' in t, f'{vp}: vendor live once approved: {t[:120]}')
+            check('live' in t and 'Founding' not in t, f'{vp}: vendor live once approved: {t[:120]}')
             check('Book me on Event Couture' in t, f'{vp}: no Instagram bio line')
             pg.wait_for_timeout(700); pg.screenshot(path=f'{OUT}/vendor-live-{vp}.png')
             vid = pg.evaluate("JSON.parse(localStorage.getItem('ec.vendor')).serverId")
@@ -53,7 +53,7 @@ for vp, size, port in [('phone', {'width': 390, 'height': 844}, 8791), ('desk', 
             pg.evaluate("(()=>{var a=JSON.parse(localStorage.getItem('ec.events'));var e=Array.isArray(a)?a[a.length-1]:Object.values(a).pop();e.paid={price:0};localStorage.setItem('ec.events',JSON.stringify(a))})()")
             pg.goto(U + base + '/vendors'); pg.reload(); pg.wait_for_selector('[data-vendor=singer]'); pg.click('[data-vendor=singer]')
             pg.wait_for_selector('[data-ecv=singer] .curated', timeout=8000)
-            ecv = pg.inner_text('[data-ecv=singer]'); check('Layali Voice' in ecv and 'Founding vendor' in ecv, f'{vp}: listed vendor not first: {ecv[:100]}')
+            ecv = pg.inner_text('[data-ecv=singer]'); check('Layali Voice' in ecv and 'Event Couture vendor' in ecv and 'Founding' not in ecv, f'{vp}: listed vendor not first: {ecv[:100]}')
             pg.wait_for_selector('.live-res[data-for=v-singer] .curated'); check('Houston Wedding Voices' in pg.inner_text('.live-res[data-for=v-singer]'), f'{vp}: Google results missing')
             # save the listed vendor
             pg.click('[data-ecv=singer] [data-short]'); pg.wait_for_timeout(300)

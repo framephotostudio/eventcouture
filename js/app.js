@@ -2929,7 +2929,7 @@
       var el = document.querySelector('[data-ecv="' + cat + '"]'), list = (j.vendors || []).slice(0, 4); if (!el || !list.length) return;
       el.innerHTML = '<div class="curated"><p class="eyebrow">Event Couture vendors</p>' + list.map(function (x) {
         var p = { id: 'ec:' + x.id, name: x.name, website: x.ig ? 'https://instagram.com/' + x.ig : x.site, mapsUrl: siteBase() + '#/v/' + x.id };
-        return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b> <span class="badge est">' + (x.featured ? 'Sponsored' : x.founding ? 'Founding vendor' : 'Event Couture vendor') + '</span>' + (x.verified ? ' <span class="vb-ver">\u2713 Verified</span>' : '') + '<div class="small muted">' + (x.price ? esc(x.priceType || 'From') + ' ' + money(x.price) + ' \u00b7 ' : '') + esc(x.bio ? x.bio.slice(0, 90) : x.cats.map(catLabel).join(', ')) + '</div></div><span class="acts">' + saveBtn(ev, p, cat) + (x.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://instagram.com/' + esc(x.ig) + '">Instagram</a>' : '') + '<a class="btn small ghost" href="#/v/' + esc(x.id) + '">View page</a></span></div>';
+        return '<div class="it"><div class="grow"><b>' + esc(x.name) + '</b> <span class="badge est">' + (x.featured ? 'Sponsored' : 'Event Couture vendor') + '</span>' + (x.verified ? ' <span class="vb-ver">\u2713 Verified</span>' : '') + '<div class="small muted">' + (x.price ? esc(x.priceType || 'From') + ' ' + money(x.price) + ' \u00b7 ' : '') + esc(x.bio ? x.bio.slice(0, 90) : x.cats.map(catLabel).join(', ')) + '</div></div><span class="acts">' + saveBtn(ev, p, cat) + (x.ig ? '<a class="btn small ghost" target="_blank" rel="noopener" href="https://instagram.com/' + esc(x.ig) + '">Instagram</a>' : '') + '<a class="btn small ghost" href="#/v/' + esc(x.id) + '">View page</a></span></div>';
       }).join('') + '</div>';
     }).catch(function () {});
   }
@@ -4069,7 +4069,7 @@
     var link = siteBase() + '#/v/' + v.serverId, join = siteBase() + '#/vendors';
     var bio = 'Book me on Event Couture \u2192 ' + link;
     var invite = 'I\u2019m listed on Event Couture by Always Luxe, where clients planning weddings and events send quote requests for free. Vendors join free here: ' + join;
-    sheet('<h3>You\u2019re live' + (v.founding ? ' \u00b7 Founding vendor' : '') + '</h3><p class="muted">Clients planning events in your city now see you' + (v.founding ? ' first, with a Founding vendor badge' : '') + '. Check <b>Client requests</b> for people asking for quotes.</p>' +
+    sheet('<h3>You\u2019re live</h3><p class="muted">Clients planning events in your city now see you. Check <b>Client requests</b> for people asking for quotes.</p>' +
       '<div class="stack"><b>Add this to your Instagram bio</b><div class="note small" style="word-break:break-all">' + esc(bio) + '</div><button class="btn small" id="cpBio">Copy for my bio</button></div>' +
       '<div class="stack"><b>Bring the vendors you work with</b><span class="muted small">Your DJ, decorator, zaffe group or photographer: when they join, clients can book your whole team.</span><button class="btn small ghost" id="invV">Invite vendors</button></div>' +
       '<div class="row"><a class="btn" href="#/vendors/requests" data-close>See client requests</a><button class="btn ghost" data-close>Done</button></div>');
@@ -4100,7 +4100,7 @@
     if (!SHARING) { $('#vp').innerHTML = '<h2>Vendor pages open when Event Couture launches</h2>'; return; }
     apiMarket('vendor/' + encodeURIComponent(id)).then(function (j) {
       var x = j.vendor;
-      $('#vp').innerHTML = '<div class="stack-lg"><div class="stack"><span class="small muted">' + (x.founding ? 'Founding Event Couture vendor' : 'Event Couture vendor') + '</span><h2>' + esc(x.name) + (x.verified ? ' <span class="vb-ver">\u2713 Verified</span>' : '') + '</h2><div class="small muted">' + esc(x.cats.map(catLabel).join(', ')) + ' \u00b7 ' + esc(x.cities.join(', ')) + '</div></div>' +
+      $('#vp').innerHTML = '<div class="stack-lg"><div class="stack"><span class="small muted">' + 'Event Couture vendor' + '</span><h2>' + esc(x.name) + (x.verified ? ' <span class="vb-ver">\u2713 Verified</span>' : '') + '</h2><div class="small muted">' + esc(x.cats.map(catLabel).join(', ')) + ' \u00b7 ' + esc(x.cities.join(', ')) + '</div></div>' +
         (x.bio ? '<p>' + esc(x.bio) + '</p>' : '') +
         (x.pkgName || x.price ? '<div class="panel stack"><b>' + esc(x.pkgName || 'Packages') + '</b>' + (x.price ? '<span>' + esc(x.priceType || 'From') + ' ' + E.moneyIn(x.price, x.cities[0]) + '</span>' : '') + (x.pkgIncl ? '<span class="small muted">' + esc(x.pkgIncl) + '</span>' : '') + '</div>' : '') +
         (x.langs ? '<div class="small">Languages: ' + esc(x.langs) + '</div>' : '') +
