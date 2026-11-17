@@ -1364,3 +1364,9 @@ main:not(.auto-picking) .pkg-progress.auto-look { display: none; }
 .vverify { border: 1.5px solid var(--gold, #c9a35b); }
 .vverify ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
 .vcode { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 1.15rem; letter-spacing: .08em; background: #fff6e0; padding: 2px 10px; border-radius: 6px; }
+.price-guides .pg-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 14px 0 12px; }
+.price-guides .pg-cols > div { background: var(--card, #fff); border: 1px solid rgba(201,163,91,.35); border-radius: 14px; padding: 14px 16px; }
+.price-guides .pg-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.price-guides .pg-links a { padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(201,163,91,.55); font-size: .9rem; text-decoration: none; color: inherit; }
+.price-guides .pg-links a:hover { background: rgba(201,163,91,.12); }
+@media (max-width: 640px) { .price-guides .pg-cols { grid-template-columns: 1fr; } }

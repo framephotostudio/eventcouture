@@ -6,6 +6,7 @@ name: Deploy
 on:
   push: { branches: [main] }
   workflow_dispatch:
+  schedule: [{ cron: '17 7 * * 1' }]   # every Monday: guide years, prices and dated offers stay current, and Google sees fresh pages
 permissions: { contents: read, pages: write, id-token: write }
 concurrency: { group: deploy, cancel-in-progress: true }
 jobs:
