@@ -2766,6 +2766,7 @@
   function luxRank(ev, list, hotel, lvl) {
     /* Budget first: the nicest place this package can afford leads; a place far above it moves down. lvl L lighter, S her budget, U lavish. */
     var RANK = { mid: 1, upper: 2, lux: 3 }, cap = budgetCap(ev, lvl);
+    var town = String(ev.city || '').toLowerCase().split(',').map(function (x) { return x.trim(); }).filter(function (x) { return x.length > 2 && !/^(usa|united states|canada)$/.test(x); });
     var up = String((D.UPSCALE_AREAS || {})[ev.city] || ev.area || '').split(/ and |, /).map(function (w) { return w.replace(/^the /i, '').trim().toLowerCase(); }).filter(Boolean);
     var score = function (p) {
       var n = String(p.name || ''), ad = String(p.address || '').toLowerCase(), pl = String(p.priceLevel || p.price || ''), m = 1;
@@ -2775,6 +2776,7 @@
       if (p.bar && /^(indoor|outdoor)$/.test(ev.setting || '') && !/banquet|ballroom|\bhall\b|event|venue/i.test(n)) m *= 0.15;   /* a bar is the last choice for a venue plan */
       if (p.restaurant && /^(indoor|outdoor)$/.test(ev.setting || '') && !/banquet|ballroom|\bhall\b|event|venue|reception|estate|garden/i.test(n)) m *= 0.3;   /* she chose a venue, not a restaurant: a restaurant's private room comes after the real venues */
       if (up.some(function (w) { return ad.indexOf(w) >= 0; })) m *= 1.15;
+      if (town && ad && !town.some(function (t) { return ad.split(',').slice(1).some(function (x) { x = x.trim(); return x === t || x.indexOf(t + ' ') === 0; }); })) m *= 0.35;   /* Houston means Houston: a suburb (Katy, Cypress) only after the places in her city */
       var isHotel = E.hotelClass(n) !== 'hall';
       if (hotel != null) m *= isHotel === hotel ? 1.6 : 0.5;   /* the right kind of place before the other kind */
       return (p.rating || 4.3) * Math.log10(10 + (p.reviews || 0)) * m;
@@ -2783,7 +2785,7 @@
     return list.map(function (p, i) { return { p: p, s: p.rec ? 1e9 - i : score(p) }; }).sort(function (a, b) { return b.s - a.s; }).map(function (x) { return x.p; });
   }
   function findPlaces(ev, body) {
-    var key = JSON.stringify(['v4', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
+    var key = JSON.stringify(['v5', body.cat || '', body.query, body.level, body.kind || '', body.city]), c = ev.placeCache = ev.placeCache || {}, hit = c[key];
     if (hit && Date.now() - hit.at < 7 * 864e5) return Promise.resolve(kidsOk(ev, hit.places));
     var sendBody = Object.assign({}, body); var sco = E.countryOf(ev.city); if (sco.id === 'CA' && !/canada/i.test(sendBody.city || '')) sendBody.city = (sendBody.city || '') + ', Canada'; else if (sco.id !== 'US' && sco.id !== 'CA' && (sendBody.city || '').toLowerCase().indexOf(sco.name.toLowerCase()) < 0 && (sendBody.city || '').indexOf(sco.short) < 0) sendBody.city = (sendBody.city || '') + ', ' + sco.name;   /* London, ON is not London, England */
     return fetch(CFG.apiUrl + '/api/places', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sendBody) })

@@ -295,6 +295,17 @@ function nearCity(list, km = 70) {
   const c = { latitude: mid(pts.map(p => p.location.latitude)), longitude: mid(pts.map(p => p.location.longitude)) };
   return list.filter(p => !p.location || kmBetween(c, p.location) <= km);
 }
+/* Is a business inside the event's own city? Its address names the city ("..., Houston, TX 77057"), not a suburb ("..., Katy, TX").
+   If she picked a suburb (Katy, TX), Katy is the city and Katy businesses come first. */
+function inTown(city) {
+  const names = String(city || '').toLowerCase().split(',').map(x => x.trim()).filter(x => x.length > 2 && !/^(usa|united states|canada|uk|united kingdom)$/.test(x)); if (!names.length) return () => 1;
+  return addr => { const parts = String(addr || '').toLowerCase().split(',').map(x => x.trim()); return parts.slice(1).some(x => names.some(n => x === n || x.startsWith(n + ' '))) ? 1 : 0; };
+}
+function midOf(list) {
+  const pts = list.filter(p => p.location && isFinite(p.location.latitude)); if (pts.length < 3) return null;
+  const m = a => { const s = a.slice().sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+  return { latitude: m(pts.map(p => p.location.latitude)), longitude: m(pts.map(p => p.location.longitude)) };
+}
 /* Every Google search is remembered for a week (the same search from anyone costs nothing again),
    and only the monthly free allowance is ever used: past it, searches stop until next month and the app offers Google Maps links instead. */
 async function googleSearch(env, body) {
@@ -325,6 +336,7 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
   // venues like ballrooms and estates often have no price level; fill in from an unpriced search, still rating-filtered
   if (!vendor && raw.length < 5) { const more = await search(false); const seen = new Set(raw.map(p => p.id)); raw = raw.concat(more.filter(p => !seen.has(p.id) && !(p.priceLevel === 'PRICE_LEVEL_INEXPENSIVE' || p.priceLevel === 'PRICE_LEVEL_FREE'))); }
   raw = nearCity(raw);
+  const home = inTown(city), locals = raw.filter(p => home(p.formattedAddress) && p.location), mid = midOf(locals) || (locals[0] && locals[0].location) || midOf(raw);   // distance is measured from the event's own city
   return raw
     .filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY' && p.businessStatus !== 'CLOSED_TEMPORARILY')
     .filter(p => !BUDGET_CHAINS.test(p.displayName?.text || '') && (level === 'L' || !MID_CHAINS.test(p.displayName?.text || '')))
@@ -335,8 +347,9 @@ async function places(env, query, city, level = 'S', vendor = false, cat = '', h
     .filter(p => !vendor || rightKind(p, cat))
     .filter(p => (p.rating || 0) >= L.minRating && (p.userRatingCount || 0) >= L.minReviews)
     /* best reviewed first; a business that names this occasion (a wedding DJ for a wedding) moves up */
-    .map(p => ({ p, score: p.rating * Math.log10(10 + p.userRatingCount) * (hintRe && hintRe.test(p.displayName?.text || '') ? 1.12 : 1) }))
-    .sort((a, b) => b.score - a.score).map(x => x.p)
+    .map(p => ({ p, local: home(p.formattedAddress), score: p.rating * Math.log10(10 + p.userRatingCount) * (hintRe && hintRe.test(p.displayName?.text || '') ? 1.12 : 1) / (1 + (mid && p.location ? kmBetween(mid, p.location) : 0) / 60) }))
+    /* in the event's own city first (Houston means Houston, not Katy or Cypress); suburbs only after, closest first */
+    .sort((a, b) => (b.local - a.local) || (b.score - a.score)).map(x => x.p)
     .slice(0, 8)
     .map(p => ({ id: p.id, name: p.displayName?.text, address: p.formattedAddress, rating: p.rating, reviews: p.userRatingCount,
       priceLevel: p.priceLevel, mapsUrl: p.googleMapsUri, website: p.websiteUri, phone: p.nationalPhoneNumber || p.internationalPhoneNumber || '', hours: p.regularOpeningHours?.weekdayDescriptions || [], restaurant: /restaurant|steak|bistro|brasserie|grill|dining/.test(String(p.primaryType || '')), bar: /\b(bar|night_club|pub|wine_bar|cocktail_bar|brewery|liquor_store)\b/.test([p.primaryType || ''].concat(p.types || []).join(' ')), source: 'Google' }));
