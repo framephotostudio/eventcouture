@@ -838,6 +838,10 @@ body:has(.sheet-back) .toast { bottom: auto; top: calc(16px + env(safe-area-inse
 
 .resume-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; margin-bottom: 12px; border-radius: 14px; background: var(--plum, #4A1438); color: #fff; text-decoration: none; font-size: .98rem; }
 .resume-bar b { color: #E8CF9A; font-weight: 600; }
+.resume-wrap { position: relative; }
+.resume-wrap .resume-bar { padding-right: 60px; }
+.resume-x { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff; font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.resume-x:hover, .resume-x:focus-visible { background: rgba(255,255,255,.25); }
 
 .pkg-pl { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; background: var(--champagne-soft, #F6EBD3); }
 .pkg-pl > span[aria-hidden] { font-size: 1.3rem; color: var(--plum, #4A1438); }
