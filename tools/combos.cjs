@@ -2,8 +2,15 @@
 // three budget levels, the line-by-line budget for that city, local vendor rates, local picks and nearby cities.
 // Every number comes from the same planning engine the app uses. Called from tools/seo.cjs.
 'use strict';
-module.exports = function ({ D, E, OCC, CITIES, page, write, urls, esc, money, totals, evFor, YEAR, BASE, recsIn, catLabel, noteFor }) {
+module.exports = function ({ BIG, D, E, OCC, CITIES, page, write, urls, esc, money, totals, evFor, YEAR, BASE, recsIn, catLabel, noteFor }) {
   const LOCAL = require('./local.cjs')({ D, E, OCC, esc, money, evFor, YEAR });
+  /* Which city + occasion pages go to Google. Thousands of near-identical pages can make Google rate the whole site lower,
+     so only these are indexed (the rest stay on the site for visitors, marked noindex and left out of the sitemap):
+     US and Canada: every occasion in the big metros, the most-searched occasions everywhere else; elsewhere: weddings only;
+     plus any page with hand-written local detail (tools/local.cjs). */
+  const CORE = new Set(['wedding', 'quince', 'birthday', 'kids-birthday', 'milestone', 'sweet16', 'baby-shower', 'bridal-shower', 'engagement', 'graduation', 'bachelorette', 'corporate', 'holiday', 'christmas']);
+  const indexable = (c, o) => { const na = ['US', 'CA'].includes(E.countryOf(c.name).id), L = LOCAL[c.name]; return (L && L.occ && L.occ[o.key]) || (na ? (BIG || []).includes(c.name) || CORE.has(o.key) : o.key === 'wedding'); };
+  let skipped = 0;
   const TITLE = { brunch: 'Brunch or Tea Party', birthday: 'Birthday Party', 'kids-birthday': 'Kids’ Birthday Party', milestone: 'Milestone Birthday Party', dinner: 'Dinner Party',
     'bridal-shower': 'Bridal Shower', 'baby-shower': 'Baby Shower', 'gender-reveal': 'Gender Reveal Party', bachelorette: 'Bachelorette Party', graduation: 'Graduation Party',
     engagement: 'Engagement Party', quince: 'Quinceañera', sweet16: 'Sweet 16', anniversary: 'Anniversary Party', retirement: 'Retirement Party', christmas: 'Christmas Party',
@@ -59,11 +66,12 @@ ${near.length ? `<h2>${esc(T)} cost in nearby cities</h2><div class="table-wrap 
 <p class="small"><a href="../">All event costs in ${esc(c.name)}</a> · <a href="../../${o.slug}/">${esc(T)} planning guide</a></p>`;
       const ld = [{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map(([qq, a]) => ({ '@type': 'Question', name: qq, acceptedAnswer: { '@type': 'Answer', text: a } })) },
         { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Planning guides', item: `${BASE}plan/` }, { '@type': 'ListItem', position: 2, name: c.name, item: `${BASE}plan/${c.slug}/` }, { '@type': 'ListItem', position: 3, name: `${T} cost`, item: base }] }];
-      write(`plan/${c.slug}/${o.slug}/index.html`, page({ rel: 3, title: LC && LC.occTitle && LC.occTitle[o.key] ? LC.occTitle[o.key]() : `Average ${T} Cost in ${where} (${YEAR}) | Event Couture`, h1: q,
+      { const html = page({ rel: 3, title: LC && LC.occTitle && LC.occTitle[o.key] ? LC.occTitle[o.key]() : `Average ${T} Cost in ${where} (${YEAR}) | Event Couture`, h1: q,
         desc: `${T} cost in ${c.name} for ${YEAR}: ${money(t[0], c.name)} to ${money(t[2], c.name)} for ${o.guests} guests, with a line-by-line budget, local vendor rates and ways to save.`,
-        body, canonical: base, ld, crumb: `${c.name} › ${T} cost` }));
-      urls.push(base); n++;
+        body, canonical: base, ld, crumb: `${c.name} › ${T} cost` }); write(`plan/${c.slug}/${o.slug}/index.html`, indexable(c, o) ? html : html.replace('<head>', '<head><meta name="robots" content="noindex, follow">')); }
+      if (indexable(c, o)) urls.push(base); else skipped++; n++;
     }
   }
+  console.log(`city + occasion pages: ${n}, indexed ${n - skipped}, noindex ${skipped}`);
   return n;
 };

@@ -91,5 +91,71 @@ module.exports = function local({ D, E, OCC, esc, money, evFor, YEAR }) {
     occTitle: { wedding: () => `Phuket Wedding Packages & Prices (${YEAR}): Beach Weddings | Event Couture` }
   };
 
+  /* ---------- Houston: more occasions ---------- */
+  Object.assign(L['Houston, TX'].occ, {
+    'arabic-wedding': () => `<h2>Arabic weddings in Houston</h2><p>Houston has a large Arab community, so zaffe groups, dabke troupes, Arabic DJs and singers, and halal caterers are easy to find locally.</p>${list([
+      '<b>Venue:</b> most Arabic weddings here use banquet halls in Southwest Houston, Sugar Land, Stafford or Katy that seat 300 or more and allow outside halal catering.',
+      '<b>Zaffe:</b> book the zaffe group and the DJ or singer together so the entrance, dabke and first dance flow without gaps.',
+      '<b>Katb el kitab:</b> often held at home or a mosque before the party; plan it as its own smaller event in the budget.',
+      '<b>Late nights:</b> Arabic weddings usually run late, so confirm the hall’s latest end time and overtime fees in writing.'])}`,
+    'indian-wedding': () => `<h2>Indian weddings in Houston</h2><p>Sugar Land, Stafford, Katy and Southwest Houston have banquet halls and hotels used to multi-day Indian weddings, along with Indian caterers, mandap decorators, mehndi artists and dhol players.</p>${list([
+      '<b>Several events:</b> budget the sangeet, mehndi, ceremony and reception separately; many families use one hotel for the ceremony and reception and a smaller hall or home for the mehndi.',
+      '<b>Baraat:</b> ask the venue early whether a horse, a dhol and a procession in the parking lot are allowed, and what permit or insurance they need.',
+      '<b>Fire ceremony:</b> the pheras need an open flame; confirm the venue and fire marshal rules before booking.',
+      '<b>Catering:</b> many hotels allow outside Indian caterers for a fee; get the fee and kitchen rules in writing.'])}`,
+    'pakistani-wedding': () => `<h2>Pakistani weddings in Houston</h2><p>Houston has many halal caterers, mehndi decorators and banquet halls that host Pakistani weddings, mostly in Southwest Houston, Sugar Land, Stafford and Katy.</p>${list([
+      '<b>Several events:</b> the nikah, mehndi, baraat and walima are often on different days and sometimes hosted by different families; budget each one.',
+      '<b>Halal catering:</b> confirm the caterer’s halal certification and whether the hall allows outside caterers.',
+      '<b>Separate seating:</b> if you need separate men’s and women’s areas, ask the hall about dividers and two entrances.',
+      '<b>Book early:</b> spring, fall and the weeks around Eid fill up fast at the most popular halls.'])}`,
+    'baby-shower': () => `<h2>Baby showers in Houston</h2>${list([
+      '<b>Restaurant private rooms and tea rooms</b> in the Galleria, River Oaks, The Heights and Sugar Land are the easiest choice: food, tables and cleanup are included.',
+      '<b>At home</b> keeps the cost lowest; add a balloon installation, a dessert table and rented chairs and linens.',
+      '<b>Weather:</b> from June to September keep it indoors or plan shade and fans; spring and fall are the most comfortable for garden showers.'])}`
+  });
+
+  /* ---------- More US cities ---------- */
+  L['Austin, TX'] = { city: () => `<h2>Where to hold an event in Austin</h2>${list([
+      '<b>Hill Country (Dripping Springs, Spicewood, Lake Travis):</b> ranches, vineyards and lakeside venues, the classic Austin wedding look.',
+      '<b>Downtown and Rainey Street:</b> hotel ballrooms, rooftops and historic venues for evening weddings and company events.',
+      '<b>South Congress and East Austin:</b> restaurants, gardens and small venues for showers, rehearsal dinners and parties.',
+      '<b>Round Rock and the north:</b> newer hotels and halls with easier parking for large groups.'])}<p>Spring and fall book first. During big festivals hotels fill up and prices rise, so check the city calendar before you pick a date.</p>`,
+    faqs: [['What are the best areas for a wedding in Austin?', 'Hill Country towns like Dripping Springs and Spicewood for ranch and vineyard venues, Lake Travis for lake views, and Downtown for hotel ballrooms and rooftops.']] };
+  L['San Antonio, TX'] = { city: () => `<h2>Where to hold an event in San Antonio</h2>${list([
+      '<b>Downtown and the River Walk:</b> historic hotels and riverside venues, popular for weddings with out-of-town guests.',
+      '<b>Pearl and Southtown:</b> restored buildings, courtyards and restaurants with a modern look.',
+      '<b>Hill Country (Boerne, New Braunfels):</b> ranches, barns and garden estates about 30 to 45 minutes away.',
+      '<b>Banquet halls across the city</b> host large quinceañeras and family weddings, often with packages that include tables, linens and a DJ.'])}<p>San Antonio is one of the biggest quinceañera cities in the US, so book halls 9 to 12 months ahead for spring and fall Saturdays.</p>`,
+    faqs: [['How far ahead should I book a quinceañera hall in San Antonio?', '9 to 12 months ahead for a spring or fall Saturday. Avoid Fiesta week in April unless you book very early, since hotels and venues fill up.']] };
+  L['Miami, FL'] = { city: () => `<h2>Where to hold an event in Miami</h2>${list([
+      '<b>Miami Beach and South Beach:</b> oceanfront hotels and beach clubs; ceremonies on the sand need a permit from the city.',
+      '<b>Coral Gables and Coconut Grove:</b> historic hotels, gardens and waterfront venues for classic weddings.',
+      '<b>Brickell and Downtown:</b> rooftops and modern hotels with skyline views for evening events.',
+      '<b>Wynwood and the Design District:</b> galleries and warehouse spaces for creative parties and launches.'])}<p>November to April is peak season with the best weather. From May to October plan for heat, afternoon storms and hurricane season, and keep a covered backup.</p>`,
+    faqs: [['Do I need a permit for a beach wedding in Miami?', 'Usually yes. Miami Beach and the other coastal cities each issue their own beach ceremony permits, with limits on guests, chairs and decor. Apply a few months ahead.']] };
+  L['Atlanta, GA'] = { city: () => `<h2>Where to hold an event in Atlanta</h2>${list([
+      '<b>Buckhead:</b> luxury hotels and private estates for formal weddings and galas.',
+      '<b>Midtown and Downtown:</b> museums, rooftops and hotel ballrooms for evening receptions and company events.',
+      '<b>Inman Park, Old Fourth Ward and West Midtown:</b> lofts, restored warehouses and restaurants with a modern look.',
+      '<b>North Georgia and the suburbs (Alpharetta, Roswell):</b> gardens, barns and estates for outdoor weddings.'])}<p>Spring and fall are peak seasons. Summers are hot and humid, so outdoor events need shade and a rain plan.</p>`,
+    faqs: [['What are the best areas for a wedding venue in Atlanta?', 'Buckhead for luxury hotels and estates, Midtown and Downtown for museums and rooftops, West Midtown for lofts and warehouses, and Alpharetta, Roswell or North Georgia for gardens and barns.']] };
+  L['Chicago, IL'] = { city: () => `<h2>Where to hold an event in Chicago</h2>${list([
+      '<b>The Loop and River North:</b> historic hotels, ballrooms and rooftops with skyline and river views.',
+      '<b>West Loop:</b> lofts, restaurants and event spaces with an industrial look.',
+      '<b>Lincoln Park and the lakefront:</b> conservatories, gardens and lake-view venues for spring and summer.',
+      '<b>Suburbs (Oak Brook, Schaumburg, Rosemont):</b> large banquet halls and hotels for big cultural weddings, close to O’Hare.'])}<p>June to October is peak season. Winter dates from November to March often come with lower venue prices, especially on Fridays and Sundays.</p>`,
+    faqs: [['Is it cheaper to get married in Chicago in winter?', 'Often yes. Many Chicago venues lower their prices or food-and-drink minimums from November to March, especially for Friday and Sunday dates.']] };
+  L['New York, NY'] = { city: () => `<h2>Where to hold an event in New York</h2>${list([
+      '<b>Manhattan:</b> hotel ballrooms, historic mansions, rooftops and lofts; expect high food-and-drink minimums.',
+      '<b>Brooklyn:</b> converted warehouses, waterfront venues and restaurants, often at lower minimums than Manhattan.',
+      '<b>Queens and Long Island:</b> large banquet halls and catering halls that host big cultural weddings.',
+      '<b>Hudson Valley:</b> barns, estates and vineyards about 90 minutes north, popular for weekend weddings.'])}<p>Venues book 12 to 18 months ahead for May, June, September and October. A Friday, Sunday or winter date can lower the total a lot.</p>`,
+    faqs: [['How can I save money on a wedding in New York?', 'Choose a Friday, Sunday or winter date, look at Brooklyn, Queens or Long Island venues with lower minimums, and keep the guest list smaller. Manhattan food-and-drink minimums are the biggest cost.']] };
+  L['Phoenix, AZ'] = { city: () => `<h2>Where to hold an event in Phoenix</h2>${list([
+      '<b>Scottsdale:</b> resorts, desert estates and golf clubs, the most popular choice for weddings and destination events.',
+      '<b>Downtown Phoenix and Tempe:</b> hotels, rooftops and historic buildings for evening events.',
+      '<b>Desert venues (North Scottsdale, Cave Creek):</b> ranches and desert gardens with mountain views and sunset ceremonies.'])}<p>Most events happen from October to April. Summer heat often passes 105°F, so summer events should be indoors or in the evening, with shade and cooling.</p>`,
+    faqs: [['When is the best time for a wedding in Phoenix?', 'October to April, when days are warm and evenings are cool. From June to September, plan indoors or after sunset, since temperatures often pass 105°F.']] };
+
   return L;
 };

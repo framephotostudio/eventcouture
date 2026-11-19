@@ -173,7 +173,7 @@ const idx = `<p>Real numbers for planning any celebration: what it costs, where 
 <h2>By occasion</h2><div class="cols">${OCC.map(o => `<a href="${o.slug}/">${esc(o.name)}</a>`).join('')}</div><h2>By city</h2><div class="cols">${CITIES.map(c => `<a href="${c.slug}/">${esc(c.name)}</a>`).join('')}</div>${cta(null, null, '../')}`;
 write('plan/index.html', page({ rel: 1, title: `Event planning guides and costs (${YEAR}) | Event Couture`, h1: 'Event planning guides', desc: `What weddings, quinceañeras, birthdays, showers and more cost in ${YEAR}, city by city, with budgets, schedules and checklists.`, body: idx, canonical: `${BASE}plan/` }).replace('<a href="../">Home</a> › <a href="../plan/">Planning guides</a></nav>', '<a href="../">Home</a> › Planning guides</nav>'));
 urls.unshift(BASE, `${BASE}plan/`);
-const comboCount = require('./combos.cjs')({ D, E, OCC, CITIES, page, write, urls, esc, money, totals, evFor, YEAR, BASE, recsIn, catLabel, noteFor });
+const comboCount = require('./combos.cjs')({ BIG, D, E, OCC, CITIES, page, write, urls, esc, money, totals, evFor, YEAR, BASE, recsIn, catLabel, noteFor });
 const landingPages = require('./landing.cjs')({ D, E, OCC, CITIES, BIG, page, write, urls, esc, money, totals, evFor, YEAR, BASE, INSPO });
 const plannerPages = require('./planners.cjs').build({ D, OCC, page, write, urls, esc, money, totals, YEAR, BASE, recsIn, catLabel, noteFor, CITIES });
 const comparePages = require('./compare.cjs')({ D, CITIES, page, write, urls, esc, BASE });
